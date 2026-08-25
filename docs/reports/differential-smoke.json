@@ -1,0 +1,19 @@
+{
+  "checked": 25,
+  "exactMatches": 24,
+  "classifiedDifferences": 1,
+  "unexpectedDifferences": 0,
+  "classifications": [
+    {
+      "suite": "gfm",
+      "case": 2,
+      "implementation": "cmark-gfm-0.29.0.gfm.13",
+      "source": "- [x] done\n- [ ] todo\n",
+      "markdown": "<ul>\n<li class=\"task-list-item\"><input type=\"checkbox\" disabled=\"\" checked=\"\"> done</li>\n<li class=\"task-list-item\"><input type=\"checkbox\" disabled=\"\"> todo</li>\n</ul>\n",
+      "reference": "<ul>\n<li><input type=\"checkbox\" checked=\"\" disabled=\"\" /> done</li>\n<li><input type=\"checkbox\" disabled=\"\" /> todo</li>\n</ul>\n",
+      "category": "serializer difference",
+      "rationale": "markdown emits explicit task-list class tokens and HTML5 void-tag syntax; task state and disabled checkbox semantics are equivalent"
+    }
+  ],
+  "unexpected": []
+}

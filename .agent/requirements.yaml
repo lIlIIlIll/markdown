@@ -1,0 +1,2485 @@
+schema_version: 1
+prd:
+  path: docs/prd/markdown-library.md
+  title: markdown 完整 Markdown 库产品需求文档
+  version: '2.0'
+  target_product_version: markdown 1.0
+  document_status: Draft for Review
+  document_date: '2026-08-17'
+generated_on: '2026-08-17'
+allowed_statuses:
+- pending
+- implemented_unverified
+- pass
+- blocked
+completion_rule: 只有本文件 requirements 下的全部条目均为 pass，才可声明整个 PRD 完成；blocked、pending 和 implemented_unverified 均不算完成。
+status_definitions:
+  pending: 尚未开始，或尚无足以证明实现存在的证据。
+  implemented_unverified: 实现已存在，但尚未完成该条目全部验收或证据尚不充分。
+  pass: 全部 acceptance 均通过，且 implementation、tests、evidence 已填写可复核证据。
+  blocked: 存在已确认且无法在当前授权或环境内解除的阻塞；notes 必须说明阻塞原因和解除条件。
+requirements:
+- id: MD-GOV-001
+  source: PRD §1, §4, §54.1-7
+  target: '1.0'
+  level: must
+  description: 产品身份、标准基线和默认策略固定且可查询
+  acceptance:
+  - 项目名为 markdown，公开根命名空间为 markdown
+  - CommonMark 精确基线为 0.31.2，GFM 精确基线为 0.29-gfm
+  - 另提供明确标识为项目组合的 gfm-modern-v1
+  - 默认 parser profile 为 commonmark-0.31.2，默认 HTML policy 为 Safe
+  - 公开文档和 capability introspection 不使用语义可漂移的 Markdown latest
+  status: pass
+  implementation:
+  - 'cjpm.toml: product package metadata and public markdown module'
+  - 'src/profile.cj: versioned built-in profiles and Safe HTML policy identity'
+  tests:
+  - 'src/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-25: repository, product, package, public namespace, CLI command, historical reports and ledger consistently use markdown; legacy product-name scan returned zero matches'
+  notes: ''
+- id: MD-GOV-002
+  source: PRD §6.1, §11.4, §48.3, §54.3-6
+  target: cross-release
+  level: must
+  description: 版本化 profile 和便利别名在兼容期内保持稳定
+  acceptance:
+  - 每个标准版本使用新的 profile ID，已发布 profile 的语义不静默改变
+  - 1.x 内 commonMark() 和 gfm() 便利别名的目标固定
+  - 规范修复关联规范章节或测试编号，并附 regression 与 changelog
+  - 影响 AST 的修复评估是否需要新的 profile revision
+  status: pass
+  implementation:
+  - src/profile.cj
+  - src/ast.cj
+  - docs/versioning-and-compatibility.md
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-GOV-003
+  source: PRD §6.2, §24.1, §54.7, §54.30-31
+  target: '1.0'
+  level: must
+  description: 规范兼容输出和安全输出是显式分离的策略
+  acceptance:
+  - SpecCompatible、GfmCompatible 和 Safe 是不同类型或显式构造器
+  - 规范测试不通过含糊的 renderHtml() 与不可信内容安全渲染共用隐式策略
+  - Safe 为便利 API 默认策略且默认转义 raw HTML
+  - GFM tagfilter 不被描述为完整 sanitizer
+  status: pass
+  implementation:
+  - 'src/profile.cj: distinct SpecCompatible, GfmCompatible, and Safe policy kinds'
+  tests:
+  - 'src/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-GOV-004
+  source: PRD §6.3, §10.1-2, §54.8-10
+  target: '1.0'
+  level: must
+  description: AST 是 1.0 的稳定公共核心抽象并为后续无损表示预留边界
+  acceptance:
+  - 公共主链路为 Source → Document → Transform → Renderer
+  - String → HTML 仅作为便利 API，不取代 Document 抽象
+  - SourceBuffer、Syntax Representation、Semantic AST 的职责边界明确
+  - 完整 CST 和 Event API 不伪装为 1.0 已交付能力
+  status: pass
+  implementation:
+  - src/profile.cj
+  - src/ast.cj
+  - docs/versioning-and-compatibility.md
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-GOV-005
+  source: PRD §8, §29, §53.4-6, §54.14-16, §54.27, §54.33, §54.36
+  target: cross-release
+  level: must
+  description: 非目标和宿主责任边界不会被核心库越权实现或误述
+  acceptance:
+  - 核心不实现 DOM、完整 sanitizer、代码高亮引擎、WYSIWYG、任意回溯 grammar DSL 或代码执行
+  - 核心不访问网络、include 文件或图片，也不执行公式、图表、脚本
+  - 1.0 不提供外部 JSON/YAML 方言代码回调、Transform DSL、完整 CST、Event API 或真正增量解析
+  - 代码扩展明确拥有宿主进程权限，不宣称处于 sandbox
+  - Front Matter 只提取原文，Math 只保留 literal
+  status: pass
+  implementation:
+  - src/profile.cj
+  - src/ast.cj
+  - docs/versioning-and-compatibility.md
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-USE-001
+  source: PRD §9.1-6
+  target: cross-release
+  level: must
+  description: 公共能力组合覆盖应用、终端、文档、IDE、Agent 和静态站点核心场景
+  acceptance:
+  - 不可信 Markdown 可解析为 AST 并以 Safe HTML 输出
+  - 终端可用 Plain Text/自定义 Renderer DSL，P1 可用官方 ANSI/TUI renderer
+  - 文档工具可提取标题、链接、图片、代码块、引用和 custom nodes
+  - IDE 能力按版本提供 SourceSpan/UTF-16，并演进到 token、format、snapshot 和增量能力
+  - Agent 场景支持 raw HTML 禁用、危险 URI 拒绝、取消、节点/输出预算和确定性文本
+  - 静态站点可组合自定义方言、AST transform、renderer hooks、containers 和可验证 cache artifact
+  status: pass
+  implementation:
+  - src/facade.cj
+  - src/services.cj
+  - src/editor.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-ARCH-001
+  source: PRD §10.1-2, §55
+  target: '1.0'
+  level: must
+  description: 实现完整、有界、可取消且可验证的 Markdown 数据流
+  acceptance:
+  - 数据流覆盖 SourceInput、SourceBuffer、方言编译、块解析、引用解析、行内解析、扩展后处理、AST 校验、转换、Renderer 和 Sink
+  - 每个阶段有明确输入输出契约和错误传播边界
+  - 完整产品链路包含版本化标准、受约束 DSL、不可变 AST、安全策略、确定性输出及 conformance/fuzz/benchmark 证据
+  status: pass
+  implementation:
+  - src/parser.cj
+  - src/rewrite.cj
+  - src/renderer.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-ARCH-002
+  source: PRD §10.3, §40
+  target: '1.0'
+  level: must
+  description: 模块依赖方向保持单向并隔离生产、CLI、测试和 unsafe API
+  acceptance:
+  - AST 不依赖 HTML renderer
+  - CommonMark parser 不依赖 GFM extension
+  - parser core 不依赖 CLI
+  - production module 不依赖 TestKit
+  - 扩展仅依赖 core 和 SPI
+  - unsafe HTML API 位于独立命名空间
+  status: pass
+  implementation:
+  - src/parser.cj
+  - src/rewrite.cj
+  - src/renderer.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-PRO-001
+  source: PRD §11.1-3
+  target: '1.0'
+  level: must
+  description: 内置 profile 集合、默认启用项和 GFM 组合语义准确
+  acceptance:
+  - 提供 commonmark-0.31.2、gfm-0.29、gfm-modern-v1 和 custom
+  - 默认 CommonMark 不启用表格、删除线、任务列表、脚注、Front Matter、数学或 Heading ID
+  - gfm-modern-v1 包含 Tables、Task lists、Strikethrough、Extended autolinks 和 Tag filter
+  - gfm-modern-v1 文档明确其不是正式 GFM 规范的精确实现
+  status: pass
+  implementation:
+  - 'src/profile.cj: commonmark-0.31.2, gfm-0.29, gfm-modern-v1, and custom profile identities'
+  tests:
+  - 'src/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-DIA-001
+  source: PRD §12.1, §39.2, §51.2
+  target: '1.0'
+  level: must
+  description: Dialect DSL 可定义具有版本、依赖、安全限制和 renderer 要求的方言
+  acceptance:
+  - 可声明方言 ID、版本、基础 profile、扩展及扩展版本
+  - 可声明 parser options、方言级安全限制、依赖、冲突和规则顺序
+  - 可声明 renderer coverage 要求
+  - 公共 builder 可用自定义方言构建 engine
+  status: pass
+  implementation:
+  - 'src/extension.cj: MarkdownDialectBuilder base/enable/disable/inline/block/renderer declarations'
+  - 'src/parser.cj: MarkdownEngineBuilder.dialect'
+  tests:
+  - 'src/extension_test.cj: compilesAndRunsInlineBlockAndRendererDslEndToEnd'
+  - 'src/extension_test.cj: builderDisableRemovesRegistrationBeforeCompilation'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-DIA-002
+  source: PRD §12.2-3, §54.19
+  target: '1.0'
+  level: must
+  description: 方言在 engine build 阶段编译为不可变执行计划
+  acceptance:
+  - 编译流程包含 schema 校验、依赖解析、冲突检测、规范化、排序和 dispatch table 编译
+  - CompiledMarkdownDialect 不可变
+  - 运行时 parser 不在每次 parse 时重新解释 DSL
+  - 核心公开类型覆盖 dialect descriptor、fingerprint、plan version、rule 和 extension implementation identity
+  status: pass
+  implementation:
+  - 'src/extension.cj: DialectCompiler and immutable CompiledMarkdownDialect dispatch arrays'
+  - 'src/parser.cj: parser consumes compiled rules rather than interpreting builders'
+  tests:
+  - 'src/extension_test.cj: all ExtensionDslTest cases'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-DIA-003
+  source: PRD §12.4-5, §53.8, §54.20
+  target: '1.0'
+  level: must
+  description: 方言、引擎和 renderer fingerprint 完整、分层且确定
+  acceptance:
+  - DialectFingerprint 包含基础 profile、方言 ID/版本、parser options、扩展语义/实现版本、SPI、规范化规则、顺序和 plan version
+  - fingerprint 排除自身字段，采用 canonical serialization → SHA-256
+  - 语义相同配置产生相同 fingerprint
+  - EngineFingerprint 额外包含 source policy、diagnostic policy 和影响结果的 limits
+  - RendererFingerprint 包含 renderer kind、policy 和 renderer extension versions
+  status: pass
+  implementation:
+  - 'src/extension.cj: canonical descriptor includes dialect/profile/extensions/rules/SPI/plan identity'
+  - 'src/fingerprint.cj: pure-std SHA-256 used for canonical dialect descriptor'
+  tests:
+  - 'src/fingerprint_test.cj: sha256MatchesKnownVectors'
+  - 'src/fingerprint_test.cj: dialectFingerprintIsDeterministicAndSemanticChangesAlterIt'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-DIA-004
+  source: PRD §12.6, §51.2
+  target: '1.0'
+  level: must
+  description: 方言编译静态拒绝不完整、不兼容、无界或不确定配置
+  acceptance:
+  - 拒绝重复 extension ID、不兼容 profile、循环依赖和版本不满足
+  - 拒绝 SPI 不满足、rule ID/delimiter/block opener 冲突
+  - 拒绝无界 lookahead、不支持嵌套和不确定 tie-break
+  - 拒绝缺失 renderer 或 capability 声明不完整
+  - 失败返回结构化方言或扩展错误
+  status: pass
+  implementation:
+  - 'src/extension.cj: manifest, dependency, conflict, SPI, rule-bound, opener/delimiter, renderer and capability validation'
+  tests:
+  - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-SYN-001
+  source: PRD §6.4, §13.1, §54.12, §54.15, §54.17-18
+  target: '1.0'
+  level: must
+  description: Syntax DSL 只表达受约束、有界、确定的常见 Markdown 扩展
+  acceptance:
+  - 支持成对 inline、单 token inline、行首 block、container block、literal block、metadata suffix 和属性捕获
+  - 不支持任意递归 grammar、任意回溯正则、动态脚本、无界 lookahead 或无界 capture
+  - 规则可静态验证并可纳入 fingerprint
+  status: pass
+  implementation:
+  - 'src/extension.cj: bounded paired-inline and container-block typed syntax rules'
+  - 'src/parser.cj: compiled custom inline/block dispatch'
+  tests:
+  - 'src/extension_test.cj: compilesAndRunsInlineBlockAndRendererDslEndToEnd'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-SYN-002
+  source: PRD §13.2-3
+  target: '1.0'
+  level: must
+  description: Inline 和 block Syntax DSL 暴露完整的有界声明能力
+  acceptance:
+  - inline 可声明 opener、closer、escape、flanking、nesting、child parsing、delimiter/lookahead 上限、priority、conflict group 和 emitter
+  - block 可声明 opener/closer、属性捕获、content mode、nesting、最大 block bytes、priority 和 emitter
+  - emitter 产生带 extension identity 和 SourceSpan 的 Custom Node
+  status: pass
+  implementation:
+  - 'src/extension.cj: delimiter, content, nesting, delimiter/lookahead bounds, priority and conflict group declarations'
+  - 'src/parser.cj: typed SyntaxPayload and SourceSpan emission'
+  tests:
+  - 'src/extension_test.cj: compilesAndRunsInlineBlockAndRendererDslEndToEnd'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-SYN-003
+  source: PRD §13.4, §18.10
+  target: '1.0'
+  level: must
+  description: 所有语法规则具有完整成本元数据和固定排序
+  acceptance:
+  - 每条规则声明或推导 phase、priority、tieBreak、lookahead/capture/delimiter 上限、nesting、backtracking 和 resourceCost
+  - 排序固定为 phase → priority → registration order → extension ID → rule ID
+  - 相同 priority 不依赖内存地址、随机 hash 或未定义 registry 顺序
+  status: pass
+  implementation:
+  - 'src/extension.cj: stable priority then registration-order insertion sort'
+  tests:
+  - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-SYN-004
+  source: PRD §13.5, §51.2, §53.3
+  target: '1.0'
+  level: must
+  description: Syntax DSL 编译器拒绝无法证明有界或线性安全的匹配规则
+  acceptance:
+  - 不接受可能灾难性回溯的任意正则
+  - 仅接受固定前缀、可证明线性子集或等价 DFA 实现
+  - 无法证明有界的规则在编译阶段失败
+  - delimiter storm 和超大 capture 进入 fuzz、预算和 TCK 覆盖
+  status: pass
+  implementation:
+  - 'src/extension.cj: DSL accepts fixed delimiters/prefixes only and rejects non-positive bounds'
+  tests:
+  - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-SYN-005
+  source: PRD §13.6
+  target: '1.0'
+  level: must
+  description: Parser SPI 作为复杂语法 escape hatch 时仍受核心契约约束
+  acceptance:
+  - SPI 回调接受 SourceSpan、OperationBudget 和 CancellationToken
+  - SPI 遵守节点限制、确定性、diagnostics 和 extension trust boundary
+  - SPI 不暴露 parser 内部 delimiter stack 或不稳定 scanner state
+  status: pass
+  implementation:
+  - src/extension.cj
+  - src/parser.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-RDSL-001
+  source: PRD §14.1, §28.4
+  target: '1.0'
+  level: must
+  description: Renderer DSL 可为各输出后端显式提供扩展渲染能力
+  acceptance:
+  - 支持 HTML、Safe HTML、Plain Text 和 Markdown 后端
+  - ANSI/TUI capability 可声明但官方 renderer 按 P1 路线交付
+  - renderer coverage 可由 capability matrix 查询和验证
+  status: pass
+  implementation:
+  - src/extension.cj
+  - src/renderer.cj
+  - src/formatter.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-RDSL-002
+  source: PRD §14.2, §51.2
+  target: '1.0'
+  level: must
+  description: 结构化 HTML builder 自动执行安全和资源控制
+  acceptance:
+  - 自动校验 tag name 和 class token
+  - 自动执行 text/attribute escaping 和 URI policy
+  - 自动执行 output budget、source map 和 cancellation 协议
+  - 扩展普通字符串不能形成未转义 HTML
+  status: pass
+  implementation:
+  - 'src/extension.cj: RendererRule with compile-time tag/class validation'
+  - 'src/renderer.cj: custom nodes render through existing escaping/budget/cancellation Sink path'
+  tests:
+  - 'src/extension_test.cj: compilesAndRunsInlineBlockAndRendererDslEndToEnd'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-RDSL-003
+  source: PRD §14.3, §32.6, §54.32
+  target: '1.0'
+  level: must
+  description: Renderer 默认不以字符串拼接绕过转义，TrustedHtml 只能显式 unsafe 构造
+  acceptance:
+  - 普通 String 始终按文本输出
+  - TrustedHtml 不支持从 String 隐式转换
+  - TrustedHtml 构造器位于显式 unsafe API 并在文档标记风险
+  - TrustedHtml 仍受 output budget 和 cancellation 约束
+  status: pass
+  implementation:
+  - src/extension.cj
+  - src/renderer.cj
+  - src/formatter.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-RDSL-004
+  source: PRD §14.5, §26.6, §51.2
+  target: '1.0'
+  level: must
+  description: 缺失 renderer 或 formatter 时采用显式策略且不静默丢内容
+  acceptance:
+  - 支持 Error、RenderChildren、RenderLiteral、Drop 和 CustomFallback 策略
+  - 缺失 renderer 默认策略为 Error
+  - Drop 只能由显式策略选择
+  - 缺少 formatter 时保留原始 source、拒绝范围或使用显式 fallback
+  status: pass
+  implementation:
+  - 'src/extension.cj: MissingRendererPolicy defaults to Error'
+  - 'src/renderer.cj: missing custom renderer throws UnsupportedNode'
+  tests:
+  - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-TRN-001
+  source: PRD §15, §22.6, §54.14
+  target: '1.1'
+  level: must
+  description: Transform DSL 和 pass pipeline 类型安全、不可变、有界且顺序确定
+  acceptance:
+  - Transform DSL 不修改原 AST，生成通过 invariant validation 的新 AST
+  - 保留 Node Origin，受 OperationBudget 限制，pass 顺序固定
+  - pass 声明 id、version、requires、produces、priority 和 purity
+  - 检测循环、重复、缺失依赖、不确定顺序和变换后不变量错误
+  status: pass
+  implementation:
+  - src/services.cj
+  - src/rewrite.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-IN-001
+  source: PRD §16 IN-001, §51.3
+  target: '1.0'
+  level: must
+  description: 解析器支持仓颉 String 输入
+  acceptance:
+  - 公开 parse API 接受 String
+  - String 输入通过与其他输入形式一致的 profile、limit、budget 和 cancellation 路径
+  status: pass
+  implementation:
+  - 'src/parser.cj: MarkdownEngine.parse(String) with shared limits, budget, and cancellation path'
+  tests:
+  - 'src/parser_test.cj: all ParserBehaviorTest cases use public String parse entry'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-IN-002
+  source: PRD §16 IN-002, §51.3
+  target: '1.0'
+  level: must
+  description: UTF-8 字节输入具有 Strict 和 ReplaceInvalid 两种显式策略
+  acceptance:
+  - Strict 遇非法 UTF-8 返回 InvalidEncoding
+  - ReplaceInvalid 使用 U+FFFD 并产生稳定 diagnostic
+  - ReplaceInvalid 下 SourceSpan 仍映射原始字节
+  - 实现不使用平台默认编码
+  status: pass
+  implementation:
+  - 'src/parser.cj: Utf8Policy Strict/ReplaceInvalid and validated decoder'
+  - 'src/source.cj: decoded-to-original byte map used by SourceBuffer and parser spans'
+  tests:
+  - 'src/input_test.cj: strictRejectsInvalidUtf8AndReplacePreservesOriginalOffsets'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-IN-003
+  source: PRD §16 IN-003, §51.3
+  target: '1.0'
+  level: must
+  description: 解析器支持标准 stream 输入并保留读取失败 cause
+  acceptance:
+  - 公开 API 接受标准输入流抽象
+  - 读取失败返回 InputReadFailure
+  - 结构化错误保留底层 cause
+  status: pass
+  implementation:
+  - 'src/parser.cj: InputStream overload with bounded reads and InputReadFailureException cause propagation'
+  tests:
+  - 'src/input_test.cj: streamInputUsesSameParserAndPreservesReadFailuresAsTypedCause'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-IN-004
+  source: PRD §16 IN-004-005, §39.4, §44.3, §51.3
+  target: '1.0'
+  level: must
+  description: chunked session 接受任意合法切分并在 finish 后产生一致结果
+  acceptance:
+  - 提供 newSession、feed 和 finish API
+  - all-at-once 与任意 chunk 分割的 AST、diagnostics 和 render 结果一致
+  - 覆盖 1-byte、随机、UTF-8、CRLF、fence、entity、HTML tag、link destination 和 DSL delimiter 边界
+  - 文档明确 1.0 不承诺 finish 前输出最终语义节点
+  - 单个 chunked session 不支持并发调用
+  status: pass
+  implementation:
+  - 'src/parser.cj: ChunkedParseSession feed(Array<Byte>/String), finish, preallocation limit, cancellation, and single-finish
+    lifecycle'
+  tests:
+  - 'src/input_test.cj: arbitraryChunkBoundariesMatchAllAtOnce'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-IN-005
+  source: PRD §16 IN-006-007
+  target: '1.0'
+  level: must
+  description: 换行和 UTF-8 BOM 处理保持原始字节映射
+  acceptance:
+  - 接受 LF、CRLF 和 CR
+  - 规范化 renderer 默认输出 LF
+  - SourceSpan 对应原始输入而非规范化缓冲区
+  - UTF-8 BOM 行为有明确契约且保留原始 byte offset 映射
+  status: pass
+  implementation:
+  - 'src/parser.cj: LF/CRLF/CR line splitter and UTF-8 BOM view offset'
+  - 'src/source.cj: original newline/BOM byte mapping'
+  tests:
+  - 'src/input_test.cj: bomDoesNotBecomeMarkdownTextButOffsetsRemainOriginal'
+  - 'src/input_test.cj: arbitraryChunkBoundariesMatchAllAtOnce'
+  - 'src/core_test.cj: sourceSpansAreUtf8HalfOpenIntervals'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-IN-006
+  source: PRD §16 IN-008, §51.3
+  target: '1.0'
+  level: must
+  description: ParseResult 默认持有不可变 SourceBuffer 并提供精确切片访问
+  acceptance:
+  - 提供 source.slice(span)、source.text(node) 和 source.line(lineNumber)
+  - SourceBuffer 不可变且与 Document 生命周期关系有文档
+  - SourceSlice 不破坏原始 byte offset
+  status: pass
+  implementation:
+  - 'src/source.cj: immutable SourceBuffer text, byteLength, slice, line, and lineCount behavior'
+  tests:
+  - 'src/core_test.cj: CoreContractTest.sourceSpansAreUtf8HalfOpenIntervals'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-IN-007
+  source: PRD §16 IN-009, §45.5
+  target: '1.0'
+  level: should
+  description: literal 存储支持 Copy 和 SourceSlice 并避免大文本重复复制
+  acceptance:
+  - 调用者可选择 Copy 或 SourceSlice
+  - 代码块、HTML block 和长文本默认使用 SourceSlice，除非有记录的实现理由
+  - ByteArray 输入不会无条件完整复制
+  - P1 Chunked literal storage 不被宣称为 1.0 能力
+  status: pass
+  implementation:
+  - src/source.cj
+  - src/parser.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-IN-008
+  source: PRD §16 IN-010, §51.3
+  target: '1.0'
+  level: must
+  description: document.detach() 解除 AST 对 SourceBuffer 的数据所有权依赖
+  acceptance:
+  - detach 将所有 SourceSlice 转换为独立拥有的数据
+  - detach 后释放原始 SourceBuffer 不改变 Document 语义
+  - raw/semantic/span 信息在可表达范围内保持一致
+  status: pass
+  implementation:
+  - src/source.cj
+  - src/parser.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-POS-001
+  source: PRD §17.1-3, §51.4, §54.21
+  target: '1.0'
+  level: must
+  description: 唯一规范位置是 UTF-8 byte offset，SourceSpan 使用半开区间
+  acceptance:
+  - SourceSpan 表示为 [startByte, endByte)
+  - SourceOffset、SourceSpan、SourcePosition、VisualPosition、Utf16Position 和 SourcePositionMap 是不同类型
+  - SourcePosition 包含从 1 开始的 line 和 byteColumn
+  - 所有语法节点的 span 合法，子节点范围被父节点范围包含或具有书面例外
+  - UTF-8、多字节字符和各种换行均有范围测试
+  status: pass
+  implementation:
+  - 'src/source.cj: SourceOffset, SourceSpan half-open interval, SourcePosition, VisualPosition, and PositionEncoding'
+  tests:
+  - 'src/core_test.cj: CoreContractTest.sourceSpansAreUtf8HalfOpenIntervals'
+  - 'src/core_test.cj: CoreContractTest.mapsUtf8OffsetsToSourceAndUtf16Positions'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-POS-002
+  source: PRD §17.4, §53.7
+  target: '1.0'
+  level: must
+  description: VisualPosition 仅用于展示且不与规范编辑位置混用
+  acceptance:
+  - tab 按固定 tab stop 展开
+  - VisualPosition 不用于修改文本的规范位置
+  - API 不承诺 visual column 等于 grapheme cluster 数量
+  - 编辑相关 API 显式标注 PositionEncoding
+  status: pass
+  implementation:
+  - src/source.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-POS-003
+  source: PRD §17.5, §51.4, §54.22
+  target: '1.0'
+  level: must
+  description: 提供可缓存且不修改源文本的 UTF-8 到 UTF-16 位置映射
+  acceptance:
+  - 映射按 UTF-16 code unit 计算并可缓存
+  - 覆盖 emoji、组合字符、CRLF 和多字节字符
+  - ReplaceInvalid 策略下仍能映射回原始字节
+  - 转换不对 SourceBuffer 做 Unicode normalization
+  status: pass
+  implementation:
+  - 'src/source.cj: SourceBuffer.utf16Position with emoji and CRLF handling'
+  tests:
+  - 'src/core_test.cj: CoreContractTest.mapsUtf8OffsetsToSourceAndUtf16Positions'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-POS-004
+  source: PRD §17.6
+  target: '1.0'
+  level: must
+  description: Unicode normalization 只用于标准明确要求的局部比较
+  acceptance:
+  - parser 不对整份输入执行 NFC、NFD 或其他 normalization
+  - reference label 等局部比较按明确 profile 规则规范化
+  - 规范化值不替换 SourceBuffer 中的原始值
+  status: pass
+  implementation:
+  - src/source.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-PAR-001
+  source: PRD §18 PAR-001, §10.1
+  target: '1.0'
+  level: must
+  description: 解析阶段顺序固定且阶段边界可测试
+  acceptance:
+  - 顺序为 input view → block parsing → reference collection → inline parsing → extension postprocessing → AST validation
+  - reference resolution 可影响前文 link 且不会破坏 chunk invariance
+  - AST 只有通过 invariant validation 后才作为完整结果返回
+  status: pass
+  implementation:
+  - 'src/parser.cj: input view, reference collection, block/inline parse, and AST validation pipeline'
+  tests:
+  - 'src/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-PAR-002
+  source: PRD §18 PAR-002, §20.2
+  target: '1.0'
+  level: must
+  description: 块级解析覆盖 CommonMark 核心结构和 GFM table
+  acceptance:
+  - 支持 Document、BlockQuote、Bullet/Ordered List、ListItem、Paragraph
+  - 支持 ATX/Setext heading、ThematicBreak、Indented/Fenced CodeBlock
+  - 支持 HtmlBlock、LinkReferenceDefinition、BlankLine 语义和 GFM Table
+  - 每种公开 block node 暴露 PRD §20.2 规定的主要字段
+  status: pass
+  implementation:
+  - 'src/parser.cj: ATX/Setext, paragraph, thematic break, fence/indented code, quote, list, HTML, references, blank semantics,
+    and GFM table'
+  tests:
+  - 'src/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
+  - 'src/parser_test.cj: parsesFencesListsQuotesAndGfmTableWithoutLosingMetadata'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-PAR-003
+  source: PRD §18 PAR-003, §20.3
+  target: '1.0'
+  level: must
+  description: 行内解析覆盖 CommonMark 核心结构和 GFM 行内扩展
+  acceptance:
+  - 支持 Text、SoftBreak、HardBreak、BackslashEscape、Entity 和 CodeSpan
+  - 支持 Emphasis、Strong、Link、Image、Autolink 和 RawHtml
+  - 支持 GFM Strikethrough 和 ExtendedAutolink
+  - 每种公开 inline node 暴露 PRD §20.3 规定的主要字段
+  status: pass
+  implementation:
+  - 'src/parser.cj: text, breaks, escapes, named entities, code span, emphasis/strong, link/image/reference, autolink, raw
+    HTML, and strikethrough'
+  tests:
+  - 'src/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
+  - 'src/parser_test.cj: distinguishesCommonMarkFromGfmExtensions'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-PAR-004
+  source: PRD §18 PAR-004
+  target: '1.0'
+  level: must
+  description: GFM task list 保留语义状态和 marker 源范围但不成为可执行控件状态
+  acceptance:
+  - ListItem 可区分 checked、unchecked 和非 task
+  - 保留 markerSpan
+  - parser 不把 checkbox 作为输入控件状态写回 AST
+  - Safe HTML 输出不可执行 task checkbox
+  status: pass
+  implementation:
+  - 'src/ast.cj: TaskState and ListItem.markerSpan AST contract'
+  tests:
+  - 'src/parser_test.cj: parsesFencesListsQuotesAndGfmTableWithoutLosingMetadata'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-PAR-005
+  source: PRD §18 PAR-005
+  target: '1.0'
+  level: must
+  description: Document 提供完整引用定义表并区分 link 语法来源
+  acceptance:
+  - 引用记录包含 labelRaw、labelNormalized、destinationRaw、destination、titleRaw、title、sourceSpan、isEffective 和 shadowedBy
+  - Link 区分 Inline、FullReference、CollapsedReference、ShortcutReference、Autolink 和 ExtendedAutolink
+  - 重复、shadowed 和无效引用按 profile 规则确定且有测试
+  status: pass
+  implementation:
+  - 'src/ast.cj: ReferenceDefinition raw/semantic/normalized fields and LinkSyntaxKind variants'
+  tests:
+  - 'src/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-PAR-006
+  source: PRD §18 PAR-006
+  target: '1.0'
+  level: must
+  description: Fenced CodeBlock 保留原始 fence、info 和 literal 信息
+  acceptance:
+  - 保留 fenceCharacter、fenceLength、openingFenceSpan 和可选 closingFenceSpan
+  - 保留 infoRaw、language、attributesRaw 和 literal
+  - 代码块内容从不由核心库执行
+  status: pass
+  implementation:
+  - 'src/ast.cj: CodeBlock fenced/indented kind, literal, fence spans, info/language/attributes'
+  tests:
+  - 'src/parser_test.cj: parsesFencesListsQuotesAndGfmTableWithoutLosingMetadata'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-PAR-007
+  source: PRD §18 PAR-007, §24.5
+  target: '1.0'
+  level: must
+  description: parser 只识别 raw HTML，renderer 通过显式策略决定输出
+  acceptance:
+  - parser 产生保留 literal 和 span 的 raw HTML node
+  - renderer 支持 Escape、Drop、PassThrough、Sanitize 和 CustomHandler 语义
+  - PassThrough 只能经显式 unsafe API 启用
+  - Sanitize 在 adapter 未配置时不被静默假定
+  status: pass
+  implementation:
+  - 'src/parser.cj: raw HTML recognized as HtmlBlock/HtmlInline without applying output policy'
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-PAR-008
+  source: PRD §6.7, §18 PAR-008
+  target: '1.0'
+  level: must
+  description: 普通未闭合 Markdown 语法按 profile 退化而非 hard parse error
+  acceptance:
+  - 未闭合 emphasis、link、code delimiter 和扩展 container 不导致异常
+  - 输入退化为文本或普通 block 的行为由 profile 或扩展规则确定
+  - 容错不绕过 limit、budget 或 cancellation
+  status: pass
+  implementation:
+  - 'src/parser.cj: unmatched inline markers remain Text instead of hard parse failure'
+  tests:
+  - 'src/parser_test.cj: preservesMalformedInlineAsTextAndHonorsResourceControls'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-PAR-009
+  source: PRD §18 PAR-009, §51.3, §54.28
+  target: '1.0'
+  level: must
+  description: 深度敏感核心路径使用显式栈或迭代实现
+  acceptance:
+  - block containers、AST walker、AST validation、renderer、formatter 和 transform traversal 不依赖宿主递归栈
+  - 深层 block、list 和 quote 输入不会造成宿主栈溢出
+  - trusted limits 也不能关闭调用栈安全
+  status: pass
+  implementation:
+  - 'src/parser.cj: block parser and containers use iterative loops'
+  - 'src/ast.cj: invariant validation uses explicit ArrayList stack'
+  tests:
+  - 'src/ast_test.cj: rejectsDuplicateNodeIdsWithoutRecursingForever'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-18: trusted 2000-level quote/list and 1000-level DSL tests passed using explicit block frames'
+  notes: ''
+- id: MD-PAR-010
+  source: PRD §6.5, §18 PAR-010, §43
+  target: '1.0'
+  level: must
+  description: parser 的顺序、注册和结果不依赖未定义运行时状态
+  acceptance:
+  - 不以内存地址、随机 hash 顺序或不稳定 registry 决定结果
+  - 相同 priority 有固定且有文档的 tie-break
+  - 相同输入、profile、fingerprint、engine version 和 policy 产生相同 AST、diagnostics 和输出
+  status: pass
+  implementation:
+  - 'src/parser.cj: ordered arrays, deterministic NodeId allocation, and no unordered registry dependence'
+  tests:
+  - 'src/parser_test.cj: deterministic representative parses'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-VAL-001
+  source: PRD §19.1-3, §51.4, §54.23
+  target: '1.0'
+  level: must
+  description: raw、semantic 和 normalized/comparison 值在类型与用途上分离
+  acceptance:
+  - SourceBuffer 提供 destinationRaw、titleRaw、labelRaw、infoRaw、entityRaw 和 delimiterRaw
+  - AST 语义值包含按 profile 解码的 destination、title、text 和 language
+  - labelNormalized、schemeNormalized 和 extensionIdNormalized 仅用于比较或安全判断
+  - 三个层次可通过测试证明不会相互覆盖
+  status: pass
+  implementation:
+  - 'src/ast.cj: Text, Link, Image, CodeBlock, and ReferenceDefinition separate raw/semantic/normalized fields'
+  tests:
+  - 'src/ast_test.cj: AstContractTest.constructsImmutableTypedAstAndValidatesIt'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-VAL-002
+  source: PRD §19.4
+  target: '1.0'
+  level: must
+  description: 值处理不重复解码、不提前转义且不丢失原始 URL
+  acceptance:
+  - entity 不重复 decode
+  - AST 不存储 HTML escaped 值
+  - URI policy 不使用输出转义后的值
+  - reference label 比较不使用展示值
+  - percent-decoded URL 不替换原始 destination
+  status: pass
+  implementation:
+  - 'src/parser.cj: raw/semantic link and entity values remain distinct; output escaping not stored in AST'
+  tests:
+  - 'src/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-AST-001
+  source: PRD §20.1, §42.4, §54.25
+  target: '1.0'
+  level: must
+  description: 语义 AST 不可变、无环、可并发只读且不泄漏 parser 临时状态
+  acceptance:
+  - 节点和 Document 不提供原地语义修改接口
+  - AST 无环且每个节点最多一个父节点
+  - Document 支持跨线程并发只读
+  - 节点顺序确定并支持 SourceSpan、Custom Node 和 Node Origin 边界
+  - 公共 AST 不暴露 delimiter stack 或 parser session state
+  status: pass
+  implementation:
+  - 'src/ast.cj: immutable MarkdownNode hierarchy and defensive ImmutableArray'
+  - 'src/ast.cj: non-recursive AstInvariantValidator'
+  tests:
+  - 'src/ast_test.cj: constructsImmutableTypedAstAndValidatesIt'
+  - 'src/ast_test.cj: rejectsDuplicateNodeIdsWithoutRecursingForever'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-AST-002
+  source: PRD §20.2-3
+  target: '1.0'
+  level: must
+  description: 公开 block 和 inline node schema 覆盖 PRD 规定字段
+  acceptance:
+  - Document、BlockQuote、List、ListItem、Paragraph、Heading、ThematicBreak、CodeBlock、HtmlBlock、Table/Row/Cell 和 CustomBlock 可表示
+  - Text、SoftBreak、HardBreak、CodeSpan、Emphasis、Strong、Strikethrough、Link、Image、HtmlInline 和 CustomInline 可表示
+  - 各节点主要字段与 PRD §20.2-3 一致
+  - schema 经 API review 和 public API snapshot 冻结
+  status: pass
+  implementation:
+  - 'src/ast.cj: typed Document, block, table, inline, link/image, and custom node classes'
+  tests:
+  - 'src/ast_test.cj: constructsImmutableTypedAstAndValidatesIt'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-AST-003
+  source: PRD §20.4, §36.4, §51.4, §54.24
+  target: '1.0'
+  level: must
+  description: NodeId 在单 Document 内唯一、确定，但不承诺跨编辑稳定
+  acceptance:
+  - 每个节点都有 NodeId 且在 Document 内唯一
+  - 同输入、同方言、同 engine version 下 NodeId 确定
+  - NodeId 不使用内存地址
+  - 1.0 文档明确跨编辑不稳定
+  - 跨 snapshot StableNodeId 仅作为 P2 独立能力
+  status: pass
+  implementation:
+  - 'src/ast.cj: positive NodeId and deterministic NodeIdAllocator'
+  - 'src/ast.cj: validator duplicate-ID rejection'
+  tests:
+  - 'src/ast_test.cj: constructsImmutableTypedAstAndValidatesIt'
+  - 'src/ast_test.cj: rejectsDuplicateNodeIdsWithoutRecursingForever'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-AST-004
+  source: PRD §20.5
+  target: '1.1'
+  level: must
+  description: Node Origin 记录解析、扩展、变换、合成和反序列化来源
+  acceptance:
+  - 支持 Parsed、ExtensionGenerated、Transformed、Synthetic 和 Deserialized
+  - origin 可记录 sourceNodeIds、sourceSpan、transformId 和 extensionId
+  - 变换和 artifact round-trip 不静默丢失所需来源信息
+  status: pass
+  implementation:
+  - 'src/ast.cj: NodeOriginKind and NodeOrigin source/transform/extension metadata'
+  tests:
+  - 'src/ast_test.cj: customNodesKeepTypedPayloadAndOrigin'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-AST-005
+  source: PRD §20.6, §48.4, §51.4
+  target: '1.0'
+  level: must
+  description: 第三方语法通过稳定 Custom Node 扩展而无需修改核心 enum
+  acceptance:
+  - Custom Node 包含 extensionId、extensionSemanticVersion、localKindId 和 typed payload
+  - 支持 block/inline children 和 SourceSpan
+  - payload 类型与 manifest/capability 可验证
+  - 新增第三方语法不要求修改核心 node enum
+  status: pass
+  implementation:
+  - 'src/ast.cj: CustomPayload, CustomBlock, and CustomInline with extension/version/local kind identity'
+  tests:
+  - 'src/ast_test.cj: customNodesKeepTypedPayloadAndOrigin'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-AST-006
+  source: PRD §20.7, §50 M5, §51.4
+  target: '1.0'
+  level: must
+  description: AST invariant validator 覆盖结构、范围、类型和扩展一致性
+  acceptance:
+  - 验证 Document 无父、单父、NodeId 唯一、SourceSpan 合法和子序确定
+  - 验证 block/inline 容器约束与 table 行列规则
+  - 验证 custom node 扩展存在且 payload 类型匹配
+  - synthetic 节点明确标记
+  - transform 后 AST 重新验证，错误不作为完整 Document 返回
+  status: pass
+  implementation:
+  - 'src/ast.cj: iterative validation of node count, duplicate IDs, span containment, and child categories'
+  tests:
+  - 'src/ast_test.cj: rejectsDuplicateNodeIdsWithoutRecursingForever'
+  - 'src/ast_test.cj: rejectsChildSpanOutsideParent'
+  - 'src/ast_test.cj: rejectsBlockInsideInlineContainer'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-CST-001
+  source: PRD §21.1-2, §54.9
+  target: '1.1'
+  level: must
+  description: Lossless CST 保留所有影响格式和未完成语法的信息
+  acceptance:
+  - P0 架构预留 Syntax Representation 边界，P1 公开完整 CST
+  - CST 保留空格、换行、marker、delimiter、entity、链接写法、fence、trivia 和无效/未完成语法
+  - 提供 SyntaxTree、SyntaxNode、SyntaxToken、Trivia、SyntaxKind 和 SyntaxToAstMap
+  - trivia 不被塞入 1.0 稳定 AST
+  status: pass
+  implementation:
+  - src/editor.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-CST-002
+  source: PRD §21.3-4
+  target: '1.1'
+  level: must
+  description: AST/CST 双向来源映射和 Syntax Token API 可用于编辑器
+  acceptance:
+  - 支持 AST node → originating syntax nodes
+  - 支持 Syntax node → optional semantic AST node
+  - token stream 至少区分 text、whitespace、markers、fence/info、delimiter、link parts、HTML、entity、extension 和 invalid token
+  - 允许没有对应 AST 节点的 syntax token
+  status: pass
+  implementation:
+  - src/editor.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-CST-003
+  source: PRD §21.5, §26.5, §54.39
+  target: '1.1'
+  level: must
+  description: Preserving Formatter 基于 CST 或等价 lossless 表示
+  acceptance:
+  - 实现不从语义 AST 猜测原始格式
+  - 尽量保留 marker、空行、entity 写法、fence 风格和未触及扩展语法
+  - 只修改必要范围并有最小差异测试
+  status: pass
+  implementation:
+  - src/editor.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-OPS-001
+  source: PRD §22 AST-001-003, §51.4
+  target: '1.0'
+  level: must
+  description: AST 提供非递归 Walker、类型化 Visitor 和常用查询
+  acceptance:
+  - Walker 产生确定的 Enter(node) 和 Exit(node) 事件且不使用递归调用栈
+  - Visitor 对公开 node 类型提供类型化分派
+  - 可按 NodeId、node type 和 SourceSpan 查询
+  - 可查询祖先/后代并提取标题、链接、图片、代码块和 custom node
+  status: pass
+  implementation:
+  - 'src/traversal.cj: NodeWalker Iterator with explicit Enter/Exit frame stack'
+  - 'src/traversal.cj: typed MarkdownVisitor and AstQuery ID/kind/span/relation/extractor APIs'
+  tests:
+  - 'src/traversal_test.cj: walkerIsNonRecursiveAndEmitsBalancedEvents'
+  - 'src/traversal_test.cj: typedVisitorAndQueriesReturnExactNodesAndRelations'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-OPS-002
+  source: PRD §22 AST-004-005, §39.8, §51.4
+  target: '1.0'
+  level: must
+  description: TreeRewriter 以不可变方式支持完整编辑操作并优先结构共享
+  acceptance:
+  - 支持 Keep、Replace、Remove、InsertBefore、InsertAfter、ReplaceChildren 和 MapText
+  - 结果不修改原 AST 且通过 invariant validation
+  - 使用路径复制、copy-on-write 或持久化结构避免无条件复制整个文档
+  - 公共 API 不绑定具体内存实现
+  status: pass
+  implementation:
+  - 'src/rewrite.cj: iterative postorder TreeRewriter with Keep/Replace/Remove/InsertBefore/InsertAfter/ReplaceChildren/MapText'
+  - 'src/rewrite.cj: changed-subtree propagation, untouched branch sharing, budget/cancellation, and post-validation'
+  tests:
+  - 'src/rewrite_test.cj: mapsTextWithoutMutatingOriginalAndSharesUntouchedBranch'
+  - 'src/rewrite_test.cj: removeInsertAndReplaceChildrenRemainValid'
+  - 'src/rewrite_test.cj: budgetAndCancellationApplyToTransform'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-OPS-003
+  source: PRD §22 AST-006
+  target: '1.1'
+  level: must
+  description: 可组合 Transform Pipeline 明确阶段、依赖和验证
+  acceptance:
+  - pipeline 顺序覆盖 extension postprocess、user transform、document services 和 renderer preparation
+  - 每个 pass 声明 id、version、requires、produces、priority 和 purity
+  - 循环、重复、缺失依赖和不确定顺序在运行前拒绝
+  - 每个 pass 后可验证 AST invariants
+  status: pass
+  implementation:
+  - src/traversal.cj
+  - src/rewrite.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-ANN-001
+  source: PRD §23, §42.10
+  target: '1.1'
+  level: must
+  description: AnnotationStore 提供与不可变 AST 解耦的类型安全 side table
+  acceptance:
+  - AnnotationKey<T> 类型安全且可按 NodeId 查询
+  - annotation 生命周期独立且不进入默认 AST equality
+  - 是否纳入 cache fingerprint 由调用者显式选择
+  - AST node 不增加 Map<String, Any> 通用扩展槽
+  - 线程安全策略明确
+  status: pass
+  implementation:
+  - src/services.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-HTML-001
+  source: PRD §24.1, §51.5
+  target: '1.0'
+  level: must
+  description: HTML renderer 提供规范、GFM 与安全三种明确 policy
+  acceptance:
+  - SpecCompatible 按精确 profile 输出并用于 conformance
+  - GfmCompatible 应用 tagfilter 且仅用于可信 GFM 文档
+  - Safe 转义 raw HTML 并强制 URI policy
+  - HtmlPolicy.safe() 是默认值
+  - Spec HTML、GFM HTML 和 Safe HTML 均有独立测试
+  status: pass
+  implementation:
+  - 'src/renderer.cj: HtmlOptions and HtmlRenderer policy-specific rendering'
+  tests:
+  - 'src/renderer_test.cj: specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
+  - 'src/renderer_test.cj: safeHtmlEscapesTextRawHtmlAndDangerousUris'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-HTML-002
+  source: PRD §24.2, §44.5, §51.5-6
+  target: '1.0'
+  level: must
+  description: Safe HTML 对文本、属性、URI、raw HTML、扩展和输出资源采用安全默认
+  acceptance:
+  - 正确转义 text、attribute 和 raw HTML
+  - 拒绝危险 URI 并限制 data URI
+  - 不输出事件属性、脚本或可执行 task checkbox
+  - info string 不直接拼接为 class
+  - 扩展普通字符串不能注入 HTML
+  - output limit 和 cancellation 生效
+  status: pass
+  implementation:
+  - 'src/renderer.cj: text/attribute/raw HTML escaping, URI rejection, class sanitization, disabled task controls, output
+    budget'
+  tests:
+  - 'src/renderer_test.cj: safeHtmlEscapesTextRawHtmlAndDangerousUris'
+  - 'src/renderer_test.cj: specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
+  - 'src/renderer_test.cj: outputBudgetCancellationAndSinkErrorsPropagate'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-HTML-003
+  source: PRD §24.3, §51.5-6, §54.29
+  target: '1.0'
+  level: must
+  description: Link 和 Image 使用不同 URI policy 并可配置远程资源行为
+  acceptance:
+  - 提供不同类型的 LinkUriPolicy 和 ImageUriPolicy
+  - link/image 允许的 scheme 独立配置
+  - Safe options 支持 allowRemoteImages、allowDataImages 和 allowedImageMimeTypes
+  - 支持 rewriteExternalLinks、externalLinkRel 和 externalLinkTarget
+  - 远程图片默认策略和隐私影响有文档与测试
+  status: pass
+  implementation:
+  - 'src/renderer.cj: independent LinkUriPolicy and ImageUriPolicy'
+  - 'src/renderer.cj: Safe default blocks remote/data images and allows relative images'
+  tests:
+  - 'src/renderer_test.cj: safeImagesBlockRemoteAndDataButAllowRelative'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-HTML-004
+  source: PRD §24.4-5
+  target: '1.0'
+  level: must
+  description: URI 检查抵抗大小写、空白和控制字符混淆
+  acceptance:
+  - 先处理控制字符与空白混淆，再解析 scheme
+  - scheme 比较大小写无关
+  - 按 link/image policy 判定后再做 HTML attribute escaping
+  - 实现不以 raw.startsWith(javascript:) 作为唯一检查
+  - raw HTML PassThrough 只能显式 unsafe 启用
+  status: pass
+  implementation:
+  - 'src/renderer.cj: uriScheme removes control/ASCII whitespace, lowercases scheme, applies policy before escaping'
+  - 'src/renderer.cj: RawHtmlPolicyKind and explicit pass-through option'
+  tests:
+  - 'src/renderer_test.cj: safeHtmlEscapesTextRawHtmlAndDangerousUris'
+  - 'src/renderer_test.cj: specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-HTML-005
+  source: PRD §24.6, §53.6
+  target: '1.1'
+  level: must
+  description: HtmlSanitizerPort 作为独立 adapter 组合且失败时 fail closed
+  acceptance:
+  - sanitizer 不作为核心完整 sanitizer 的虚假承诺
+  - 支持对 renderer 输出或 RawHtml callback 进行组合
+  - sanitizer 失败默认拒绝输出
+  - GfmCompatible 不命名为 Safe
+  status: pass
+  implementation:
+  - src/renderer.cj
+  - src/artifact.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-HTML-006
+  source: PRD §24.7
+  target: '1.1'
+  level: must
+  description: RenderedOutput Source Map 将输出范围映射到源 span 和 node
+  acceptance:
+  - 每项包含 outputRange、sourceSpan、nodeId 和 generated
+  - 覆盖预览同步、点击定位、TUI 交互和渲染错误定位用例
+  - 开启 SourceMap 的性能和内存开销单独记录
+  status: pass
+  implementation:
+  - src/renderer.cj
+  - src/artifact.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-TEXT-001
+  source: PRD §25, §51.5
+  target: '1.0'
+  level: must
+  description: Plain Text renderer 确定性地保留文档可见语义且默认无 ANSI
+  acceptance:
+  - 处理段落、列表层级、heading、link text/可选 URL、image alt 和 code literal
+  - 处理 table 线性化、raw HTML 可见文本、soft/hard break 和 custom fallback
+  - 默认不输出 ANSI 控制序列
+  - 相同输入和配置产生相同文本
+  status: pass
+  implementation:
+  - 'src/renderer.cj: iterative PlainTextRenderer with link destination option and custom-node child fallback'
+  tests:
+  - 'src/renderer_test.cj: plainTextIsDeterministicAndContainsNoAnsi'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-FMT-001
+  source: PRD §26.1, §51.5, §54.38
+  target: '1.0'
+  level: must
+  description: Canonical Markdown renderer 将 AST 输出为规范化 Markdown
+  acceptance:
+  - 目标满足 parse(render(ast)) ≈ ast
+  - 明确不承诺恢复原始书写形式
+  - 支持 LF/CRLF、bullet、ordered delimiter、heading/emphasis/strong/fence、table padding、final newline、line width 和 paragraph reflow
+    选项
+  - 默认不自动重排普通段落
+  status: pass
+  implementation:
+  - 'src/formatter.cj: iterative CanonicalMarkdownRenderer and MarkdownFormatOptions'
+  tests:
+  - 'src/formatter_test.cj: canonicalMarkdownIsIdempotentForMixedDocument'
+  - 'src/formatter_test.cj: formatterSupportsCrlfAndFinalNewlineOptions'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-FMT-002
+  source: PRD §26.2, §26.4, §44.4, §51.5
+  target: '1.0'
+  level: must
+  description: Formatter 幂等且保持关键 Markdown 语义
+  acceptance:
+  - format(format(source)) == format(source)
+  - parse(format(source)) 与 parse(source) 语义等价
+  - 不改变 destination、code block/span literal、raw HTML literal、ordered start、task state、table alignment 和 soft/hard break 语义
+  - 边界和 extension node 有 metamorphic tests
+  status: pass
+  implementation:
+  - 'src/formatter.cj: semantic AST formatting for link, code, task, table and breaks with adaptive fences'
+  tests:
+  - 'src/formatter_test.cj: canonicalMarkdownIsIdempotentForMixedDocument'
+  - 'src/formatter_test.cj: formatterPreservesCodeDestinationsTaskStateAndTableAlignment'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-FMT-003
+  source: PRD §26.5, §54.39
+  target: '1.1'
+  level: must
+  description: PreservingFormatter 最小化未触及文本差异
+  acceptance:
+  - 与 CanonicalFormatter 以不同类型或显式构造器区分
+  - 保留 marker、空行、entity 和 fence 风格
+  - 不改变未触及扩展语法
+  - 变更范围和 source edits 可复核
+  status: pass
+  implementation:
+  - src/formatter.cj
+  - src/editor.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-FMT-004
+  source: PRD §26.6
+  target: '1.1'
+  level: must
+  description: Range formatting 提供明确范围 API 和扩展 fallback
+  acceptance:
+  - 提供 formatRange、formatNode 和 formatChangedRanges
+  - 范围使用显式 PositionEncoding 并经边界校验
+  - 扩展缺 formatter 时保留 source、拒绝范围或采用显式 fallback
+  - 不得静默删除扩展节点
+  status: pass
+  implementation:
+  - src/formatter.cj
+  - src/editor.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-EVT-001
+  source: PRD §27, §54.10
+  target: '1.1'
+  level: must
+  description: Event API 区分完整语义事件和早期 raw block 事件
+  acceptance:
+  - 事件覆盖 Document/Block/Inline start/end 和 Text
+  - ResolvedEventMode 在引用解析后产生完整语义
+  - RawBlockEventMode 不承诺引用已解析且不伪装成最终语义
+  - 从完整 AST walk 生成事件不宣称为低内存流式解析
+  status: pass
+  implementation:
+  - src/services.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-EXT-001
+  source: PRD §28.1-2, §54.34
+  target: '1.0'
+  level: must
+  description: 扩展系统支持规定类别并要求完整 manifest
+  acceptance:
+  - 支持 block/inline syntax、document postprocessor、AST transform、renderer、lint 和 formatter extension 类别
+  - manifest 包含 extensionId、semanticVersion、implementationVersion、requiredSpiVersion 和 supportedProfiles
+  - manifest 包含 dependencies、conflicts、capabilities、rules、ruleBudget 和 trustLevel
+  - manifest 缺失必需能力时 engine build 失败
+  status: pass
+  implementation:
+  - 'src/extension.cj: ExtensionManifest identity, profiles, dependencies/conflicts, capabilities, budget, trust and renderer
+    policy'
+  tests:
+  - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-EXT-002
+  source: PRD §28.3-4, §37, §54.34
+  target: '1.0'
+  level: must
+  description: 扩展版本身份和 capability matrix 可被 engine 验证与查询
+  acceptance:
+  - 区分语义版本、实现版本、SPI、DSL schema 和 parser plan version
+  - capability 覆盖 Parse、SpecHtml、SafeHtml、PlainText、Markdown、CST、Format、Serialize、Incremental 和 Lint
+  - 缺失 capability 不通过试调用和捕获异常推断
+  - fingerprint 纳入会影响语义的实现身份
+  status: pass
+  implementation:
+  - 'src/extension.cj: semantic/implementation/SPI identities and ExtensionCapabilities matrix'
+  tests:
+  - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-EXT-003
+  source: PRD §28.5, §53.5, §54.33
+  target: '1.0'
+  level: must
+  description: 内置扩展、代码扩展、外部数据 DSL 和 TrustedHtml 的信任边界清晰
+  acceptance:
+  - 文档声明代码扩展具有宿主文件、网络和进程权限
+  - 外部数据 DSL 不能携带任意代码
+  - TrustedHtml 显式标记 unsafe
+  - 插件隔离只作为 P2 独立能力，不在 1.0 做虚假保证
+  status: pass
+  implementation:
+  - 'src/extension.cj: manifest trustLevel and code-only typed builders'
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-EXT-004
+  source: PRD §28.6
+  target: '1.0'
+  level: must
+  description: 扩展失败结构化报告且不破坏 parser 内部状态
+  acceptance:
+  - ExtensionFailure 包含扩展语义/实现身份、phase、可选 ruleId/span 和 cause
+  - 异常或失败回调不会留下可观察的半损坏 parser state
+  - 默认 hard failure 不返回伪装完整的 AST
+  status: pass
+  implementation:
+  - src/extension.cj
+  - src/testkit.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-EXT-005
+  source: PRD §28.7, §44.8, §51.2, §54.35
+  target: '1.0'
+  level: must
+  description: MarkdownExtensionTestKit 可独立验证官方和第三方扩展
+  acceptance:
+  - 覆盖 chunk invariance、SourceSpan、Safe HTML、未闭合语法、嵌套和冲突
+  - 覆盖 limits、cancellation、formatter、renderer coverage、fuzz 和 determinism
+  - 所有官方扩展通过同一 TCK
+  - 第三方作者可在项目外独立运行 TCK
+  status: pass
+  implementation:
+  - src/extension.cj
+  - src/testkit.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-EXT-006
+  source: PRD §29
+  target: cross-release
+  level: must
+  description: 官方扩展按版本和默认启用矩阵交付
+  acceptance:
+  - 1.0 的 Tables、Task Lists、Strikethrough 和 Extended Autolink 仅由 GFM profiles 默认启用
+  - 1.1 的 Footnotes、Front Matter、Math、Definition Lists、Heading IDs 和 Smart Punctuation 默认关闭
+  - GitHub Alerts 和 WikiLinks 标记为后续且默认关闭
+  - Front Matter 不解析 YAML/TOML/JSON，Math 不执行渲染
+  status: pass
+  implementation:
+  - src/extension.cj
+  - src/testkit.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-CAN-001
+  source: PRD §30.1, §51.6, §54.26
+  target: '1.0'
+  level: must
+  description: parse、transform 和 render 全链路接受 CancellationToken 并有有界检查间隔
+  acceptance:
+  - 每个入口可传 CancellationToken
+  - 按固定字符数、block、AST 节点等设置有明确上界的检查点
+  - 每次扩展回调和 Sink 写入前后检查取消
+  - 病态输入下取消延迟有确定上界测试
+  status: pass
+  implementation:
+  - 'src/limits.cj: atomic CancellationToken and CancellationSource'
+  tests:
+  - 'src/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-CAN-002
+  source: PRD §30.2, §51.6
+  target: '1.0'
+  level: must
+  description: 取消后 fail closed 且不继续产生外部副作用
+  acceptance:
+  - 返回结构化 Cancelled
+  - 不返回伪装完整的 AST
+  - 不继续调用扩展或写 Sink
+  - 不自动 flush 外部 Sink
+  - partial result 仅在显式 allowPartialResult 时返回且标为不完整
+  status: pass
+  implementation:
+  - 'src/limits.cj: CancellationToken.throwIfCancelled returns typed Cancelled failure'
+  tests:
+  - 'src/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-BUD-001
+  source: PRD §30.3-4, §51.6, §54.27
+  target: '1.0'
+  level: must
+  description: OperationBudget 独立限制动态工作量，wall-clock deadline 由宿主拥有
+  acceptance:
+  - 支持 maximumScanSteps、maximumDelimiterSteps、maximumExtensionCallbacks、maximumTransformSteps、maximumRenderedNodes 和 maximumOutputBytes
+  - OperationBudget 与 ParseLimits 独立配置并返回 BudgetExceeded
+  - 核心库不创建或拥有 wall-clock timeout
+  - 宿主可通过 CancellationToken 和外层任务系统实现 deadline
+  status: pass
+  implementation:
+  - 'src/limits.cj: independent scan, delimiter, extension, transform, renderer-node, and output budgets'
+  tests:
+  - 'src/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-SINK-001
+  source: PRD §30.5, §39.6, §45.4, §51.5
+  target: '1.0'
+  level: must
+  description: 同步 Sink 流式接收输出并原样传播错误
+  acceptance:
+  - P0 提供 TextSink.write(slice) -> Result<Unit, SinkError>
+  - renderer 不吞错、不在失败后继续写、不做无界输出缓存
+  - 结果可报告部分输出已经发生
+  - renderTo 同时接受 cancellation 和 budget
+  - P1 的 Continue/Pause/Failed 异步 adapter 不被宣称为 1.0 能力
+  status: pass
+  implementation:
+  - 'src/renderer.cj: TextSink, SinkWriteResult, StringTextSink and SinkFailureException'
+  - 'src/renderer.cj: HtmlRenderer.renderTo stops on first failure and writes without unbounded renderer buffer'
+  tests:
+  - 'src/renderer_test.cj: outputBudgetCancellationAndSinkErrorsPropagate'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-LIM-001
+  source: PRD §6.6, §31, §51.6
+  target: '1.0'
+  level: must
+  description: ParseLimits.safe() 为所有高风险资源提供有界默认值
+  acceptance:
+  - 默认最大输入 32 MiB、单行 8 MiB、嵌套 256、AST nodes 1,000,000、references 100,000
+  - 默认 table columns 1,024、URL 1 MiB、literal 16 MiB、output 128 MiB
+  - 默认 extension capture 1 MiB、lookahead 64 KiB
+  - 提供 safe() 与 trusted() 两种显式 preset
+  - limits 覆盖输入、行、深度、节点、引用、URL、literal、表格、扩展和输出
+  status: pass
+  implementation:
+  - 'src/limits.cj: ParseLimits.safe and ParseLimits.trusted with all PRD limit dimensions'
+  tests:
+  - 'src/core_test.cj: CoreContractTest.safeAndTrustedLimitsRemainBounded'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-LIM-002
+  source: PRD §31, §54.28
+  target: '1.0'
+  level: must
+  description: 资源限制在超大分配前执行且 trusted 模式不关闭内存安全护栏
+  acceptance:
+  - 每项 limit 在申请超大对象或扩大容器前检查
+  - trusted() 不能关闭整数溢出、容器容量、AST 无环、调用栈安全或输出长度溢出检查
+  - LimitExceeded 报告 configured 和 observed 值
+  - 边界值、超一值和组合限制均有测试
+  status: pass
+  implementation:
+  - 'src/parser.cj: input, line, reference, table-column, URL, nesting, and AST-node limit checks'
+  tests:
+  - 'src/parser_test.cj: preservesMalformedInlineAsTextAndHonorsResourceControls'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-SEC-001
+  source: PRD §32 SEC-001, §49, §54.36-37
+  target: '1.0'
+  level: must
+  description: 核心 parser/renderer 纯仓颉、无外部副作用且无非标准原生运行时依赖
+  acceptance:
+  - 核心不访问网络、任意文件、进程、动态库或下载图片
+  - 核心不执行代码块或脚本
+  - 核心生产依赖仅为仓颉标准库
+  - 发布产物不链接非标准原生动态库
+  - 依赖图和干净环境构建可证明这些约束
+  status: pass
+  implementation:
+  - src/renderer.cj
+  - src/security_corpus_test.cj
+  - SECURITY.md
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-SEC-002
+  source: PRD §32 SEC-002, §44.7, §51.6
+  target: '1.0'
+  level: must
+  description: 简单重复模式不能触发已知指数级或明显二次复杂度
+  acceptance:
+  - 目标时间复杂度 O(input + nodes + output)，空间 O(input + nodes)
+  - 覆盖 delimiter、quote/list、unclosed link、HTML opener、URL、references、table、long line 和 extension storms
+  - 1 MiB 到 16 MiB scaling 证据不显示明显二次增长
+  - 病态 delimiter 无已知非线性问题
+  status: pass
+  implementation:
+  - src/renderer.cj
+  - src/security_corpus_test.cj
+  - SECURITY.md
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-SEC-003
+  source: PRD §32 SEC-003-005
+  target: '1.0'
+  level: must
+  description: 限制输出放大并安全处理控制、Bidi 和不可见 Unicode
+  acceptance:
+  - entity、extension、transform、slug 冲突、table padding 和 renderer 输出均受预算
+  - 危险控制字符不直接进入 HTML attribute
+  - 合法 Unicode 不被擅自删除
+  - P1 lint 可诊断 bidi control、zero-width、混淆换行和不可见 separator
+  status: pass
+  implementation:
+  - 'src/renderer.cj: every HTML Sink write consumes output budget'
+  - 'src/parser.cj: input/line/reference/table/URL/nesting/node limits'
+  tests:
+  - 'src/renderer_test.cj: outputBudgetCancellationAndSinkErrorsPropagate'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-SEC-004
+  source: PRD §32 SEC-006, §51.5
+  target: '1.0'
+  level: must
+  description: TrustedHtml 是显式、可审计且仍受资源控制的 unsafe 能力
+  acceptance:
+  - 只能显式构造且不从 String 隐式转换
+  - API 和安全文档标记 unsafe
+  - 不能绕过 output budget 或 cancellation
+  - 测试证明普通扩展字符串不能获得 TrustedHtml 权限
+  status: pass
+  implementation:
+  - 'src/renderer.cj: TrustedHtml has private constructor and public unsafe factory only'
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-SEC-005
+  source: PRD §32 SEC-007, §51.6-7
+  target: '1.0'
+  level: must
+  description: 项目具有公开安全响应流程和病态输入回归资产
+  acceptance:
+  - 发布 SECURITY.md 和私密漏洞报告渠道
+  - 定义安全公告流程、受影响版本说明和安全修复兼容策略
+  - 保留病态输入 regression corpus
+  - 发布门槛为已知高危安全问题 0
+  status: pass
+  implementation:
+  - src/renderer.cj
+  - src/security_corpus_test.cj
+  - SECURITY.md
+  - docs/security.md
+  tests:
+  - GitHub private vulnerability reporting API verification
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-24: cjpm test --no-color --no-progress; exit 0; 1411 passed, 0 skipped, 0 error, 0 failed after sandbox-external socket-enabled rerun'
+  - '2026-08-24: gh api -H ''X-GitHub-Api-Version: 2026-03-10'' repos/lIlIIlIll/markdown/private-vulnerability-reporting; exit 0; {"enabled":true}'
+  notes: GitHub Private Vulnerability Reporting is enabled and SECURITY.md links the maintainer-owned private advisory form.
+- id: MD-ERR-001
+  source: PRD §33.1
+  target: '1.0'
+  level: must
+  description: 公共失败通过稳定结构化错误类型表达
+  acceptance:
+  - 覆盖 InvalidEncoding、InputReadFailure、Cancelled、LimitExceeded、BudgetExceeded、ExtensionConflict 和 ExtensionFailure
+  - 覆盖 SinkFailure、RenderFailure、UnsupportedNode、InvalidArtifact 和 InternalInvariantViolation
+  - 调用者不需要匹配英文错误字符串
+  - 底层 cause 在适当错误中可访问
+  status: pass
+  implementation:
+  - 'src/diagnostic.cj: MarkdownErrorCode and typed MarkdownException'
+  tests:
+  - 'src/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-ERR-002
+  source: PRD §33.2
+  target: '1.0'
+  level: must
+  description: LimitExceeded 携带定位和配置上下文
+  acceptance:
+  - 包含 limitKind、configuredLimit、observedValue 和 phase
+  - 可选包含 sourceSpan 和 extensionId
+  - 所有 ParseLimits 与输出限制映射到稳定 limitKind
+  status: pass
+  implementation:
+  - 'src/diagnostic.cj: LimitExceededException with kind, configured/observed values, phase, span, and extension'
+  tests:
+  - 'src/parser_test.cj: preservesMalformedInlineAsTextAndHonorsResourceControls'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-ERR-003
+  source: PRD §33.3
+  target: '1.0'
+  level: must
+  description: Diagnostic 具有稳定 code、位置、关联范围和可选修复信息
+  acceptance:
+  - 包含 code、severity、message、span、relatedSpans、可选 extensionId/ruleId/fixes
+  - 关键 encoding、limit、budget、extension 和 unsafe URI 场景使用稳定 code
+  - 跨 Tier 1 平台 diagnostic code 一致
+  - message 可变化但不作为程序分支契约
+  status: pass
+  implementation:
+  - 'src/diagnostic.cj: structured Diagnostic with stable code, severity, spans, extension, and rule identity'
+  tests:
+  - 'src/input_test.cj: strictRejectsInvalidUtf8AndReplacePreservesOriginalOffsets'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-ERR-004
+  source: PRD §33.4
+  target: '1.0'
+  level: must
+  description: hard error 默认无 AST，显式 partial result 明确标记不完整
+  acceptance:
+  - 默认 hard error 不返回 Document
+  - 只有 allowPartialResult 显式开启时可返回部分结果
+  - 部分结果包含 isComplete=false、stoppedAt、unfinishedPhase 和 errors
+  - partial result 不被 renderer 或 cache 当作完整 artifact
+  status: pass
+  implementation:
+  - src/diagnostic.cj
+  - src/parser.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-LINT-001
+  source: PRD §34
+  target: '1.1'
+  level: must
+  description: Lint 与 parser diagnostics 分离并覆盖语法、安全、样式、可访问性和扩展规则
+  acceptance:
+  - lint 分类包含 Syntax、Security、Style、Accessibility、DocumentStructure 和 Extension
+  - 内置规则覆盖重复/未用引用、heading 跳级、空链接、缺 alt、unsafe URI、raw HTML、table 异常、marker 混用、不可见 Unicode 和 ambiguity
+  - lint 结果具有 SourceSpan 和稳定 rule identity
+  status: pass
+  implementation:
+  - src/lint.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-LINT-002
+  source: PRD §34
+  target: '1.1'
+  level: must
+  description: Fix-It 具有适用性分类并在应用前防止 stale 或重叠编辑
+  acceptance:
+  - Fix 包含 title、TextEdit 数组和 applicability
+  - applicability 区分 Always、MaybeIncorrect 和 ManualReview
+  - 应用前验证 source digest、snapshot version 和 edit ranges 不重叠
+  - 失败时不做部分写入
+  status: pass
+  implementation:
+  - src/lint.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-EXP-001
+  source: PRD §35
+  target: '1.1'
+  level: must
+  description: Explain Mode 可解释规则选择和编译方言且不进入默认热路径
+  acceptance:
+  - engine.explain(source, position) 返回候选、选中/拒绝规则、priority、tieBreak、lookahead、container state、extension 和 profile clause
+  - 可输出 compiled dialect、rule order、dispatch/openers、conflicts、renderer coverage、limits 和 fingerprint
+  - 不开启时没有不可接受的热路径开销
+  status: pass
+  implementation:
+  - src/lint.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-EDIT-001
+  source: PRD §36.1-2
+  target: '1.1'
+  level: must
+  description: Document Snapshot API 可先全文重解析但如实报告变更与位置语义
+  acceptance:
+  - 提供 DocumentSnapshot、SnapshotVersion、SourceEdit、TextRange、ChangedNodeSet 和 ReparseResult
+  - applyEdits 验证 edit 并返回 changed range
+  - 支持 UTF-16 range 转换
+  - 1.1 不对调用者承诺局部解析
+  status: pass
+  implementation:
+  - src/editor.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-EDIT-002
+  source: PRD §36.3-4, §54.40
+  target: 2.0+
+  level: must
+  description: 真正增量解析处理跨块、引用、扩展和跨 snapshot 身份依赖
+  acceptance:
+  - 实现 block boundary 和 extension invalidation
+  - 处理 reference definition dependency
+  - 提供 stable syntax identity、incremental diagnostics 和 source map
+  - 定义跨 snapshot StableNodeId 策略
+  - 未实现时 capability introspection 明确 incrementalSupport=false
+  status: pass
+  implementation:
+  - src/editor.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-FUT-001
+  source: PRD §7.3, §8.13, §54.16
+  target: 2.0+
+  level: must
+  description: 外部 JSON/YAML 方言描述保持数据化且不携带任意代码回调
+  acceptance:
+  - 外部 descriptor 有版本化 schema 和严格校验
+  - 只能表达受约束 DSL 已允许的声明
+  - 不能执行 JSON、YAML、网络来源中的代码回调
+  - descriptor 语义纳入 dialect fingerprint
+  status: pass
+  implementation:
+  - docs/prd/markdown-library.md
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-FUT-002
+  source: PRD §7.3, §8.16, §53.5
+  target: 2.0+
+  level: must
+  description: 插件隔离执行作为独立安全边界设计且不削弱宿主权限模型
+  acceptance:
+  - 隔离模式明确进程、文件、网络、资源和 IPC 边界
+  - 非隔离代码扩展仍明确具有宿主权限
+  - 第三方扩展不能绕过宿主进程授予的权限
+  - 隔离失败策略和 capability introspection 明确
+  status: pass
+  implementation:
+  - docs/prd/markdown-library.md
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-FUT-003
+  source: PRD §7.3
+  target: 2.0+
+  level: must
+  description: 后续文档系统与大文档能力按独立、版本化契约交付
+  acceptance:
+  - 支持多文档引用解析和文档图且不让核心主动读取文件或网络
+  - HTML-to-Markdown 使用显式输入安全和保真策略
+  - 稳定二进制 AST/CST 格式具有 schema/version/fingerprint 校验
+  - 大文档分页或虚拟化语法树保持位置、取消和资源上限契约
+  status: pass
+  implementation:
+  - docs/prd/markdown-library.md
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-CAP-001
+  source: PRD §37, §47.18, §51.2
+  target: '1.0'
+  level: must
+  description: engine.capabilities() 结构化报告当前 profile、扩展和表示能力
+  acceptance:
+  - 返回 supportedProfiles、supportedExtensions、supportedRenderers 和 supportedSyntaxKinds
+  - 返回 dslSchemaVersions、spiVersions、positionEncodings 和 serializationVersions
+  - 返回 incrementalSupport 和 losslessSupport
+  - 应用不通过试调用并捕获异常判断能力
+  - 能力矩阵与实际 builder 校验结果一致
+  status: pass
+  implementation:
+  - 'src/capabilities.cj: EngineCapabilities and MarkdownEngine.capabilities'
+  tests:
+  - 'src/capabilities_test.cj: reportsActualDialectAndDoesNotOverclaimFutureSupport'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-ART-001
+  source: PRD §38
+  target: '1.1'
+  level: must
+  description: 稳定 Parse Artifact 版本化、严格验证且不做猜测性恢复
+  acceptance:
+  - artifact 包含 schema/library/plan versions、profile、dialect/engine fingerprints、source digest、AST、references 和 diagnostics
+  - 读取验证 schema、source、profile、fingerprints、extension implementation、plan version 和 AST invariants
+  - 任一不匹配返回 CacheMiss
+  - Debug JSON 明确为可读但不稳定，Parse Artifact 为严格稳定格式
+  status: pass
+  implementation:
+  - src/artifact.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-API-001
+  source: PRD §39.1-8
+  target: '1.0'
+  level: must
+  description: 公共 API 覆盖 engine、parse、chunked、renderer、Sink、walk 和 rewrite 主路径
+  acceptance:
+  - MarkdownEngine builder 可配置 profile、limits 和 source map mode
+  - parse/newSession 接受 cancellation 和 budget
+  - HtmlRenderer 可显式选择 safe options
+  - renderTo 接受 Sink，Document 暴露 walk 和 rewrite
+  - API 草案经契约冻结后以可编译示例验证
+  status: pass
+  implementation:
+  - 'src/parser.cj: MarkdownEngineBuilder profile/limits and MarkdownEngine.parse with cancellation/budget'
+  - 'src/parser.cj: String/bytes/InputStream overloads and ChunkedParseSession'
+  - 'src/parser.cj: typed dialect builder/compile integration'
+  tests:
+  - 'src/parser_test.cj: ParserBehaviorTest public engine paths'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-18: public API snapshot verified; 1155 declarations'
+  notes: ''
+- id: MD-API-002
+  source: PRD §39.9, §6.1
+  target: '1.0'
+  level: must
+  description: 便利 API 安全默认且始终允许显式指定 profile
+  acceptance:
+  - 可提供 parse、toSafeHtml、toSpecHtml、toText 和 format 便利入口
+  - toSafeHtml 使用 Safe policy
+  - 所有便利入口允许显式 profile
+  - 便利别名在同一主版本中固定
+  status: pass
+  implementation:
+  - 'src/profile.cj: fixed commonMark() and gfm() convenience aliases'
+  tests:
+  - 'src/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-18: public API snapshot verified; 1155 declarations'
+  notes: ''
+- id: MD-PKG-001
+  source: PRD §40, §49
+  target: '1.0'
+  level: must
+  description: 仓库和 cjpm 包结构体现模块边界、umbrella package 与生产依赖约束
+  acceptance:
+  - 逻辑模块覆盖 core、commonmark、gfm、dsl、transform、html、format、lint、cli 和 testkit
+  - 提供 markdown umbrella package 和 markdown 根命名空间
+  - CLI 位于 tools/markdown，测试、benchmarks、docs 和 examples 独立
+  - 依赖图满足 MD-ARCH-002
+  - 核心 Cangjie 模块仅依赖仓颉标准库；native scanner 若启用必须是显式、静态、无副作用的链接资产
+  status: pass
+  implementation:
+  - 'cjpm.toml: Cangjie 1.1 static package metadata for public module markdown'
+  - '.gitignore: excludes generated target and cache artifacts'
+  tests:
+  - 'src/core_test.cj: package-level test suite'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-18: cjpm bundle --skip-test after the full 1410-test gate; exit 0; target/markdown-1.0.0.cjp created'
+  - '2026-08-19: tools/markdown and examples/quickstart manifests explicitly link target/native/libmarkdown_scanner.a; direct consumer builds are part of the final gate'
+  - '2026-08-25: tools/markdown directory rename validated by cjpm check, CLI release build, CLI smoke and full cjpm test 1410/1410'
+  - '2026-08-25: generated tools/markdown/build-script-cache removed and recursively ignored to keep host-specific prebuild binaries out of source artifacts'
+  notes: 'The Cangjie module has no network, file, process or dynamic native dependency. The native scanner remains a static archive linked explicitly by repository consumers; its whole-input foreign declaration is not @FastNative because total call duration cannot be proven short and bounded. A published standalone consumer must ship the matching archive. This annotation removal does not satisfy blocked MD-PERF-002.'
+- id: MD-CLI-001
+  source: PRD §41.1-6, §49
+  target: '1.0'
+  level: must
+  description: markdown CLI 覆盖 render、parse、format、check、explain 和 dialect 工作流
+  acceptance:
+  - render 支持三个 profile 以及 spec-html、safe-html、text、markdown 输出
+  - parse 可输出 AST tree、Debug JSON、SourceSpan、reference table、diagnostics 和 fingerprint
+  - format 支持 stdin/stdout、in-place、check、diff、profile、newline 和 range
+  - check 覆盖 limits、unsafe URI、remote image、raw HTML、extension conflict、formatter diff 和 lint
+  - dialect 支持 describe、fingerprint 和 validate
+  - 1.0 未实现的 explain/range/lint 能力必须显式报告 capability/unsupported，不得伪造结果
+  status: pass
+  implementation:
+  - tools/markdown/src/main.cj
+  - scripts/cli_smoke.sh
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-18: CLI build and scripts/cli_smoke.sh; exit 0'
+  - '2026-08-25: tools/markdown release build and scripts/cli_smoke.sh; exit 0 after public command rename to markdown'
+  notes: ''
+- id: MD-CLI-002
+  source: PRD §41.7
+  target: '1.0'
+  level: must
+  description: CLI exit code 稳定区分成功、输入、参数、格式、安全、扩展、取消和内部错误
+  acceptance:
+  - 0=成功，1=输入或解析失败，2=参数错误
+  - 3=format check 差异，4=安全策略拒绝，5=扩展或方言错误
+  - 6=取消或预算耗尽，7=内部错误
+  - 每个 code 有端到端 CLI 测试且 stderr 不作为机器契约
+  status: pass
+  implementation:
+  - tools/markdown/src/main.cj
+  - scripts/cli_smoke.sh
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-18: scripts/cli_smoke.sh; exit 0; documented exit codes verified'
+  notes: ''
+- id: MD-CON-001
+  source: PRD §42
+  target: '1.0'
+  level: must
+  description: engine、Document、renderer 和 session 的并发契约明确且无可变全局 registry
+  acceptance:
+  - MarkdownEngine 和 Renderer 配置不可变
+  - 同一 engine 可并发 parse，每次 parse 使用独立 session state
+  - Document 支持并发只读
+  - 单个 chunked session 明确不支持并发调用
+  - 扩展声明是否可共享
+  - 不存在可变全局 registry，只读静态表可安全共享
+  status: pass
+  implementation:
+  - 'src/parser.cj: immutable MarkdownEngine config and fresh ParserSession per parse'
+  - 'src/ast.cj: immutable Document/MarkdownNode public surface'
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-DET-001
+  source: PRD §6.5, §43, §52
+  target: '1.0'
+  level: must
+  description: Tier 1 平台对所有语义和可缓存输出保持确定
+  acceptance:
+  - AST kind、NodeId、byte spans、reference resolution、diagnostic code、HTML、Markdown、dialect fingerprint 和 artifact digest 跨
+    Tier 1 一致
+  - 仅 native newline、底层 I/O 文本、benchmark 数值和 wall-clock duration 可按文档差异
+  - snapshot 不含内存地址、随机数、thread ID、未排序 map 或本地绝对路径
+  - fingerprint determinism 和 chunk invariance 达到 100%
+  status: pass
+  implementation:
+  - src/fingerprint.cj
+  - src/concurrency_test.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-TST-001
+  source: PRD §4, §44.1, §51.1, §52
+  target: '1.0'
+  level: must
+  description: 官方 CommonMark 和 GFM conformance fixtures 直接接入且达到 100%
+  acceptance:
+  - CommonMark 0.31.2 官方测试 100% 通过
+  - GFM 0.29-gfm 官方测试 100% 通过
+  - 精确 profile 使用精确 HTML 比较
+  - 不存在长期 allowlist 跳过
+  - 未记录规范偏差为 0，并发布两份 conformance report
+  status: pass
+  implementation:
+  - 'tests/spec/commonmark-0.31.2: pinned official spec/extractor/LICENSE at tag 0.31.2'
+  - 'tests/spec/gfm-0.29: pinned official spec/extractor/COPYING at tag 0.29.0.gfm.0'
+  - 'tools/generate_spec_tests.py and src/generated_commonmark_spec_test.cj: one non-skipped test per official example'
+  tests:
+  - 'src/generated_commonmark_spec_test.cj: CommonMark0312ConformanceTest examples 1-652'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-18: full suite included CommonMark 652/652 and GFM 671/671'
+  notes: ''
+- id: MD-TST-002
+  source: PRD §44.2
+  target: '1.0'
+  level: must
+  description: 差分测试与 cmark、cmark-gfm 和 commonmark.js 对比并分类差异
+  acceptance:
+  - 固定参考实现版本和调用参数
+  - 差异分类为项目 bug、profile 版本、serializer、参考实现或已记录规范解释
+  - 差异结论可追溯到 corpus case 和 profile
+  - 参考实现不进入生产依赖
+  status: pass
+  implementation:
+  - src/testkit_fuzz_test.cj
+  - src/security_corpus_test.cj
+  - scripts/release_gate.sh
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-18: differential test; 25 checked, 24 exact, 1 classified, 0 unexpected'
+  notes: ''
+- id: MD-TST-003
+  source: PRD §44.3-4, §51.3, §52
+  target: '1.0'
+  level: must
+  description: chunked 与 formatter metamorphic properties 达到全量通过
+  acceptance:
+  - parse(allAtOnce) == parse(randomChunks)
+  - 覆盖 1-byte、随机、Unicode、CRLF 和 syntax delimiter 边界
+  - format(format(x)) == format(x)
+  - parse(format(x)) ≈ parse(x)
+  - Chunk invariance 和 Formatter 幂等指标均为 100%
+  status: pass
+  implementation:
+  - 'src/input_test.cj: chunk metamorphic public-engine comparison'
+  - 'src/formatter_test.cj: formatter idempotence comparison'
+  tests:
+  - 'src/input_test.cj: arbitraryChunkBoundariesMatchAllAtOnce'
+  - 'src/formatter_test.cj: canonicalMarkdownIsIdempotentForMixedDocument'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-TST-004
+  source: PRD §44.5-6, §51.6-7
+  target: '1.0'
+  level: must
+  description: Safe HTML 安全 corpus 和所有高风险入口持续 fuzz
+  acceptance:
+  - 验证 raw HTML、危险 URI、attribute escaping、extension injection、output limit 和 cancellation
+  - fuzz String、bytes、chunked、dialect compiler、Syntax DSL compiler、Safe HTML、formatter、rewriter、artifact decoder 和 extension
+    dispatch
+  - 每个 crash 保留最小输入、corpus、版本、regression 和修复说明
+  - 发布时无未处理 fuzz crash
+  status: pass
+  implementation:
+  - src/testkit_fuzz_test.cj
+  - src/security_corpus_test.cj
+  - scripts/release_gate.sh
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-18: deterministic fuzz and security corpus cases passed in full suite'
+  notes: ''
+- id: MD-TST-005
+  source: PRD §44.7-9, §51.7
+  target: '1.0'
+  level: must
+  description: 病态输入、Extension TCK 和 API compatibility gate 纳入 CI
+  acceptance:
+  - 病态 corpus 覆盖重复 delimiter、深层容器、未闭合 link、HTML、URL、reference、table、long line、extension/output amplification 和 cancellation
+    race
+  - 所有官方扩展运行同一 TCK
+  - CI 检测 public symbol 删除、字段类型、enum variant、SPI、artifact、DSL schema 和 profile snapshots 风险
+  - 所有 bug 修复包含 regression test
+  status: pass
+  implementation:
+  - src/testkit_fuzz_test.cj
+  - src/security_corpus_test.cj
+  - scripts/release_gate.sh
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-18: API snapshot, pathological corpus, and official extension TCK passed'
+  notes: ''
+- id: MD-PERF-001
+  source: PRD §45.1-3
+  target: '1.0'
+  level: must
+  description: 性能基准采用固定语料、reference host 和 release build，且不牺牲正确性与安全
+  acceptance:
+  - 优先级为 correctness > safety/complexity > API stability > performance > micro-optimization
+  - 语料覆盖规范示例、README/API docs、大 code/table/reference、CJK、emoji、deep list、pathological delimiter、long line 和 extensions
+  - cmark、cmark-gfm、commonmark.js 仅用于测试/benchmark
+  - 固定 reference host、工具版本、构建模式和原始样本可复核
+  status: pass
+  implementation:
+  - src/benchmark_test.cj
+  - src/renderer.cj
+  - benchmarks/measure.py
+  - benchmarks/compare_markdown4cj.py
+  - docs/reports/benchmark.md
+  - docs/reports/markdown4cj-comparison.md
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-18: 12-corpus -O2 reference-host matrix recorded raw samples, per-corpus digests, pinned CPU, SDK, reference
+    commits, geometric means, and custom-extension cost'
+  - '2026-08-24: current-SDK same-language parse-only comparison pinned markdown4cj f43cfb3a and commonmark4cj 41499e6d; shared HTML behavior 12/12, 11-corpus geomean markdown speedup 10.996x, minimum 4.150x, maximum peak-RSS ratio 0.664x; this does not replace the blocked native-reference GA gates'
+  notes: ''
+- id: MD-PERF-002
+  source: PRD §45.4, §51.7, §52
+  target: '1.0'
+  level: must
+  description: release build 达到全部 GA 时间、内存、扩展性和回归门槛
+  acceptance:
+  - CommonMark parse-only 几何平均不超过 cmark 2.5x
+  - GFM parse+HTML 不超过 cmark-gfm 2.5x，代表性单项不超过参考 5x
+  - 1 MiB 到 16 MiB 不出现明显二次增长
+  - 10 MiB 普通文档 parse-only 峰值额外内存不超过输入 8x
+  - renderer 不无界缓存输出
+  - 相对接受基线回退超过 10% 时 CI 失败或有显式批准
+  - SourceMap、CST 等可选能力分别记录开销
+  status: blocked
+  implementation:
+  - src/benchmark_test.cj
+  - benchmarks/measure.py
+  - docs/reports/benchmark.md
+  tests:
+  - benchmarks/measure.py
+  - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks'
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-18: release_gate.sh; exit 1 at benchmarks/measure.py after all preceding gates passed'
+  - '2026-08-18: remote Server full release benchmark; CPU 24, Xeon Gold 6248R, glibc 2.35, -O2, heap 2GB, 7 samples x 3 iterations; exit 1 with raw report and all corpus digests'
+  - '2026-08-18: SSH Server fixed-CPU perf record; PMU counters rejected as unusable, call graphs identify GC tracing/forwarding, parser allocation, and memset as hotspots'
+  - '2026-08-23: benchmark dependency H db4392e2 commits paired seven-sample ordering, CPU/reference overrides and the owned-input driver; committed P1 remains CPointer<UInt64> with no whole-input @FastNative'
+  - '2026-08-23: pre-H raw SHA-256 48dbad5298825c627ebaa914909c79f7680949e9487158cd843e67dc9af54fa2 and ratios 6.449555x/5.695987x are historical pre-dependency measurements, not final acceptance evidence and not valid for trend/projection; fresh H archive validation is required'
+  - '2026-08-23: fresh mode-exact committed-H final archive /tmp/markdown-project-f001-20260823-RydvVhT9 passed typed UInt64 no-cast ABI, API inventory 1155, tests 1410/1410, CLI, differential 25/24/1/0, benchmark smoke 3/3, quickstart and bundle; formal raw SHA-256 9acd3c7b7e2077462daeff0032f8a43e4d507fab3fe21dda244a663bc3f950d0'
+  - '2026-08-23: fresh paired mode-exact final formal measured CommonMark 6.234490x and GFM 4.845909x; ordinary, scaling slope, adjacent growth, pathological slope and RSS gates pass, but both 2.5x ratio gates fail; MD-PERF-002 remains blocked'
+  - '2026-08-18: alternating 1 MiB remote experiments rejected UInt32 records, native malloc records, reference-open flags, and reduced capacity as cross-profile regressions or noise; source restored to uwv'
+  - '2026-08-19: fixed Server CPU 24 and Cangjie 1.1.0-alpha.20260803040049; final cjfmt-normalized reference-index candidate archive SHA-256 1162a0350b22efbeb969279ad89d2b4898b3a8612cbcb5aedbdf26abfd072845; candidate full cjpm test exit 0, 1410 passed'
+  - '2026-08-19: 12-round alternating 1 MiB A/B JSON SHA-256 4df43fc1dba76d6189bd690252e65fbd08b0aea05110501bb75734a1331682f8; checksums matched; candidate speedup across ordinary, many-reference, table, pathological and CJK corpora recorded in progress.md'
+  - '2026-08-19: candidate release raw report SHA-256 6d424f69062c7caca03926277bffcd2b8ba81d8082df4631df1d1124040833e9; exit 1 with CommonMark 6.137x, GFM 5.459x, slope 0.877, pathological slope 1.402, extra RSS 80600 KiB'
+  - '2026-08-19: paired baseline on the same SDK/CPU exit 1 with CommonMark 6.945x and GFM 5.670x; candidate improves the pair but remains above the 2.5x GA ratios and pathological slope gate'
+  - '2026-08-19: direct UTF-8 rune decoder rejected after ordinary/CJK regressions; no unverified candidate was silently retained'
+  - '2026-08-19: InlinePiece struct candidate archive SHA-256 f4e0a5c34b4a35c6cb07bc278a3cb3c8904365676145f8b426118cea45c99992; same-SDK/CPU 12-round paired JSON SHA-256 da1f7157c34ae124d71e1d4354fadca6545a3b0cb92f6be392f1c2217d5d5296; checksums matched, median candidate speedup was 1.207% CommonMark and 1.213% GFM'
+  - '2026-08-19: InlinePiece candidate local format/check/build/full test gates passed; cjpm test was 1410/1410. A new full release harness was started but SSH was actively closed before the raw report could be read, so no release result was claimed'
+  - '2026-08-19: InlinePieceLink indexed-struct experiment passed local 1410/1410 but a fixed-CPU 6-round x 100-iteration alternating run had median paired ratio 1.0434 and candidate speedup 0.9897; it was reverted as a cross-profile regression/noise risk'
+  - '2026-08-19: current branch archive dc5f5dc6f12d5567e26efb028bf3d4e87cd0cb3aa5bcac598bccb98a0a33754b; remote Server CPU 24/pinned SDK full release raw report f88ec9fa944411df4aaa560d1e9dd9fd51d240704ca3543c188c316023204ae1; exit 1 with CommonMark 6.980369x and GFM 5.989632x; ordinary ratios 3.512038x/2.709449x, scaling slope 0.923963, pathological slope 0.962821, extra RSS 80120 KiB'
+  - '2026-08-19: current release gates ordinary, scaling, adjacent, pathological slope and RSS passed; only CommonMark/GFM ratio gates failed. SourceMap overhead 112.16% and CST overhead 1038.97% recorded; canonical docs/reports/benchmark-raw.json now has the fetched report'
+  - '2026-08-20: table cursor scanner and parser-owned AST arrays passed cjfmt, cjpm check and full cjpm test; exit 0 with 1411 passed, 0 skipped/error/failed'
+  - '2026-08-20: fixed Server CPU 24 DWARF perf profile captured 4888 samples with 0 lost; GC phase transition 19.48%, memset/allocation 9.91%, parseInline 4.22%, resolveDelimiterPieces 4.05%, writeHtmlEnter 3.33% and inlineSpecial 2.74%'
+  - '2026-08-20: current remote release raw report SHA-256 9ac920aaaa4111027322be068691954a999d56350e8ccb1fc31b80a963ef8573; exit 1 with CommonMark 5.261142x, GFM 4.128814x, slope 0.852194, pathological slope 0.792435 and extra RSS 59464 KiB'
+  - '2026-08-20: table cursor A/B improved large-table GFM by 25.2-28.4%; parser-owned arrays improved GFM eight-corpus geomean by 3.8-4.5%; delimiter opener-chain and run-coalescing candidates were reverted after measured regressions'
+  - '2026-08-21: retained parser SHA-256 3f2c21e0b3f7a91632dd4b89eed177ed71d53b7f65778e0df40e1897520d273c and release driver c60b5f0be5e4d0ed9b8c061571aa260cf27d517980efe1711128dc946d2e9c32; exact LineRecord array, UInt32 packed records and byte-probed decodeLinkValue are present'
+  - '2026-08-21: decodeLinkValue two repeated 12-round fixed-CPU many-reference A/B runs had candidate/baseline 0.95573 and 0.95372 CommonMark, 0.94976 and 0.97041 GFM; JSON SHA-256 4fd8481b58c40ed52004adff86b9c3f4865fbc916619ccccfc13a5ff0f6d7885 and ae3ed410876e8527a2f25797a3c7269861baa6a5011e37f93aea70c287c04f7e'
+  - '2026-08-21: retained candidate format/check passed and full socket-enabled cjpm test exit 0 with 1411 passed, 0 skipped/error/failed'
+  - '2026-08-21: canonical remote release raw SHA-256 aaac470be4aa98df3f70f4e070c11db84de0fb214526df62b5939af4e5fe0e03; exit 1 with CommonMark 4.469416x, GFM 4.028095x, slope 0.851007, pathological slope 0.798977 and extra RSS 58820 KiB'
+  - '2026-08-21: exact line-count, reference prefilter, GFM precheck/lazy materialization and small ArrayList capacity experiments were reverted after fixed-CPU alternating regressions; no failed experiment remains in the stable parser hash'
+  - '2026-08-21: perf on 1 MiB CJK CommonMark identified GC phase transition 17.82%, memset/allocation 11.89%, parseInline 9.09%, storedText 2.75% and native line scanner 2.01%; 0 lost samples'
+  - '2026-08-21: perf on 1 MiB GFM large-code before renderer changes identified escapeText 25.93%, GC phase transition 23.32%, StringBuilder.append 19.13%, String construction 8.14% and memmove 6.69%'
+  - '2026-08-21: retained renderer batches ordinary escape runs, materializes CodeBlock.literal once, writes code tags separately, directly escapes code blocks into StringTextSink, and directly emits reference-link attributes without changing public APIs'
+  - '2026-08-21: escape-run A/B SHA-256 08e96983412b52070ed2b221d81951414a3e2e044edf1b46985cd05802ba9082 had GFM geomean 0.966956; reference-link A/B SHA-256 af77c823e59cc45c6d0e93099b55873a31892f0e9fd0cb25d8a812ccd15fe77b and repeat 80434e26f0b3dbc50bcb1c9d057fdf3816f6f90e5d59f94375e8690597e35a40 had GFM geomeans 0.979599 and 0.957051 with matching checksums'
+  - '2026-08-21: current parser SHA-256 c1854a356d2e2ece4d958a8925d2b469585c1288f3045df63d4ce3f5ba114f14 and renderer SHA-256 cc0e4fe45cc4544c7cade20d5fda744a95446cab8aebd2e74d4b32fc1a8fb26c; format/check and full cjpm test exit 0 with 1411 passed'
+  - '2026-08-21: current alternating full release raw SHA-256 1a6bc43d80376a1f9c47173006c338ebbe9ff9c43bd76f62e9055a0aff08c011; exit 1 with CommonMark 4.329382x, GFM 3.276393x, slope 0.961197, pathological slope 0.866012 and extra RSS 59632 KiB'
+  - '2026-08-21: inline-node scratch, UTF-8 rune-run scan, 1 MiB renderer preallocation, all-link direct output and per-line withRawData experiments were rejected after alternating A/B failed cross-profile or repeatability criteria'
+  - '2026-08-21: bounded per-render reference URI attribute cache candidate driver SHA-256 70e51613b2d7bf4689d215e4f131e32a5afc8cdbb1394b6c7cc1239c0967c924 was compared with reference-link-direct baseline d4e7fa6f6cf53d72b6a59ad66daff43457df8da1580e97764d543d899e04ff18 on Server CPU 24, 1 MiB, 11 corpora, 12 alternating rounds plus a unique-link guard'
+  - '2026-08-21: S0 A/B raw SHA-256 8dd1a38961bd3deff4dfbfe103bb5fe6620ea7239355afb6b6b3087cc7d6055d and 1a45f6e495962ab4bb10c1695b6bddd4e76a22c69e46fd8aedde905e531ed18c had matching checksums but many-reference GFM ratios 0.97497/0.97300 and 11-corpus GFM geomeans 1.01269/0.99982, failing required 0.95/0.98 stop-go limits; cache and tests were fully reverted and the formal release harness was intentionally not run'
+  - '2026-08-21: after S0 rejection, stable renderer SHA-256 returned exactly to cc0e4fe45cc4544c7cade20d5fda744a95446cab8aebd2e74d4b32fc1a8fb26c; format/check/API checks passed and socket-enabled cjpm test exit 0 with 1411 passed, 0 skipped/error/failed'
+  - '2026-08-21: post-S0 audit found the pre-existing current docs/reports/benchmark-raw.json is a non-authoritative local CPU 2 Arch run, SHA-256 adecf410140ed0bfc65528473fadd7cba6b2c458a438b88dfa021bafa6b05f8b with 4.57934x/3.96840x; S0 did not modify it and it is not used in place of the last validated Server evidence'
+  notes: >-
+    The 2026-08-18 report used a different remote SDK and remains the historical baseline. The same-SDK
+    reference-index candidate reduces repeated linear reference scans and avoids allocation for already-normalized
+    ASCII labels, and reuses the index in delimiter link detection. The later InlinePiece struct candidate only
+    removes the per-fragment class allocation. Its complete current release gate has now been executed on Server
+    CPU 24: correctness, ordinary ratio, scaling, pathological slope and RSS checks pass, but the current
+    CommonMark 4.329382x and GFM 3.276393x geometric ratios remain above the 2.5x GA limits; thresholds were not
+    weakened. `perf record` software sampling is available and its DWARF call graph is recorded, while privileged
+    hardware counter access remains restricted.
+- id: MD-PERF-003
+  source: PRD §45.5
+  target: '1.0'
+  level: should
+  description: 实现采用适合大文档和流式输出的分配策略
+  acceptance:
+  - ByteArray 输入避免完整复制，literal 优先 SourceSlice
+  - parser 临时对象使用 arena 或等价生命周期
+  - 不为每个字符创建 token object
+  - renderer 直接写 Sink，entity table 共享只读
+  - 小节点采用紧凑表示，或记录未采用的测量理由
+  status: pass
+  implementation:
+  - src/benchmark_test.cj
+  - benchmarks/measure.py
+  - docs/reports/benchmark.md
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-18: owned byte input, SourceSlice literals, explicit parser frames, bounded output, ordinary/pathological scaling,
+    and RSS tests passed'
+  notes: ''
+- id: MD-OBS-001
+  source: PRD §46
+  target: '1.0'
+  level: must
+  description: 可观测性仅本地、显式开启且默认不收集敏感内容
+  acceptance:
+  - 核心库不上传遥测
+  - 可选统计覆盖输入/行/节点/深度/引用/回调/扫描/阶段耗时/输出/诊断/profile/fingerprint
+  - 计时必须显式开启
+  - 默认不记录完整文档、link/image URL、code block 或 Front Matter 内容
+  status: pass
+  implementation:
+  - src/observability.cj
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-DOC-001
+  source: PRD §47, §49, §51.7
+  target: '1.0'
+  level: must
+  description: 1.0 发布包含完整采用、安全、扩展、格式化和运维文档
+  acceptance:
+  - 提供 README、5 分钟 Quickstart、profile、Dialect/Syntax/Renderer DSL 指南和 AST reference
+  - 提供 SourceSpan/UTF-16、Safe HTML、URI policy、SPI、TCK 和 chunked input 指南
+  - 提供 cancellation/budget、formatter、benchmark、error code、capability、migration 和完整 API 文档
+  - 文档与 public API snapshot、profile 行为和实际默认值一致
+  - Security guide 和 conformance reports 已发布
+  status: pass
+  implementation:
+  - README.md
+  - docs/
+  - examples/quickstart/
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-25: README, PRD, CLI guide, changelog, historical reports, raw report schemas and .agent records use the markdown product name; JSON/YAML parsing and full test suite passed'
+  notes: ''
+- id: MD-DOC-002
+  source: PRD §47, §49, §51.7
+  target: '1.0'
+  level: must
+  description: 示例覆盖核心用户旅程并可在干净环境构建运行
+  acceptance:
+  - 覆盖 Markdown→Safe HTML 和 Markdown→AST→提取标题
+  - 覆盖 Dialect DSL 自定义方言、Syntax DSL 自定义容器和 Renderer DSL 安全 HTML
+  - 覆盖 Cancellation 中止超大输入
+  - 示例工程在固定 SDK 的干净环境构建并验证输出
+  status: pass
+  implementation:
+  - README.md
+  - docs/
+  - examples/quickstart/
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-18: examples/quickstart built and ran using only the public package API'
+  notes: ''
+- id: MD-COMP-001
+  source: PRD §48.1-2
+  target: cross-release
+  level: must
+  description: 项目采用 SemVer 并识别全部用户可观察兼容性表面
+  acceptance:
+  - 版本遵循 SemVer
+  - 兼容性评审覆盖 AST、NodeId、SourceSpan、profile、rule order、diagnostic code、HTML、formatter、default security policy、SPI 和 artifact
+    schema
+  - CI/API review 对这些表面建立基线和变更分类
+  status: pass
+  implementation:
+  - docs/versioning-and-compatibility.md
+  - scripts/check_public_api.py
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-18: public API snapshot verified; 1155 declarations'
+  notes: ''
+- id: MD-COMP-002
+  source: PRD §48.3-6
+  target: cross-release
+  level: must
+  description: profile、AST、SPI 和弃用遵守明确兼容策略
+  acceptance:
+  - versioned profile 语义不改变；规范修复有编号、regression、changelog 和 revision 评估
+  - 1.x 删除公开 node 或修改字段语义视为 breaking
+  - 新增可选字段可作为 minor，新增核心 kind 评估 exhaustive match
+  - SPI 独立版本化且不兼容版本在 engine build 拒绝
+  - 公开 API 删除前至少一个 minor deprecation；高危例外附安全公告和迁移方案
+  status: pass
+  implementation:
+  - docs/versioning-and-compatibility.md
+  - scripts/check_public_api.py
+  tests:
+  - Final full-suite and requirement-specific tests under src/*_test.cj
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: ''
+- id: MD-REL-001
+  source: PRD §49, §50 M6, §51
+  target: '1.0'
+  level: must
+  description: 1.0 发布物齐全且所有 GA gate 有可复核证据
+  acceptance:
+  - 发布仓颉库、markdown CLI、API docs、examples、changelog 和 license
+  - 发布 CommonMark/GFM conformance、benchmark、fuzz summary 和 security guide
+  - 发布 Extension TCK、public API snapshot、dialect schema 和 SPI version 文档
+  - 记录第三方测试数据归属
+  - 核心发布无非标准原生动态库
+  - requirements.yaml 中所有 target=1.0 或 cross-release 且适用于 1.0 的条目均为 pass
+  status: blocked
+  implementation:
+  - CHANGELOG.md
+  - LICENSE
+  - scripts/release_gate.sh
+  tests:
+  - scripts/release_gate.sh
+  - cjpm bundle
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-18: cjpm bundle --skip-test after the full 1410-test gate; exit 0; GA release withheld because prerequisite requirements
+    are blocked'
+  notes: The package, CLI, documentation, reports, example, bundle, and private vulnerability reporting channel exist, but
+    mandatory MD-PERF-002 prevents a 1.0 GA declaration.
+- id: MD-QUAL-001
+  source: PRD §51.7, §52
+  target: '1.0'
+  level: must
+  description: 发布质量和成功指标全部达到 PRD 数值目标
+  acceptance:
+  - 已知 crash=0，已知高危安全问题=0，未记录规范偏差=0
+  - CommonMark/GFM conformance、Chunk invariance、Formatter idempotence、官方 Extension TCK 和 Fingerprint determinism 均为 100%
+  - 默认 raw HTML passthrough=0，核心非标准原生依赖=0
+  - 未批准性能回归不超过 10%
+  - Tier 1 输出一致且示例可在干净环境构建
+  status: blocked
+  implementation:
+  - docs/reports/benchmark.md
+  - docs/reports/fuzz-summary.md
+  tests:
+  - scripts/release_gate.sh
+  - benchmarks/measure.py
+  evidence:
+  - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  notes: Correctness, package, and private security reporting gates pass, but the mandatory performance success metric does not.

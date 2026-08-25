@@ -1,0 +1,10 @@
+/target/
+/.cache/
+**/target/
+**/.cache/
+**/build-script-cache/
+*.log
+__pycache__/
+*.pyc
+!api/public-api-v1.txt
+!docs/reports/*.json
