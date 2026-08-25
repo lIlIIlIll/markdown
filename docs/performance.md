@@ -65,13 +65,13 @@ scaling slope, adjacent growth, pathological slope, and RSS gates passed, but
 both ratio gates failed. This is retained as a historical dependency-transition
 run, not as the current release value. The sole canonical release result is
 declared in `release-evidence.json` and rendered into README,
-`docs/reports/benchmark.md`, and the acceptance report. The 2026-08-25 canonical
-run is bound to source commit `0275f27a1d8fea38262127b245ca5e4c81c9b3a8`,
+`docs/reports/benchmark.md`, and the acceptance report. The current 2026-08-25 canonical
+run is bound to source commit `34113ea6f47a3bcd57b80ca9ee5c6063873dd5bb`,
 Cangjie SDK `1.1.0-alpha.20260803040049`, the source archive, benchmark harness,
-and all three drivers. It measured CommonMark `5.842342x` and GFM `4.982426x`;
+and all three drivers. It measured CommonMark `5.731996x` and GFM `5.013855x`;
 all non-ratio gates passed, so `MD-PERF-002` remains blocked only by the two
 `2.5x` ratio limits. The evidence tree is still dirty until the reproducibility
-fixes, vendored conformance corpora, raw data, and generated reports are committed.
+raw data and generated reports are committed.
 
 Reference provisioning reports `lockGenerationDeterminism: not claimed / not
 tested` and `sealedLockOfflineConsumptionReproducible: true`. Its official

@@ -508,7 +508,8 @@ requirements:
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: 256 arbitrary-byte Strict/ReplaceInvalid and chunk-partition cases; full suite exit 0 with 1419/1419 passed'
-  notes: ''
+  - '2026-08-25: unsafe OwnedUtf8Input fast path uses String.withRawData only after the caller guarantees valid UTF-8 and transfers unique ownership; safe Array Strict/ReplaceInvalid tests remain unchanged and full suite passes 1423/1423'
+  notes: See A-034. Unsafe OwnedUtf8Input is a caller-validated fast path; all safe byte and stream APIs retain structured UTF-8 validation.
 - id: MD-IN-003
   source: PRD §16 IN-003, §51.3
   target: '1.0'
@@ -2313,6 +2314,8 @@ requirements:
   - '2026-08-24: current-SDK same-language parse-only comparison pinned markdown4cj f43cfb3a and commonmark4cj 41499e6d; shared HTML behavior 12/12, 11-corpus geomean markdown speedup 10.996x, minimum 4.150x, maximum peak-RSS ratio 0.664x; this does not replace the blocked native-reference GA gates'
   - '2026-08-25: String, Array<Byte>, OwnedUtf8Input and InputStream have distinct executable driver modes and future raw reports record copy/decode/native-scanner semantics; legacy commonmark-parse remains an explicitly documented owned-byte alias'
   - '2026-08-25: canonical remote raw SHA-256 1b025514500df45128e92a5fb72c77897773222e72f98e95c72db1ee89e23f57 binds source commit 0275f27a, Cangjie SDK 1.1.0-alpha.20260803040049, source archive, harness, markdown driver and both reference drivers; vendored CommonMark/GFM corpus digests match release-evidence.json'
+  - '2026-08-25: trusted-owned candidate A/B raw SHA-256 382842e1f4e7c55373ca07790c810613cec7ff3aa64af058183227eb67979a83 with unchanged driver surface measured candidate/baseline 0.921434 CommonMark and 0.964209 GFM; reverse-order repeat and baseline A/A 0.997942/1.002247 distinguish the benefit from measurement drift'
+  - '2026-08-25: canonical raw SHA-256 4398eefa73195165220628a8629a9dea1163535e7bcdc6e78d14794ace3e3747 binds source commit 34113ea6, archive 64f463fe, driver 47ea83dd, harness e35120dc, SDK and both reference drivers'
   notes: ''
 - id: MD-PERF-002
   source: PRD §45.4, §51.7, §52
@@ -2376,13 +2379,14 @@ requirements:
   - '2026-08-21: after S0 rejection, stable renderer SHA-256 returned exactly to cc0e4fe45cc4544c7cade20d5fda744a95446cab8aebd2e74d4b32fc1a8fb26c; format/check/API checks passed and socket-enabled cjpm test exit 0 with 1411 passed, 0 skipped/error/failed'
   - '2026-08-21: post-S0 audit found the pre-existing current docs/reports/benchmark-raw.json is a non-authoritative local CPU 2 Arch run, SHA-256 adecf410140ed0bfc65528473fadd7cba6b2c458a438b88dfa021bafa6b05f8b with 4.57934x/3.96840x; S0 did not modify it and it is not used in place of the last validated Server evidence'
   - '2026-08-25: canonical commit-bound remote release benchmark on Server CPU 24, 12 corpora, 7 alternating paired samples x 3 iterations exited 1 with CommonMark 5.842342x and GFM 4.982426x versus 2.5x; ordinary 4.019176x/2.704565x, slope 0.861705, maximum adjacent 2.076031, pathological slope 0.914978 and extra RSS 69700 KiB all pass; raw SHA-256 1b025514500df45128e92a5fb72c77897773222e72f98e95c72db1ee89e23f57'
+  - '2026-08-25: trusted-owned commit 34113ea6 canonical release run exited 1 with CommonMark 5.731996x and GFM 5.013855x; ordinary 3.423491x/2.367448x, slope 0.840169, maximum adjacent 1.976536, pathological slope 1.096347 and extra RSS 59964 KiB pass; only both 2.5x ratios fail; raw SHA-256 4398eefa73195165220628a8629a9dea1163535e7bcdc6e78d14794ace3e3747'
   notes: >-
     The 2026-08-18 report used a different remote SDK and remains the historical baseline. The same-SDK
     reference-index candidate reduces repeated linear reference scans and avoids allocation for already-normalized
     ASCII labels, and reuses the index in delimiter link detection. The later InlinePiece struct candidate only
     removes the per-fragment class allocation. Its complete current release gate has now been executed on Server
     CPU 24: correctness, ordinary ratio, scaling, pathological slope and RSS checks pass, but the current
-    CommonMark 5.842342x and GFM 4.982426x geometric ratios remain above the 2.5x GA limits; thresholds were not
+    CommonMark 5.731996x and GFM 5.013855x geometric ratios remain above the 2.5x GA limits; thresholds were not
     weakened. `perf record` software sampling is available and its DWARF call graph is recorded, while privileged
     hardware counter access remains restricted.
 - id: MD-PERF-003
@@ -2539,9 +2543,10 @@ requirements:
     are blocked'
   - '2026-08-25: version reset to 0.8.0 because cjpm rejects prerelease SemVer; release-evidence.json is the single generated report source and release-ready validation fails closed for an unbound source/SDK or stale benchmark'
   - '2026-08-25: canonical benchmark is now bound to source commit 0275f27a, SDK, source archive, harness and all drivers; release-ready validation still fails closed because the release is draft, the evidence tree is dirty and MD-PERF-002 fails'
+  - '2026-08-25: refreshed canonical benchmark is bound to product commit 34113ea6, SDK, source archive, harness and all drivers; its evidence projection is clean, while release-ready validation still fails closed because the release is draft and MD-PERF-002 fails'
   notes: The package, CLI, documentation, reports, example, bundle, and private vulnerability reporting channel exist, but
-    mandatory MD-PERF-002 prevents a 1.0 GA declaration. The pre-GA benchmark is commit-bound, but the generated evidence and
-    reproducibility fixes remain an uncommitted dirty draft.
+    mandatory MD-PERF-002 prevents a 1.0 GA declaration. The pre-GA benchmark and generated evidence are commit-bound;
+    draft release status and the two mandatory ratio failures still prevent release readiness.
 - id: MD-QUAL-001
   source: PRD §51.7, §52
   target: '1.0'

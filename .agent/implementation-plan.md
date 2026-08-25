@@ -252,7 +252,7 @@ S0 契约与证据基础
 
 依赖次序：冻结 evidence schema → 选择 RC/version policy → 生成 commit/SDK/target/flags/corpus/reference/raw/conformance/API digests → 由该文件生成 README/report/acceptance 投影 → 托管 CI 多 SDK/平台验证。
 
-退出门槛：仓库内只有一个 canonical current result；README、benchmark report、raw digest、账本和 acceptance report 可由同一 evidence 文件复核，且不再把 pre-GA 状态与 `1.0.0` 完整冻结承诺并列。版本、生成器、fail-closed gate 和 Linux 双 SDK CI 已落地；2026-08-25 raw 已绑定 source commit、SDK、源码归档、harness 和三个 driver，但两个 `2.5x` ratio gate 仍失败且 evidence tree 尚未提交，因此本切片仍未达到发布退出门槛。完成前不得发布 GA。
+退出门槛：仓库内只有一个 canonical current result；README、benchmark report、raw digest、账本和 acceptance report 可由同一 evidence 文件复核，且不再把 pre-GA 状态与 `1.0.0` 完整冻结承诺并列。版本、生成器、fail-closed gate 和 Linux 双 SDK CI 已落地；2026-08-25 raw 已绑定产品提交 `34113ea6f47a3bcd57b80ca9ee5c6063873dd5bb`、SDK、源码归档、harness 和三个 driver，但 CommonMark `5.731996x`、GFM `5.013855x` 仍未通过两个 `2.5x` ratio gate，因此本切片仍未达到发布退出门槛。完成前不得发布 GA。
 
 ### S14：input profiles and native scanner execution capability（2026-08-25）
 

@@ -92,7 +92,7 @@ GA 门槛。
 ## 当前非通过项
 
 - `MD-SEC-005` — `pass` — 2026-08-24 GitHub official API returned `{"enabled":true}`; SECURITY.md and docs/security.md link the private advisory form.
-- `MD-PERF-002` — `blocked` — On the fixed 2026-08-25 Server rerun, commit `0275f27a` measured CommonMark 5.842x and GFM 4.982x versus the 2.5x GA limits. Ordinary, scaling, pathological scaling and RSS gates pass; only the two ratio gates fail.
+- `MD-PERF-002` — `blocked` — On the fixed 2026-08-25 Server rerun, product commit `34113ea6` measured CommonMark 5.731996x and GFM 5.013855x versus the 2.5x GA limits. Ordinary, scaling, pathological scaling and RSS gates pass; only the two ratio gates fail.
 - `MD-REL-001` — `blocked` — The package, CLI, documentation, reports, example, bundle, and private reporting channel exist, but mandatory MD-PERF-002 prevents a 1.0 GA declaration.
 - `MD-QUAL-001` — `blocked` — Correctness, package, and private security reporting gates pass, but the mandatory performance success metric does not.
 
@@ -256,3 +256,12 @@ GA 门槛。
 - 最终固定 Server CPU 24、Cangjie `1.1.0-alpha.20260803040049`、12 个 256 KiB 语料、每进程 3 iterations、每侧 warmup + 7 个交替配对样本。命令 exit `1`：CommonMark `5.842342x`、GFM `4.982426x`，只失败两个 `2.5x` ratio gate；ordinary `4.019176x`/`2.704565x`、slope `0.861705`、最大相邻 `2.076031`、pathological slope `0.914978`、extra RSS `69700 KiB` 均通过。
 - SourceMap 开销 `2.31%`，CST/snapshot 开销 `1040.41%`。1 MiB 输入 profile 中位耗时：String `0.211546s`、Array `0.221442s`、Owned `0.213213s`、InputStream `0.235104s`；各入口的复制、转换和 native scanner 语义已写入 raw。
 - canonical raw SHA-256 为 `1b025514500df45128e92a5fb72c77897773222e72f98e95c72db1ee89e23f57`。raw 同时绑定 harness `e35120dc...131a26`、markdown driver `7c83262f...3a5c`、cmark driver `385d4f18...a95e` 和 cmark-gfm driver `6f8ad2cf...e0b4`。README、benchmark report、账本和 acceptance report 已由 `release-evidence.json` 同步；整体仍为 **INCOMPLETE**。
+
+## 2026-08-25 trusted owned UTF-8 fast path and canonical rerun
+
+- 本机 `perf` 对 1 MiB ordinary 输入的归因显示 `String.checkInvalid`/UTF-8 重复验证约占 24.49%，native scanner 约占 24.46%，GC 约占 12.66%，其余显著成本包括 `memmove`/`memcpy`。同一 owned 输入上的 pure/native 隔离没有证明 native scanner 回退，因此保留 native 路径。
+- `OwnedUtf8Input.take` 的既有 trusted-valid/ownership-transfer 契约现直接使用 `unsafe { String.withRawData(bytes) }`，避免在 scanner 已消费相同 byte arena 后再次做 UTF-8 校验；安全的 `Array<Byte>`、stream 及 Strict/ReplaceInvalid 入口仍执行原有验证或替换。该最小必要解释记录为 A-034。
+- 最终产品 A/B 在固定 CPU、11 个语料和交替采样下保持 checksum 一致：CommonMark candidate/baseline `0.921434`，GFM `0.964209`，raw SHA-256 `382842e1f4e7c55373ca07790c810613cec7ff3aa64af058183227eb67979a83`。反转顺序复核分别为 `0.909810`/`0.954436`，baseline/baseline A/A 为 `0.997942`/`1.002247`。
+- format、`cjpm check`、8/8 API checker、3/3 input-profile tests、3/3 release-evidence tests 通过；socket-enabled 全量 suite exit 0，`1423/1423` passed。产品提交为 `34113ea6f47a3bcd57b80ca9ee5c6063873dd5bb`；最小源码归档 SHA-256 `64f463fe6ee332f0a6361755eb6988f7bc8acced6f953d88844bd17f0a9e069a`。
+- 全新远端目录、Server CPU 24、Cangjie `1.1.0-alpha.20260803040049` 的完整 release harness exit 1；raw SHA-256 `4398eefa73195165220628a8629a9dea1163535e7bcdc6e78d14794ace3e3747`。CommonMark `5.731996x`、GFM `5.013855x`；ordinary `3.423491x`/`2.367448x`、slope `0.840169`、最大相邻 `1.976536`、pathological slope `1.096347`、extra RSS `59964 KiB` 均通过。SourceMap overhead `7.39%`，CST/snapshot overhead `1054.81%`。
+- canonical raw、README、benchmark report、需求账本和 acceptance report 统一投影自 `release-evidence.json`。账本仍为 125 total、122 pass、3 blocked；只有两个强制 ratio gate 失败，连带 `MD-REL-001`、`MD-QUAL-001` 保持 blocked，整体为 **INCOMPLETE**。

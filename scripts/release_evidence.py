@@ -58,6 +58,11 @@ def readme_block(data: dict[str, object]) -> str:
     release = data["release"]
     source = data["source"]
     benchmark = data["benchmark"]
+    source_state = (
+        "The benchmark and source identities are commit-bound and the evidence tree is clean."
+        if source["sourceCommit"] and source["treeState"] == "clean"
+        else "The source identity or evidence tree is not yet release-bound."
+    )
     return f"""<!-- release-evidence:start -->
 | Release evidence | Value |
 | --- | --- |
@@ -68,8 +73,8 @@ def readme_block(data: dict[str, object]) -> str:
 | Benchmark identity | `{benchmark['status']}`; commit `{benchmark['sourceCommit'] or 'UNBOUND'}`; SDK `{benchmark['sdkVersion'] or 'UNBOUND'}` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
-It is commit-bound benchmark evidence, but the release remains a fail-closed
-dirty draft until every mandatory gate passes and the evidence changes are committed.
+{source_state} The release remains fail-closed until its status is ready and
+every mandatory gate passes.
 <!-- release-evidence:end -->"""
 
 
@@ -78,6 +83,11 @@ def acceptance_block(data: dict[str, object]) -> str:
     source = data["source"]
     benchmark = data["benchmark"]
     tests = data["tests"]
+    source_state = (
+        "The benchmark identity is bound and the evidence tree is clean"
+        if source["sourceCommit"] and source["treeState"] == "clean"
+        else "The benchmark source identity or evidence tree is not release-bound"
+    )
     return f"""<!-- release-evidence:start -->
 ## Generated Release Evidence
 
@@ -87,9 +97,8 @@ def acceptance_block(data: dict[str, object]) -> str:
 - Benchmark: CommonMark `{benchmark['commonmarkRatio']:.2f}x`, GFM `{benchmark['gfmRatio']:.2f}x`, status `{benchmark['status']}`.
 - Raw digest: `{benchmark['rawSha256']}`.
 
-The benchmark identity is bound, but both mandatory performance ratios fail and
-the evidence tree is dirty. It is not release-ready and cannot change the
-overall `INCOMPLETE` verdict.
+{source_state}, but both mandatory performance ratios fail and the release
+status is not ready. It cannot change the overall `INCOMPLETE` verdict.
 <!-- release-evidence:end -->"""
 
 

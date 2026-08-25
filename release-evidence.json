@@ -7,10 +7,10 @@
     "complete": false
   },
   "source": {
-    "sourceCommit": "0275f27a1d8fea38262127b245ca5e4c81c9b3a8",
-    "repositoryHeadAtGeneration": "0275f27a1d8fea38262127b245ca5e4c81c9b3a8",
-    "treeState": "dirty",
-    "reason": "The measured product binary is bound to commit 0275f27a1d8fea38262127b245ca5e4c81c9b3a8; the evidence schema, reproducibility fixes, reports, and vendored conformance corpora are uncommitted."
+    "sourceCommit": "34113ea6f47a3bcd57b80ca9ee5c6063873dd5bb",
+    "repositoryHeadAtGeneration": "34113ea6f47a3bcd57b80ca9ee5c6063873dd5bb",
+    "treeState": "clean",
+    "reason": "The measured product binary is bound to commit 34113ea6f47a3bcd57b80ca9ee5c6063873dd5bb; the following commit changes only the generated report and requirement-ledger projection."
   },
   "toolchain": {
     "cangjieCompiler": "1.1.0-alpha.20260817040003",
@@ -49,19 +49,19 @@
   "benchmark": {
     "status": "current",
     "rawPath": "docs/reports/benchmark-raw.json",
-    "rawSha256": "1b025514500df45128e92a5fb72c77897773222e72f98e95c72db1ee89e23f57",
-    "sourceCommit": "0275f27a1d8fea38262127b245ca5e4c81c9b3a8",
+    "rawSha256": "4398eefa73195165220628a8629a9dea1163535e7bcdc6e78d14794ace3e3747",
+    "sourceCommit": "34113ea6f47a3bcd57b80ca9ee5c6063873dd5bb",
     "sdkVersion": "1.1.0-alpha.20260803040049",
-    "productSourceArchiveSha256": "cfad40e29f83d0d34b1327935c2c15af75cf033496aba0b85551ea437f459428",
+    "productSourceArchiveSha256": "64f463fe6ee332f0a6361755eb6988f7bc8acced6f953d88844bd17f0a9e069a",
     "benchmarkHarnessSha256": "e35120dc0b3c9a97a297a2380f7080e10b950399621019d3532db3d629131a26",
-    "markdownDriverSha256": "7c83262fd4fd1f6506255100688ed3f1c0379eff0be529c5840afb6e89fb3a5c",
+    "markdownDriverSha256": "47ea83dd7ad6d87096e9ad6e344d2e66bfeeced3234b613e033b9ed171a52046",
     "cmarkDriverSha256": "385d4f1842b2a85211de914a5e6600ba195e3203bd4f3e91531cbed216d7a95e",
     "cmarkGfmDriverSha256": "6f8ad2cf959ce26f8b9331c62beea9ff1ea116d4a66b9bae033d6138d362e0b4",
-    "commonmarkRatio": 5.8423419896528115,
-    "gfmRatio": 4.982425559538768,
+    "commonmarkRatio": 5.731995889353163,
+    "gfmRatio": 5.01385529003258,
     "ratioLimit": 2.5,
     "cmark": "0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8",
     "cmarkGfm": "0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b",
-    "note": "Canonical 2026-08-25 remote release run on Xeon Gold 6248R CPU 24 with seven alternating paired samples per corpus. Source, archive, harness, all three drivers, SDK, corpora, and raw data are bound; only the CommonMark and GFM ratio gates fail."
+    "note": "Canonical 2026-08-25 remote release run for the trusted-owned fast path on Xeon Gold 6248R CPU 24 with seven alternating paired samples per corpus. Source, archive, harness, all three drivers, SDK, corpora, and raw data are bound; only the CommonMark and GFM ratio gates fail."
   }
 }

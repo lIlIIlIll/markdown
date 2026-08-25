@@ -8,14 +8,13 @@
 ## Generated Release Evidence
 
 - Version/status: `0.8.0` / `draft`.
-- Source identity: `0275f27a1d8fea38262127b245ca5e4c81c9b3a8`; tree state `dirty`.
+- Source identity: `34113ea6f47a3bcd57b80ca9ee5c6063873dd5bb`; tree state `clean`.
 - Tests: `1423/1423` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `5.84x`, GFM `4.98x`, status `current`.
-- Raw digest: `1b025514500df45128e92a5fb72c77897773222e72f98e95c72db1ee89e23f57`.
+- Benchmark: CommonMark `5.73x`, GFM `5.01x`, status `current`.
+- Raw digest: `4398eefa73195165220628a8629a9dea1163535e7bcdc6e78d14794ace3e3747`.
 
-The benchmark identity is bound, but both mandatory performance ratios fail and
-the evidence tree is dirty. It is not release-ready and cannot change the
-overall `INCOMPLETE` verdict.
+The benchmark identity is bound and the evidence tree is clean, but both mandatory performance ratios fail and the release
+status is not ready. It cannot change the overall `INCOMPLETE` verdict.
 <!-- release-evidence:end -->
 
 2026-08-23 dependency transition：H `db4392e2` commits the paired seven-sample
@@ -160,7 +159,7 @@ seal/path/binary identity check.
 | `MD-TST-004` | PRD §44.5-6, §51.6-7 | `pass` | 2026-08-25: arbitrary-byte fuzz found and guards two UTF-8 boundary crashes; full 1419-test suite passed |
 | `MD-TST-005` | PRD §44.7-9, §51.7 | `pass` | 2026-08-18: API snapshot, pathological corpus, and official extension TCK passed |
 | `MD-PERF-001` | PRD §45.1-3 | `pass` | 2026-08-18: 12-corpus -O2 reference-host matrix recorded raw samples, per-corpus digests, pinned CPU, SDK, reference commits, geometric means, and custom-extension cost |
-| `MD-PERF-002` | PRD §45.4, §51.7, §52 | `blocked` | 2026-08-25 commit-bound candidate on Server CPU 24: CommonMark 5.842x and GFM 4.982x versus 2.5x limits. Scaling slope 0.862, adjacent 2.076, pathological slope 0.915 and extra RSS 69700 KiB pass; only both ratio gates fail. |
+| `MD-PERF-002` | PRD §45.4, §51.7, §52 | `blocked` | 2026-08-25 trusted-owned commit 34113ea6 on Server CPU 24: CommonMark 5.732x and GFM 5.014x versus 2.5x limits. Scaling slope 0.840, adjacent 1.977, pathological slope 1.096 and extra RSS 59964 KiB pass; only both ratio gates fail. |
 | `MD-PERF-003` | PRD §45.5 | `pass` | 2026-08-18: owned byte input, SourceSlice literals, explicit parser frames, bounded output, ordinary/pathological scaling, and RSS tests passed |
 | `MD-OBS-001` | PRD §46 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DOC-001` | PRD §47, §49, §51.7 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
@@ -187,7 +186,7 @@ seal/path/binary identity check.
 | `python3 scripts/test_release_evidence.py` | 0 | 3/3 consistency and fail-closed regressions passed |
 | `python3 scripts/test_benchmark_input_profiles.py` | 0 | String/Array/Owned/Stream modes execute and produce identical parse checksums |
 | `python3 scripts/release_evidence.py` | 0 | README, benchmark report, acceptance projection, raw/corpus/API digests and ratios match the canonical evidence file |
-| `python3 scripts/release_evidence.py --release-ready` | 1 (expected) | correctly rejects draft, dirty/unbound source and stale/unbound benchmark identity |
+| `python3 scripts/release_evidence.py --release-ready` | 1 (expected) | correctly rejects draft release status and the failed mandatory benchmark ratios; source and benchmark identities are current and clean |
 | `python3 scripts/differential_test.py` | 0 | 25 comparisons: 24 exact, 1 classified, 0 unexpected |
 | `cjpm bench --filter MarkdownReleaseBenchmarks ...` | 0 | 3/3 benchmark smoke cases; socket permission required |
 | remote `python3` wrapper importing `benchmarks/measure.py` on authorized SSH Server (CPU 24) | 1 | 2026-08-19 final candidate: CommonMark 6.137x, GFM 5.459x, ordinary/scaling and RSS gates pass, ratio and pathological slope gates fail; same-SDK paired baseline 6.945x/5.670x |
@@ -480,9 +479,9 @@ The overall verdict remains **INCOMPLETE** with 122/125 requirements passing:
 `MD-PERF-002`, `MD-REL-001` and `MD-QUAL-001` remain blocked. This slice did not
 replace the canonical remote release benchmark.
 
-## 2026-08-25 Canonical Release Benchmark Acceptance
+## 2026-08-25 Previous Canonical Release Benchmark Acceptance
 
-The canonical remote release benchmark now binds product commit
+The previous canonical remote release benchmark bound product commit
 `0275f27a1d8fea38262127b245ca5e4c81c9b3a8`, Cangjie SDK
 `1.1.0-alpha.20260803040049`, the minimal source archive, benchmark harness,
 markdown release driver, and both reference drivers. The frozen CommonMark and
@@ -497,3 +496,34 @@ RSS all pass. Only the two mandatory `2.5x` ratios fail. SourceMap overhead was
 
 Therefore `MD-PERF-002`, `MD-REL-001`, and `MD-QUAL-001` remain `blocked`, and
 the final status remains **INCOMPLETE**. No threshold or assertion was weakened.
+
+## 2026-08-25 Trusted Owned UTF-8 Fast Path and Canonical Acceptance
+
+Profiling attributed about `24.49%` of the ordinary owned-input workload to
+redundant UTF-8 validation. Product commit
+`34113ea6f47a3bcd57b80ca9ee5c6063873dd5bb` now uses the existing
+trusted-valid, ownership-transfer contract of `OwnedUtf8Input.take` to create
+its source string with `unsafe { String.withRawData(bytes) }`. Safe byte,
+stream, Strict and ReplaceInvalid entry points retain their validation and
+replacement behavior. Assumption A-034 records the validity and aliasing
+preconditions rather than silently broadening the unsafe surface.
+
+The final fixed-CPU product A/B preserved all output checksums and measured
+candidate/baseline ratios of `0.921434` for CommonMark and `0.964209` for GFM;
+reverse-order confirmation measured `0.909810` and `0.954436`, while the
+baseline/baseline A/A ratios were `0.997942` and `1.002247`. Format, package
+check, 8/8 API checker tests, 3/3 input-profile tests, 3/3 release-evidence
+tests and the socket-enabled `1423/1423` full suite passed.
+
+The fresh remote canonical release run is bound to that product commit, source
+archive SHA-256
+`64f463fe6ee332f0a6361755eb6988f7bc8acced6f953d88844bd17f0a9e069a`,
+the frozen corpora, SDK, harness and all three drivers. Raw SHA-256
+`4398eefa73195165220628a8629a9dea1163535e7bcdc6e78d14794ace3e3747`
+measured CommonMark `5.731996x` and GFM `5.013855x`. Ordinary ratios, scaling,
+pathological scaling and RSS pass; only the two mandatory `2.5x` ratio gates
+fail. SourceMap overhead was `7.39%`; CST/snapshot overhead was `1054.81%`.
+
+The authoritative ledger therefore remains 122/125 pass. `MD-PERF-002`,
+`MD-REL-001` and `MD-QUAL-001` remain blocked, so the final status remains
+**INCOMPLETE**. No gate, assertion or benchmark profile was weakened.
