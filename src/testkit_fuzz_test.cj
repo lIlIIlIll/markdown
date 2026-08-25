@@ -7,7 +7,7 @@ import std.unittest.testmacro.*
 class ExtensionTckAndFuzzTest {
     @TestCase
     func extensionTckPassesAllRequiredRuntimeChecks(): Unit {
-        let manifest = ExtensionManifest("tck", "1", "1", capabilities: ExtensionCapabilities(safeHtml: true))
+        let manifest = ExtensionManifest("tck", "1.0.0", "1", capabilities: ExtensionCapabilities(safeHtml: true))
         let dialect = MarkdownDialect
             .define("tck", "1")
             .enable(manifest)
@@ -65,6 +65,99 @@ class ExtensionTckAndFuzzTest {
                 case _ => @Expect(false)
             }
         }
+    }
+
+    @TestCase
+    func arbitraryByteFuzzMatchesBufferedAndChunkedUtf8Policies(): Unit {
+        var state: Int64 = 20260825
+        let engine = MarkdownEngine.builder().profile(MarkdownProfile.gfmModernV1()).build()
+        for (caseIndex in 0..256) {
+            let length = caseIndex % 192
+            let bytes = Array<Byte>(length, repeat: 0)
+            for (index in 0..length) {
+                state = (state * 1103515245 + 12345) % 2147483647
+                bytes[index] = UInt8(state % 256)
+            }
+
+            var directStrictSucceeded = false
+            var chunkedStrictSucceeded = false
+            var directStrictHtml = ""
+            var chunkedStrictHtml = ""
+            try {
+                let result = engine.parse(bytes, utf8Policy: Utf8Policy.Strict)
+                directStrictSucceeded = true
+                directStrictHtml = HtmlRenderer().render(result.document)
+            } catch (_: MarkdownException) {
+            }
+            try {
+                let session = engine.newSession(utf8Policy: Utf8Policy.Strict)
+                feedFuzzPartitions(session, bytes, caseIndex)
+                let result = session.finish()
+                chunkedStrictSucceeded = true
+                chunkedStrictHtml = HtmlRenderer().render(result.document)
+            } catch (_: MarkdownException) {
+            }
+            @Expect(chunkedStrictSucceeded, directStrictSucceeded)
+            if (directStrictSucceeded) {
+                @Expect(chunkedStrictHtml, directStrictHtml)
+            }
+
+            let directReplace = engine.parse(bytes, utf8Policy: Utf8Policy.ReplaceInvalid)
+            let replaceSession = engine.newSession(utf8Policy: Utf8Policy.ReplaceInvalid)
+            feedFuzzPartitions(replaceSession, bytes, caseIndex)
+            let chunkedReplace = replaceSession.finish()
+            @Expect(chunkedReplace.source.text(), directReplace.source.text())
+            @Expect(chunkedReplace.source.byteLength(), directReplace.source.byteLength())
+            @Expect(chunkedReplace.diagnostics.size, directReplace.diagnostics.size)
+            @Expect(HtmlRenderer().render(chunkedReplace.document), HtmlRenderer().render(directReplace.document))
+            AstInvariantValidator().validate(directReplace.document)
+            AstInvariantValidator().validate(chunkedReplace.document)
+        }
+    }
+
+    @TestCase
+    func historicalInvalidUtf8GfmCrashCorpusStaysFixed(): Unit {
+        let bytes: Array<Byte> = [
+            0xA0,
+            0x8A,
+            0xE6,
+            0xDF,
+            0x4B,
+            0xFE,
+            0x31,
+            0xBD,
+            0x5C,
+            0x8D,
+            0x1B,
+            0xE8,
+            0x40,
+            0x4F,
+            0xA9,
+            0x24
+        ]
+        let engine = MarkdownEngine.builder().profile(MarkdownProfile.gfmModernV1()).build()
+        try {
+            engine.parse(bytes, utf8Policy: Utf8Policy.Strict)
+            @Expect(false)
+        } catch (error: MarkdownException) {
+            match (error.code) {
+                case MarkdownErrorCode.InvalidEncoding => @Expect(true)
+                case _ => @Expect(false)
+            }
+        }
+        let direct = engine.parse(bytes, utf8Policy: Utf8Policy.ReplaceInvalid)
+        let buffered = engine.newBufferedInputSession(utf8Policy: Utf8Policy.ReplaceInvalid)
+        var offset: Int64 = 0
+        while (offset < bytes.size) {
+            let size = min(3, bytes.size - offset)
+            buffered.feed(bytes.slice(offset, size))
+            offset += size
+        }
+        let partitioned = buffered.finish()
+        @Expect(partitioned.source.text(), direct.source.text())
+        @Expect(partitioned.source.byteLength(), direct.source.byteLength())
+        @Expect(HtmlRenderer().render(partitioned.document), HtmlRenderer().render(direct.document))
+        AstInvariantValidator().validate(partitioned.document)
     }
 
     @TestCase
@@ -134,7 +227,7 @@ class ExtensionTckAndFuzzTest {
 
         let dialect = MarkdownDialect
             .define("deep-extension", "1")
-            .enable(ExtensionManifest("deep-extension", "1", "1"))
+            .enable(ExtensionManifest("deep-extension", "1.0.0", "1"))
             .block(BlockSyntax.define("deep-extension", "box").opener(":::box").closer(":::").nesting(true))
             .renderer(RendererRule("deep-extension", "box", "section", markdownOpener: ":::", markdownCloser: ":::"))
             .limits(ParseLimits.trusted())
@@ -159,5 +252,14 @@ class ExtensionTckAndFuzzTest {
             case _: Paragraph => @Expect(true)
             case _ => @Expect(false)
         }
+    }
+}
+
+private func feedFuzzPartitions(session: ChunkedParseSession, bytes: Array<Byte>, caseIndex: Int64): Unit {
+    var offset: Int64 = 0
+    while (offset < bytes.size) {
+        let size = min(bytes.size - offset, ((offset + caseIndex) % 11) + 1)
+        session.feed(bytes.slice(offset, size))
+        offset += size
     }
 }

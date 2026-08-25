@@ -253,12 +253,16 @@ requirements:
   status: pass
   implementation:
   - 'src/extension.cj: canonical descriptor includes dialect/profile/extensions/rules/SPI/plan identity'
-  - 'src/fingerprint.cj: pure-std SHA-256 used for canonical dialect descriptor'
+  - 'src/fingerprint.cj: length-prefixed CanonicalDescriptor plus pure-std SHA-256'
+  - 'src/renderer.cj, src/artifact.cj, src/binary_artifact.cj: renderer, engine and binary AST digests use the same unambiguous field encoding'
   tests:
   - 'src/fingerprint_test.cj: sha256MatchesKnownVectors'
   - 'src/fingerprint_test.cj: dialectFingerprintIsDeterministicAndSemanticChangesAlterIt'
+  - 'src/fingerprint_test.cj: canonicalFingerprintEncodingHasNoDelimiterOrFieldSplitCollisions'
+  - 'src/renderer_test.cj: rendererFingerprintIsDeterministicAndPolicySensitive'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-25: full socket-enabled cjpm test; exit 0; 1413 passed, including delimiter, Unicode, empty-field, manifest-order and rule-order fingerprint cases'
   notes: ''
 - id: MD-DIA-004
   source: PRD §12.6, §51.2
@@ -274,10 +278,13 @@ requirements:
   status: pass
   implementation:
   - 'src/extension.cj: manifest, dependency, conflict, SPI, rule-bound, opener/delimiter, renderer and capability validation'
+  - 'src/extension.cj: complete SemVer parser and precedence comparator for manifest versions and dependency minimums'
   tests:
   - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
+  - 'src/extension_test.cj: semanticVersionConstraintsFollowSemVerPrecedenceAndRejectInvalidVersions'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-25: socket-enabled full cjpm test; exit 0; 1417 passed, 0 skipped/error/failed; prerelease, build metadata, incomplete, leading-zero, empty-identifier and overflow cases passed'
   notes: ''
 - id: MD-SYN-001
   source: PRD §6.4, §13.1, §54.12, §54.15, §54.17-18
@@ -494,10 +501,13 @@ requirements:
   implementation:
   - 'src/parser.cj: Utf8Policy Strict/ReplaceInvalid and validated decoder'
   - 'src/source.cj: decoded-to-original byte map used by SourceBuffer and parser spans'
+  - 'src/parser.cj: byte-safe GFM email punctuation and whole-buffer ASCII lowercase preserve decoded UTF-8 boundaries'
   tests:
   - 'src/input_test.cj: strictRejectsInvalidUtf8AndReplacePreservesOriginalOffsets'
+  - 'src/testkit_fuzz_test.cj: arbitraryByteFuzzMatchesBufferedAndChunkedUtf8Policies'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-25: 256 arbitrary-byte Strict/ReplaceInvalid and chunk-partition cases; full suite exit 0 with 1419/1419 passed'
   notes: ''
 - id: MD-IN-003
   source: PRD §16 IN-003, §51.3
@@ -511,11 +521,14 @@ requirements:
   status: pass
   implementation:
   - 'src/parser.cj: InputStream overload with bounded reads and InputReadFailureException cause propagation'
+  - 'src/parser.cj: BufferedInputSession and tryParse make the fully-buffered and no-completed-prefix contracts explicit'
   tests:
   - 'src/input_test.cj: streamInputUsesSameParserAndPreservesReadFailuresAsTypedCause'
+  - 'src/input_test.cj: explicitBufferedInputSessionParsesOnlyAtFinish'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  - '2026-08-25: full cjpm test; exit 0; 1423 passed; docs/input-and-resources.md distinguishes buffered stream input from incremental parsing'
+  notes: 'A-033: InputStream and buffered sessions do not reduce peak input memory or emit an AST before parsing starts.'
 - id: MD-IN-004
   source: PRD §16 IN-004-005, §39.4, §44.3, §51.3
   target: '1.0'
@@ -531,11 +544,13 @@ requirements:
   implementation:
   - 'src/parser.cj: ChunkedParseSession feed(Array<Byte>/String), finish, preallocation limit, cancellation, and single-finish
     lifecycle'
+  - 'src/parser.cj: explicitly named BufferedInputSession preserves the same bounded finish-only execution contract'
   tests:
   - 'src/input_test.cj: arbitraryChunkBoundariesMatchAllAtOnce'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  - '2026-08-25: full cjpm test; exit 0; 1423 passed; arbitrary chunk, explicit buffered lifecycle and historical crash regressions passed'
+  notes: 'A-033: the compatibility ChunkedParseSession is buffered input, not a true incremental parser.'
 - id: MD-IN-005
   source: PRD §16 IN-006-007
   target: '1.0'
@@ -625,11 +640,14 @@ requirements:
   status: pass
   implementation:
   - 'src/source.cj: SourceOffset, SourceSpan half-open interval, SourcePosition, VisualPosition, and PositionEncoding'
+  - 'src/source.cj: SourceIndex line-start index and bounded per-line checkpoints for repeated position queries'
   tests:
   - 'src/core_test.cj: CoreContractTest.sourceSpansAreUtf8HalfOpenIntervals'
   - 'src/core_test.cj: CoreContractTest.mapsUtf8OffsetsToSourceAndUtf16Positions'
+  - 'src/input_test.cj: InputBehaviorTest.indexedPositionMapMatchesSourceAcrossCrlfUnicodeAndReplacement'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-25: socket-enabled full cjpm test; exit 0; 1415 passed, 0 skipped/error/failed; indexed map agrees with SourceBuffer across CRLF, UTF-8 and long-line checkpoints'
   notes: ''
 - id: MD-POS-002
   source: PRD §17.4, §53.7
@@ -643,12 +661,13 @@ requirements:
   - 编辑相关 API 显式标注 PositionEncoding
   status: pass
   implementation:
-  - src/source.cj
+  - 'src/source.cj: DisplayWidthPolicy explicitly distinguishes scalar columns with and without tab expansion'
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/input_test.cj: InputBehaviorTest.indexedPositionMapMatchesSourceAcrossCrlfUnicodeAndReplacement'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  - '2026-08-25: socket-enabled full cjpm test; exit 0; 1415 passed, 0 skipped/error/failed'
+  notes: 'See A-030: visual columns are Unicode scalar counts with an explicit tab policy, not terminal cell or grapheme width.'
 - id: MD-POS-003
   source: PRD §17.5, §51.4, §54.22
   target: '1.0'
@@ -662,10 +681,13 @@ requirements:
   status: pass
   implementation:
   - 'src/source.cj: SourceBuffer.utf16Position with emoji and CRLF handling'
+  - 'src/source.cj: SourcePositionMap caches SourceIndex line starts, UTF-16 checkpoints, visual checkpoints and replacement-map binary lookup'
   tests:
   - 'src/core_test.cj: CoreContractTest.mapsUtf8OffsetsToSourceAndUtf16Positions'
+  - 'src/input_test.cj: InputBehaviorTest.indexedPositionMapMatchesSourceAcrossCrlfUnicodeAndReplacement'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-25: socket-enabled full cjpm test; exit 0; 1415 passed, 0 skipped/error/failed; replacement, emoji, CRLF and checkpoint-boundary mappings passed'
   notes: ''
 - id: MD-POS-004
   source: PRD §17.6
@@ -1029,11 +1051,13 @@ requirements:
   - trivia 不被塞入 1.0 稳定 AST
   status: pass
   implementation:
-  - src/editor.cj
+  - 'src/editor.cj: one shared SyntaxToken arena with immutable per-node range views and lossless reconstruction'
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/editor_test.cj: EditorSnapshotTest.syntaxTreeRoundTripsEverySourceByte'
+  - 'src/editor_test.cj: EditorSnapshotTest.syntaxArenaRangesAndIndexesRemainLossless'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-25: socket-enabled full cjpm test; exit 0; 1416 passed, 0 skipped/error/failed; nested CST ranges remain lossless and public token arrays remain defensive copies'
   notes: ''
 - id: MD-CST-002
   source: PRD §21.3-4
@@ -1047,11 +1071,13 @@ requirements:
   - 允许没有对应 AST 节点的 syntax token
   status: pass
   implementation:
-  - src/editor.cj
+  - 'src/editor.cj: NodeId-to-syntax, NodeId-to-semantic and token-to-smallest-semantic indexes plus binary byte-offset token lookup'
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/editor_test.cj: EditorSnapshotTest.syntaxTreeRoundTripsEverySourceByte'
+  - 'src/editor_test.cj: EditorSnapshotTest.syntaxArenaRangesAndIndexesRemainLossless'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-25: socket-enabled full cjpm test; exit 0; 1416 passed, 0 skipped/error/failed; tokenAt and both mapping directions return indexed results'
   notes: ''
 - id: MD-CST-003
   source: PRD §21.5, §26.5, §54.39
@@ -1185,12 +1211,15 @@ requirements:
   implementation:
   - 'src/renderer.cj: text/attribute/raw HTML escaping, URI rejection, class sanitization, disabled task controls, output
     budget'
+  - 'src/renderer.cj: exact data-image media-type matching and Safe _blank rel hardening'
   tests:
   - 'src/renderer_test.cj: safeHtmlEscapesTextRawHtmlAndDangerousUris'
   - 'src/renderer_test.cj: specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
   - 'src/renderer_test.cj: outputBudgetCancellationAndSinkErrorsPropagate'
+  - 'src/renderer_test.cj: safeDataImageMimeAndBlankTargetPoliciesAreExact'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-25: cjpm test; exit 0; 1418 passed, 0 skipped/error/failed; exact MIME and Safe _blank rel regression passed'
   notes: ''
 - id: MD-HTML-003
   source: PRD §24.3, §51.5-6, §54.29
@@ -1207,10 +1236,13 @@ requirements:
   implementation:
   - 'src/renderer.cj: independent LinkUriPolicy and ImageUriPolicy'
   - 'src/renderer.cj: Safe default blocks remote/data images and allows relative images'
+  - 'src/renderer.cj: data-image allowlist compares the complete media type before parameters; Safe external _blank links add noopener noreferrer'
   tests:
   - 'src/renderer_test.cj: safeImagesBlockRemoteAndDataButAllowRelative'
+  - 'src/renderer_test.cj: safeDataImageMimeAndBlankTargetPoliciesAreExact'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-25: cjpm test; exit 0; 1418 passed, 0 skipped/error/failed; image/pngx rejection, MIME parameters and rel token deduplication passed'
   notes: ''
 - id: MD-HTML-004
   source: PRD §24.4-5
@@ -1263,12 +1295,14 @@ requirements:
   - 开启 SourceMap 的性能和内存开销单独记录
   status: pass
   implementation:
-  - src/renderer.cj
-  - src/artifact.cj
+  - 'src/renderer.cj: source-derived writes are recorded at the exact renderer write site; generated tags remain separate'
+  - 'src/artifact.cj: sorted write-time ranges and binary-search sourceSpanAt/nodeIdAt lookup'
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/artifact_test.cj: renderedSourceMapSeparatesSourceAndGeneratedRanges'
+  - 'src/artifact_test.cj: renderedSourceMapCannotMatchVisibleTextInsideGeneratedTags'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-25: full 1413-test suite exit 0; paragraph p and emphasis em tag-name collisions map generated tag bytes to None and visible bytes to their exact nodes'
   notes: ''
 - id: MD-TEXT-001
   source: PRD §25, §51.5
@@ -1564,11 +1598,14 @@ requirements:
   implementation:
   - 'src/renderer.cj: TextSink, SinkWriteResult, StringTextSink and SinkFailureException'
   - 'src/renderer.cj: HtmlRenderer.renderTo stops on first failure and writes without unbounded renderer buffer'
+  - 'src/renderer.cj: BufferedAsyncHtmlOutputSession explicitly names the pre-rendered buffered adapter contract'
   tests:
   - 'src/renderer_test.cj: outputBudgetCancellationAndSinkErrorsPropagate'
+  - 'src/renderer_test.cj: explicitlyNamedBufferedAsyncSessionPreservesBackpressure'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  - '2026-08-25: full cjpm test; exit 0; 1423 passed; buffered async backpressure regression passed'
+  notes: 'A-033: async describes sink backpressure only; it does not stream parser or renderer frames.'
 - id: MD-LIM-001
   source: PRD §6.6, §31, §51.6
   target: '1.0'
@@ -1600,11 +1637,15 @@ requirements:
   - 边界值、超一值和组合限制均有测试
   status: pass
   implementation:
-  - 'src/parser.cj: input, line, reference, table-column, URL, nesting, and AST-node limit checks'
+  - 'src/ast.cj, src/parser.cj: parser-owned NodeIdAllocator rejects the next allocation before maximumAstNodes is exceeded, including Parser SPI allocations'
+  - 'src/limits.cj, src/parser.cj: BoundedLiteralBuilder and literal guards enforce accumulated multiline and inline literal bytes during construction'
   tests:
   - 'src/parser_test.cj: preservesMalformedInlineAsTextAndHonorsResourceControls'
+  - 'src/parser_test.cj: enforcesAstNodeAndAccumulatedLiteralLimitsDuringConstruction'
+  - 'src/extension_test.cj: boundedParserSpiRunsAndFailuresAreStructuredWithoutStateLeak'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-25: full socket-enabled cjpm test; exit 0; 1413 passed, including low-node, multiline fenced/HTML literal and SPI allocation attacks'
   notes: ''
 - id: MD-SEC-001
   source: PRD §32 SEC-001, §49, §54.36-37
@@ -1622,11 +1663,14 @@ requirements:
   - src/renderer.cj
   - src/security_corpus_test.cj
   - SECURITY.md
+  - 'src/native/accelerator.cj: foreign declaration isolated in an opt-in subpackage'
+  - 'cjpm.toml and build.cj: default package has no native link option and does not invoke a C toolchain'
   tests:
   - Final full-suite and requirement-specific tests under src/*_test.cj
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  - '2026-08-25: CC/AR set to nonexistent paths; default cjpm build into a fresh /tmp target; exit 0'
+  notes: 'A-033: the optional native accelerator is not part of the core parser/renderer dependency graph.'
 - id: MD-SEC-002
   source: PRD §32 SEC-002, §44.7, §51.6
   target: '1.0'
@@ -1936,11 +1980,17 @@ requirements:
   status: pass
   implementation:
   - 'src/capabilities.cj: EngineCapabilities and MarkdownEngine.capabilities'
+  - 'src/parser.cj: MarkdownEngineBuilder.nativeScannerEnabled'
+  - 'src/capabilities.cj: ExecutionModelCapabilities reports buffered input/output and no-prefix failure semantics separately'
+  - 'src/scanner_accelerator.cj: AcceleratedMarkdownEngine reports the explicitly supplied scanner implementation'
   tests:
-  - 'src/capabilities_test.cj: reportsActualDialectAndDoesNotOverclaimFutureSupport'
+  - 'src/capabilities_test.cj: reportsActualDialectAndVersionedOptionalSupport'
+  - 'src/input_test.cj: nativeScannerCanBeDisabledWithoutChangingPublicParseSemantics'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  - '2026-08-25: full 1414-test suite exit 0; capabilities report native scanner available/enabled/String behavior and disabled byte parsing preserves rendered semantics'
+  - '2026-08-25: final full suite exit 0; 1423/1423; accelerated and pure capability reports matched their actual execution paths'
+  notes: 'A-033: native availability belongs to the explicit accelerated engine, while the default engine reports unavailable.'
 - id: MD-ART-001
   source: PRD §38
   target: '1.1'
@@ -1953,11 +2003,15 @@ requirements:
   - Debug JSON 明确为可读但不稳定，Parse Artifact 为严格稳定格式
   status: pass
   implementation:
-  - src/artifact.cj
+  - 'src/artifact.cj: schema-v1 artifacts reject non-identity decoded-to-original source mappings before encoding'
+  - 'src/source.cj: internal identity-mapping predicate is shared by artifact codecs'
+  - 'src/binary_artifact.cj: binary schema-v1 encode is fail-closed for non-identity mappings and uses canonical AST digests'
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/artifact_test.cj: artifactHitsOnlyExactSourceEngineAndDialect includes ReplaceInvalid rejection'
+  - 'src/document_system_test.cj: binarySnapshotIsVersionedStrictAndFuzzSafe'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-25: full 1413-test suite exit 0; invalid byte 0xFF under ReplaceInvalid cannot produce a schema-v1 parse artifact'
   notes: ''
 - id: MD-API-001
   source: PRD §39.1-8
@@ -2015,15 +2069,21 @@ requirements:
   implementation:
   - 'cjpm.toml: Cangjie 1.1 static package metadata for public module markdown'
   - '.gitignore: excludes generated target and cache artifacts'
+  - 'src/{core,render,extensions,editor,artifact,document,testkit}: curated public package facades with one-way dependency on the compatibility umbrella'
+  - 'src/native and scripts/build_native_scanner.py: opt-in accelerator plus Unix/MinGW/MSVC target-aware archive production'
+  - 'src/ast.cj and src/fingerprint.cj: NodeIdAllocator and Sha256 implementation helpers reduced to internal visibility'
   tests:
   - 'src/core_test.cj: package-level test suite'
+  - 'scripts/test_build_native_scanner.py: default no-op and Linux/MinGW/MSVC tool/linker command contracts'
+  - 'examples/quickstart: public consumer imports curated packages without native linkage'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: cjpm bundle --skip-test after the full 1410-test gate; exit 0; target/markdown-1.0.0.cjp created'
   - '2026-08-19: tools/markdown and examples/quickstart manifests explicitly link target/native/libmarkdown_scanner.a; direct consumer builds are part of the final gate'
   - '2026-08-25: tools/markdown directory rename validated by cjpm check, CLI release build, CLI smoke and full cjpm test 1410/1410'
   - '2026-08-25: generated tools/markdown/build-script-cache removed and recursively ignored to keep host-specific prebuild binaries out of source artifacts'
-  notes: 'The Cangjie module has no network, file, process or dynamic native dependency. The native scanner remains a static archive linked explicitly by repository consumers; its whole-input foreign declaration is not @FastNative because total call duration cannot be proven short and bounded. A published standalone consumer must ship the matching archive. This annotation removal does not satisfy blocked MD-PERF-002.'
+  - '2026-08-25: build helper contract tests 4/4; missing-toolchain pure build, explicit native archive, benchmark driver, quickstart and CLI builds exit 0; API snapshot 1192 declarations'
+  notes: 'A-033: root markdown remains the compatibility umbrella; curated packages shrink the import surface for new code. NodeIdAllocator and Sha256 are internal in pre-GA 0.8. Non-Linux command contracts are implemented but real target SDK/linker release qualification remains a platform-matrix responsibility.'
 - id: MD-CLI-001
   source: PRD §41.1-6, §49
   target: '1.0'
@@ -2145,6 +2205,9 @@ requirements:
   - src/testkit_fuzz_test.cj
   - src/security_corpus_test.cj
   - scripts/release_gate.sh
+  - 'tests/fuzz/native_scanner_fuzz.c and scripts/fuzz_native_scanner.py: coverage-guided libFuzzer with ASan/UBSan'
+  - 'tests/fuzz/native_scanner_sanitizer.c: deterministic scanner boundary sanitizer harness'
+  - 'tests/fuzz/crashes and tests/fuzz/native-scanner-corpus: checked-in historical crash and seed corpora'
   tests:
   - Final full-suite and requirement-specific tests under src/*_test.cj
   evidence:
@@ -2189,11 +2252,16 @@ requirements:
   - src/security_corpus_test.cj
   - scripts/release_gate.sh
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/testkit_fuzz_test.cj: deterministicFuzzSmokeCoversAllPublicPipelines'
+  - 'src/testkit_fuzz_test.cj: arbitraryByteFuzzMatchesBufferedAndChunkedUtf8Policies'
+  - 'src/testkit_fuzz_test.cj: historicalInvalidUtf8GfmCrashCorpusStaysFixed'
+  - 'src/security_corpus_test.cj: safeHtmlCorpusRejectsInjectionAndUriConfusion'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: deterministic fuzz and security corpus cases passed in full suite'
-  notes: ''
+  - '2026-08-25: seed 20260825 arbitrary-byte fuzz found two UTF-8 boundary crashes; both fixed and full 1419-test suite passed'
+  - '2026-08-25: scripts/fuzz_native_scanner.py --runs 10000; exit 0; coverage-guided libFuzzer completed and ASan/UBSan remained clean; full suite 1423/1423'
+  notes: 'A-033: libFuzzer mutates a temporary corpus copy, so checked-in seeds and historical regressions remain stable.'
 - id: MD-TST-005
   source: PRD §44.7-9, §51.7
   target: '1.0'
@@ -2231,16 +2299,19 @@ requirements:
   - src/benchmark_test.cj
   - src/renderer.cj
   - benchmarks/measure.py
+  - benchmarks/driver/src/main.cj
   - benchmarks/compare_markdown4cj.py
   - docs/reports/benchmark.md
   - docs/reports/markdown4cj-comparison.md
   tests:
   - Final full-suite and requirement-specific tests under src/*_test.cj
+  - scripts/test_benchmark_input_profiles.py
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: 12-corpus -O2 reference-host matrix recorded raw samples, per-corpus digests, pinned CPU, SDK, reference
     commits, geometric means, and custom-extension cost'
   - '2026-08-24: current-SDK same-language parse-only comparison pinned markdown4cj f43cfb3a and commonmark4cj 41499e6d; shared HTML behavior 12/12, 11-corpus geomean markdown speedup 10.996x, minimum 4.150x, maximum peak-RSS ratio 0.664x; this does not replace the blocked native-reference GA gates'
+  - '2026-08-25: String, Array<Byte>, OwnedUtf8Input and InputStream have distinct executable driver modes and future raw reports record copy/decode/native-scanner semantics; legacy commonmark-parse remains an explicitly documented owned-byte alias'
   notes: ''
 - id: MD-PERF-002
   source: PRD §45.4, §51.7, §52
@@ -2410,11 +2481,13 @@ requirements:
   implementation:
   - docs/versioning-and-compatibility.md
   - scripts/check_public_api.py
+  - 'src/extension.cj: SemVer validation and ordering for extension manifests and dependency constraints'
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/extension_test.cj: semanticVersionConstraintsFollowSemVerPrecedenceAndRejectInvalidVersions'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: public API snapshot verified; 1155 declarations'
+  - '2026-08-25: socket-enabled full cjpm test; exit 0; 1417 passed, 0 skipped/error/failed; public API snapshot verified at 1165 declarations'
   notes: ''
 - id: MD-COMP-002
   source: PRD §48.3-6
@@ -2453,6 +2526,8 @@ requirements:
   - CHANGELOG.md
   - LICENSE
   - scripts/release_gate.sh
+  - release-evidence.json
+  - scripts/release_evidence.py
   tests:
   - scripts/release_gate.sh
   - cjpm bundle
@@ -2460,8 +2535,10 @@ requirements:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: cjpm bundle --skip-test after the full 1410-test gate; exit 0; GA release withheld because prerequisite requirements
     are blocked'
+  - '2026-08-25: version reset to 0.8.0 because cjpm rejects prerelease SemVer; release-evidence.json is the single generated report source and release-ready validation fails closed for an unbound source/SDK or stale benchmark'
   notes: The package, CLI, documentation, reports, example, bundle, and private vulnerability reporting channel exist, but
-    mandatory MD-PERF-002 prevents a 1.0 GA declaration.
+    mandatory MD-PERF-002 prevents a 1.0 GA declaration. The pre-GA evidence remains draft and intentionally unbound until the
+    P0 changes are committed and rerun on the canonical remote host.
 - id: MD-QUAL-001
   source: PRD §51.7, §52
   target: '1.0'
@@ -2477,6 +2554,7 @@ requirements:
   implementation:
   - docs/reports/benchmark.md
   - docs/reports/fuzz-summary.md
+  - release-evidence.json
   tests:
   - scripts/release_gate.sh
   - benchmarks/measure.py

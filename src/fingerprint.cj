@@ -3,7 +3,44 @@ package markdown
 import std.collection.*
 import std.overflow.*
 
-public class Sha256 {
+// A descriptor is a sequence of typed fields, not a delimiter-separated
+// string. Length-prefixing every field makes the preimage unambiguous even
+// when extension-controlled values contain punctuation or empty strings.
+internal class CanonicalDescriptor {
+    private let out = StringBuilder()
+
+    internal init() {}
+
+    internal func append(value: String): Unit {
+        let bytes = value.toArray()
+        out.append("s")
+        out.append(bytes.size)
+        out.append(":")
+        out.append(value)
+    }
+
+    internal func append(value: Int64): Unit {
+        let encoded = value.toString()
+        out.append("i")
+        out.append(encoded.size)
+        out.append(":")
+        out.append(encoded)
+    }
+
+    internal func append(value: Bool): Unit {
+        out.append(if (value) {
+            "b1:1"
+        } else {
+            "b1:0"
+        })
+    }
+
+    internal func toString(): String {
+        out.toString()
+    }
+}
+
+internal class Sha256 {
     public static func digest(value: String): String {
         digestBytes(value.toArray())
     }

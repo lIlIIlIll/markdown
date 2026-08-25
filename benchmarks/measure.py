@@ -167,6 +167,12 @@ def main() -> int:
     ordinary_gfm_ratio = float(gfm_matrix["ordinary"]["medianRatio"])
     extension_samples = samples([str(DRIVER), "extension-html", str(MATRIX_ITERATIONS)], corpora["custom-extension"])
     common_one_mib = samples([str(DRIVER), "commonmark-parse", "1"], one_mib_common)
+    input_profile_samples = {
+        "string": samples([str(DRIVER), "commonmark-parse-string", "1"], one_mib_common),
+        "bytes": samples([str(DRIVER), "commonmark-parse-bytes", "1"], one_mib_common),
+        "ownedBytes": samples([str(DRIVER), "commonmark-parse-owned", "1"], one_mib_common),
+        "inputStream": samples([str(DRIVER), "commonmark-parse-stream", "1"], one_mib_common),
+    }
     common_html = samples([str(DRIVER), "commonmark-html", "1"], one_mib_common)
     source_map = samples([str(DRIVER), "commonmark-source-map", "1"], one_mib_common)
     cst = samples([str(DRIVER), "commonmark-cst", "1"], one_mib_common)
@@ -227,6 +233,23 @@ def main() -> int:
         "optionalFeatures": {"commonmarkParse": common_one_mib, "commonmarkHtml": common_html, "sourceMap": source_map,
             "cst": cst, "customExtensionHtml": extension_samples, "sourceMapTimeOverhead": source_map_overhead,
             "cstTimeOverhead": cst_overhead},
+        "inputProfiles": {
+            "string": {"driverMode": "commonmark-parse-string", "perParseConversionOrCopy": "none",
+                "processPreparation": "stdin bytes are decoded once before repeated parse calls",
+                "nativeScanner": false, "samples": input_profile_samples["string"]},
+            "bytes": {"driverMode": "commonmark-parse-bytes",
+                "perParseConversionOrCopy": "defensive byte copy and UTF-8 decode",
+                "processPreparation": "stdin bytes retained by driver", "nativeScanner": true,
+                "samples": input_profile_samples["bytes"]},
+            "ownedBytes": {"driverMode": "commonmark-parse-owned",
+                "perParseConversionOrCopy": "driver clone required for each ownership transfer",
+                "processPreparation": "stdin bytes retained by driver", "nativeScanner": true,
+                "samples": input_profile_samples["ownedBytes"]},
+            "inputStream": {"driverMode": "commonmark-parse-stream",
+                "perParseConversionOrCopy": "full stream buffering and UTF-8 decode",
+                "processPreparation": "new in-memory stream per parse", "nativeScanner": true,
+                "samples": input_profile_samples["inputStream"]},
+        },
         "scaling": {"samples": scaling, "slope": growth_slope, "adjacentRatios": adjacent},
         "pathologicalScaling": {"samples": pathological_scaling, "slope": pathological_slope,
             "adjacentRatios": pathological_adjacent},

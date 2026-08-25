@@ -30,3 +30,6 @@ rebases changed nodes, reuses unaffected NodeIds, and reports incremental
 diagnostic/source-map ranges. Structural, newline, reference, extension, or
 size-changing edits explicitly fall back to full parsing. `StableNodeId` is a
 content/path identity separate from 1.x document-local `NodeId`.
+Capability discovery reports this scope as `block-local-with-full-fallback`; it does not
+claim a general incremental parser, incremental dependency graph, or reduced
+peak memory for unsupported edits.

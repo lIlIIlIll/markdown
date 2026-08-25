@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "release": {
+    "version": "0.8.0",
+    "channel": "preview",
+    "status": "draft",
+    "complete": false
+  },
+  "source": {
+    "sourceCommit": null,
+    "repositoryHeadAtGeneration": "68a89d4b32b5aeeff2fd3a6edaaacb3e5db907f4",
+    "treeState": "dirty",
+    "reason": "The correctness and P1 hardening changes are not committed; release identity cannot be claimed yet."
+  },
+  "toolchain": {
+    "cangjieCompiler": "1.1.0-alpha.20260817040003",
+    "backend": "cjnative",
+    "targetTriple": "x86_64-unknown-linux-gnu",
+    "compilerFlags": ["-O2"]
+  },
+  "conformance": {
+    "commonmark": {
+      "version": "0.31.2",
+      "passed": 652,
+      "total": 652,
+      "corpusPath": "tests/spec/commonmark-0.31.2/spec.txt",
+      "corpusSha256": "257c41ad946f7a1414a499aca402a1aa8fdac3678532266611348c1cf54f4b80"
+    },
+    "gfm": {
+      "version": "0.29",
+      "passed": 671,
+      "total": 671,
+      "corpusPath": "tests/spec/gfm-0.29/spec.txt",
+      "corpusSha256": "7cea1221ffba48559d8748c8510d3c5bda40487a13667b80e77c14a1505b9821"
+    }
+  },
+  "api": {
+    "snapshotPath": "api/public-api-v1.txt",
+    "declarations": 1192,
+    "sha256": "979b58a15152b7c68bf5962f0a86cdc1c1b8588ab4cf3b75890de311a4b6ed1f"
+  },
+  "tests": {
+    "passed": 1423,
+    "total": 1423,
+    "skipped": 0,
+    "errors": 0,
+    "failed": 0
+  },
+  "benchmark": {
+    "status": "stale-unbound",
+    "rawPath": "docs/reports/benchmark-raw.json",
+    "rawSha256": "a107300090f599152ffd8e9020465666ed1b3b91c7e2fccd783ddcfc29d897d9",
+    "sourceCommit": null,
+    "sdkVersion": null,
+    "commonmarkRatio": 6.980369063437482,
+    "gfmRatio": 5.9896321915382815,
+    "ratioLimit": 2.5,
+    "cmark": "0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8",
+    "cmarkGfm": "0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b",
+    "note": "The raw report is the canonical remote release run, but it does not bind its tested source commit or Cangjie SDK and predates this P0 change."
+  }
+}

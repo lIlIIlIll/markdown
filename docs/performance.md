@@ -18,6 +18,9 @@ Allocation strategy:
   lifetime without exposing allocator state in the AST.
 - The semantic parser does not allocate one token per character. Lossless CST
   tokens are opt-in and their separately measured time overhead is reported.
+  A CST owns one token arena; nested syntax nodes hold immutable range views,
+  while public `toArray()` calls still return defensive copies. AST/CST and
+  byte-offset/token queries use construction-time indexes.
 - Renderers write directly to bounded Sink instances. Entity data is generated
   once as shared read-only tables.
 - Stable public node classes are retained instead of an ABI-risk compact tagged
@@ -31,6 +34,18 @@ Allocation strategy:
   because its total execution time is input-dependent and cannot be proven
   short and bounded. Long parser and allocation work remains in cancellable
   Cangjie code.
+
+Input APIs are reported separately under `inputProfiles` in every newly
+generated raw benchmark. `commonmark-parse` remains a compatibility alias for
+`commonmark-parse-owned`; it must not be presented as the default String facade.
+The benchmark driver explicitly imports `markdown.native.NativeLineScanner`,
+injects it into every engine, and links the checked native archive. The root
+library defaults to the pure-Cangjie scanner and carries no foreign link
+dependency; benchmark metadata must therefore keep `nativeScanner` explicit.
+The String profile performs one process-preparation decode from benchmark stdin
+and no conversion inside each parse call. Array input performs defensive copy
+and decoding per parse, owned input clones in the driver to create a fresh
+ownership transfer, and stream input performs full buffering and decoding.
 
 ## 2026-08-23 benchmark dependency transition
 
@@ -46,7 +61,12 @@ candidate. The fresh committed-H archive run at
 It used 11 256 KiB comparison corpora, 3 iterations per process, and 7 paired
 samples per side. CommonMark was `6.234490x` and GFM `4.845909x`; ordinary,
 scaling slope, adjacent growth, pathological slope, and RSS gates passed, but
-both ratio gates failed. `MD-PERF-002` remains blocked.
+both ratio gates failed. This is retained as a historical dependency-transition
+run, not as the current release value. The sole canonical release result is
+declared in `release-evidence.json` and rendered into README,
+`docs/reports/benchmark.md`, and the acceptance report. Its current status is
+`stale-unbound`, so `MD-PERF-002` remains blocked until a clean committed source
+and exact benchmark SDK are recorded by a fresh remote run.
 
 Reference provisioning reports `lockGenerationDeterminism: not claimed / not
 tested` and `sealedLockOfflineConsumptionReproducible: true`. Its official

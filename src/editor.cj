@@ -54,6 +54,8 @@ public class SyntaxNode {
     public let leadingTrivia: ImmutableArray<Trivia>
     public let trailingTrivia: ImmutableArray<Trivia>
     public let semanticNodeId: ?NodeId
+    internal let firstTokenIndex: Int64
+    internal let tokenCount: Int64
     public init(kind: SyntaxKind, span: SourceSpan, tokens: Array<SyntaxToken>, children!: Array<SyntaxNode> = [],
         leadingTrivia!: Array<Trivia> = [], trailingTrivia!: Array<Trivia> = [], semanticNodeId!: ?NodeId = None) {
         this.kind = kind
@@ -63,16 +65,33 @@ public class SyntaxNode {
         this.leadingTrivia = ImmutableArray<Trivia>(leadingTrivia)
         this.trailingTrivia = ImmutableArray<Trivia>(trailingTrivia)
         this.semanticNodeId = semanticNodeId
+        firstTokenIndex = 0
+        tokenCount = tokens.size
+    }
+
+    internal init(kind: SyntaxKind, span: SourceSpan, sharedTokens: Array<SyntaxToken>, firstTokenIndex: Int64,
+        tokenCount: Int64, children!: Array<SyntaxNode> = [], semanticNodeId!: ?NodeId = None) {
+        this.kind = kind
+        this.span = span
+        tokens = ImmutableArray<SyntaxToken>(sharedTokens, firstTokenIndex, tokenCount)
+        this.children = ImmutableArray<SyntaxNode>(children)
+        leadingTrivia = ImmutableArray<Trivia>(leadingTriviaInRange(sharedTokens, firstTokenIndex, tokenCount))
+        trailingTrivia = ImmutableArray<Trivia>(trailingTriviaInRange(sharedTokens, firstTokenIndex, tokenCount))
+        this.semanticNodeId = semanticNodeId
+        this.firstTokenIndex = firstTokenIndex
+        this.tokenCount = tokenCount
     }
 }
 
 public class SyntaxTree {
     public let source: SourceBuffer
     public let root: SyntaxNode
+    private let tokenArena: Array<SyntaxToken>
 
-    private init(source: SourceBuffer, root: SyntaxNode) {
+    private init(source: SourceBuffer, root: SyntaxNode, tokenArena: Array<SyntaxToken>) {
         this.source = source
         this.root = root
+        this.tokenArena = tokenArena
     }
 
     public static func parse(source: SourceBuffer, document!: ?Document = None): SyntaxTree {
@@ -158,17 +177,17 @@ public class SyntaxTree {
                     SourceSpan(source.originalOffset(start), source.originalOffset(index))))
         }
         let tokenValues = tokens.toArray()
-        let flatRoot = SyntaxNode(SyntaxKind.Document, SourceSpan(0, source.byteLength()), tokenValues,
-            leadingTrivia: leadingTriviaOf(tokenValues), trailingTrivia: trailingTriviaOf(tokenValues))
+        let flatRoot = SyntaxNode(SyntaxKind.Document, SourceSpan(0, source.byteLength()), tokenValues, 0,
+            tokenValues.size)
         match (document) {
-            case Some(value) => SyntaxTree(source, syntaxRootForDocument(value, tokenValues))
-            case None => SyntaxTree(source, flatRoot)
+            case Some(value) => SyntaxTree(source, syntaxRootForDocument(value, tokenValues), tokenValues)
+            case None => SyntaxTree(source, flatRoot, tokenValues)
         }
     }
 
     public func losslessText(): String {
         let out = StringBuilder()
-        for (token in root.tokens.toArray()) {
+        for (token in tokenArena) {
             out.append(token.raw)
         }
         out.toString()
@@ -177,62 +196,127 @@ public class SyntaxTree {
     public func originatingTokens(node: MarkdownNode): Array<SyntaxToken> {
         match (node.span) {
             case Some(span) =>
-                let out = ArrayList<SyntaxToken>()
-                for (token in root.tokens.toArray()) {
-                    if (token.span.startByte >= span.startByte && token.span.endByte <= span.endByte) {
-                        out.add(token)
-                    }
-                }
-                out.toArray()
+                let range = syntaxTokenRangeInSpan(tokenArena, span)
+                ImmutableArray<SyntaxToken>(tokenArena, range.first, range.count).toArray()
             case None => []
         }
+    }
+
+    public func tokenAt(byteOffset: Int64): ?SyntaxToken {
+        if (byteOffset < 0 || byteOffset >= source.byteLength()) {
+            return None
+        }
+        var low: Int64 = 0
+        var high = tokenArena.size
+        while (low < high) {
+            let middle = low + (high - low) / 2
+            if (tokenArena[middle].span.endByte <= byteOffset) {
+                low = middle + 1
+            } else {
+                high = middle
+            }
+        }
+        if (low < tokenArena.size && byteOffset >= tokenArena[low].span.startByte && byteOffset < tokenArena[low]
+            .span
+            .endByte) {
+            Some(tokenArena[low])
+        } else {
+            None
+        }
+    }
+
+    internal func tokenIndex(token: SyntaxToken): ?Int64 {
+        let range = syntaxTokenRangeInSpan(tokenArena, token.span)
+        var index = range.first
+        let end = range.first + range.count
+        while (index < end) {
+            if (tokenArena[index].span == token.span) {
+                return Some(index)
+            }
+            index++
+        }
+        None
+    }
+
+    internal func tokenArenaSize(): Int64 {
+        tokenArena.size
     }
 }
 
 public class SyntaxToAstMap {
     public let syntaxTree: SyntaxTree
     public let document: Document
+    private let syntaxNodesById: HashMap<Int64, SyntaxNode>
+    private let semanticNodesById: HashMap<Int64, MarkdownNode>
+    private let semanticNodeIdsByToken: Array<Int64>
     public init(syntaxTree: SyntaxTree, document: Document) {
         this.syntaxTree = syntaxTree
         this.document = document
-    }
-    public func originatingTokens(node: MarkdownNode): Array<SyntaxToken> {
-        syntaxTree.originatingTokens(node)
-    }
-    public func originatingSyntaxNode(node: MarkdownNode): ?SyntaxNode {
+        syntaxNodesById = HashMap<Int64, SyntaxNode>()
+        semanticNodesById = HashMap<Int64, MarkdownNode>()
+        semanticNodeIdsByToken = Array<Int64>(syntaxTree.tokenArenaSize(), repeat: -1)
+        let ownerLengths = Array<Int64>(syntaxTree.tokenArenaSize(), repeat: Int64.Max)
+        for (event in document.walk()) {
+            if (let WalkEvent.Enter(node) <- event) {
+                semanticNodesById.add(node.nodeId.value, node)
+            }
+        }
         let pending = ArrayList<SyntaxNode>()
         pending.add(syntaxTree.root)
         while (!pending.isEmpty()) {
             let current = pending.remove(at: pending.size - 1)
-            if (current.semanticNodeId == Some(node.nodeId)) {
-                return Some(current)
+            if (let Some(id) <- current.semanticNodeId) {
+                syntaxNodesById.add(id.value, current)
+                if (let Some(semantic) <- semanticNodesById.get(id.value)) {
+                    let length = current.span.length()
+                    var tokenIndex = current.firstTokenIndex
+                    let end = tokenIndex + current.tokenCount
+                    while (tokenIndex < end) {
+                        if (length < ownerLengths[tokenIndex]) {
+                            semanticNodeIdsByToken[tokenIndex] = semantic.nodeId.value
+                            ownerLengths[tokenIndex] = length
+                        }
+                        tokenIndex++
+                    }
+                }
             }
             for (child in current.children.toArray()) {
                 pending.add(child)
             }
         }
-        None
+    }
+    public func originatingTokens(node: MarkdownNode): Array<SyntaxToken> {
+        syntaxTree.originatingTokens(node)
+    }
+    public func originatingSyntaxNode(node: MarkdownNode): ?SyntaxNode {
+        syntaxNodesById.get(node.nodeId.value)
     }
     public func semanticNode(node: SyntaxNode): ?MarkdownNode {
         match (node.semanticNodeId) {
-            case Some(id) => AstQuery.byNodeId(document, id)
+            case Some(id) => semanticNodesById.get(id.value)
             case None => None
         }
     }
     public func semanticNode(token: SyntaxToken): ?MarkdownNode {
-        var best: ?MarkdownNode = None
-        var bestLength = Int64.Max
-        for (event in document.walk()) {
-            if (let WalkEvent.Enter(node) <- event) {
-                if (let Some(span) <- node.span) {
-                    if (span.containsSpan(token.span) && span.length() < bestLength) {
-                        best = Some(node)
-                        bestLength = span.length()
-                    }
+        match (syntaxTree.tokenIndex(token)) {
+            case Some(index) =>
+                let id = semanticNodeIdsByToken[index]
+                if (id >= 0) {
+                    semanticNodesById.get(id)
+                } else {
+                    None
                 }
-            }
+            case None => None
         }
-        best
+    }
+}
+
+private struct SyntaxTokenRange {
+    let first: Int64
+    let count: Int64
+    init(first: Int64, count: Int64) {
+        this.first = first
+        this.count = count
     }
 }
 
@@ -244,7 +328,7 @@ private func syntaxRootForDocument(document: Document, tokens: Array<SyntaxToken
                 case Some(value) => value;
                 case None => SourceSpan(0, 0)
             }
-            let nodeTokens = syntaxTokensInSpan(tokens, span)
+            let tokenRange = syntaxTokenRangeInSpan(tokens, span)
             let children = ArrayList<SyntaxNode>()
             for (child in node.children().toArray()) {
                 if (let Some(value) <- built.get(child.nodeId.value)) {
@@ -259,19 +343,17 @@ private func syntaxRootForDocument(document: Document, tokens: Array<SyntaxToken
                 }
             }
             built.add(node.nodeId.value,
-                SyntaxNode(kind, span, nodeTokens, children: children.toArray(),
-                    leadingTrivia: leadingTriviaOf(nodeTokens), trailingTrivia: trailingTriviaOf(nodeTokens),
+                SyntaxNode(kind, span, tokens, tokenRange.first, tokenRange.count, children: children.toArray(),
                     semanticNodeId: Some(node.nodeId)))
         }
     }
     match (built.get(document.nodeId.value)) {
         case Some(value) => value
-        case None => SyntaxNode(SyntaxKind.Document, SourceSpan(0, 0), [])
+        case None => SyntaxNode(SyntaxKind.Document, SourceSpan(0, 0), tokens, 0, 0)
     }
 }
 
-private func syntaxTokensInSpan(tokens: Array<SyntaxToken>, span: SourceSpan): Array<SyntaxToken> {
-    let values = ArrayList<SyntaxToken>()
+private func syntaxTokenRangeInSpan(tokens: Array<SyntaxToken>, span: SourceSpan): SyntaxTokenRange {
     var low: Int64 = 0
     var high = tokens.size
     while (low < high) {
@@ -282,37 +364,36 @@ private func syntaxTokensInSpan(tokens: Array<SyntaxToken>, span: SourceSpan): A
             high = middle
         }
     }
-    var index = low
+    let first = low
+    var index = first
     while (index < tokens.size && tokens[index].span.endByte <= span.endByte) {
-        values.add(tokens[index])
+        index++
+    }
+    SyntaxTokenRange(first, index - first)
+}
+
+private func leadingTriviaInRange(tokens: Array<SyntaxToken>, first: Int64, count: Int64): Array<Trivia> {
+    let values = ArrayList<Trivia>()
+    var index = first
+    let end = first + count
+    while (index < end && isTriviaToken(tokens[index])) {
+        values.add(Trivia(tokens[index].raw, tokens[index].span))
         index++
     }
     values.toArray()
 }
 
-private func leadingTriviaOf(tokens: Array<SyntaxToken>): Array<Trivia> {
+private func trailingTriviaInRange(tokens: Array<SyntaxToken>, first: Int64, count: Int64): Array<Trivia> {
     let values = ArrayList<Trivia>()
-    for (token in tokens) {
-        if (isTriviaToken(token)) {
-            values.add(Trivia(token.raw, token.span))
-        } else {
-            break
-        }
-    }
-    values.toArray()
-}
-
-private func trailingTriviaOf(tokens: Array<SyntaxToken>): Array<Trivia> {
-    let values = ArrayList<Trivia>()
-    var index = tokens.size - 1
-    while (index >= 0 && isTriviaToken(tokens[index])) {
+    var index = first + count - 1
+    while (index >= first && isTriviaToken(tokens[index])) {
         values.add(Trivia(tokens[index].raw, tokens[index].span))
         index--
     }
     let ordered = ArrayList<Trivia>()
     var reverse = values.size - 1
     while (reverse >= 0) {
-        ordered.add(values[reverse]);
+        ordered.add(values[reverse])
         reverse--
     }
     ordered.toArray()

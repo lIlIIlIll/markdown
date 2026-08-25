@@ -36,6 +36,7 @@ public class MarkdownEngineBuilder {
     private var limitsValue = ParseLimits.safe()
     private var dialectValue: ?MarkdownDialect = None
     private var limitsExplicit = false
+    private var nativeScannerEnabledValue = true
 
     public init() {}
 
@@ -60,12 +61,17 @@ public class MarkdownEngineBuilder {
         this
     }
 
+    public func nativeScannerEnabled(enabled: Bool): MarkdownEngineBuilder {
+        nativeScannerEnabledValue = enabled
+        this
+    }
+
     public func build(): MarkdownEngine {
         let compiled = match (dialectValue) {
             case Some(dialect) => DialectCompiler.compile(dialect)
             case None => CompiledMarkdownDialect.builtin(profileValue)
         }
-        MarkdownEngine(profileValue, limitsValue, compiled)
+        MarkdownEngine(profileValue, limitsValue, compiled, nativeScannerEnabledValue)
     }
 }
 
@@ -73,11 +79,14 @@ public class MarkdownEngine {
     public let profile: MarkdownProfile
     public let limits: ParseLimits
     public let dialect: CompiledMarkdownDialect
+    internal let nativeScannerEnabledValue: Bool
 
-    internal init(profile: MarkdownProfile, limits: ParseLimits, dialect: CompiledMarkdownDialect) {
+    internal init(profile: MarkdownProfile, limits: ParseLimits, dialect: CompiledMarkdownDialect,
+        nativeScannerEnabled: Bool) {
         this.profile = profile
         this.limits = limits
         this.dialect = dialect
+        this.nativeScannerEnabledValue = nativeScannerEnabled
     }
 
     public static func builder(): MarkdownEngineBuilder {
@@ -93,10 +102,23 @@ public class MarkdownEngine {
         if (value.size > limits.maximumInputBytes) {
             throw LimitExceededException("input_bytes", limits.maximumInputBytes, value.size, "input")
         }
-        parseSource(SourceBuffer(value), [], cancellation, budget)
+        let noAccelerator: ?LineScannerAccelerator = None
+        parseSource(SourceBuffer(value), [], cancellation, budget, noAccelerator)
     }
 
     public func parsePartial(
+        value: String,
+        cancellation!: CancellationToken = CancellationToken.none(),
+        budget!: OperationBudget = OperationBudget.safe()
+    ): ParseResult {
+        tryParse(value, cancellation: cancellation, budget: budget)
+    }
+
+    /**
+     * Returns either a complete parse or a failure result with an empty
+     * document. It does not expose a completed AST prefix.
+     */
+    public func tryParse(
         value: String,
         cancellation!: CancellationToken = CancellationToken.none(),
         budget!: OperationBudget = OperationBudget.safe()
@@ -117,18 +139,39 @@ public class MarkdownEngine {
         cancellation!: CancellationToken = CancellationToken.none(),
         budget!: OperationBudget = OperationBudget.safe()
     ): ParseResult {
+        let noAccelerator: ?LineScannerAccelerator = None
+        parseBytesWithAccelerator(bytes, utf8Policy, cancellation, budget, noAccelerator)
+    }
+
+    internal func parseBytesWithAccelerator(
+        bytes: Array<Byte>,
+        utf8Policy: Utf8Policy,
+        cancellation: CancellationToken,
+        budget: OperationBudget,
+        accelerator: ?LineScannerAccelerator
+    ): ParseResult {
         cancellation.throwIfCancelled(phase: "input")
         if (bytes.size > limits.maximumInputBytes) {
             throw LimitExceededException("input_bytes", limits.maximumInputBytes, bytes.size, "input")
         }
         let decoded = decodeUtf8Input(bytes, utf8Policy)
-        parseSource(decoded.source, decoded.diagnostics, cancellation, budget)
+        parseSource(decoded.source, decoded.diagnostics, cancellation, budget, accelerator)
     }
 
     public func parse(
         input: OwnedUtf8Input,
         cancellation!: CancellationToken = CancellationToken.none(),
         budget!: OperationBudget = OperationBudget.safe()
+    ): ParseResult {
+        let noAccelerator: ?LineScannerAccelerator = None
+        parseOwnedWithAccelerator(input, cancellation, budget, noAccelerator)
+    }
+
+    internal func parseOwnedWithAccelerator(
+        input: OwnedUtf8Input,
+        cancellation: CancellationToken,
+        budget: OperationBudget,
+        accelerator: ?LineScannerAccelerator
     ): ParseResult {
         cancellation.throwIfCancelled(phase: "input")
         let bytes = input.consume()
@@ -137,7 +180,7 @@ public class MarkdownEngine {
         }
         try {
             let value = String.fromUtf8(bytes)
-            parseSource(SourceBuffer(value, bytes, true), [], cancellation, budget)
+            parseSource(SourceBuffer(value, bytes, true), [], cancellation, budget, accelerator)
         } catch (error: MarkdownException) {
             throw error
         } catch (_: Exception) {
@@ -150,6 +193,17 @@ public class MarkdownEngine {
         utf8Policy!: Utf8Policy = Utf8Policy.Strict,
         cancellation!: CancellationToken = CancellationToken.none(),
         budget!: OperationBudget = OperationBudget.safe()
+    ): ParseResult {
+        let noAccelerator: ?LineScannerAccelerator = None
+        parseStreamWithAccelerator(input, utf8Policy, cancellation, budget, noAccelerator)
+    }
+
+    internal func parseStreamWithAccelerator(
+        input: InputStream,
+        utf8Policy: Utf8Policy,
+        cancellation: CancellationToken,
+        budget: OperationBudget,
+        accelerator: ?LineScannerAccelerator
     ): ParseResult {
         let bytes = ArrayList<Byte>()
         let buffer = Array<Byte>(8192, repeat: 0)
@@ -175,7 +229,7 @@ public class MarkdownEngine {
         } catch (error: Exception) {
             throw InputReadFailureException(error)
         }
-        parse(bytes.toArray(), utf8Policy: utf8Policy, cancellation: cancellation, budget: budget)
+        parseBytesWithAccelerator(bytes.toArray(), utf8Policy, cancellation, budget, accelerator)
     }
 
     public func newSession(
@@ -186,13 +240,24 @@ public class MarkdownEngine {
         ChunkedParseSession(this, utf8Policy, cancellation, budget)
     }
 
+    /** Creates a session that buffers all input and parses only at finish(). */
+    public func newBufferedInputSession(
+        utf8Policy!: Utf8Policy = Utf8Policy.Strict,
+        cancellation!: CancellationToken = CancellationToken.none(),
+        budget!: OperationBudget = OperationBudget.safe()
+    ): BufferedInputSession {
+        BufferedInputSession(this, utf8Policy, cancellation, budget)
+    }
+
     private func parseSource(
         source: SourceBuffer,
         inputDiagnostics: Array<Diagnostic>,
         cancellation: CancellationToken,
-        budget: OperationBudget
+        budget: OperationBudget,
+        accelerator: ?LineScannerAccelerator
     ): ParseResult {
-        ParserSession(profile, limits, cancellation, budget, source, dialect).parse(inputDiagnostics)
+        ParserSession(profile, limits, cancellation, budget, source, dialect, nativeScannerEnabledValue, accelerator)
+            .parse(inputDiagnostics)
     }
 }
 
@@ -235,6 +300,51 @@ public class ChunkedParseSession {
     public func finish(): ParseResult {
         if (finished) {
             throw IllegalStateException("chunked session is already finished")
+        }
+        finished = true
+        engine.parse(bytes.toArray(), utf8Policy: utf8Policy, cancellation: cancellation, budget: budget)
+    }
+}
+
+public class BufferedInputSession {
+    private let engine: MarkdownEngine
+    private let utf8Policy: Utf8Policy
+    private let cancellation: CancellationToken
+    private let budget: OperationBudget
+    private let bytes = ArrayList<Byte>()
+    private var finished = false
+
+    internal init(
+        engine: MarkdownEngine,
+        utf8Policy: Utf8Policy,
+        cancellation: CancellationToken,
+        budget: OperationBudget
+    ) {
+        this.engine = engine
+        this.utf8Policy = utf8Policy
+        this.cancellation = cancellation
+        this.budget = budget
+    }
+
+    public func feed(chunk: Array<Byte>): Unit {
+        if (finished) {
+            throw IllegalStateException("buffered input session is already finished")
+        }
+        cancellation.throwIfCancelled(phase: "input")
+        if (bytes.size + chunk.size > engine.limits.maximumInputBytes) {
+            throw LimitExceededException("input_bytes", engine.limits.maximumInputBytes, bytes.size + chunk.size,
+                "input")
+        }
+        bytes.add(all: chunk)
+    }
+
+    public func feed(chunk: String): Unit {
+        feed(chunk.toArray())
+    }
+
+    public func finish(): ParseResult {
+        if (finished) {
+            throw IllegalStateException("buffered input session is already finished")
         }
         finished = true
         engine.parse(bytes.toArray(), utf8Policy: utf8Policy, cancellation: cancellation, budget: budget)
@@ -449,7 +559,9 @@ internal class ParserSession {
     private let budget: OperationBudget
     private let source: SourceBuffer
     private let dialect: CompiledMarkdownDialect
-    private let ids = NodeIdAllocator()
+    private let ids: NodeIdAllocator
+    private let nativeScannerEnabled: Bool
+    private let lineScannerAccelerator: ?LineScannerAccelerator
     private let diagnostics = ArrayList<Diagnostic>()
     private var references: Array<ReferenceDefinition> = []
     private let referenceIndex = HashMap<String, ReferenceDefinition>()
@@ -459,13 +571,17 @@ internal class ParserSession {
     private var suppressedBlockRule = ""
 
     init(profile: MarkdownProfile, limits: ParseLimits, cancellation: CancellationToken, budget: OperationBudget,
-        source: SourceBuffer, dialect: CompiledMarkdownDialect) {
+        source: SourceBuffer, dialect: CompiledMarkdownDialect, nativeScannerEnabled: Bool,
+        lineScannerAccelerator: ?LineScannerAccelerator) {
         this.profile = profile
         this.limits = limits
         this.cancellation = cancellation
         this.budget = budget
         this.source = source
         this.dialect = dialect
+        this.ids = NodeIdAllocator(limits.maximumAstNodes)
+        this.nativeScannerEnabled = nativeScannerEnabled
+        this.lineScannerAccelerator = lineScannerAccelerator
     }
 
     func parse(inputDiagnostics: Array<Diagnostic>): ParseResult {
@@ -522,15 +638,23 @@ internal class ParserSession {
 
     private func splitLines(source: SourceBuffer): Array<LineRecord> {
         let value = source.text()
-        if (let Some(bytes) <- source.decodedBytesForNative()) {
-            if (let Some(nativeLines) <- splitLinesNative(value, bytes)) {
-                return nativeLines
+        if (nativeScannerEnabled) {
+            if (let Some(accelerator) <- lineScannerAccelerator) {
+                if (let Some(bytes) <- source.decodedBytesForNative()) {
+                    if (let Some(acceleratedLines) <- splitLinesAccelerated(value, bytes, accelerator)) {
+                        return acceleratedLines
+                    }
+                }
             }
         }
         splitLinesCangjie(value)
     }
 
-    private func splitLinesNative(value: String, bytes: Array<Byte>): ?Array<LineRecord> {
+    private func splitLinesAccelerated(
+        value: String,
+        bytes: Array<Byte>,
+        accelerator: LineScannerAccelerator
+    ): ?Array<LineRecord> {
         if (value.size == 0) {
             scanSteps(0)
             return Some([LineRecord("", 0, 0, 0, hasCoreInlineSpecial: false)])
@@ -538,22 +662,12 @@ internal class ParserSession {
         // One packed UInt64 per line is bounded, compact, and lets the native
         // pass stop safely when unusually dense input exceeds the estimate.
         let capacity = max(16, bytes.size / 8 + 16)
-        let records = Array<UInt64>(capacity, repeat: 0u64)
-        let scannedLines = unsafe {
-            let inputHandle = acquireArrayRawData(bytes)
-            let recordsHandle = acquireArrayRawData(records)
-            try {
-                MD_Markdown_ScanLines(inputHandle.pointer, bytes.size, recordsHandle.pointer, capacity)
-            } finally {
-                releaseArrayRawData(recordsHandle)
-                releaseArrayRawData(inputHandle)
-            }
+        let records = match (accelerator.scanLines(bytes, capacity)) {
+            case Some(value) => value
+            case None => return None
         }
-        if (scannedLines == -2) {
-            return None
-        }
-        if (scannedLines <= 0 || scannedLines > capacity) {
-            throw IllegalStateException("native line scanner returned an invalid record count")
+        if (records.size <= 0 || records.size > capacity) {
+            throw IllegalStateException("line scanner accelerator returned an invalid record count")
         }
         scanSteps(value.size)
         let lines = ArrayList<LineRecord>()
@@ -562,11 +676,16 @@ internal class ParserSession {
         } else {
             0
         }
-        for (lineIndex in 0..scannedLines) {
+        for (lineIndex in 0..records.size) {
             let packed = records[lineIndex]
             let endWithNewline = Int64(packed >> 3)
             let newlineWidth = Int64(packed & 0x3u64)
             let end = endWithNewline - newlineWidth
+            if (endWithNewline < start || endWithNewline > bytes.size || end < start || newlineWidth > 2 || (lineIndex +
+                1 == records.size && (endWithNewline != bytes.size || newlineWidth != 0)) || (lineIndex + 1 < records
+                .size && !validAcceleratedNewline(bytes, end, endWithNewline))) {
+                throw IllegalStateException("line scanner accelerator returned an invalid packed record")
+            }
             if (end - start > limits.maximumLineBytes) {
                 throw LimitExceededException("line_bytes", limits.maximumLineBytes, end - start, "input",
                     span: Some(mappedSpan(start, end)))
@@ -576,6 +695,14 @@ internal class ParserSession {
             start = endWithNewline
         }
         Some(lines.toArray())
+    }
+
+    private func validAcceleratedNewline(bytes: Array<Byte>, end: Int64, endWithNewline: Int64): Bool {
+        let width = endWithNewline - end
+        if (width == 1) {
+            return bytes[end] == b'\n' || bytes[end] == b'\r'
+        }
+        width == 2 && bytes[end] == b'\r' && bytes[end + 1] == b'\n'
     }
 
     private func splitLinesCangjie(value: String): Array<LineRecord> {
@@ -1005,16 +1132,17 @@ internal class ParserSession {
             index++
         }
         let literalStorage = if (contentStart >= 0 && literalCanUseSourceSlice) {
+            ensureLiteralBytes(contentEnd - contentStart, "block_parse")
             LiteralStorage.Slice(source.sourceSlice(mappedSpan(contentStart, contentEnd)))
         } else {
-            let literal = StringBuilder()
+            let literal = BoundedLiteralBuilder(limits.maximumLiteralBytes, budget, cancellation, "block_parse")
             for (lineIndex in start + 1..contentStop) {
                 literal.append(stripUpToSpaces(lines[lineIndex].text, leading))
                 if (lines[lineIndex].endWithNewline > lines[lineIndex].endByte) {
-                    literal.append("\n")
+                    literal.appendByte(b'\n')
                 }
             }
-            LiteralStorage.Copy(literal.toString())
+            LiteralStorage.Copy(literal.finish())
         }
         (CodeBlock(
                 ids.next(),
@@ -1050,8 +1178,9 @@ internal class ParserSession {
         while (!parts.isEmpty() && parts[parts.size - 1].isEmpty()) {
             parts.remove(at: parts.size - 1)
         }
-        (CodeBlock(ids.next(), CodeBlockKind.Indented, joinStrings(parts.toArray(), "\n"),
-                mappedSpan(lines[start].startByte, last.endByte)), index)
+        let literal = joinStrings(parts.toArray(), "\n")
+        ensureLiteralBytes(literal.size, "block_parse")
+        (CodeBlock(ids.next(), CodeBlockKind.Indented, literal, mappedSpan(lines[start].startByte, last.endByte)), index)
     }
 
     private func scanQuote(lines: Array<LineRecord>, start: Int64, depth: Int64): PendingQuoteState {
@@ -1273,7 +1402,7 @@ internal class ParserSession {
     }
 
     private func parseHtmlBlock(lines: Array<LineRecord>, start: Int64): (HtmlBlock, Int64) {
-        let literal = StringBuilder()
+        let literal = BoundedLiteralBuilder(limits.maximumLiteralBytes, budget, cancellation, "block_parse")
         let blockType = htmlBlockType(lines[start].text)
         var index = start
         var last = lines[start]
@@ -1282,7 +1411,7 @@ internal class ParserSession {
                 break
             }
             if (index > start) {
-                literal.append("\n")
+                literal.appendByte(b'\n')
             }
             literal.append(lines[index].text)
             last = lines[index]
@@ -1293,7 +1422,7 @@ internal class ParserSession {
             index++
         }
         let span = mappedSpan(lines[start].startByte, last.endByte)
-        (HtmlBlock(ids.next(), storageForLiteral(literal.toString(), span), blockType, span), index)
+        (HtmlBlock(ids.next(), storageForLiteral(literal.finish(), span), blockType, span), index)
     }
 
     private func parseTable(lines: Array<LineRecord>, start: Int64): (Table, Int64) {
@@ -1605,9 +1734,11 @@ internal class ParserSession {
             let marker = codeMarker(text, start)
             let end = findExactCodeCloser(text, start, marker.size)
             if (end >= 0) {
+                let literal = normalizeCodeLiteral(text[start + marker.size..end])
+                ensureLiteralBytes(literal.size, "inline_parse", consumeBudget: false)
                 return Some(
-                    (CodeSpan(ids.next(), normalizeCodeLiteral(text[start + marker.size..end]), marker,
-                            mappedSpan(baseOffset + start, baseOffset + end + marker.size)), end + marker.size))
+                    (CodeSpan(ids.next(), literal, marker, mappedSpan(baseOffset + start, baseOffset + end + marker.size)),
+                        end + marker.size))
             }
             return Some((parsedText(marker, marker, baseOffset + start, baseOffset + start + marker.size), start + marker
                     .size))
@@ -1691,6 +1822,7 @@ internal class ParserSession {
                                 mappedSpan(baseOffset + start, baseOffset + end + 1)), end + 1))
                 }
                 if (isInlineHtml(body)) {
+                    ensureLiteralBytes(end + 1 - start, "inline_parse", consumeBudget: false)
                     return Some(
                         (HtmlInline(ids.next(), text[start..end + 1], mappedSpan(baseOffset + start, baseOffset + end + 1)),
                             end + 1))
@@ -2054,6 +2186,7 @@ internal class ParserSession {
                 budget.consumeScan(
                     steps: syntaxRuleCost(rule.resourceCost, lines[start].endByte - lines[start].startByte))
                 let span = mappedSpan(lines[start].startByte, lines[start].endByte)
+                ensureLiteralBytes(captured.size, "extension_parse", consumeBudget: false)
                 let children: Array<MarkdownNode> = match (rule.contentMode) {
                     case BlockContentMode.Markdown =>
                         if (captured.isEmpty()) {
@@ -2123,6 +2256,7 @@ internal class ParserSession {
             budget.consumeExtensionCallback()
             budget.consumeScan(steps: syntaxRuleCost(rule.resourceCost, lines[index].endByte - lines[start].startByte))
             let literal = joinLineRecords(lines, start + 1, index)
+            ensureLiteralBytes(literal.size, "extension_parse")
             let span = mappedSpan(lines[start].startByte, lines[index].endByte)
             let kindId = if (!rule.kindFromFirstWord || name.isEmpty()) {
                 rule.ruleId
@@ -2329,6 +2463,7 @@ internal class ParserSession {
     }
 
     private func storedText(raw: String, value: String, span: SourceSpan): Text {
+        ensureLiteralBytes(max(raw.size, value.size), "inline_parse", consumeBudget: false)
         let useSlice = if (span.length() >= 256) {
             source.matches(span, raw)
         } else {
@@ -2370,6 +2505,7 @@ internal class ParserSession {
                                     let mergedSpan = SourceSpan(previousSpan.startByte, currentSpan.endByte)
                                     let raw = previous.raw + current.raw
                                     let value = previous.value + current.value
+                                    ensureLiteralBytes(max(raw.size, value.size), "inline_parse", consumeBudget: false)
                                     let useSlice = if (mergedSpan.length() >= 256) {
                                         source.matches(mergedSpan, raw)
                                     } else {
@@ -2502,6 +2638,16 @@ internal class ParserSession {
             case ProfileKind.Gfm029 => true
             case ProfileKind.GfmModernV1 => true
             case _ => false
+        }
+    }
+
+    private func ensureLiteralBytes(observed: Int64, phase: String, consumeBudget!: Bool = true): Unit {
+        cancellation.throwIfCancelled(phase: phase)
+        if (observed > limits.maximumLiteralBytes) {
+            throw LimitExceededException("literal_bytes", limits.maximumLiteralBytes, observed, phase)
+        }
+        if (consumeBudget) {
+            budget.consumeScan(steps: observed)
         }
     }
 
@@ -3062,15 +3208,13 @@ private func isBlockTag(name: String): Bool {
 }
 
 private func lowerAsciiValue(value: String): String {
-    let out = StringBuilder()
-    for (byte in value.toArray()) {
-        out.appendFromUtf8([if (byte >= b'A' && byte <= b'Z') {
-            byte + 32
-        } else {
-            byte
-        }])
+    let bytes = value.toArray()
+    for (index in 0..bytes.size) {
+        if (bytes[index] >= b'A' && bytes[index] <= b'Z') {
+            bytes[index] += 32
+        }
     }
-    out.toString()
+    String.fromUtf8(bytes)
 }
 
 private func isBlockStart(lines: Array<LineRecord>, index: Int64): Bool {
@@ -3827,8 +3971,7 @@ private func isEmailAutolink(body: String): Bool {
     }
     for (index in 0..at) {
         let byte = body[index]
-        if (!(isAsciiLetterByte(byte) || (byte >= b'0' && byte <= b'9') || ".!#$%&'*+/=?^_`{|}~-".contains(
-            body[index..index + 1]))) {
+        if (!(isAsciiLetterByte(byte) || (byte >= b'0' && byte <= b'9') || isEmailLocalPunctuationByte(byte))) {
             return false
         }
     }
@@ -3842,6 +3985,12 @@ private func isEmailAutolink(body: String): Bool {
         }
     }
     hasDot && body[at + 1] != b'.' && body[body.size - 1] != b'.' && body[body.size - 1] != b'-'
+}
+
+private func isEmailLocalPunctuationByte(byte: Byte): Bool {
+    byte == 33 || byte == 35 || byte == 36 || byte == 37 || byte == 38 || byte == 39 || byte == 42 || byte == 43 ||
+        byte == 45 || byte == 46 || byte == 47 || byte == 61 || byte == 63 || byte == 94 || byte == 95 || byte == 96 ||
+        byte == 123 || byte == 124 || byte == 125 || byte == 126
 }
 
 private func isAsciiLetterByte(byte: Byte): Bool {

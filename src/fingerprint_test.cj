@@ -20,4 +20,52 @@ class FingerprintTest {
         @Expect(first.fingerprint.size, 64)
         @Expect(first.fingerprint != changed.fingerprint, true)
     }
+
+    @TestCase
+    func canonicalFingerprintEncodingHasNoDelimiterOrFieldSplitCollisions(): Unit {
+        let emptyFirst = CanonicalDescriptor()
+        emptyFirst.append("")
+        emptyFirst.append("文@|:/")
+        let emptyLast = CanonicalDescriptor()
+        emptyLast.append("文@|:/")
+        emptyLast.append("")
+        @Expect(Sha256.digest(emptyFirst.toString()) == Sha256.digest(emptyLast.toString()), false)
+
+        let splitLeft = DialectCompiler.compile(MarkdownDialect.define("a@b", "c").build())
+        let splitRight = DialectCompiler.compile(MarkdownDialect.define("a", "b@c").build())
+        @Expect(splitLeft.fingerprint == splitRight.fingerprint, false)
+
+        let unicode = DialectCompiler.compile(MarkdownDialect.define("文档@|:/", "β@|:/").build())
+        @Expect(unicode.fingerprint.size, 64)
+
+        let firstOrder = DialectCompiler.compile(
+            MarkdownDialect
+                .define("ordered-set", "1")
+                .enable(ExtensionManifest("a", "1.0.0", "x"))
+                .enable(ExtensionManifest("b", "1.0.0", "y"))
+                .build())
+        let reverseOrder = DialectCompiler.compile(
+            MarkdownDialect
+                .define("ordered-set", "1")
+                .enable(ExtensionManifest("b", "1.0.0", "y"))
+                .enable(ExtensionManifest("a", "1.0.0", "x"))
+                .build())
+        @Expect(firstOrder.fingerprint, reverseOrder.fingerprint)
+
+        let rulesLeft = DialectCompiler.compile(
+            MarkdownDialect
+                .define("rule-order", "1")
+                .enable(ExtensionManifest("x", "1.0.0", "1"))
+                .inline(InlineSyntax.define("x", "a").delimiter("%%"))
+                .inline(InlineSyntax.define("x", "b").delimiter("^^"))
+                .build())
+        let rulesRight = DialectCompiler.compile(
+            MarkdownDialect
+                .define("rule-order", "1")
+                .enable(ExtensionManifest("x", "1.0.0", "1"))
+                .inline(InlineSyntax.define("x", "b").delimiter("^^"))
+                .inline(InlineSyntax.define("x", "a").delimiter("%%"))
+                .build())
+        @Expect(rulesLeft.fingerprint == rulesRight.fingerprint, false)
+    }
 }

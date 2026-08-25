@@ -36,6 +36,35 @@ class EditorSnapshotTest {
     }
 
     @TestCase
+    func syntaxArenaRangesAndIndexesRemainLossless(): Unit {
+        let source = "# a *b*\n\nparagraph"
+        let snapshot = MarkdownEngine.builder().build().parseSnapshot(source)
+        let heading = snapshot.result.document.children()[0]
+        match (snapshot.syntaxMap.originatingSyntaxNode(heading)) {
+            case Some(node) =>
+                @Expect(node.firstTokenIndex >= 0, true)
+                @Expect(node.tokenCount, node.tokens.size)
+                @Expect(node.tokenCount < snapshot.syntaxTree.root.tokens.size, true)
+                let copy = node.tokens.toArray()
+                let originalSpan = node.tokens[0].span
+                copy[0] = SyntaxToken(SyntaxKind.Invalid, "x", SourceSpan(0, 0))
+                @Expect(node.tokens[0].span, originalSpan)
+            case None => @Expect(false)
+        }
+        match (snapshot.syntaxTree.tokenAt(0)) {
+            case Some(token) =>
+                @Expect(token.span, SourceSpan(0, 1))
+                match (snapshot.syntaxMap.semanticNode(token)) {
+                    case Some(node) => @Expect(node.nodeId, heading.nodeId)
+                    case None => @Expect(false)
+                }
+            case None => @Expect(false)
+        }
+        @Expect(snapshot.syntaxTree.tokenAt(snapshot.result.source.byteLength()).isNone(), true)
+        @Expect(snapshot.syntaxTree.losslessText(), source)
+    }
+
+    @TestCase
     func snapshotAppliesValidatedUtf8AndUtf16Edits(): Unit {
         let snapshot = MarkdownEngine.builder().build().parseSnapshot("A😀B")
         let changed = snapshot.applyUtf16Edit(Utf16Position(0, 1), Utf16Position(0, 3), "中")
@@ -112,7 +141,7 @@ class EditorSnapshotTest {
             .dialect(
                 MarkdownDialect
                     .define("raw", "1")
-                    .enable(ExtensionManifest("raw", "1", "1"))
+                    .enable(ExtensionManifest("raw", "1.0.0", "1"))
                     .inline(InlineSyntax.define("raw", "mark").delimiter("=="))
                     .build())
             .build()

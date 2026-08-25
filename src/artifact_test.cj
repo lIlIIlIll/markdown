@@ -36,6 +36,20 @@ class ArtifactSourceMapTest {
     }
 
     @TestCase
+    func renderedSourceMapCannotMatchVisibleTextInsideGeneratedTags(): Unit {
+        let paragraph = HtmlRenderer().renderWithSourceMap(Markdown.parse("p").document)
+        let noSpan: ?SourceSpan = None
+        @Expect(paragraph.content, "<p>p</p>\n")
+        @Expect(paragraph.sourceSpanAt(1), noSpan)
+        @Expect(paragraph.sourceSpanAt(3), Some(SourceSpan(0, 1)))
+
+        let emphasis = HtmlRenderer().renderWithSourceMap(Markdown.parse("*em*").document)
+        @Expect(emphasis.content, "<p><em>em</em></p>\n")
+        @Expect(emphasis.sourceSpanAt(4), noSpan)
+        @Expect(emphasis.sourceSpanAt(7), Some(SourceSpan(1, 3)))
+    }
+
+    @TestCase
     func artifactHitsOnlyExactSourceEngineAndDialect(): Unit {
         let engine = MarkdownEngine.builder().build()
         let result = engine.parse("text")
@@ -49,5 +63,16 @@ class ArtifactSourceMapTest {
             case _ => @Expect(false)
         }
         @Expect(artifact.debugJson().contains("\"debug\":true"), true)
+
+        let replaced = engine.parse([0xFF], utf8Policy: Utf8Policy.ReplaceInvalid)
+        try {
+            engine.createArtifact(replaced)
+            @Expect(false)
+        } catch (error: MarkdownException) {
+            match (error.code) {
+                case MarkdownErrorCode.InvalidArtifact => @Expect(error.phase, "artifact_encode")
+                case _ => @Expect(false)
+            }
+        }
     }
 }

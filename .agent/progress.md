@@ -1,7 +1,7 @@
 # markdown 当前进度
 
-更新时间：2026-08-21
-当前阶段：已保留表格游标扫描、parser-owned AST 数组切片、UInt32 packed line records 和无重复字符串验证的 link decode；私密安全报告渠道已启用，性能仍未达 GA
+更新时间：2026-08-25
+当前阶段：P0 correctness 与 P1 input/source-position hardening 已完成并通过全量测试；0.8.0 与 release evidence 基础设施已落地，但 canonical benchmark 身份仍未刷新，性能仍未达 GA
 整体结论：**INCOMPLETE**。正确性、规范、构建、打包和私密安全报告门槛已通过，但需求账本仍有 3 个 `blocked` 项。
 
 ## 需求概览
@@ -15,6 +15,50 @@
 | `blocked` | 3 |
 
 `requirements.yaml` 是唯一状态账本；本文件只用于会话恢复。
+
+## 2026-08-25 P0 correctness/resource contract hardening
+
+- `maximumAstNodes` 已前移到 parser-owned `NodeIdAllocator.next()`，内建节点与 Parser SPI 的 `nextNodeId()` 共用同一计数器；极低上限在下一节点分配前抛出 `ast_nodes`。
+- `BoundedLiteralBuilder` 与统一 literal guard 在 fenced code、HTML block、indented code、inline code/HTML、Text 合并和 extension literal 构造期间检查 `maximumLiteralBytes`，多行内容不能再靠单行上限绕过。
+- dialect、renderer、engine 与 binary AST digest 改用类型化长度前缀 canonical fields；分隔符、Unicode、空字段和字段切分不再形成相同 preimage，manifest 的无序集合先排序，语义相关 rule 顺序仍进入 fingerprint。
+- HTML SourceMap 改为 renderer 写出时同步记录 generated/source-derived range；`sourceSpanAt()` 与 `nodeIdAt()` 对已排序 ranges 二分查询，`p`/`em` 标签名碰撞回归通过。
+- schema-v1 artifact 采用保守方案：仅接受 identity-preserving source mapping；`ReplaceInvalid` 结果在 encode 前以 `InvalidArtifact` 拒绝，binary artifact 同样 fail closed。
+- 最终验证：format、`cjpm check`、release build、8 个 API checker tests、1155 declaration API snapshot 均 exit 0；完整 socket-enabled suite `1413/1413` pass。
+- 本切片没有重新运行 benchmark；后续发布治理已把版本重置为 `0.8.0`，新增托管 CI 和单一 `release-evidence.json`，并把现有 raw 标记为 `stale-unbound`。当前整体状态保持 **INCOMPLETE**。
+
+## 2026-08-25 P1 indexed source positions
+
+- `SourcePositionMap` 现在一次构建 `SourceIndex`：行起点通过二分定位，UTF-16 与 visual scalar 查询从每行最近的 bounded checkpoint 开始短扫，不再每次从文档开头扫描。
+- ReplaceInvalid 的 original→decoded 定位改为 lower-bound 二分并保持重复映射取首项的既有语义；CRLF 中间 offset 仍按下一行 column 0/1 的旧契约返回。
+- 保留 `SourcePositionMap(source, tabStop: ...)` 构造器和默认 tab 展开行为；新增显式 `DisplayWidthPolicy`。文档不把 scalar column 误称为 CJK/emoji/grapheme 的终端 cell 宽度。
+- 验证：`scripts/check_format.sh` exit 0；API snapshot 1164 declarations，SHA-256 `448d318d...b10`；socket-enabled full `cjpm test` exit 0，1415/1415 passed，其中索引回归覆盖 CRLF、emoji、replacement、tab policy 和 200-byte checkpoint 边界。
+- 当前 canonical benchmark 仍是 `stale-unbound`，未用本地功能测试替代远端 release benchmark；整体状态保持 **INCOMPLETE**。
+
+## 2026-08-25 P1 shared CST arena and indexes
+
+- `SyntaxTree` 只保存一份 token arena；每个嵌套 `SyntaxNode.tokens` 变为共享 backing 的 `ImmutableArray` range view，不再为每个 AST 节点收集并防御性复制同一批 token 引用。公开构造器和 `toArray()` 仍执行防御性复制。
+- `SyntaxToAstMap` 构造时建立 NodeId→syntax、NodeId→semantic 与 TokenIndex→smallest semantic node 索引；`SyntaxTree.tokenAt(byteOffset)` 用二分查找，替代每次全 token/AST 遍历。
+- capability 使用 `incrementalMode="block-local-with-full-fallback"`；文档明确 chunk/stream 是 buffered adapter，unsupported edit 仍全文重解析，不宣称完整 incremental parser。
+- 验证：format、build 通过；最终 socket-enabled full suite exit 0，1416/1416 passed，包括共享 range、防御性复制、byte token lookup、smallest semantic owner 和 capability 回归；benchmark smoke 3/3。API snapshot 为 1165 declarations、SHA-256 `b6b105c0...9479`；canonical CST overhead 仍待远端 release benchmark。
+
+## 2026-08-25 P1 SemVer dependency correctness
+
+- extension semantic version 和 dependency minimum 不再只取前三段数字并截断 `-`/`+`；完整实现 SemVer prerelease precedence，build metadata 不影响排序。
+- dialect compile 阶段拒绝不完整版本、数字前导零、空/非法 identifier 和 Int64 overflow；implementationVersion 保持不透明构建身份。仓库内有效 manifest 已迁移到完整 `x.y.z`。
+- 第一次 full suite 真实发现 1 个 capability 断言和 1 个 Parser SPI fixture 尚用旧版本字符串，结果为 1415 passed/1 failed/1 error；修复迁移而未降低断言后，最终 socket-enabled full suite exit 0，1417/1417 passed。
+- 最终门禁：`scripts/check_format.sh`、`cjpm check`、`python3 scripts/release_evidence.py`、release-evidence tests 3/3、API checker tests 8/8 和 1165-declaration snapshot 均 exit 0；公开 API 未新增。`python3 scripts/release_evidence.py --release-ready` 按预期 exit 1，明确拒绝 draft、dirty/unbound source、stale benchmark 和 unbound benchmark SDK。canonical benchmark 仍未绑定当前源码，整体状态保持 **INCOMPLETE**。
+
+## 2026-08-25 Safe renderer URI/target hardening
+
+- data-image allowlist 不再使用 MIME 前缀匹配；只比较首个 `;` 参数前的完整 media type，大小写无关，因此允许 `image/png` 不会误放行 `image/pngx`，带合法参数的 `image/PNG;charset=...` 仍可通过。
+- Safe policy 下，HTTP(S) 外链配置 `_blank` target 时强制补齐 `noopener noreferrer`；已有大小写不同的 rel token 按 ASCII whitespace token 识别并去重。SpecCompatible 不自动添加 Safe-only rel。
+- 定向用例 exit 0；socket-enabled 全量 `cjpm test` exit 0，1418/1418 passed，0 skipped/error/failed。format、`cjpm check`、真实仓库命令 `cjpm build`、API checker 8/8 和 1165-declaration snapshot 均 exit 0。曾误用 `cjpm build --build-type release`，cjpm 在编译前因无效自定义参数 exit 1；该结果未计为 build 证据，随后已按 `scripts/release_gate.sh` 的实际命令重跑成功。该切片不改变 public API，也不改写 canonical benchmark；整体状态仍为 **INCOMPLETE**。
+
+## 2026-08-25 arbitrary-byte UTF-8/chunk differential fuzz
+
+- 新增 seed `20260825` 的 256 个任意 byte 输入（最长 191 bytes），同时验证 Strict/ReplaceInvalid、all-at-once/变长 chunk partition、decoded source、原始 byte length、diagnostics、HTML 与 AST invariants。
+- 首次定向运行在 case 16 `[160,138,230,223,75,254,49,189,92,141,27,232,64,79,169,36]` 真实触发 GFM email local-part 的非法 UTF-8 slice；修复后复跑又触发 HTML block ASCII lowercase 逐 byte 构造非法 String。两处均修复为 byte-safe 实现，未吞异常或弱化测试。
+- 最终定向测试 exit 0；socket-enabled 全量 `cjpm test` exit 0，1419/1419 passed，0 skipped/error/failed；format、`cjpm check`、`cjpm build`、API checker 8/8、1165-declaration snapshot 和 benchmark smoke 3/3 均通过。fuzz summary 保持 deterministic property smoke 定位，不声称 coverage-guided/native fuzz 已完成，benchmark smoke 也不替代 canonical 远端 release benchmark。
 
 2026-08-23 UInt64 repair：benchmark dependency H `db4392e2` 已把 paired
 seven-sample protocol 与 owned-input driver 纳入 committed stack。H 之前的
@@ -60,7 +104,7 @@ GA 门槛。
 | `cjlint -f src` | 0 | 0 errors; 476 advisory diagnostics |
 | `cjpm check` | 0 | dependency graph valid |
 | `cjpm build` | 0 | root static library, `-O2` |
-| `cjpm test` (local socket-enabled rerun) | 0 | 1411 passed, 0 skipped/error/failed |
+| `cjpm test` (2026-08-25 P0 final socket-enabled rerun) | 0 | 1413 passed, 0 skipped/error/failed |
 | CommonMark/GFM cases inside full suite | 0 | 652/652 and 671/671 |
 | `cd tools/markdown && cjpm build`; `scripts/cli_smoke.sh` | 0 | CLI build and exit 0/2/3/4/5/6/7 smoke; explicit native archive link |
 | `cd examples/quickstart && cjpm build && cjpm run` | 0 | public consumer example built and ran; explicit native archive link |
@@ -177,3 +221,30 @@ GA 门槛。
 - CLI 验证再次生成的 `tools/markdown/build-script-cache` 已删除，根 `.gitignore` 新增 `**/build-script-cache/`，后续子工程构建不会再把本机预构建脚本缓存带入源码归档或工作区差异。
 - 改名不改变任何 benchmark 样本或 ratio。标签规范化后当前文件摘要为：`benchmark-raw.json` `a107300090f599152ffd8e9020465666ed1b3b91c7e2fccd783ddcfc29d897d9`，`benchmark.md` `a8387ff89585a32eb445cb82e02e7732226875c141f4d8bd10c8db5a6f48e590`，同语言 raw `6d67ac4a9db3d6a64aaebfeb56d498658a3a248ecbf2787aa87889a03ac882a7`，同语言报告 `a6faf8d59555294552ce8ec603c072b858b447730ede6978d62bb389d1fe78ef`。
 - 验证：Python 脚本编译、125 项 YAML、3 份 JSON、`scripts/check_format.sh`、`cjpm check`、CLI release build、CLI smoke、API checker 8/8、1155 声明快照及 socket-enabled `cjpm test` 1410/1410 全部通过。第一次沙箱内全量测试在执行 0 个用例前因 `std.unittest` socket 权限失败，随后以相同命令在允许 socket 的环境通过。
+
+## 2026-08-25 P0 correctness 与 release evidence
+
+- 构造路径统一执行 `maximumAstNodes`；代码块、HTML、inline 与扩展 literal 在累计/合并时执行 `maximumLiteralBytes`、operation budget 和 cancellation，未恢复解析后的全树遍历。
+- fingerprint 改为类型标记加 UTF-8 字节长度前缀编码；SourceMap 改为 renderer 写出时记录 generated/source ranges 并使用二分查询；artifact schema v1 对非 identity mapping fail closed。
+- 新增低节点数、多行 fenced code/HTML、Parser SPI 批量节点、delimiter/Unicode/empty/order fingerprint、标签名碰撞及 invalid UTF-8 artifact 回归。全量 socket-enabled 测试为 1413/1413。
+- `cjpm` 实测拒绝 `1.0.0-rc.1` prerelease 字符串，因此包版本从 `1.0.0` 调整为可构建的 pre-GA `0.8.0`，文档不再冻结完整 1.x 表面。新增 `release-evidence.json`、生成/校验脚本、fail-closed release gate 和 Linux LTS/current SDK 托管 CI 定义。
+- README、canonical benchmark report 与 acceptance report 的当前数字都投影自 `release-evidence.json`。现有 raw SHA-256 `a1073000...d897d9` 对应 6.980369x/5.989632x，但未记录受测 source commit 和 SDK，且早于本轮 P0 改动，因此明确标记 `stale-unbound`，不能作为当前候选发布证据。
+- 仓库 `.gitignore` 显式反忽略根目录 `release-evidence.json`，覆盖开发机全局 `*.json` 规则，保证该 canonical 证据文件不会在提交时静默遗漏。
+- 最终验证：format、API snapshot 1155、API checker 8/8、release-evidence tests 3/3、`cjpm check`、root/CLI/quickstart build、quickstart run、socket-enabled full suite 1413/1413 均 exit 0；`cjpm bundle --skip-test` 生成 `target/markdown-0.8.0.cjp`（SHA-256 `8782dcc1...cfd527`）。`--release-ready` 按预期 exit 1，明确列出 draft、source unbound、benchmark stale 和 SDK unbound。
+
+## 2026-08-25 P1 input profiles 与 scanner capability
+
+- `MarkdownEngineBuilder.nativeScannerEnabled(false)` 可强制 byte-backed 输入走纯仓颉 line scanner；默认行为保持不变。`EngineCapabilities` 新增 available/enabled/String-path 三个显式字段。
+- benchmark driver 新增 `commonmark-parse-string`、`-bytes`、`-owned`、`-stream`；历史 `commonmark-parse` 明确保留为 owned alias。`measure.py` 的新 raw schema 会分别记录每轮 copy/decode、process preparation 和 native scanner 使用情况。
+- 四种 driver mode 已实际执行并产生相同 checksum；Python contract tests 2/2、API checker 8/8、API snapshot 1159、定向 input/capability 8/8 以及 socket-enabled full suite 1414/1414 全部通过。
+- 该 P1 切片当时仍静态链接 scanner archive；随后 S20 已把默认包改为纯仓颉、将 foreign/linker 边界移入显式 accelerator，并增加 target-aware `.a`/`.lib` 构建。真实非 Linux SDK/linker 资格仍须平台 runner 验证。
+
+## 2026-08-25 optional native、buffered execution、package surface 与 native fuzz
+
+- 根 `cjpm.toml`、CLI 和 quickstart 已移除 native link option；foreign 声明只存在于 `markdown.native`。默认 engine 走纯仓颉 scanner，byte/owned/stream 只有通过 `acceleratedBy(NativeLineScanner())` 才启用 C scanner。以不存在的 `CC`/`AR` 在全新 `/tmp` target 执行默认 `cjpm build` exit 0，证明纯构建不调用 C toolchain。
+- `scripts/build_native_scanner.py` 默认 no-op，显式 `--enable` 后按 target 生成 Unix/MinGW `.a` 或 MSVC `.lib`，工具链完全由 `CC`/`AR` 提供；4/4 command-contract tests 通过。Linux 上实际 archive、显式链接的 benchmark driver、无 native 的 quickstart 和 CLI 均构建通过。非 Linux 实机 SDK/linker 资格未在本机伪造。
+- `BufferedInputSession`、`BufferedAsyncHtmlOutputSession`、`tryParse` 与 `ExecutionModelCapabilities` 明确 stream/chunk/async 都是 buffered adapter：finish 前不产生语义、async 仅表示 sink backpressure、failure result 不含 completed prefix。旧名称保留兼容行为。
+- 新增 `markdown.core/render/extensions/editor/artifact/document/testkit` 精选子包；根 `markdown` 保留 umbrella 兼容。公开表面审计将内部 `NodeIdAllocator`、`Sha256` 收回为 internal，API snapshot 最终为 1192 declarations。quickstart 仅导入精选 public packages 并运行成功。
+- 新增 scanner libFuzzer、ASan/UBSan deterministic harness、4 个稳定 seed 和版本化历史 crash corpus。`scripts/fuzz_native_scanner.py --runs 10000` exit 0；mutation 在临时 corpus 中进行，ASan/UBSan clean。Cangjie 历史 crash regression 纳入全量测试。
+- 最终验证：format exit 0；`cjpm check` exit 0；API checker tests 8/8；API snapshot 1192；build-helper tests 4/4；benchmark input-profile tests 2/2；pure/native/driver/quickstart/CLI build 与 CLI smoke 全部 exit 0；full `cjpm test` exit 0，1423/1423 passed，0 skipped/error/failed。
+- 账本仍为 125 total、122 pass、3 blocked。该切片未重跑或覆盖 canonical 远端 release benchmark；`MD-PERF-002` 及其连带的 `MD-REL-001`、`MD-QUAL-001` 保持 blocked，整体仍为 INCOMPLETE。

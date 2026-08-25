@@ -2,6 +2,49 @@ package markdown
 
 import std.sync.AtomicBool
 
+internal class BoundedLiteralBuilder {
+    private let builder = StringBuilder()
+    private let maximumBytes: Int64
+    private let budget: OperationBudget
+    private let cancellation: CancellationToken
+    private let phase: String
+    private var bytes: Int64 = 0
+
+    internal init(maximumBytes: Int64, budget: OperationBudget, cancellation: CancellationToken, phase: String) {
+        this.maximumBytes = maximumBytes
+        this.budget = budget
+        this.cancellation = cancellation
+        this.phase = phase
+    }
+
+    internal func append(value: String): Unit {
+        consume(value.size)
+        builder.append(value)
+    }
+
+    internal func appendByte(value: Byte): Unit {
+        consume(1)
+        builder.append(String.fromUtf8([value]))
+    }
+
+    internal func finish(): String {
+        cancellation.throwIfCancelled(phase: phase)
+        builder.toString()
+    }
+
+    private func consume(count: Int64): Unit {
+        cancellation.throwIfCancelled(phase: phase)
+        let observed = bytes + count
+        if (observed > maximumBytes) {
+            throw LimitExceededException("literal_bytes", maximumBytes, observed, phase)
+        }
+        // Literal construction is real parser work and must participate in the
+        // same operation budget instead of becoming an unmetered copy loop.
+        budget.consumeScan(steps: count)
+        bytes = observed
+    }
+}
+
 public class ParseLimits {
     public let maximumInputBytes: Int64
     public let maximumLineBytes: Int64

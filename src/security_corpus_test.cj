@@ -61,7 +61,7 @@ class SecurityCorpusTest {
             }
             let dialect = MarkdownDialect
                 .define("fuzz", "1")
-                .enable(ExtensionManifest("fuzz", "1", "${index}"))
+                .enable(ExtensionManifest("fuzz", "1.0.0", "${index}"))
                 .inline(
                     InlineSyntax
                         .define("fuzz", "r${index}")

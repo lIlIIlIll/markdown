@@ -147,6 +147,31 @@ class ParserBehaviorTest {
     }
 
     @TestCase
+    func enforcesAstNodeAndAccumulatedLiteralLimitsDuringConstruction(): Unit {
+        let nodeLimited = ParseLimits(1024, 1024, 16, 4, 16, 16, 1024, 1024, 4096, 1024, 1024)
+        try {
+            MarkdownEngine.builder().limits(nodeLimited).build().parse("a *b* c")
+            @Expect(false)
+        } catch (error: LimitExceededException) {
+            @Expect(error.limitKind, "ast_nodes")
+            @Expect(error.configuredLimit, 4)
+            @Expect(error.phase, "ast_allocation")
+        }
+
+        let literalLimited = ParseLimits(1024, 1024, 16, 64, 16, 16, 1024, 5, 4096, 1024, 1024)
+        for (input in ["```\nab\ncd\n```", "<script>\nab\ncd\n</script>"]) {
+            try {
+                MarkdownEngine.builder().limits(literalLimited).build().parse(input)
+                @Expect(false)
+            } catch (error: LimitExceededException) {
+                @Expect(error.limitKind, "literal_bytes")
+                @Expect(error.configuredLimit, 5)
+                @Expect(error.phase, "block_parse")
+            }
+        }
+    }
+
+    @TestCase
     func distinguishesCommonMarkFromGfmExtensions(): Unit {
         let source = "~~gone~~\n\n| a |\n| --- |\n| b |"
         let common = MarkdownEngine.builder().build().parse(source)

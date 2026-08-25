@@ -8,3 +8,4 @@ __pycache__/
 *.pyc
 !api/public-api-v1.txt
 !docs/reports/*.json
+!release-evidence.json

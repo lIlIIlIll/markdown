@@ -2,7 +2,11 @@
 
 All notable changes follow Keep a Changelog and Semantic Versioning.
 
-## 1.0.0 - 2026-08-17
+## 0.8.0 - 2026-08-25
+
+This is a pre-GA preview, not a 1.0 compatibility freeze. Correctness,
+artifact, fingerprint and SourceMap contracts may still change before GA; the
+remaining performance and release-evidence gates are tracked explicitly.
 
 ### Added
 

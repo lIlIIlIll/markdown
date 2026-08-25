@@ -28,7 +28,7 @@ class LintExplainTest {
     func explainReportsActualExtensionSelectionAndFingerprint(): Unit {
         let dialect = MarkdownDialect
             .define("docs", "1")
-            .enable(ExtensionManifest("docs", "1", "1"))
+            .enable(ExtensionManifest("docs", "1.0.0", "1"))
             .inline(InlineSyntax.define("docs", "mark").delimiter("==").priority(200))
             .build()
         let engine = MarkdownEngine.builder().dialect(dialect).build()

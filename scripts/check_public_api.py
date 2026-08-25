@@ -13,15 +13,16 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT = ROOT / "api" / "public-api-v1.txt"
 HEADER = "# markdown public API snapshot v1"
-RECORD_PREFIX = re.compile(r"^[^/\\:\s]+\.cj:")
+RECORD_PREFIX = re.compile(r"^[^\\:\s]+\.cj:")
 PUBLIC_INIT_PREFIX = re.compile(r"^(?:public init|public unsafe init)(?![A-Za-z0-9_])")
 
 
 def normalized_declarations() -> list[str]:
     declarations: list[str] = []
-    for path in sorted((ROOT / "src").glob("*.cj")):
+    for path in sorted((ROOT / "src").rglob("*.cj")):
         if path.name.endswith("_test.cj") or path.name.startswith("generated_"):
             continue
+        relative = path.relative_to(ROOT / "src").as_posix()
         lines = path.read_text(encoding="utf-8").splitlines()
         collecting = False
         current: list[str] = []
@@ -32,11 +33,24 @@ def normalized_declarations() -> list[str]:
             stripped = raw.strip()
             if collecting:
                 current.append(stripped)
-                parens += stripped.count("(") - stripped.count(")")
-                if parens <= 0 and ("{" in stripped or stripped.endswith(";")):
-                    declarations.append(f"{path.name}:" + " ".join(current))
+                if current[0].startswith("public import "):
+                    parens += stripped.count("{") - stripped.count("}")
+                else:
+                    parens += stripped.count("(") - stripped.count(")")
+                if parens <= 0 and (current[0].startswith("public import ") or "{" in stripped or
+                    stripped.endswith(";")):
+                    declarations.append(f"{relative}:" + " ".join(current))
                     collecting = False
                     current = []
+                continue
+            if stripped.startswith("public import "):
+                current = [stripped]
+                braces = stripped.count("{") - stripped.count("}")
+                if braces > 0:
+                    collecting = True
+                    parens = braces
+                else:
+                    declarations.append(f"{relative}:" + stripped)
                 continue
             if re.match(r"^public\s+(?:unsafe\s+)?(?:class|open class|struct|enum|interface|func|static func|init|operator func|override func|prop|let|var)\b", stripped):
                 current = [stripped]
@@ -44,7 +58,7 @@ def normalized_declarations() -> list[str]:
                 if parens > 0 and "{" not in stripped:
                     collecting = True
                 else:
-                    declarations.append(f"{path.name}:" + stripped)
+                    declarations.append(f"{relative}:" + stripped)
                 if re.match(r"^public\s+enum\b", stripped):
                     public_enum = True
                     braces = stripped.count("{") - stripped.count("}")
@@ -52,7 +66,7 @@ def normalized_declarations() -> list[str]:
             if public_enum:
                 braces += stripped.count("{") - stripped.count("}")
                 if stripped.startswith("|"):
-                    declarations.append(f"{path.name}:enum-variant {stripped}")
+                    declarations.append(f"{relative}:enum-variant {stripped}")
                 if braces <= 0:
                     public_enum = False
     return sorted(set(declarations))

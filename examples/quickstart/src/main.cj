@@ -1,6 +1,9 @@
 package markdown_quickstart
 
-import markdown.*
+import markdown.core.{CancellationSource, Markdown, MarkdownEngine, MarkdownException}
+import markdown.editor.AstQuery
+import markdown.extensions.{BlockSyntax, ExtensionCapabilities, ExtensionManifest, MarkdownDialect, RendererRule}
+import markdown.render.HtmlRenderer
 
 main(): Int64 {
     let safe = Markdown.toSafeHtml("# Hello\n\n<script>blocked</script>")

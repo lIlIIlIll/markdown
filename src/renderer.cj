@@ -38,16 +38,55 @@ public enum AsyncRenderState {
 
 public class StringTextSink <: TextSink {
     private let builder = StringBuilder()
+    private let mappedEntries: ?ArrayList<RenderedSourceMapEntry>
+    private var outputOffset: Int64 = 0
 
-    public init() {}
+    public init() {
+        mappedEntries = None
+    }
+
+    internal init(sourceMapEnabled: Bool) {
+        mappedEntries = if (sourceMapEnabled) {
+            Some(ArrayList<RenderedSourceMapEntry>())
+        } else {
+            None
+        }
+    }
 
     public func write(slice: String): SinkWriteResult {
+        let noSpan: ?SourceSpan = None
+        let noNode: ?NodeId = None
+        record(slice, noSpan, noNode, true)
+        builder.append(slice)
+        SinkWriteResult.Success
+    }
+
+    internal func writeFromNode(slice: String, node: MarkdownNode): SinkWriteResult {
+        record(slice, node.span, Some(node.nodeId), false)
         builder.append(slice)
         SinkWriteResult.Success
     }
 
     public func content(): String {
         builder.toString()
+    }
+
+    internal func sourceMap(): Array<RenderedSourceMapEntry> {
+        match (mappedEntries) {
+            case Some(entries) => entries.toArray()
+            case None => []
+        }
+    }
+
+    private func record(slice: String, sourceSpan: ?SourceSpan, nodeId: ?NodeId, generated: Bool): Unit {
+        if (slice.isEmpty()) {
+            return
+        }
+        if (let Some(entries) <- mappedEntries) {
+            let end = outputOffset + slice.size
+            entries.add(RenderedSourceMapEntry(SourceSpan(outputOffset, end), sourceSpan, nodeId, generated))
+            outputOffset = end
+        }
     }
 }
 
@@ -207,7 +246,7 @@ public class HtmlRenderer {
     }
 
     public func fingerprint(): String {
-        let out = StringBuilder()
+        let out = CanonicalDescriptor()
         out.append("html-renderer-v1|")
         match (options.policy.kind) {
             case HtmlPolicyKind.SpecCompatible => out.append("spec")
@@ -392,8 +431,10 @@ public class HtmlRenderer {
                 } else {
                     code.literal + "\n"
                 }
-                write("<pre><code${classAttribute}>${escapeText(literal)}</code></pre>\n", sink, cancellation, budget)
-            case html: HtmlBlock => writeRawHtml(html.literal, true, sink, cancellation, budget)
+                write("<pre><code${classAttribute}>", sink, cancellation, budget)
+                writeFromNode(escapeText(literal), code, sink, cancellation, budget)
+                write("</code></pre>\n", sink, cancellation, budget)
+            case html: HtmlBlock => writeRawHtml(html, true, sink, cancellation, budget)
             case table: Table => renderTable(table, sink, cancellation, budget)
             case row: TableRow =>
                 write("<tr>\n", sink, cancellation, budget)
@@ -409,10 +450,13 @@ public class HtmlRenderer {
                 write("<${tag}${alignment}>", sink, cancellation, budget)
                 stack.add(RenderFrame(cell, true, tableHeader: frame.tableHeader))
                 pushChildren(cell, stack, tableHeader: frame.tableHeader)
-            case text: Text => write(escapeText(text.value), sink, cancellation, budget)
+            case text: Text => writeFromNode(escapeText(text.value), text, sink, cancellation, budget)
             case _: SoftBreak => write("\n", sink, cancellation, budget)
             case _: HardBreak => write("<br />\n", sink, cancellation, budget)
-            case code: CodeSpan => write("<code>${escapeText(code.literal)}</code>", sink, cancellation, budget)
+            case code: CodeSpan =>
+                write("<code>", sink, cancellation, budget)
+                writeFromNode(escapeText(code.literal), code, sink, cancellation, budget)
+                write("</code>", sink, cancellation, budget)
             case _: Emphasis =>
                 write("<em>", sink, cancellation, budget)
                 pushContainer(frame, stack)
@@ -449,7 +493,7 @@ public class HtmlRenderer {
                 }
                 write("<img${src} alt=\"${escapeAttribute(plainTextOf(image), safe: isSafePolicy())}\"${title} />", sink,
                     cancellation, budget)
-            case html: HtmlInline => writeRawHtml(html.literal, false, sink, cancellation, budget)
+            case html: HtmlInline => writeRawHtml(html, false, sink, cancellation, budget)
             case custom: CustomBlock => renderCustomEnter(custom.extensionId, custom.localKindId, frame, stack, sink,
                 cancellation, budget)
             case custom: CustomInline => renderCustomEnter(custom.extensionId, custom.localKindId, frame, stack, sink,
@@ -523,37 +567,44 @@ public class HtmlRenderer {
     }
 
     private func writeRawHtml(
-        literal: String,
+        html: MarkdownNode,
         block: Bool,
         sink: TextSink,
         cancellation: CancellationToken,
         budget: OperationBudget
     ): Unit {
+        let literal = match (html) {
+            case block: HtmlBlock => block.literal
+            case inline: HtmlInline => inline.literal
+            case _ => throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation,
+                "raw HTML renderer received a non-HTML node", phase: "render", span: html.span)
+        }
         match (options.rawHtmlPolicy) {
-            case RawHtmlPolicyKind.Escape => write(escapeText(literal) + if (block && !literal.endsWith("\n")) {
-                "\n"
-            } else {
-                ""
-            }, sink, cancellation, budget)
+            case RawHtmlPolicyKind.Escape => writeFromNode(
+                escapeText(literal) + if (block && !literal.endsWith("\n")) {
+                    "\n"
+                } else {
+                    ""
+                }, html, sink, cancellation, budget)
             case RawHtmlPolicyKind.Drop => ()
             case RawHtmlPolicyKind.PassThrough =>
                 let filtered = match (options.policy.kind) {
                     case HtmlPolicyKind.GfmCompatible => applyGfmTagFilter(literal)
                     case _ => literal
                 }
-                write(filtered + if (block && !filtered.endsWith("\n")) {
+                writeFromNode(filtered + if (block && !filtered.endsWith("\n")) {
                     "\n"
                 } else {
                     ""
-                }, sink, cancellation, budget)
+                }, html, sink, cancellation, budget)
             case RawHtmlPolicyKind.Sanitize => match (sanitizer) {
                 case Some(port) =>
                     let sanitized = port.sanitize(literal)
-                    write(sanitized + if (block && !sanitized.endsWith("\n")) {
+                    writeFromNode(sanitized + if (block && !sanitized.endsWith("\n")) {
                         "\n"
                     } else {
                         ""
-                    }, sink, cancellation, budget)
+                    }, html, sink, cancellation, budget)
                 case None => throw MarkdownException(MarkdownErrorCode.RenderFailure, "sanitizer adapter is required",
                     phase: "render")
             }
@@ -571,6 +622,26 @@ public class HtmlRenderer {
         cancellation.throwIfCancelled(phase: "render")
         budget.consumeOutput(bytes: value.size)
         match (sink.write(value)) {
+            case SinkWriteResult.Success => ()
+            case SinkWriteResult.Failure(error) => throw SinkFailureException(error)
+        }
+        cancellation.throwIfCancelled(phase: "render")
+    }
+
+    private func writeFromNode(
+        value: String,
+        node: MarkdownNode,
+        sink: TextSink,
+        cancellation: CancellationToken,
+        budget: OperationBudget
+    ): Unit {
+        cancellation.throwIfCancelled(phase: "render")
+        budget.consumeOutput(bytes: value.size)
+        let result = match (sink) {
+            case mapped: StringTextSink => mapped.writeFromNode(value, node)
+            case _ => sink.write(value)
+        }
+        match (result) {
             case SinkWriteResult.Success => ()
             case SinkWriteResult.Failure(error) => throw SinkFailureException(error)
         }
@@ -616,8 +687,14 @@ public class HtmlRenderer {
                 return false
             }
             let metadata = rendererLowerAscii(uri[5..comma])
+            let semicolon = rendererFindByte(metadata, b';', 0)
+            let mediaType = if (semicolon < 0) {
+                metadata
+            } else {
+                metadata[0..semicolon]
+            }
             for (mime in options.imageUriPolicy.allowedDataMimeTypes.toArray()) {
-                if (metadata.startsWith(rendererLowerAscii(mime))) {
+                if (mediaType == rendererLowerAscii(mime)) {
                     return true
                 }
             }
@@ -631,9 +708,18 @@ public class HtmlRenderer {
             return ""
         }
         let out = StringBuilder()
-        if (!options.externalLinkRel.isEmpty()) {
+        var rel = options.externalLinkRel
+        if (isSafePolicy() && rendererLowerAscii(options.externalLinkTarget) == "_blank") {
+            if (!containsAsciiWhitespaceToken(rel, "noopener")) {
+                rel = appendAsciiWhitespaceToken(rel, "noopener")
+            }
+            if (!containsAsciiWhitespaceToken(rel, "noreferrer")) {
+                rel = appendAsciiWhitespaceToken(rel, "noreferrer")
+            }
+        }
+        if (!rel.isEmpty()) {
             out.append(" rel=\"")
-            out.append(escapeAttribute(options.externalLinkRel, safe: isSafePolicy()))
+            out.append(escapeAttribute(rel, safe: isSafePolicy()))
             out.append("\"")
         }
         if (!options.externalLinkTarget.isEmpty()) {
@@ -683,7 +769,7 @@ public class HtmlRenderer {
             }
             write("<${rule.htmlTag}${attributes.toString()}>", sink, cancellation, budget)
             if (rule.renderPayloadLiteral) {
-                write(escapeText(customLiteral(frame.node)), sink, cancellation, budget)
+                writeFromNode(escapeText(customLiteral(frame.node)), frame.node, sink, cancellation, budget)
             }
             pushContainer(frame, stack)
         } else {
@@ -695,11 +781,12 @@ public class HtmlRenderer {
                 case MissingRendererPolicy.Error => throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
                     "missing renderer for ${extensionId}/${localKindId}", phase: "render", span: frame.node.span)
                 case MissingRendererPolicy.RenderChildren => pushChildren(frame.node, stack)
-                case MissingRendererPolicy.RenderLiteral => write(escapeText(customLiteral(frame.node)), sink,
-                    cancellation, budget)
+                case MissingRendererPolicy.RenderLiteral => writeFromNode(escapeText(customLiteral(frame.node)),
+                    frame.node, sink, cancellation, budget)
                 case MissingRendererPolicy.Drop => ()
                 case MissingRendererPolicy.CustomFallback => match (findExtensionFallback(extensionId)) {
-                    case Some(fallback) => write(fallback.renderHtml(frame.node).value, sink, cancellation, budget)
+                    case Some(fallback) => writeFromNode(fallback.renderHtml(frame.node).value, frame.node, sink,
+                        cancellation, budget)
                     case None => throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
                         "custom renderer fallback is not installed for ${extensionId}", phase: "render",
                         span: frame.node.span)
@@ -776,7 +863,7 @@ public class HtmlRenderer {
             match (nodes[0]) {
                 case text: Text =>
                     budget.consumeRenderedNode()
-                    write(escapeText(text.value), sink, cancellation, budget)
+                    writeFromNode(escapeText(text.value), text, sink, cancellation, budget)
                     return
                 case _ => ()
             }
@@ -849,6 +936,34 @@ public class HtmlRenderer {
     }
 }
 
+private func appendAsciiWhitespaceToken(value: String, token: String): String {
+    if (value.isEmpty()) {
+        token
+    } else {
+        "${value} ${token}"
+    }
+}
+
+private func containsAsciiWhitespaceToken(value: String, expected: String): Bool {
+    let normalizedExpected = rendererLowerAscii(expected)
+    var start: Int64 = 0
+    var index: Int64 = 0
+    while (index <= value.size) {
+        if (index == value.size || rendererIsAsciiWhitespace(value[index])) {
+            if (index > start && rendererLowerAscii(value[start..index]) == normalizedExpected) {
+                return true
+            }
+            start = index + 1
+        }
+        index++
+    }
+    false
+}
+
+private func rendererIsAsciiWhitespace(byte: Byte): Bool {
+    byte == b' ' || byte == b'\t' || byte == b'\n' || byte == b'\r' || byte == 12
+}
+
 extend MarkdownEngine {
     public func htmlRenderer(options!: HtmlOptions = HtmlOptions.safe(), sanitizer!: ?HtmlSanitizerPort = None,
         fallbacks!: Array<ExtensionRendererFallback> = []): HtmlRenderer {
@@ -872,6 +987,43 @@ public class AsyncHtmlRenderSession {
         cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()) {
         if (chunkBytes <= 0) {
             throw IllegalArgumentException("async render chunk size must be positive")
+        }
+        this.content = renderer.render(document, cancellation: cancellation, budget: budget)
+        this.chunkBytes = chunkBytes
+    }
+
+    public func resume(sink: AsyncTextSink, cancellation!: CancellationToken = CancellationToken.none()): AsyncRenderState {
+        while (offset < content.size) {
+            cancellation.throwIfCancelled(phase: "async_render")
+            let end = min(content.size, offset + chunkBytes)
+            let chunk = content[offset..end]
+            match (sink.write(chunk)) {
+                case AsyncSinkWriteResult.Continue => offset = end
+                case AsyncSinkWriteResult.Pause => return AsyncRenderState.Paused
+                case AsyncSinkWriteResult.Failed(error) => return AsyncRenderState.Failed(error)
+            }
+        }
+        AsyncRenderState.Complete
+    }
+
+    public func bytesWritten(): Int64 {
+        offset
+    }
+}
+
+/**
+ * Pre-renders the complete HTML value, then applies sink backpressure while
+ * emitting bounded chunks. This is buffered output, not incremental rendering.
+ */
+public class BufferedAsyncHtmlOutputSession {
+    private let content: String
+    private let chunkBytes: Int64
+    private var offset: Int64 = 0
+
+    public init(renderer: HtmlRenderer, document: Document, chunkBytes!: Int64 = 4096,
+        cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()) {
+        if (chunkBytes <= 0) {
+            throw IllegalArgumentException("buffered async output chunk size must be positive")
         }
         this.content = renderer.render(document, cancellation: cancellation, budget: budget)
         this.chunkBytes = chunkBytes

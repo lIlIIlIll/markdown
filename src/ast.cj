@@ -4,6 +4,8 @@ import std.collection.*
 
 public class ImmutableArray<T> {
     private let values: Array<T>
+    private let startIndex: Int64
+    private let valueCount: Int64
 
     public init(values: Array<T>) {
         // Cangjie arrays have a fixed length. An empty array exposes no slot a
@@ -14,24 +16,50 @@ public class ImmutableArray<T> {
         } else {
             values.clone()
         }
+        startIndex = 0
+        valueCount = values.size
+    }
+
+    // Parser-owned immutable arenas can expose non-overlapping or nested views
+    // without copying the backing references for every semantic node. This is
+    // internal so public callers retain the defensive-copy constructor.
+    internal init(sharedValues: Array<T>, startIndex: Int64, valueCount: Int64) {
+        if (startIndex < 0 || valueCount < 0 || startIndex + valueCount > sharedValues.size) {
+            throw IllegalArgumentException("immutable array view is outside its backing storage")
+        }
+        values = sharedValues
+        this.startIndex = startIndex
+        this.valueCount = valueCount
     }
 
     public prop size: Int64 {
         get() {
-            values.size
+            valueCount
         }
     }
 
     public func isEmpty(): Bool {
-        values.isEmpty()
+        valueCount == 0
     }
 
     public operator func [](index: Int64): T {
-        values[index]
+        if (index < 0 || index >= valueCount) {
+            throw IndexOutOfBoundsException("immutable array index is outside the view")
+        }
+        values[startIndex + index]
     }
 
     public func toArray(): Array<T> {
-        values.clone()
+        if (valueCount == 0) {
+            return []
+        }
+        let copy = ArrayList<T>()
+        var index: Int64 = 0
+        while (index < valueCount) {
+            copy.add(values[startIndex + index])
+            index++
+        }
+        copy.toArray()
     }
 }
 
@@ -50,12 +78,23 @@ public struct NodeId <: Equatable<NodeId> {
     }
 }
 
-public class NodeIdAllocator {
+internal class NodeIdAllocator {
     private var nextValue: Int64 = 1
+    private var maximumNodes: Int64 = Int64.Max
 
-    public init() {}
+    internal init() {}
 
-    public func next(): NodeId {
+    internal init(maximumNodes: Int64) {
+        if (maximumNodes <= 0) {
+            throw IllegalArgumentException("maximum AST nodes must be positive")
+        }
+        this.maximumNodes = maximumNodes
+    }
+
+    internal func next(): NodeId {
+        if (nextValue > maximumNodes) {
+            throw LimitExceededException("ast_nodes", maximumNodes, nextValue, "ast_allocation")
+        }
         let result = NodeId(nextValue)
         if (nextValue == Int64.Max) {
             throw MarkdownException(

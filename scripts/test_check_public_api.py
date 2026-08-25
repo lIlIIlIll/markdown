@@ -160,7 +160,7 @@ class PublicApiCheckerCliTest(unittest.TestCase):
             (HEADER + "\n" + "\n".join(reversed(records)) + "\n", "not sorted"),
             (HEADER + "\n" + "\n".join(sorted(records + [records[0]])) + "\n", "duplicate raw"),
             (HEADER + "\ngarbage\n", "invalid API record"),
-            (HEADER + "\ndir/sample.cj:public init() {}\n", "invalid API record"),
+            (HEADER + "\ndir\\sample.cj:public init() {}\n", "invalid API record"),
             (HEADER + "\n.cj:public init() {}\n", "invalid API record"),
         ]
         for content, message in malformed:
@@ -195,12 +195,18 @@ class PublicApiCheckerCliTest(unittest.TestCase):
         bin_directory.mkdir()
         (gate_root / "tools" / "markdown").mkdir(parents=True)
         (gate_root / "examples" / "quickstart").mkdir(parents=True)
-        (gate_root / "benchmarks").mkdir()
+        (gate_root / "benchmarks" / "driver").mkdir(parents=True)
         shutil.copy2(RELEASE_GATE, scripts / "release_gate.sh")
 
         self.write_shell_stub(scripts / "check_format.sh", "format")
+        self.write_python_stub(scripts / "test_build_native_scanner.py", "native-build-test")
+        self.write_python_stub(scripts / "build_native_scanner.py", "native-build")
+        self.write_python_stub(scripts / "fuzz_native_scanner.py", "native-fuzz")
         self.write_python_stub(scripts / "test_check_public_api.py", "checker-test", "CHECKER_TEST_EXIT")
         self.write_python_stub(scripts / "check_public_api.py", "checker", "CHECKER_EXIT")
+        self.write_python_stub(scripts / "release_evidence.py", "release-evidence")
+        self.write_python_stub(scripts / "test_release_evidence.py", "release-evidence-test")
+        self.write_python_stub(scripts / "test_benchmark_input_profiles.py", "benchmark-input-profiles")
         self.write_shell_stub(scripts / "cli_smoke.sh", "cli-smoke")
         self.write_python_stub(scripts / "differential_test.py", "differential")
         self.write_python_stub(gate_root / "benchmarks" / "measure.py", "measure")
@@ -208,19 +214,19 @@ class PublicApiCheckerCliTest(unittest.TestCase):
 
         failed_tests, failed_tests_log = self.run_release_gate(gate_root, checker_test_exit=7, checker_exit=0)
         self.assertEqual(failed_tests.returncode, 7)
-        self.assertEqual(failed_tests_log, ["format", "checker-test"])
+        self.assertEqual(failed_tests_log, ["format", "native-build-test", "checker-test"])
         self.assertNotIn("checker", failed_tests_log)
         self.assertFalse(any(entry.startswith("cjpm:") for entry in failed_tests_log))
 
         failed_checker, failed_checker_log = self.run_release_gate(gate_root, checker_test_exit=0, checker_exit=9)
         self.assertEqual(failed_checker.returncode, 9)
-        self.assertEqual(failed_checker_log, ["format", "checker-test", "checker"])
+        self.assertEqual(failed_checker_log, ["format", "native-build-test", "checker-test", "checker"])
         self.assertFalse(any(entry.startswith("cjpm:") for entry in failed_checker_log))
 
         success, success_log = self.run_release_gate(gate_root, checker_test_exit=0, checker_exit=0)
         self.assertEqual(success.returncode, 0, success.stderr)
-        self.assertEqual(success_log[:3], ["format", "checker-test", "checker"])
-        self.assertTrue(success_log[3].startswith("cjpm:check"))
+        self.assertEqual(success_log[:4], ["format", "native-build-test", "checker-test", "checker"])
+        self.assertTrue(success_log[4].startswith("cjpm:check"))
 
     def write_shell_stub(self, path: Path, label: str) -> None:
         path.write_text(

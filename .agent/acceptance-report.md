@@ -4,6 +4,19 @@
 
 **INCOMPLETE** — 125 项需求中 122 项为 `pass`，仍有 3 项 blocked；私密安全报告渠道已启用并验证，性能 GA 数值仍实测失败。
 
+<!-- release-evidence:start -->
+## Generated Release Evidence
+
+- Version/status: `0.8.0` / `draft`.
+- Source identity: `UNBOUND`; tree state `dirty`.
+- Tests: `1423/1423` passed, `0` skipped, `0` failed.
+- Benchmark: CommonMark `6.98x`, GFM `5.99x`, status `stale-unbound`.
+- Raw digest: `a107300090f599152ffd8e9020465666ed1b3b91c7e2fccd783ddcfc29d897d9`.
+
+Because source commit and benchmark SDK are unbound, this evidence is not
+release-ready and cannot change the overall `INCOMPLETE` verdict.
+<!-- release-evidence:end -->
+
 2026-08-23 dependency transition：H `db4392e2` commits the paired seven-sample
 protocol and owned-input driver. Pre-H raw `48dbad...` and
 `6.449555x`/`5.695987x` are historical pre-dependency measurements, not final
@@ -41,7 +54,7 @@ seal/path/binary identity check.
 | `MD-PRO-001` | PRD §11.1-3 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DIA-001` | PRD §12.1, §39.2, §51.2 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DIA-002` | PRD §12.2-3, §54.19 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
-| `MD-DIA-003` | PRD §12.4-5, §53.8, §54.20 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
+| `MD-DIA-003` | PRD §12.4-5, §53.8, §54.20 | `pass` | 2026-08-25: canonical length-prefix adversarial cases and full 1413-test suite pass |
 | `MD-DIA-004` | PRD §12.6, §51.2 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-SYN-001` | PRD §6.4, §13.1, §54.12, §54.15, §54.17-18 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-SYN-002` | PRD §13.2-3 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
@@ -54,7 +67,7 @@ seal/path/binary identity check.
 | `MD-RDSL-004` | PRD §14.5, §26.6, §51.2 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-TRN-001` | PRD §15, §22.6, §54.14 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-IN-001` | PRD §16 IN-001, §51.3 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
-| `MD-IN-002` | PRD §16 IN-002, §51.3 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
+| `MD-IN-002` | PRD §16 IN-002, §51.3 | `pass` | 2026-08-25: 256 arbitrary-byte Strict/ReplaceInvalid chunk-differential cases and full 1419-test suite passed |
 | `MD-IN-003` | PRD §16 IN-003, §51.3 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-IN-004` | PRD §16 IN-004-005, §39.4, §44.3, §51.3 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-IN-005` | PRD §16 IN-006-007 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
@@ -91,11 +104,11 @@ seal/path/binary identity check.
 | `MD-OPS-003` | PRD §22 AST-006 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-ANN-001` | PRD §23, §42.10 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-HTML-001` | PRD §24.1, §51.5 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
-| `MD-HTML-002` | PRD §24.2, §44.5, §51.5-6 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
-| `MD-HTML-003` | PRD §24.3, §51.5-6, §54.29 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
+| `MD-HTML-002` | PRD §24.2, §44.5, §51.5-6 | `pass` | 2026-08-25: exact data-image MIME and Safe `_blank` rel hardening; full 1418-test suite passed |
+| `MD-HTML-003` | PRD §24.3, §51.5-6, §54.29 | `pass` | 2026-08-25: MIME parameters/prefix collision and rel-token deduplication regressions passed |
 | `MD-HTML-004` | PRD §24.4-5 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-HTML-005` | PRD §24.6, §53.6 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
-| `MD-HTML-006` | PRD §24.7 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
+| `MD-HTML-006` | PRD §24.7 | `pass` | 2026-08-25: write-time SourceMap tag-collision cases and full 1413-test suite pass |
 | `MD-TEXT-001` | PRD §25, §51.5 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-FMT-001` | PRD §26.1, §51.5, §54.38 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-FMT-002` | PRD §26.2, §26.4, §44.4, §51.5 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
@@ -113,7 +126,7 @@ seal/path/binary identity check.
 | `MD-BUD-001` | PRD §30.3-4, §51.6, §54.27 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-SINK-001` | PRD §30.5, §39.6, §45.4, §51.5 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-LIM-001` | PRD §6.6, §31, §51.6 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
-| `MD-LIM-002` | PRD §31, §54.28 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
+| `MD-LIM-002` | PRD §31, §54.28 | `pass` | 2026-08-25: low AST-node, multiline literal and Parser SPI attacks plus full 1413-test suite pass |
 | `MD-SEC-001` | PRD §32 SEC-001, §49, §54.36-37 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-SEC-002` | PRD §32 SEC-002, §44.7, §51.6 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-SEC-003` | PRD §32 SEC-003-005 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
@@ -132,7 +145,7 @@ seal/path/binary identity check.
 | `MD-FUT-002` | PRD §7.3, §8.16, §53.5 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-FUT-003` | PRD §7.3 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-CAP-001` | PRD §37, §47.18, §51.2 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
-| `MD-ART-001` | PRD §38 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
+| `MD-ART-001` | PRD §38 | `pass` | 2026-08-25: ReplaceInvalid artifact rejection and full 1413-test suite pass |
 | `MD-API-001` | PRD §39.1-8 | `pass` | 2026-08-18: public API snapshot verified; 1155 declarations |
 | `MD-API-002` | PRD §39.9, §6.1 | `pass` | 2026-08-18: public API snapshot verified; 1155 declarations |
 | `MD-PKG-001` | PRD §40, §49 | `pass` | 2026-08-19: Cangjie core remains std-only; CLI, benchmark driver and quickstart explicitly link the bounded static `libmarkdown_scanner` asset; bundle and consumer fixtures are validated |
@@ -143,7 +156,7 @@ seal/path/binary identity check.
 | `MD-TST-001` | PRD §4, §44.1, §51.1, §52 | `pass` | 2026-08-18: full suite included CommonMark 652/652 and GFM 671/671 |
 | `MD-TST-002` | PRD §44.2 | `pass` | 2026-08-18: differential test; 25 checked, 24 exact, 1 classified, 0 unexpected |
 | `MD-TST-003` | PRD §44.3-4, §51.3, §52 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
-| `MD-TST-004` | PRD §44.5-6, §51.6-7 | `pass` | 2026-08-18: deterministic fuzz and security corpus cases passed in full suite |
+| `MD-TST-004` | PRD §44.5-6, §51.6-7 | `pass` | 2026-08-25: arbitrary-byte fuzz found and guards two UTF-8 boundary crashes; full 1419-test suite passed |
 | `MD-TST-005` | PRD §44.7-9, §51.7 | `pass` | 2026-08-18: API snapshot, pathological corpus, and official extension TCK passed |
 | `MD-PERF-001` | PRD §45.1-3 | `pass` | 2026-08-18: 12-corpus -O2 reference-host matrix recorded raw samples, per-corpus digests, pinned CPU, SDK, reference commits, geometric means, and custom-extension cost |
 | `MD-PERF-002` | PRD §45.4, §51.7, §52 | `blocked` | 2026-08-21 current candidate on Server CPU 24: CommonMark 4.329x and GFM 3.276x versus 2.5x limits. Scaling slope 0.961, adjacent 2.400, pathological slope 0.866 and extra RSS 59632 KiB pass; only both ratio gates fail. |
@@ -170,6 +183,10 @@ seal/path/binary identity check.
 | `cd examples/quickstart && cjpm build && cjpm run` | 0 | public consumer example built and ran; explicit native archive link |
 | `python3 scripts/check_public_api.py` | 0 | 1155 public declarations match snapshot |
 | `python3 scripts/test_check_public_api.py` | 0 | 8/8 checker regression tests passed |
+| `python3 scripts/test_release_evidence.py` | 0 | 3/3 consistency and fail-closed regressions passed |
+| `python3 scripts/test_benchmark_input_profiles.py` | 0 | String/Array/Owned/Stream modes execute and produce identical parse checksums |
+| `python3 scripts/release_evidence.py` | 0 | README, benchmark report, acceptance projection, raw/corpus/API digests and ratios match the canonical evidence file |
+| `python3 scripts/release_evidence.py --release-ready` | 1 (expected) | correctly rejects draft, dirty/unbound source and stale/unbound benchmark identity |
 | `python3 scripts/differential_test.py` | 0 | 25 comparisons: 24 exact, 1 classified, 0 unexpected |
 | `cjpm bench --filter MarkdownReleaseBenchmarks ...` | 0 | 3/3 benchmark smoke cases; socket permission required |
 | remote `python3` wrapper importing `benchmarks/measure.py` on authorized SSH Server (CPU 24) | 1 | 2026-08-19 final candidate: CommonMark 6.137x, GFM 5.459x, ordinary/scaling and RSS gates pass, ratio and pathological slope gates fail; same-SDK paired baseline 6.945x/5.670x |
@@ -180,6 +197,13 @@ seal/path/binary identity check.
 | `python3 /tmp/markdown_pair_link_attribute_cache.py candidate-first ...` on Server CPU 24 | 0 | S0 run 2 checksums matched; many-reference GFM 0.97300 and GFM geomean 0.99982 failed 0.95/0.98 stop-go limits; raw SHA-256 1a45f6...d18c |
 | `scripts/release_gate.sh` | 1 | fail-closed at performance after format/API/check/build/1410 tests/CLI/example/differential/benchmark smoke passed |
 | `cjpm bundle --skip-test` after the full 1410-test gate | 0 | target/markdown-1.0.0.cjp; 343528 bytes; SHA-256 aab2e233b88b495c0221eb36e673c0d6a19184721b1776620525283098882529 |
+| `cjpm test --no-color --no-progress --report-path /tmp/markdown-p0-final-tests-2 --report-format xml` | 0 | 1413 passed, 0 skipped/error/failed |
+| `cjpm bundle --skip-test` for 0.8.0 | 0 | target/markdown-0.8.0.cjp; 374 KiB; SHA-256 8782dcc16ea5063e70e51ac74efdbc87c33fdd19885beaa63feeebfb67cfd527 |
+| `cjpm test --no-color --no-progress --report-path /tmp/markdown-p1-input-profile-full-tests --report-format xml` | 0 | 1414 passed, 0 skipped/error/failed |
+| `cjpm test` (2026-08-25 indexed SourcePositionMap full rerun) | 0 | 1415 passed, 0 skipped/error/failed; indexed CRLF/Unicode/replacement/checkpoint case passed |
+| `cjpm test` (2026-08-25 shared CST arena full rerun) | 0 | 1416 passed, 0 skipped/error/failed; arena ranges, defensive copy and query indexes passed |
+| `cjpm bench --filter MarkdownReleaseBenchmarks --no-color` (after CST arena change) | 0 | 3/3 benchmark smoke cases passed; not canonical performance evidence |
+| `cjpm test` (2026-08-25 SemVer final rerun) | 0 | 1417 passed, 0 skipped/error/failed; prerelease/build/invalid/overflow cases passed |
 
 
 ## Release Decision
@@ -377,3 +401,80 @@ check, CLI release build and smoke, 8 API-checker tests, the 1155-declaration
 snapshot, and the socket-enabled full suite all passed; the latter executed
 `1410/1410` tests. This branding change does not alter the existing overall
 `INCOMPLETE` verdict or the blocked performance gate.
+
+## 2026-08-25 P0 Correctness and Resource Contract Acceptance
+
+The construction path now enforces AST-node and accumulated literal limits
+before the next oversized allocation. Built-in parsing and Parser SPI node IDs
+share the bounded allocator. Multiline fenced code, HTML, extension literals,
+inline literals and merged text are covered by targeted attack regressions.
+
+Fingerprint preimages now use typed length-prefixed fields. Adversarial field
+splits, all former delimiters, Unicode, empty fields, manifest registration
+order, semantic rule order, renderer policy fields, engine identity and binary
+AST semantics are no longer represented by ambiguous delimiter concatenation.
+
+HTML SourceMap ranges are emitted with renderer writes, so generated tag bytes
+cannot capture visible text mappings; point queries use binary search. Artifact
+schema v1 now rejects non-identity UTF-8 replacement mappings before encoding,
+including the `[0xFF]` versus encoded `U+FFFD` identity ambiguity.
+
+Final local evidence: `scripts/check_format.sh`, `cjpm check`, `cjpm build`, the
+8 API checker tests and the 1155-declaration public API snapshot all exited 0.
+The final socket-enabled full suite exited 0 with `1413/1413` passed and no
+skips, errors or failures. No canonical benchmark report was overwritten by
+this correctness slice.
+
+The overall verdict remains **INCOMPLETE**: version `0.8.0`, hosted CI and the
+single `release-evidence.json` are implemented, but the canonical benchmark is
+still `stale-unbound`. Performance, release and quality requirements remain
+blocked in the authoritative ledger until a clean committed candidate is rerun.
+
+## 2026-08-25 Safe Renderer Hardening Acceptance
+
+Data-image MIME allowlisting now compares the complete media type before URI
+parameters instead of accepting string prefixes. Safe external `_blank` links
+always include deduplicated `noopener noreferrer`; compatibility renderers keep
+their prior output contract. The targeted regression and the complete
+socket-enabled suite passed, with `1418/1418` tests and no skips, errors or
+failures. Public API signatures are unchanged.
+
+## 2026-08-25 Arbitrary-byte Fuzz Acceptance
+
+The deterministic byte corpus now covers both UTF-8 policies and varied chunk
+partitions. It found invalid UTF-8 slicing in GFM email autolinks and HTML block
+ASCII normalization; both paths now preserve decoded UTF-8 boundaries. The
+targeted regression and complete suite passed with `1419/1419` tests and no
+skips, errors or failures. The parser benchmark smoke also passed `3/3`; it is
+not treated as canonical release-performance evidence.
+
+## 2026-08-25 Optional Native and Execution Surface Acceptance
+
+The core package now has no foreign declaration or linker option. A fresh
+default build completed with deliberately nonexistent `CC` and `AR` paths;
+the C scanner is available only through the `markdown.native` package and an
+explicit `AcceleratedMarkdownEngine`. The target-aware build helper passed
+4/4 Linux, MinGW and MSVC command-contract tests. On the available Linux host,
+the archive and benchmark consumer linked successfully. Other target families
+still require their real SDK/linker release runners; no cross-platform result
+is inferred from mocked command tests.
+
+Stream, chunk, partial/failure and async-output APIs now expose their buffered
+execution contracts in names, documentation and `ExecutionModelCapabilities`.
+They do not claim completed-prefix parsing, early AST production, or reduced
+peak memory. Curated `markdown.core`, `render`, `extensions`, `editor`,
+`artifact`, `document` and `testkit` packages reduce new-consumer imports while
+the root package remains the compatibility umbrella. Internal-only
+`NodeIdAllocator` and `Sha256` were removed from the public snapshot, which now
+contains 1192 declarations.
+
+The native scanner gate completed 10,000 coverage-guided libFuzzer runs and
+the deterministic ASan/UBSan harness with no sanitizer finding. Four seed
+files and the minimized historical invalid-UTF-8/GFM crash input are checked
+in and replayed. Final format, check, pure/native/consumer builds, CLI smoke,
+8/8 API-checker tests, 4/4 build-helper tests, 2/2 input-profile tests and the
+full `1423/1423` Cangjie suite passed.
+
+The overall verdict remains **INCOMPLETE** with 122/125 requirements passing:
+`MD-PERF-002`, `MD-REL-001` and `MD-QUAL-001` remain blocked. This slice did not
+replace the canonical remote release benchmark.

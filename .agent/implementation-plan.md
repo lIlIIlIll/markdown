@@ -5,8 +5,9 @@
 本计划的 S0-S11 主链路已有可运行实现，最终全量测试为 1410/1410，
 CommonMark/GFM 官方语料为 652/652 与 671/671；随后执行
 `cjpm bundle --skip-test` 通过并生成当前包，避免无意义地重复同一轮测试。
-当前仍不能声明 GA：`requirements.yaml` 有 4 个 `blocked` 项；真实私密安全
-报告渠道未配置，`benchmarks/measure.py` 的性能 GA gate 真实失败。
+当前仍不能声明 GA：`requirements.yaml` 有 3 个 `blocked` 项；私密安全
+报告渠道已启用并验证，但 `benchmarks/measure.py` 的性能 GA gate 真实失败，
+并连带阻塞 release 与 quality gate。
 
 本轮性能切片已按 profile 证据完成：`LineRecord`/list marker 改为值类型、
 共享空 immutable array、普通 inline 跳过 delimiter 链、段落只计算一次续行
@@ -17,8 +18,7 @@ CommonMark/GFM 官方语料为 652/652 与 671/671；随后执行
 后续依赖顺序冻结为：
 
 ```text
-configure and verify private vulnerability channel
-→ allocation profile and performance convergence
+allocation profile and performance convergence
 → full correctness/performance/package gate rerun
 → final 125/125 audit
 ```
@@ -235,6 +235,80 @@ S0 契约与证据基础
 依赖次序：stable syntax identity → invalidation graph → incremental diagnostics/source map → StableNodeId → external data dialect → plugin isolation → multi-document/document graph → binary format/paging。
 
 退出门槛：每项能力有独立版本化契约、capability flag、资源/安全模型和跨 snapshot 测试。当前这些条目已通过；后续修改必须保持对应回归。
+
+### S12：P0 correctness/resource contract hardening（2026-08-25）
+
+范围：`MD-LIM-002`、`MD-DIA-003`、`MD-HTML-006`、`MD-ART-001`。
+
+依赖次序：构造时 node/literal limits → canonical fingerprint fields → renderer write-time SourceMap → artifact identity restriction → targeted attacks → full suite/API gate。
+
+交付：bounded parser allocator、`BoundedLiteralBuilder`、长度前缀 descriptor、write-time range recorder、binary-search SourceMap queries，以及 schema-v1 identity-mapping cache restriction。
+
+退出门槛：低节点数、多行 code/HTML、Parser SPI、delimiter/Unicode/empty/order fingerprints、tag-name collision 和 invalid UTF-8 artifact 回归全过；format/check/build/API/full suite 全过。该切片已达到退出门槛。
+
+### S13：release evidence and version reset（基础设施已实施，证据待刷新）
+
+范围：版本改为 0.x 或 RC、缩减 RC 阶段的 1.x 冻结承诺、托管 CI、规范语料可复现获取，以及单一 `release-evidence.json`。
+
+依赖次序：冻结 evidence schema → 选择 RC/version policy → 生成 commit/SDK/target/flags/corpus/reference/raw/conformance/API digests → 由该文件生成 README/report/acceptance 投影 → 托管 CI 多 SDK/平台验证。
+
+退出门槛：仓库内只有一个 canonical current result；README、benchmark report、raw digest、账本和 acceptance report 可由同一 evidence 文件复核，且不再把 pre-GA 状态与 `1.0.0` 完整冻结承诺并列。版本、生成器、fail-closed gate 和 Linux 双 SDK CI 已落地；当前 raw 未绑定 source commit/SDK，故 evidence 保持 `stale-unbound`，本切片尚未达到发布退出门槛。完成前不得发布 GA。
+
+### S14：input profiles and native scanner execution capability（2026-08-25）
+
+范围：P1 默认 String 与 owned-byte benchmark 偏差、native scanner on/off capability，以及输入 API 成本归因。
+
+交付：engine 级 native scanner 开关；available/enabled/String-path capability；String、Array、Owned、InputStream 四个可执行 benchmark mode；future raw report 的复制、转换和 scanner metadata；兼容 alias 文档。
+
+退出门槛：四种 mode 对同一输入产生相同 checksum；native on/off 公共解析语义相同；API snapshot、format/check/build 和全量测试通过。该执行层切片已达到退出门槛，但静态 native archive 的完全可选打包与跨平台产物仍属于后续 build-system 工作。
+
+### S15：indexed source positions（2026-08-25）
+
+范围：`MD-POS-001-003` 的高频编辑器查询成本与 visual-column 语义校准。
+
+交付：`SourcePositionMap` 持有共享 `SourceIndex`；line starts 二分定位；长行按 bounded checkpoints 计算 UTF-16 与 visual scalar 列；ReplaceInvalid decoded/original mapping 二分定位；显式 `DisplayWidthPolicy`，且保留旧构造器行为。
+
+退出门槛：CRLF、emoji、非法 UTF-8 replacement、tab policy 和跨 checkpoint 长行与原 `SourceBuffer` 语义一致；API snapshot、format、build 和全量测试通过。该切片已达到退出门槛；终端 cell/grapheme width 不在此切片范围，见 A-030。
+
+### S16：shared CST token arena and query indexes（2026-08-25）
+
+范围：`MD-CST-001-002` 的嵌套 token 重复存储与 AST/CST/token 反查成本，并校准局部增量 capability 的命名。
+
+交付：一个 `SyntaxTree` token arena；`SyntaxNode.tokens` 作为共享 backing 的不可变 range view；NodeId→SyntaxNode、NodeId→MarkdownNode、TokenIndex→smallest semantic node 索引；byte offset→token 二分；`incrementalMode=block-local-with-full-fallback`。
+
+退出门槛：lossless bytes、token categories、双向映射、defensive-copy API、byte lookup、formatter/lint/snapshot 全量回归通过；旧 `SyntaxNode` 构造器与 `tokens` 公开类型保持兼容。该切片已达到退出门槛；CST overhead 的 canonical 数字必须在下一次绑定当前 commit 的远端 release benchmark 中刷新。
+
+### S17：SemVer dependency correctness（2026-08-25）
+
+范围：`MD-DIA-004`、`MD-COMP-001` 的 extension manifest 与 dependency minimum 版本语义。
+
+交付：完整 `major.minor.patch` 解析；prerelease identifier precedence；build metadata 非排序语义；leading zero、空 identifier、非法字符和 Int64 overflow fail closed；仓库示例/fixture 迁移到完整 semantic version。
+
+退出门槛：release/prerelease、numeric/text prerelease、build metadata、无效/不完整/溢出版本均有回归；现有 DSL、SPI、fingerprint、capability 与外部 descriptor 全量测试通过。该切片已达到退出门槛；implementationVersion 继续作为不透明 fingerprint identity。
+
+### S18：Safe renderer URI/target hardening（2026-08-25）
+
+范围：`MD-HTML-002-003` 的 data-image allowlist 与外部链接 target 安全细节。
+
+交付：data URI 只按首个参数前的完整 media type 做大小写无关等值匹配；Safe policy 的外部 `_blank` 链接强制包含 `noopener noreferrer`，并按 ASCII whitespace token 去重；compatibility policy 不静默改变输出。
+
+退出门槛：合法 MIME 参数、前缀碰撞、大小写、已有 rel token 和 SpecCompatible 对照回归通过；format、check、API snapshot 和全量测试通过。
+
+### S19：arbitrary-byte UTF-8/chunk differential fuzz（2026-08-25）
+
+范围：`MD-IN-002`、`MD-TST-004` 的任意 bytes、Strict/ReplaceInvalid 和 chunk partition 风险。
+
+交付：256-case 任意字节 deterministic corpus；all-at-once/chunked 成败、decoded text、original byte length、diagnostics、HTML 与 AST invariants 差分；修复 GFM email punctuation 和 HTML-block ASCII lowercase 的 UTF-8 byte-boundary 崩溃。
+
+退出门槛：固定 seed 的任意 bytes corpus 在 Strict/ReplaceInvalid 双模式无未处理异常，chunk partition 语义一致，全量测试通过；持续明确该套件是 deterministic property smoke，不冒充 coverage-guided native fuzz。
+
+### S20：optional native、buffered execution 与 public surface（2026-08-25）
+
+范围：`MD-IN-003-004`、`MD-SINK-001`、`MD-CAP-001`、`MD-PKG-001`、`MD-TST-004`。
+
+交付：默认纯仓颉核心；显式 `markdown.native` accelerator 包装器；Unix/MinGW/MSVC target-aware archive 构建；明确 buffered stream/chunk/async/tryParse 合同；按 core/render/extensions/editor/artifact/document/testkit 收窄的公开子包；coverage-guided libFuzzer、ASan/UBSan scanner harness 与历史 crash corpus。
+
+退出门槛：缺失 C toolchain 的默认构建通过；显式 native archive 和 benchmark consumer 可链接；跨 target 命令合同测试通过；全量测试、API snapshot、format、consumer example 和 10,000-run sanitizer fuzz 均通过。非 Linux 平台的真实 SDK/linker release matrix 仍由对应托管 runner 资格验证，不把命令合同测试冒充平台实机构建。
 
 ## 5. 每个切片的统一工作流
 

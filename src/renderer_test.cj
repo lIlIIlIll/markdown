@@ -92,6 +92,30 @@ class RendererBehaviorTest {
     }
 
     @TestCase
+    func safeDataImageMimeAndBlankTargetPoliciesAreExact(): Unit {
+        let dataOptions = HtmlOptions(HtmlPolicy.safe(), RawHtmlPolicyKind.Escape, LinkUriPolicy.safe(),
+            ImageUriPolicy(true, false, true, allowedDataMimeTypes: ["image/png"]))
+        let dataDocument = Markdown
+            .parse("![ok](data:image/PNG;charset=utf-8;base64,AA) ![bad](data:image/pngx;base64,AA)")
+            .document
+        let dataHtml = HtmlRenderer(options: dataOptions).render(dataDocument)
+        @Expect(dataHtml.contains("src=\"data:image/PNG;charset=utf-8;base64,AA\""), true)
+        @Expect(dataHtml.contains("src=\"data:image/pngx;base64,AA\""), false)
+
+        let blankOptions = HtmlOptions(HtmlPolicy.safe(), RawHtmlPolicyKind.Escape, LinkUriPolicy.safe(),
+            ImageUriPolicy.safe(), externalLinkRel: "nofollow NOOPENER", externalLinkTarget: "_BLANK")
+        let blankHtml = HtmlRenderer(options: blankOptions).render(Markdown.parse("[x](https://example.com)").document)
+        @Expect(blankHtml.contains("rel=\"nofollow NOOPENER noreferrer\""), true)
+        @Expect(blankHtml.contains("noopener noopener"), false)
+        @Expect(blankHtml.contains("target=\"_BLANK\""), true)
+
+        let specOptions = HtmlOptions(HtmlPolicy.specCompatible(), RawHtmlPolicyKind.PassThrough, LinkUriPolicy.safe(),
+            ImageUriPolicy.safe(), externalLinkTarget: "_blank")
+        let specHtml = HtmlRenderer(options: specOptions).render(Markdown.parse("[x](https://example.com)").document)
+        @Expect(specHtml.contains(" rel="), false)
+    }
+
+    @TestCase
     func outputBudgetCancellationAndSinkErrorsPropagate(): Unit {
         let document = MarkdownEngine.builder().build().parse("hello").document
         try {
@@ -155,6 +179,22 @@ class RendererBehaviorTest {
     }
 
     @TestCase
+    func explicitlyNamedBufferedAsyncSessionPreservesBackpressure(): Unit {
+        let session = BufferedAsyncHtmlOutputSession(HtmlRenderer(), Markdown.parse("buffered output").document,
+            chunkBytes: 4)
+        let sink = PauseOnceSink()
+        match (session.resume(sink)) {
+            case AsyncRenderState.Paused => @Expect(true)
+            case _ => @Expect(false)
+        }
+        match (session.resume(sink)) {
+            case AsyncRenderState.Complete => @Expect(true)
+            case _ => @Expect(false)
+        }
+        @Expect(session.bytesWritten(), "<p>buffered output</p>\n".size)
+    }
+
+    @TestCase
     func rendererFingerprintIsDeterministicAndPolicySensitive(): Unit {
         let safe1 = HtmlRenderer().fingerprint()
         let safe2 = HtmlRenderer().fingerprint()
@@ -162,6 +202,13 @@ class RendererBehaviorTest {
         @Expect(safe1, safe2)
         @Expect(safe1 == spec, false)
         @Expect(safe1.size, 64)
+        let splitLeft = HtmlRenderer(
+            options: HtmlOptions(HtmlPolicy.safe(), RawHtmlPolicyKind.Escape, LinkUriPolicy.safe(),
+                ImageUriPolicy.safe(), externalLinkRel: "a|target=b", externalLinkTarget: "c"))
+        let splitRight = HtmlRenderer(
+            options: HtmlOptions(HtmlPolicy.safe(), RawHtmlPolicyKind.Escape, LinkUriPolicy.safe(),
+                ImageUriPolicy.safe(), externalLinkRel: "a", externalLinkTarget: "b|target=c"))
+        @Expect(splitLeft.fingerprint() == splitRight.fingerprint(), false)
         try {
             HtmlRenderer(
                 extensionRules: [RendererRule("bad", "node", "span",
@@ -211,7 +258,7 @@ class RendererBehaviorTest {
 private func missingRendererEngine(id: String, policy: MissingRendererPolicy, content: BlockContentMode): MarkdownEngine {
     let dialect = MarkdownDialect
         .define(id, "1")
-        .enable(ExtensionManifest(id, "1", "1", missingRendererPolicy: policy))
+        .enable(ExtensionManifest(id, "1.0.0", "1", missingRendererPolicy: policy))
         .block(BlockSyntax.define(id, "box").opener(":::").closer(":::").content(content))
         .build()
     MarkdownEngine.builder().dialect(dialect).build()

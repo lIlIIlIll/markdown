@@ -276,7 +276,7 @@ class ExtensionDslTest {
 
     @TestCase
     func unknownAndUnclosedSyntaxHaveDeterministicFallbackAndDiagnostic(): Unit {
-        let manifest = ExtensionManifest("docs", "1", "1")
+        let manifest = ExtensionManifest("docs", "1.0.0", "1")
         let dialect = MarkdownDialect
             .define("docs", "1")
             .enable(manifest)
@@ -301,7 +301,7 @@ class ExtensionDslTest {
     func typedBlockParametersHonorQuotesEscapesTypesAndInvalidDiagnostics(): Unit {
         let dialect = MarkdownDialect
             .define("typed", "1")
-            .enable(ExtensionManifest("typed", "1", "1"))
+            .enable(ExtensionManifest("typed", "1.0.0", "1"))
             .block(
                 BlockSyntax
                     .define("typed", "box")
@@ -341,8 +341,8 @@ class ExtensionDslTest {
 
     @TestCase
     func compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer(): Unit {
-        let base = ExtensionManifest("a", "1", "1")
-        let missingDependency = ExtensionManifest("b", "1", "1", dependencies: ["missing"])
+        let base = ExtensionManifest("a", "1.0.0", "1")
+        let missingDependency = ExtensionManifest("b", "1.0.0", "1", dependencies: ["missing"])
         expectCompileFailure(MarkdownDialect.define("x", "1").enable(base).enable(missingDependency).build())
 
         let duplicateRules = MarkdownDialect
@@ -360,13 +360,14 @@ class ExtensionDslTest {
             .build()
         expectCompileFailure(unbounded)
 
-        let needsRenderer = ExtensionManifest("rendered", "1", "1", capabilities: ExtensionCapabilities(safeHtml: true))
+        let needsRenderer = ExtensionManifest("rendered", "1.0.0", "1",
+            capabilities: ExtensionCapabilities(safeHtml: true))
         expectCompileFailure(MarkdownDialect.define("x", "1").enable(needsRenderer).build())
     }
 
     @TestCase
     func dialectOptionsLimitsAndFingerprintAreRuntimeEffective(): Unit {
-        let manifest = ExtensionManifest("docs", "1", "1")
+        let manifest = ExtensionManifest("docs", "1.0.0", "1")
         let small = ParseLimits(64, 64, 16, 128, 16, 16, 32, 64, 256, 32, 32)
         let disabledDialect = MarkdownDialect
             .define("docs", "1")
@@ -398,19 +399,19 @@ class ExtensionDslTest {
         expectCompileFailure(
             MarkdownDialect
                 .define("profile", "1")
-                .enable(ExtensionManifest("only-gfm", "1", "1", supportedProfiles: ["gfm-modern-v1"]))
+                .enable(ExtensionManifest("only-gfm", "1.0.0", "1", supportedProfiles: ["gfm-modern-v1"]))
                 .build())
 
-        let cycleA = ExtensionManifest("a", "1", "1", dependencies: ["b"])
-        let cycleB = ExtensionManifest("b", "1", "1", dependencies: ["a"])
+        let cycleA = ExtensionManifest("a", "1.0.0", "1", dependencies: ["b"])
+        let cycleB = ExtensionManifest("b", "1.0.0", "1", dependencies: ["a"])
         expectCompileFailure(MarkdownDialect.define("cycle", "1").enable(cycleA).enable(cycleB).build())
 
         let dependency = ExtensionManifest("dependency", "1.5.0", "1")
-        let consumer = ExtensionManifest("consumer", "1", "1",
+        let consumer = ExtensionManifest("consumer", "1.0.0", "1",
             dependencyConstraints: [ExtensionDependency("dependency", "2.0.0")])
         expectCompileFailure(MarkdownDialect.define("version", "1").enable(dependency).enable(consumer).build())
 
-        let duplicate = ExtensionManifest("duplicate", "1", "1")
+        let duplicate = ExtensionManifest("duplicate", "1.0.0", "1")
         expectCompileFailure(
             MarkdownDialect
                 .define("rules", "1")
@@ -419,7 +420,7 @@ class ExtensionDslTest {
                 .block(BlockSyntax.define("duplicate", "same").opener(":::").closer(":::"))
                 .build())
 
-        let noParse = ExtensionManifest("no-parse", "1", "1", capabilities: ExtensionCapabilities(parse: false))
+        let noParse = ExtensionManifest("no-parse", "1.0.0", "1", capabilities: ExtensionCapabilities(parse: false))
         expectCompileFailure(
             MarkdownDialect
                 .define("capability", "1")
@@ -427,7 +428,7 @@ class ExtensionDslTest {
                 .inline(InlineSyntax.define("no-parse", "mark").delimiter("=="))
                 .build())
 
-        let noMarkdownLowering = ExtensionManifest("format", "1", "1",
+        let noMarkdownLowering = ExtensionManifest("format", "1.0.0", "1",
             capabilities: ExtensionCapabilities(markdown: true))
         expectCompileFailure(
             MarkdownDialect
@@ -439,19 +440,58 @@ class ExtensionDslTest {
         expectCompileFailure(
             MarkdownDialect
                 .define("lint-capability", "1")
-                .enable(ExtensionManifest("lint-only", "1", "1", capabilities: ExtensionCapabilities(lint: true)))
+                .enable(ExtensionManifest("lint-only", "1.0.0", "1", capabilities: ExtensionCapabilities(lint: true)))
                 .build())
         expectCompileFailure(
             MarkdownDialect
                 .define("incremental-capability", "1")
-                .enable(ExtensionManifest("incremental", "1", "1",
-                    capabilities: ExtensionCapabilities(incremental: true)))
+                .enable(
+                    ExtensionManifest("incremental", "1.0.0", "1",
+                        capabilities: ExtensionCapabilities(incremental: true)))
                 .build())
     }
 
     @TestCase
+    func semanticVersionConstraintsFollowSemVerPrecedenceAndRejectInvalidVersions(): Unit {
+        let release = ExtensionManifest("dependency", "1.0.0", "release")
+        let acceptsPrereleaseMinimum = ExtensionManifest("consumer", "1.0.0", "1",
+            dependencyConstraints: [ExtensionDependency("dependency", "1.0.0-alpha.9")])
+        let compiled = MarkdownDialect.define("semver", "1").enable(release).enable(acceptsPrereleaseMinimum).build()
+        @Expect(compiled.manifests.size, 2)
+
+        let prerelease = ExtensionManifest("dependency", "1.0.0-alpha.10+build.7", "pre")
+        let acceptsNumericOrdering = ExtensionManifest("consumer", "1.0.0", "1",
+            dependencyConstraints: [ExtensionDependency("dependency", "1.0.0-alpha.2+ignored")])
+        @Expect(
+            MarkdownDialect
+                .define("semver-pre", "1")
+                .enable(prerelease)
+                .enable(acceptsNumericOrdering)
+                .build()
+                .manifests
+                .size,
+            2)
+
+        let needsRelease = ExtensionManifest("consumer", "1.0.0", "1",
+            dependencyConstraints: [ExtensionDependency("dependency", "1.0.0")])
+        expectCompileFailure(
+            MarkdownDialect.define("semver-release", "1").enable(prerelease).enable(needsRelease).build())
+
+        for (invalid in ["1", "1.0", "01.0.0", "1.01.0", "1.0.01", "1.0.0-", "1.0.0-alpha..1", "1.0.0-alpha.01",
+            "1.0.0+", "1.0.0+build..1", "9223372036854775808.0.0"]) {
+            expectCompileFailure(
+                MarkdownDialect.define("invalid-semver", "1").enable(ExtensionManifest("invalid", invalid, "1")).build())
+        }
+
+        let invalidMinimum = ExtensionManifest("consumer", "1.0.0", "1",
+            dependencyConstraints: [ExtensionDependency("dependency", "1.0")])
+        expectCompileFailure(
+            MarkdownDialect.define("invalid-minimum", "1").enable(release).enable(invalidMinimum).build())
+    }
+
+    @TestCase
     func syntaxDslKindsEscapingFlankingNestingEmittersAndCostsAreEffective(): Unit {
-        let manifest = ExtensionManifest("syntax", "1", "1")
+        let manifest = ExtensionManifest("syntax", "1.0.0", "1")
         let dialect = MarkdownDialect
             .define("syntax", "1")
             .enable(manifest)
@@ -532,7 +572,7 @@ class ExtensionDslTest {
             .dialect(
                 MarkdownDialect
                     .define("non-nested", "1")
-                    .enable(ExtensionManifest("non-nested", "1", "1"))
+                    .enable(ExtensionManifest("non-nested", "1.0.0", "1"))
                     .block(BlockSyntax.define("non-nested", "container").opener(":::").closer(":::").nesting(false))
                     .build())
             .build()
@@ -542,7 +582,7 @@ class ExtensionDslTest {
         let ordered = DialectCompiler.compile(
             MarkdownDialect
                 .define("ordered", "1")
-                .enable(ExtensionManifest("ordered", "1", "1"))
+                .enable(ExtensionManifest("ordered", "1.0.0", "1"))
                 .inline(InlineSyntax.define("ordered", "metadata").metadataSuffix("{#", "}"))
                 .inline(InlineSyntax.define("ordered", "paired").delimiter("=="))
                 .build())
@@ -554,7 +594,7 @@ class ExtensionDslTest {
             .dialect(
                 MarkdownDialect
                     .define("cost", "1")
-                    .enable(ExtensionManifest("cost", "1", "1"))
+                    .enable(ExtensionManifest("cost", "1.0.0", "1"))
                     .inline(
                         InlineSyntax
                             .define("cost", "mark")
@@ -575,7 +615,7 @@ class ExtensionDslTest {
 
     @TestCase
     func extensionPostprocessTransformLintAndFormatterCategoriesRunInFixedOrder(): Unit {
-        let manifest = ExtensionManifest("pipeline", "1", "build-1",
+        let manifest = ExtensionManifest("pipeline", "1.0.0", "build-1",
             capabilities: ExtensionCapabilities(postprocess: true, transform: true, lint: true))
         let dialect = MarkdownDialect
             .define("pipeline", "1")
@@ -602,7 +642,7 @@ class ExtensionDslTest {
         }
         @Expect(found, true)
 
-        let missingCapabilities = ExtensionManifest("pipeline", "1", "1")
+        let missingCapabilities = ExtensionManifest("pipeline", "1.0.0", "1")
         expectCompileFailure(
             MarkdownDialect
                 .define("missing-pipeline-capability", "1")
@@ -615,7 +655,7 @@ class ExtensionDslTest {
     func builderDisableRemovesRegistrationBeforeCompilation(): Unit {
         let dialect = MarkdownDialect
             .define("x", "1")
-            .enable(ExtensionManifest("temp", "1", "1"))
+            .enable(ExtensionManifest("temp", "1.0.0", "1"))
             .inline(InlineSyntax.define("temp", "mark").delimiter("=="))
             .disable("temp")
             .build()
@@ -628,7 +668,7 @@ class ExtensionDslTest {
     func boundedParserSpiRunsAndFailuresAreStructuredWithoutStateLeak(): Unit {
         let dialect = MarkdownDialect
             .define("spi", "1")
-            .enable(ExtensionManifest("spi", "1", "build-1"))
+            .enable(ExtensionManifest("spi", "1.0.0", "build-1"))
             .parserSpi(HashTagSpi())
             .build()
         let engine = MarkdownEngine.builder().dialect(dialect).build()
@@ -641,12 +681,21 @@ class ExtensionDslTest {
             case _ => @Expect(false)
         }
 
+        let nodeLimited = ParseLimits(1024, 1024, 16, 3, 16, 16, 1024, 1024, 4096, 1024, 1024)
+        try {
+            MarkdownEngine.builder().dialect(dialect).limits(nodeLimited).build().parse("#topic")
+            @Expect(false)
+        } catch (error: LimitExceededException) {
+            @Expect(error.limitKind, "ast_nodes")
+            @Expect(error.phase, "ast_allocation")
+        }
+
         let failing = MarkdownEngine
             .builder()
             .dialect(
                 MarkdownDialect
                     .define("fail", "1")
-                    .enable(ExtensionManifest("fail", "1.2", "broken-build"))
+                    .enable(ExtensionManifest("fail", "1.2.0", "broken-build"))
                     .parserSpi(FailingInlineSpi())
                     .build())
             .build()
@@ -655,7 +704,7 @@ class ExtensionDslTest {
             @Expect(false)
         } catch (error: ExtensionFailureException) {
             @Expect(error.extensionId, "fail")
-            @Expect(error.semanticVersion, "1.2")
+            @Expect(error.semanticVersion, "1.2.0")
             @Expect(error.implementationVersion, "broken-build")
             @Expect(error.ruleId, Some("failure"))
             @Expect(error.cause.message, "callback failed")

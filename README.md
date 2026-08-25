@@ -54,19 +54,9 @@ cd markdown_demo
 export MARKDOWN_PATH=/absolute/path/to/markdown
 ```
 
-需要 Cangjie `1.1.0`、Python 3、C11 编译器和 `ar`。
+基础包只需要 Cangjie `1.1.0` 和 Python 3；纯仓颉构建不需要 C 编译器、归档器或原生链接参数。
 
-### 2. 构建原生行扫描器
-
-```sh
-CC=/usr/lib/llvm15/bin/clang \
-  python3 "${MARKDOWN_PATH}/scripts/build_native_scanner.py" \
-  --out-dir "${MARKDOWN_PATH}/target/native"
-```
-
-扫描器被静态链接为 `libmarkdown_scanner.a`；库本身不会在运行时加载动态原生依赖。
-
-### 3. 生成 `cjpm.toml`
+### 2. 生成 `cjpm.toml`
 
 ```sh
 python3 - <<'PY'
@@ -77,10 +67,10 @@ path = os.environ["MARKDOWN_PATH"]
 Path("cjpm.toml").write_text(f'''[package]
   cjc-version = "1.1.0"
   name = "markdown_demo"
-  version = "1.0.0"
+  version = "0.8.0"
   output-type = "executable"
   compile-option = "-O2"
-  link-option = "-L {path}/target/native -lmarkdown_scanner"
+  link-option = ""
 
 [dependencies]
   "markdown" = {{ path = "{path}", output-type = "static" }}
@@ -88,7 +78,7 @@ Path("cjpm.toml").write_text(f'''[package]
 PY
 ```
 
-### 4. 解析并输出安全 HTML
+### 3. 解析并输出安全 HTML
 
 ```cangjie
 package markdown_demo
@@ -240,6 +230,10 @@ flowchart TD
 
 公开入口是 `Markdown` facade 和 `MarkdownEngine.builder()`。核心 Cangjie 包只依赖标准库；C 行扫描器是显式构建、静态链接的窄边界。整输入 foreign 函数没有标注 `@FastNative`，因为执行时间随输入长度变化，不能证明始终短时有界。
 
+默认所有入口都走纯仓颉 scanner。需要原生加速时，显式执行 `scripts/build_native_scanner.py --enable`、在消费端为目标平台配置 archive/linker，并从 `markdown.native` 注入 `NativeLineScanner()`；未导入该子包时不存在 foreign 符号或原生链接依赖。Linux/macOS/MinGW 使用 `CC`/`AR`，MSVC 使用 `cl`/`lib`，交叉编译通过 `--target` 传入 target triple。完整命令和输入 profile 见[输入与资源](docs/input-and-resources.md)。
+
+公开表面按用途提供精选子包：`markdown.core`、`markdown.render`、`markdown.extensions`、`markdown.editor`、`markdown.artifact`、`markdown.document` 和 `markdown.testkit`。根 `markdown.*` 保留为兼容门面；新代码应优先导入所需子包，避免无意绑定编辑器、artifact 或 testkit API。
+
 ## 性能对比
 
 ### 同语言库：markdown4cj
@@ -269,12 +263,20 @@ flowchart TD
 
 原生 C 的 cmark/cmark-gfm 用于定位性能下限，不属于同语言产品对比。
 
-| 工作负载 | markdown / 原生参考 | GA 门槛 | 状态 |
-| --- | ---: | ---: | --- |
-| CommonMark parse / cmark | `6.234490×` | `≤ 2.5×` | 未通过 |
-| GFM parse+HTML / cmark-gfm | `4.845909×` | `≤ 2.5×` | 未通过 |
+<!-- release-evidence:start -->
+| Release evidence | Value |
+| --- | --- |
+| Version / status | `0.8.0` / `draft` |
+| Source commit | `UNBOUND (dirty draft)` |
+| CommonMark / cmark | `6.98x` / limit `2.5x` |
+| GFM HTML / cmark-gfm | `5.99x` / limit `2.5x` |
+| Benchmark identity | `stale-unbound`; commit and SDK are not bound |
 
-上述数字来自 fixed CPU、`-O2`、11 个 256 KiB 非自定义语料、每进程 3 iterations、每侧 7 个交替样本的 committed-harness 正式证据。来源不明或未绑定相同 committed source/harness 的本地报告已排除；当前工作区 `docs/reports/benchmark.*` 的本机报告不参与这项结论。原始协议、正式证据身份与其他 scaling/RSS 门槛见[性能说明](docs/performance.md)。
+The table is generated from [`release-evidence.json`](release-evidence.json).
+It is a fail-closed draft, not evidence for the current uncommitted candidate.
+<!-- release-evidence:end -->
+
+历史测量仅保留在[性能说明](docs/performance.md)中，不再作为“当前值”。发布报告、README 和验收报告中的 canonical 数字都来自同一个 `release-evidence.json`；只有 source commit、SDK、语料和 raw digest 全部绑定后，证据才能转为 release-ready。
 
 ## 功能对比
 
@@ -288,7 +290,7 @@ flowchart TD
 | 输出 | Safe/Spec/GFM HTML、plain text、canonical Markdown、CST、source map、artifact | NodeView/HarmonyOS UI，主题、代码高亮、图片、公式、音频等展示能力 |
 | HTML 与 URI 安全 | Safe HTML 默认、raw policy、Link/Image URI policy、sanitizer port、output budget | 支持一组 HTML 标签和属性；公开安全文档未声明默认 URI policy 或 sanitizer contract |
 | 扩展与插件 | versioned manifest、typed syntax/renderer DSL、依赖/冲突、fingerprint、TCK、external descriptor、isolation contract | `MarkdownPlugin` 可配置 parser/visitor、pre/post-process，Registry 处理依赖且插件顺序有语义 |
-| 流式 / 增量 | bytes/stream/chunk feed；snapshot、range edit、preserving edit API | UI 文档声明全量/增量加载渲染 |
+| 流式 / 增量 | buffered bytes/stream/chunk feed；snapshot、range edit、preserving edit；等长纯文本的 block-local fast path | UI 文档声明全量/增量加载渲染 |
 | 取消 / 资源限制 / 诊断 | CancellationToken、ParseLimits、OperationBudget、typed diagnostic、partial result | 公开 API 文档未声明对应的统一契约 |
 | 工具链 | CLI render/parse/format/check/explain/dialect；lint/fix、formatter、CST、source map | 公开文档聚焦 HAR/UI 使用，未声明独立 CLI、lint/format/source-map/CST |
 | UI / 主题 / 媒体 | 核心不绑定 UI；由宿主 renderer/adapter 实现 | MarkdownComponent、深浅主题、文本/表格样式、代码高亮、图片/公式/音频等 |

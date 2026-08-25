@@ -6,9 +6,10 @@ format_tmp="$(mktemp -d)"
 trap 'rm -rf "$format_tmp"' EXIT
 
 cjfmt -d "$repo_root/src" -o "$format_tmp"
-for source_file in "$repo_root"/src/*.cj; do
-    diff -q "$source_file" "$format_tmp/src/$(basename "$source_file")"
-done
+while IFS= read -r source_file; do
+    relative_path="${source_file#"$repo_root/"}"
+    diff -q "$source_file" "$format_tmp/$relative_path"
+done < <(rp-find "$repo_root/src" -type f -name '*.cj')
 
 check_one() {
     local source_file="$1"

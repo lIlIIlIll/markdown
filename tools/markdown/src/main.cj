@@ -158,7 +158,7 @@ func runDialect(engine: MarkdownEngine, args: Array<String>): Int64 {
         DialectCompiler.compile(
             MarkdownDialect
                 .define("cli-validation", "1")
-                .enable(ExtensionManifest("cli-validation", "1", "1", requiredSpiVersion: spiVersion))
+                .enable(ExtensionManifest("cli-validation", "1.0.0", "1", requiredSpiVersion: spiVersion))
                 .build())
         println("valid")
         return 0

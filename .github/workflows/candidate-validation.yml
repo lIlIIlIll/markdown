@@ -1,0 +1,54 @@
+name: Candidate validation
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-sdk-matrix:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: [lts, current]
+    env:
+      CANGJIE_SDK_URL: ${{ matrix.sdk == 'lts' && vars.CANGJIE_SDK_LTS_URL || vars.CANGJIE_SDK_CURRENT_URL }}
+      CANGJIE_SDK_SHA256: ${{ matrix.sdk == 'lts' && vars.CANGJIE_SDK_LTS_SHA256 || vars.CANGJIE_SDK_CURRENT_SHA256 }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install declared Cangjie SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${CANGJIE_SDK_URL}"
+          test -n "${CANGJIE_SDK_SHA256}"
+          curl --fail --location --retry 3 "${CANGJIE_SDK_URL}" --output /tmp/cangjie-sdk.tar.gz
+          echo "${CANGJIE_SDK_SHA256}  /tmp/cangjie-sdk.tar.gz" | sha256sum --check --strict
+          mkdir -p /tmp/cangjie-sdk
+          tar -xf /tmp/cangjie-sdk.tar.gz -C /tmp/cangjie-sdk
+          env_file="$(find /tmp/cangjie-sdk -name envsetup.sh -type f -print -quit)"
+          test -n "${env_file}"
+          echo "CANGJIE_ENV_FILE=${env_file}" >> "${GITHUB_ENV}"
+
+      - name: Validate candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          source "${CANGJIE_ENV_FILE}"
+          scripts/check_format.sh
+          python3 scripts/test_build_native_scanner.py
+          python3 scripts/test_release_evidence.py
+          python3 scripts/test_check_public_api.py
+          python3 scripts/check_public_api.py
+          cjpm check
+          cjpm build
+          CC=clang AR=ar python3 scripts/build_native_scanner.py --enable
+          (cd benchmarks/driver && cjpm build)
+          python3 scripts/fuzz_native_scanner.py --runs 10000
+          python3 scripts/test_benchmark_input_profiles.py
+          cjpm test --no-color --no-progress --report-path /tmp/markdown-tests --report-format xml

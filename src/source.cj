@@ -1,5 +1,7 @@
 package markdown
 
+import std.collection.*
+
 public struct SourceOffset <: Equatable<SourceOffset> {
     public let byteOffset: Int64
 
@@ -103,6 +105,13 @@ public enum PositionEncoding {
     | Utf8Byte
     | Utf16CodeUnit
     | Visual
+}
+
+public enum DisplayWidthPolicy {
+    // Every Unicode scalar, including tab, advances one column.
+    | UnicodeScalar
+    // Every Unicode scalar advances one column and tab advances to tabStop.
+    | UnicodeScalarWithTabStops
 }
 
 public class OwnedUtf8Input {
@@ -211,6 +220,10 @@ public class SourceBuffer {
         } else {
             Some(decodedBytes)
         }
+    }
+
+    internal func hasIdentityMapping(): Bool {
+        mappingIsIdentity
     }
 
     public func slice(span: SourceSpan): String {
@@ -444,7 +457,8 @@ public class SourceBuffer {
     }
 
     internal func originalOffset(decodedOffset: Int64): Int64 {
-        if (decodedOffset < 0 || decodedOffset > decodedLength()) {
+        let length = decodedLength()
+        if (decodedOffset < 0 || decodedOffset > length) {
             throw IllegalArgumentException("decoded byte offset is outside source")
         }
         if (mappingIsIdentity) {
@@ -476,22 +490,28 @@ public class SourceBuffer {
         true
     }
 
-    private func decodedOffset(originalOffset: Int64): Int64 {
+    internal func decodedOffset(originalOffset: Int64): Int64 {
         ensureOffset(originalOffset)
         if (mappingIsIdentity) {
             return originalOffset
         }
-        var index: Int64 = 0
-        while (index < decodedToOriginal.size) {
-            if (decodedToOriginal[index] == originalOffset) {
-                return index
+        var low: Int64 = 0
+        var high = decodedToOriginal.size
+        while (low < high) {
+            let middle = low + (high - low) / 2
+            if (decodedToOriginal[middle] < originalOffset) {
+                low = middle + 1
+            } else {
+                high = middle
             }
-            index++
+        }
+        if (low < decodedToOriginal.size && decodedToOriginal[low] == originalOffset) {
+            return low
         }
         throw IllegalArgumentException("original byte offset is not on a decoded boundary")
     }
 
-    private func originalLength(): Int64 {
+    internal func originalLength(): Int64 {
         if (valueBackedIdentity) {
             value.size
         } else {
@@ -499,7 +519,7 @@ public class SourceBuffer {
         }
     }
 
-    private func decodedLength(): Int64 {
+    internal func decodedLength(): Int64 {
         if (valueBackedIdentity) {
             value.size
         } else {
@@ -507,7 +527,7 @@ public class SourceBuffer {
         }
     }
 
-    private func originalByte(index: Int64): Byte {
+    internal func originalByte(index: Int64): Byte {
         if (valueBackedIdentity) {
             value[index]
         } else {
@@ -515,7 +535,7 @@ public class SourceBuffer {
         }
     }
 
-    private func decodedByte(index: Int64): Byte {
+    internal func decodedByte(index: Int64): Byte {
         if (valueBackedIdentity) {
             value[index]
         } else {
@@ -581,9 +601,173 @@ extend LiteralStorage {
     }
 }
 
+internal class SourceIndex {
+    internal let originalLineStarts: Array<Int64>
+    internal let originalContentStarts: Array<Int64>
+    internal let decodedLineStarts: Array<Int64>
+    internal let decodedContentStarts: Array<Int64>
+    internal let decodedLineEnds: Array<Int64>
+    internal let checkpointsByLine: Array<Array<SourceCheckpoint>>
+
+    internal init(source: SourceBuffer, tabStop: Int64, displayWidthPolicy: DisplayWidthPolicy) {
+        let originalStarts = ArrayList<Int64>()
+        let originalContent = ArrayList<Int64>()
+        originalStarts.add(0)
+        originalContent.add(0)
+        var original: Int64 = 0
+        while (original < source.originalLength()) {
+            if (source.originalByte(original) == 13) {
+                originalStarts.add(original + 1)
+                if (original + 1 < source.originalLength() && source.originalByte(original + 1) == 10) {
+                    originalContent.add(original + 2)
+                    original++
+                } else {
+                    originalContent.add(original + 1)
+                }
+            } else if (source.originalByte(original) == 10) {
+                originalStarts.add(original + 1)
+                originalContent.add(original + 1)
+            }
+            original++
+        }
+        originalLineStarts = originalStarts.toArray()
+        originalContentStarts = originalContent.toArray()
+
+        let decodedStarts = ArrayList<Int64>()
+        let decodedContent = ArrayList<Int64>()
+        let decodedEnds = ArrayList<Int64>()
+        decodedStarts.add(0)
+        decodedContent.add(0)
+        var decoded: Int64 = 0
+        while (decoded < source.decodedLength()) {
+            if (source.decodedByte(decoded) == 13) {
+                decodedEnds.add(decoded)
+                decodedStarts.add(decoded + 1)
+                if (decoded + 1 < source.decodedLength() && source.decodedByte(decoded + 1) == 10) {
+                    decodedContent.add(decoded + 2)
+                    decoded++
+                } else {
+                    decodedContent.add(decoded + 1)
+                }
+            } else if (source.decodedByte(decoded) == 10) {
+                decodedEnds.add(decoded)
+                decodedStarts.add(decoded + 1)
+                decodedContent.add(decoded + 1)
+            }
+            decoded++
+        }
+        decodedEnds.add(source.decodedLength())
+        decodedLineStarts = decodedStarts.toArray()
+        decodedContentStarts = decodedContent.toArray()
+        decodedLineEnds = decodedEnds.toArray()
+
+        let lineCheckpoints = ArrayList<Array<SourceCheckpoint>>()
+        for (line in 0..decodedLineStarts.size) {
+            let checkpoints = ArrayList<SourceCheckpoint>()
+            var current = decodedContentStarts[line]
+            let end = decodedLineEnds[line]
+            var utf16Units: Int64 = 0
+            var visualColumn: Int64 = 1
+            var checkpointOffset = current
+            checkpoints.add(SourceCheckpoint(current, utf16Units, visualColumn))
+            while (current < end) {
+                if (source.decodedByte(current) == b'\t' && expandsTabs(displayWidthPolicy)) {
+                    visualColumn += tabStop - ((visualColumn - 1) % tabStop)
+                    current++
+                    utf16Units++
+                } else {
+                    let width = utf8Width(source.decodedByte(current))
+                    utf16Units += if (width == 4) {
+                        2
+                    } else {
+                        1
+                    }
+                    visualColumn++
+                    current += width
+                }
+                if (current - checkpointOffset >= 64) {
+                    checkpoints.add(SourceCheckpoint(current, utf16Units, visualColumn))
+                    checkpointOffset = current
+                }
+            }
+            if (checkpoints[checkpoints.size - 1].decodedOffset != end) {
+                checkpoints.add(SourceCheckpoint(end, utf16Units, visualColumn))
+            }
+            lineCheckpoints.add(checkpoints.toArray())
+        }
+        checkpointsByLine = lineCheckpoints.toArray()
+    }
+
+    internal func originalLine(byteOffset: Int64): Int64 {
+        lineAt(originalLineStarts, byteOffset)
+    }
+
+    internal func decodedLine(decodedOffset: Int64): Int64 {
+        lineAt(decodedLineStarts, decodedOffset)
+    }
+
+    internal func checkpointAt(line: Int64, decodedOffset: Int64): SourceCheckpoint {
+        let checkpoints = checkpointsByLine[line]
+        var low: Int64 = 0
+        var high = checkpoints.size
+        while (low < high) {
+            let middle = low + (high - low) / 2
+            if (checkpoints[middle].decodedOffset <= decodedOffset) {
+                low = middle + 1
+            } else {
+                high = middle
+            }
+        }
+        checkpoints[low - 1]
+    }
+
+    internal func checkpointAtUtf16(line: Int64, character: Int64): SourceCheckpoint {
+        let checkpoints = checkpointsByLine[line]
+        var low: Int64 = 0
+        var high = checkpoints.size
+        while (low < high) {
+            let middle = low + (high - low) / 2
+            if (checkpoints[middle].utf16Units <= character) {
+                low = middle + 1
+            } else {
+                high = middle
+            }
+        }
+        checkpoints[low - 1]
+    }
+
+    private func lineAt(starts: Array<Int64>, offset: Int64): Int64 {
+        var low: Int64 = 0
+        var high = starts.size
+        while (low < high) {
+            let middle = low + (high - low) / 2
+            if (starts[middle] <= offset) {
+                low = middle + 1
+            } else {
+                high = middle
+            }
+        }
+        low - 1
+    }
+}
+
+internal struct SourceCheckpoint {
+    internal let decodedOffset: Int64
+    internal let utf16Units: Int64
+    internal let visualColumn: Int64
+
+    internal init(decodedOffset: Int64, utf16Units: Int64, visualColumn: Int64) {
+        this.decodedOffset = decodedOffset
+        this.utf16Units = utf16Units
+        this.visualColumn = visualColumn
+    }
+}
+
 public class SourcePositionMap {
     public let source: SourceBuffer
     public let tabStop: Int64
+    public let displayWidthPolicy: DisplayWidthPolicy
+    private let index: SourceIndex
 
     public init(source: SourceBuffer, tabStop!: Int64 = 4) {
         if (tabStop <= 0) {
@@ -591,18 +775,115 @@ public class SourcePositionMap {
         }
         this.source = source
         this.tabStop = tabStop
+        this.displayWidthPolicy = DisplayWidthPolicy.UnicodeScalarWithTabStops
+        index = SourceIndex(source, tabStop, DisplayWidthPolicy.UnicodeScalarWithTabStops)
+    }
+
+    public init(source: SourceBuffer, tabStop: Int64, displayWidthPolicy: DisplayWidthPolicy) {
+        if (tabStop <= 0) {
+            throw IllegalArgumentException("tab stop must be positive")
+        }
+        this.source = source
+        this.tabStop = tabStop
+        this.displayWidthPolicy = displayWidthPolicy
+        index = SourceIndex(source, tabStop, displayWidthPolicy)
     }
 
     public func sourcePosition(byteOffset: Int64): SourcePosition {
-        source.position(byteOffset)
+        ensureOffset(byteOffset)
+        let line = index.originalLine(byteOffset)
+        let contentStart = index.originalContentStarts[line]
+        SourcePosition(line + 1, max(1, byteOffset - contentStart + 1))
     }
     public func visualPosition(byteOffset: Int64): VisualPosition {
-        source.visualPosition(byteOffset, tabStop: tabStop)
+        ensureOffset(byteOffset)
+        let decodedLimit = source.decodedOffset(byteOffset)
+        let line = index.decodedLine(decodedLimit)
+        if (decodedLimit < index.decodedContentStarts[line]) {
+            return VisualPosition(line + 1, 1)
+        }
+        let checkpoint = index.checkpointAt(line, decodedLimit)
+        var column = checkpoint.visualColumn
+        var current = checkpoint.decodedOffset
+        while (current < decodedLimit) {
+            if (source.decodedByte(current) == b'\t' && expandsTabs(displayWidthPolicy)) {
+                column += tabStop - ((column - 1) % tabStop)
+                current++
+            } else {
+                let width = utf8Width(source.decodedByte(current))
+                if (current + width > decodedLimit) {
+                    throw IllegalArgumentException("byte offset is not on a UTF-8 boundary")
+                }
+                column++
+                current += width
+            }
+        }
+        VisualPosition(line + 1, column)
     }
     public func utf16Position(byteOffset: Int64): Utf16Position {
-        source.utf16Position(byteOffset)
+        ensureOffset(byteOffset)
+        let decodedLimit = source.decodedOffset(byteOffset)
+        let line = index.decodedLine(decodedLimit)
+        if (decodedLimit < index.decodedContentStarts[line]) {
+            return Utf16Position(line, 0)
+        }
+        let checkpoint = index.checkpointAt(line, decodedLimit)
+        var character = checkpoint.utf16Units
+        var current = checkpoint.decodedOffset
+        while (current < decodedLimit) {
+            let width = utf8Width(source.decodedByte(current))
+            if (current + width > decodedLimit) {
+                throw IllegalArgumentException("byte offset is not on a UTF-8 boundary")
+            }
+            character += if (width == 4) {
+                2
+            } else {
+                1
+            }
+            current += width
+        }
+        Utf16Position(line, character)
     }
     public func byteOffset(position: Utf16Position): Int64 {
-        source.byteOffset(position)
+        if (position.line >= index.decodedLineStarts.size) {
+            throw IllegalArgumentException("UTF-16 position is outside source")
+        }
+        let checkpoint = index.checkpointAtUtf16(position.line, position.character)
+        var character = checkpoint.utf16Units
+        var current = checkpoint.decodedOffset
+        let end = index.decodedLineEnds[position.line]
+        while (current < end) {
+            if (character == position.character) {
+                return source.originalOffset(current)
+            }
+            let width = utf8Width(source.decodedByte(current))
+            let units: Int64 = if (width == 4) {
+                2
+            } else {
+                1
+            }
+            if (character + units > position.character) {
+                throw IllegalArgumentException("UTF-16 position splits a surrogate pair")
+            }
+            character += units
+            current += width
+        }
+        if (character == position.character) {
+            return source.originalOffset(current)
+        }
+        throw IllegalArgumentException("UTF-16 position is outside source")
+    }
+
+    private func ensureOffset(byteOffset: Int64): Unit {
+        if (byteOffset < 0 || byteOffset > source.byteLength()) {
+            throw IllegalArgumentException("byte offset is outside source")
+        }
+    }
+}
+
+private func expandsTabs(policy: DisplayWidthPolicy): Bool {
+    match (policy) {
+        case DisplayWidthPolicy.UnicodeScalar => false
+        case DisplayWidthPolicy.UnicodeScalarWithTabStops => true
     }
 }

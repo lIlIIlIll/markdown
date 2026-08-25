@@ -21,6 +21,10 @@ public enum BinaryArtifactLoadResult {
 
 public class BinaryArtifactCodec {
     public static func encode(snapshot: DocumentSnapshot): BinarySnapshotArtifact {
+        if (!snapshot.result.source.hasIdentityMapping()) {
+            throw MarkdownException(MarkdownErrorCode.InvalidArtifact,
+                "binary artifacts require an identity-preserving UTF-8 source mapping", phase: "artifact_encode")
+        }
         let out = ArrayList<Byte>()
         out.add(all: "MCJ1".toArray())
         binaryWriteString(out, snapshot.result.document.profile.id)
@@ -130,15 +134,25 @@ private func binaryWriteU64(out: ArrayList<Byte>, value: UInt64): Unit {
 
 private func binaryEngineFingerprint(engine: MarkdownEngine): String {
     let limits = engine.limits
-    Sha256.digest(
-        "${engine.dialect.fingerprint}|${limits.maximumInputBytes}|${limits.maximumLineBytes}|" +
-            "${limits.maximumNestingDepth}|${limits.maximumAstNodes}|${limits.maximumReferences}|" +
-            "${limits.maximumTableColumns}|${limits.maximumUrlBytes}|${limits.maximumLiteralBytes}|" +
-            "${limits.maximumOutputBytes}|${limits.maximumExtensionCaptureBytes}|${limits.maximumExtensionLookaheadBytes}")
+    let out = CanonicalDescriptor()
+    out.append("engine")
+    out.append(engine.dialect.fingerprint)
+    out.append(limits.maximumInputBytes)
+    out.append(limits.maximumLineBytes)
+    out.append(limits.maximumNestingDepth)
+    out.append(limits.maximumAstNodes)
+    out.append(limits.maximumReferences)
+    out.append(limits.maximumTableColumns)
+    out.append(limits.maximumUrlBytes)
+    out.append(limits.maximumLiteralBytes)
+    out.append(limits.maximumOutputBytes)
+    out.append(limits.maximumExtensionCaptureBytes)
+    out.append(limits.maximumExtensionLookaheadBytes)
+    Sha256.digest(out.toString())
 }
 
 private func binaryAstDigest(document: Document): String {
-    let out = StringBuilder()
+    let out = CanonicalDescriptor()
     for (event in document.walk()) {
         match (event) {
             case WalkEvent.Enter(node) =>
@@ -162,7 +176,7 @@ private func binaryAstDigest(document: Document): String {
     Sha256.digest(out.toString())
 }
 
-private func appendBinarySemantic(out: StringBuilder, node: MarkdownNode): Unit {
+private func appendBinarySemantic(out: CanonicalDescriptor, node: MarkdownNode): Unit {
     match (node) {
         case value: Text =>
             out.append("=");

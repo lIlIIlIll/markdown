@@ -21,6 +21,7 @@ links/images. Payload-literal and container/line Markdown lowering are explicit.
 Ordinary strings are always escaped. `TrustedHtml` has only an explicit `unsafe` factory and does not bypass budgets or cancellation.
 
 Raw HTML sanitization is an independent `HtmlSanitizerPort`; adapter failure is
-propagated without falling back to unsanitized input. `AsyncHtmlRenderSession`
-adapts bounded rendered output to `Continue`/`Pause`/`Failed` sinks and resumes
-without duplicate writes.
+propagated without falling back to unsanitized input.
+`BufferedAsyncHtmlOutputSession` pre-renders bounded output, then adapts it to
+`Continue`/`Pause`/`Failed` sinks without duplicate writes. The compatibility
+name `AsyncHtmlRenderSession` has the same buffered, non-streaming semantics.

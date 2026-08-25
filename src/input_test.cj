@@ -1,8 +1,19 @@
 package markdown
 
+import std.collection.*
 import std.io.InputStream
 import std.unittest.*
 import std.unittest.testmacro.*
+
+private class InvalidScannerAccelerator <: LineScannerAccelerator {
+    public func implementationId(): String {
+        "invalid-test-scanner"
+    }
+
+    public func scanLines(_: Array<Byte>, _: Int64): ?Array<UInt64> {
+        Some([UInt64.Max])
+    }
+}
 
 class ArrayInputStream <: InputStream {
     private let bytes: Array<Byte>
@@ -140,6 +151,83 @@ class InputBehaviorTest {
             @Expect(false)
         } catch (_: IllegalStateException) {
             @Expect(true)
+        }
+    }
+
+    @TestCase
+    func nativeScannerCanBeDisabledWithoutChangingPublicParseSemantics(): Unit {
+        let input = "# title\r\n\r\nText *em* 😀".toArray()
+        let nativeEngine = MarkdownEngine.builder().nativeScannerEnabled(true).build()
+        let cangjieEngine = MarkdownEngine.builder().nativeScannerEnabled(false).build()
+        let renderer = HtmlRenderer(options: HtmlOptions.specCompatible())
+        let nativeHtml = renderer.render(nativeEngine.parse(input).document)
+        let cangjieHtml = renderer.render(cangjieEngine.parse(input).document)
+        @Expect(cangjieHtml, nativeHtml)
+        @Expect(cangjieEngine.capabilities().nativeScannerEnabled, false)
+    }
+
+    @TestCase
+    func explicitBufferedInputSessionParsesOnlyAtFinish(): Unit {
+        let engine = MarkdownEngine.builder().build()
+        let session = engine.newBufferedInputSession()
+        session.feed("# buffered")
+        let result = session.finish()
+        @Expect(PlainTextRenderer().render(result.document), "buffered")
+        try {
+            session.feed("late")
+            @Expect(false)
+        } catch (_: IllegalStateException) {
+            @Expect(true)
+        }
+    }
+
+    @TestCase
+    func rejectsMalformedThirdPartyScannerRecordsBeforeSlicing(): Unit {
+        let engine = MarkdownEngine.builder().build().acceleratedBy(InvalidScannerAccelerator())
+        try {
+            engine.parse("x".toArray())
+            @Expect(false)
+        } catch (error: IllegalStateException) {
+            @Expect(error.message.contains("invalid packed record"), true)
+        }
+    }
+
+    @TestCase
+    func indexedPositionMapMatchesSourceAcrossCrlfUnicodeAndReplacement(): Unit {
+        let result = Markdown.parse("\t😀\r\nx\n")
+        let positions = SourcePositionMap(result.source, tabStop: 4)
+        for (offset in 0..result.source.byteLength() + 1) {
+            @Expect(positions.sourcePosition(offset), result.source.position(offset))
+        }
+        for (offset in [0, 1, 5, 6, 7, 8, 9]) {
+            @Expect(positions.utf16Position(offset), result.source.utf16Position(offset))
+            @Expect(positions.visualPosition(offset), result.source.visualPosition(offset, tabStop: 4))
+        }
+        @Expect(positions.byteOffset(Utf16Position(1, 0)), 7)
+        @Expect(positions.byteOffset(Utf16Position(1, 1)), 8)
+        @Expect(positions.byteOffset(Utf16Position(2, 0)), 9)
+        let scalarPositions = SourcePositionMap(result.source, 4, DisplayWidthPolicy.UnicodeScalar)
+        @Expect(scalarPositions.visualPosition(1), VisualPosition(1, 2))
+        @Expect(positions.visualPosition(1), VisualPosition(1, 5))
+
+        let replaced = MarkdownEngine.builder().build().parse([b'a', 0xFF, b'b'], utf8Policy: Utf8Policy.ReplaceInvalid)
+        let replacementPositions = SourcePositionMap(replaced.source)
+        @Expect(replacementPositions.utf16Position(0), Utf16Position(0, 0))
+        @Expect(replacementPositions.utf16Position(1), Utf16Position(0, 1))
+        @Expect(replacementPositions.utf16Position(2), Utf16Position(0, 2))
+        @Expect(replacementPositions.utf16Position(3), Utf16Position(0, 3))
+        @Expect(replacementPositions.byteOffset(Utf16Position(0, 2)), 2)
+
+        let longLine = StringBuilder()
+        for (_ in 0..200) {
+            longLine.append("a")
+        }
+        longLine.append("😀\tend")
+        let longResult = Markdown.parse(longLine.toString())
+        let longPositions = SourcePositionMap(longResult.source, tabStop: 4)
+        for (offset in [0, 63, 64, 65, 127, 128, 129, 200, 204, 205, 208]) {
+            @Expect(longPositions.utf16Position(offset), longResult.source.utf16Position(offset))
+            @Expect(longPositions.visualPosition(offset), longResult.source.visualPosition(offset, tabStop: 4))
         }
     }
 }

@@ -37,8 +37,15 @@ public class EngineCapabilities {
     public let virtualTreeSupport: Bool
     public let pluginIsolationPortVersion: String
     public let builtInPluginOsSandbox: Bool
+    public let nativeScannerAvailable: Bool
+    public let nativeScannerEnabled: Bool
+    public let nativeScannerUsedForStringInput: Bool
 
-    internal init(dialect: CompiledMarkdownDialect) {
+    internal init(
+        dialect: CompiledMarkdownDialect,
+        nativeScannerEnabled: Bool,
+        lineScannerAccelerator: ?LineScannerAccelerator
+    ) {
         supportedProfiles = ImmutableArray<String>(["commonmark-0.31.2", "gfm-0.29", "gfm-modern-v1", "custom"])
         let extensions = ArrayList<String>()
         let reports = ArrayList<ExtensionCapabilityReport>()
@@ -61,7 +68,8 @@ public class EngineCapabilities {
         supportedSyntaxKinds = ImmutableArray<String>(syntax.toArray())
         dslSchemaVersions = ImmutableArray<String>(["1"])
         spiVersions = ImmutableArray<String>(["1"])
-        positionEncodings = ImmutableArray<String>(["utf-8-byte", "utf-16-code-unit", "visual"])
+        positionEncodings = ImmutableArray<String>(
+            ["utf-8-byte", "utf-16-code-unit", "visual-scalar", "visual-scalar-with-tab-stops"])
         serializationVersions = ImmutableArray<String>(["parse-artifact-1", "markdown-snapshot-binary-1"])
         incrementalSupport = true
         incrementalMode = "block-local-with-full-fallback"
@@ -71,6 +79,9 @@ public class EngineCapabilities {
         virtualTreeSupport = true
         pluginIsolationPortVersion = "markdown-isolation-ipc-1"
         builtInPluginOsSandbox = false
+        nativeScannerAvailable = lineScannerAccelerator.isSome()
+        this.nativeScannerEnabled = nativeScannerEnabled && nativeScannerAvailable
+        nativeScannerUsedForStringInput = false
     }
 
     public func extension(extensionId: String): ?ExtensionCapabilityReport {
@@ -83,8 +94,33 @@ public class EngineCapabilities {
     }
 }
 
+public class ExecutionModelCapabilities {
+    public let nativeScannerImplementation: String
+    public let streamInput: String
+    public let chunkInput: String
+    public let partialParse: String
+    public let asyncHtml: String
+
+    internal init(lineScannerAccelerator: ?LineScannerAccelerator) {
+        nativeScannerImplementation = match (lineScannerAccelerator) {
+            case Some(accelerator) => accelerator.implementationId()
+            case None => ""
+        }
+        streamInput = "buffered-before-parse"
+        chunkInput = "buffered-until-finish"
+        partialParse = "failure-result-without-completed-prefix"
+        asyncHtml = "pre-rendered-buffered-output"
+    }
+}
+
 extend MarkdownEngine {
     public func capabilities(): EngineCapabilities {
-        EngineCapabilities(dialect)
+        let noAccelerator: ?LineScannerAccelerator = None
+        EngineCapabilities(dialect, nativeScannerEnabledValue, noAccelerator)
+    }
+
+    public func executionModels(): ExecutionModelCapabilities {
+        let noAccelerator: ?LineScannerAccelerator = None
+        ExecutionModelCapabilities(noAccelerator)
     }
 }

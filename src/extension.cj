@@ -849,6 +849,9 @@ public class DialectCompiler {
                 }
             }
             for (constraint in manifest.dependencyConstraints.toArray()) {
+                if (parseSemanticVersion(constraint.minimumSemanticVersion).isNone()) {
+                    fail("invalid minimum semantic version for dependency: ${constraint.extensionId}")
+                }
                 let found = findManifest(dialect.manifests, constraint.extensionId)
                 match (found) {
                     case Some(dependency) =>
@@ -1096,6 +1099,9 @@ public class DialectCompiler {
     private static func validateManifest(manifest: ExtensionManifest): Unit {
         validateIdentifier("extension id", manifest.extensionId)
         validateIdentifier("semantic version", manifest.semanticVersion)
+        if (parseSemanticVersion(manifest.semanticVersion).isNone()) {
+            fail("extension semantic version must be a valid SemVer version")
+        }
         validateIdentifier("implementation version", manifest.implementationVersion)
         if (manifest.requiredSpiVersion != "1") {
             fail("unsupported extension SPI version")
@@ -1411,55 +1417,222 @@ private func supportsProfile(manifest: ExtensionManifest, profileId: String): Bo
 }
 
 private func semanticVersionAtLeast(actual: String, minimum: String): Bool {
-    let actualParts = semanticVersionParts(actual)
-    let minimumParts = semanticVersionParts(minimum)
-    if (actualParts.isNone() || minimumParts.isNone()) {
-        return actual == minimum
+    match ((parseSemanticVersion(actual), parseSemanticVersion(minimum))) {
+        case (Some(left), Some(right)) => compareSemanticVersions(left, right) >= 0
+        case _ => false
     }
-    let left = match (actualParts) {
-        case Some(value) => value;
-        case None => [0, 0, 0]
-    }
-    let right = match (minimumParts) {
-        case Some(value) => value;
-        case None => [0, 0, 0]
-    }
-    for (index in 0..3) {
-        if (left[index] > right[index]) {
-            return true
-        }
-        if (left[index] < right[index]) {
-            return false
-        }
-    }
-    true
 }
 
-private func semanticVersionParts(value: String): ?Array<Int64> {
-    let parts: Array<Int64> = [0, 0, 0]
-    var part: Int64 = 0
-    var index: Int64 = 0
-    var digits: Int64 = 0
-    while (index < value.size && part < 3) {
-        let byte = value[index]
-        if (byte >= b'0' && byte <= b'9') {
-            parts[part] = parts[part] * 10 + Int64(byte - b'0')
-            digits++
-            index++
-        } else if (byte == b'.' && digits > 0) {
-            part++;
-            digits = 0
-            index++
-        } else if ((byte == b'-' || byte == b'+') && digits > 0) {
-            break
-        } else {
-            return None
-        }
+private enum SemanticPrereleaseIdentifier {
+    | Numeric(Int64)
+    | Text(String)
+}
+
+private class ParsedSemanticVersion {
+    let major: Int64
+    let minor: Int64
+    let patch: Int64
+    let prerelease: Array<SemanticPrereleaseIdentifier>
+    init(major: Int64, minor: Int64, patch: Int64, prerelease: Array<SemanticPrereleaseIdentifier>) {
+        this.major = major
+        this.minor = minor
+        this.patch = patch
+        this.prerelease = prerelease
     }
-    if (digits == 0) {
+}
+
+private func parseSemanticVersion(value: String): ?ParsedSemanticVersion {
+    let majorResult = semanticCoreNumber(value, 0)
+    let major = match (majorResult) {
+        case Some(result) => result
+        case None => return None
+    }
+    if (major[1] >= value.size || value[major[1]] != b'.') {
         return None
     }
-    Some(parts)
+    let minorResult = semanticCoreNumber(value, major[1] + 1)
+    let minor = match (minorResult) {
+        case Some(result) => result
+        case None => return None
+    }
+    if (minor[1] >= value.size || value[minor[1]] != b'.') {
+        return None
+    }
+    let patchResult = semanticCoreNumber(value, minor[1] + 1)
+    let patch = match (patchResult) {
+        case Some(result) => result
+        case None => return None
+    }
+    var index = patch[1]
+    let prerelease = ArrayList<SemanticPrereleaseIdentifier>()
+    if (index < value.size && value[index] == b'-') {
+        index++
+        let parsed = semanticPrerelease(value, index)
+        match (parsed) {
+            case Some(result) =>
+                for (identifier in result[0]) {
+                    prerelease.add(identifier)
+                }
+                index = result[1]
+            case None => return None
+        }
+    }
+    if (index < value.size && value[index] == b'+') {
+        index++
+        match (semanticBuildMetadataEnd(value, index)) {
+            case Some(end) => index = end
+            case None => return None
+        }
+    }
+    if (index != value.size) {
+        return None
+    }
+    Some(ParsedSemanticVersion(major[0], minor[0], patch[0], prerelease.toArray()))
+}
+
+private func semanticCoreNumber(value: String, start: Int64): ?(Int64, Int64) {
+    if (start >= value.size || value[start] < b'0' || value[start] > b'9') {
+        return None
+    }
+    var index = start
+    var number: Int64 = 0
+    while (index < value.size && value[index] >= b'0' && value[index] <= b'9') {
+        let digit = Int64(value[index] - b'0')
+        if (number > (Int64.Max - digit) / 10) {
+            return None
+        }
+        number = number * 10 + digit
+        index++
+    }
+    if (index - start > 1 && value[start] == b'0') {
+        return None
+    }
+    Some((number, index))
+}
+
+private func semanticPrerelease(value: String, start: Int64): ?(Array<SemanticPrereleaseIdentifier>, Int64) {
+    let identifiers = ArrayList<SemanticPrereleaseIdentifier>()
+    var identifierStart = start
+    var index = start
+    while (true) {
+        if (index == value.size || value[index] == b'+' || value[index] == b'.') {
+            if (identifierStart == index) {
+                return None
+            }
+            let raw = value[identifierStart..index]
+            var numeric = true
+            for (byte in raw.toArray()) {
+                if (!semanticIdentifierByte(byte)) {
+                    return None
+                }
+                if (byte < b'0' || byte > b'9') {
+                    numeric = false
+                }
+            }
+            if (numeric) {
+                if (raw.size > 1 && raw[0] == b'0') {
+                    return None
+                }
+                match (semanticCoreNumber(raw, 0)) {
+                    case Some(result) => identifiers.add(SemanticPrereleaseIdentifier.Numeric(result[0]))
+                    case None => return None
+                }
+            } else {
+                identifiers.add(SemanticPrereleaseIdentifier.Text(raw))
+            }
+            if (index == value.size || value[index] == b'+') {
+                return Some((identifiers.toArray(), index))
+            }
+            identifierStart = index + 1
+        }
+        index++
+    }
+    None
+}
+
+private func semanticBuildMetadataEnd(value: String, start: Int64): ?Int64 {
+    var identifierStart = start
+    var index = start
+    while (index <= value.size) {
+        if (index == value.size || value[index] == b'.') {
+            if (identifierStart == index) {
+                return None
+            }
+            for (byte in value[identifierStart..index].toArray()) {
+                if (!semanticIdentifierByte(byte)) {
+                    return None
+                }
+            }
+            if (index == value.size) {
+                return Some(index)
+            }
+            identifierStart = index + 1
+        }
+        index++
+    }
+    None
+}
+
+private func semanticIdentifierByte(value: Byte): Bool {
+    (value >= b'0' && value <= b'9') || (value >= b'A' && value <= b'Z') || (value >= b'a' && value <= b'z') || value ==
+        b'-'
+}
+
+private func compareSemanticVersions(left: ParsedSemanticVersion, right: ParsedSemanticVersion): Int64 {
+    for ((leftValue, rightValue) in [(left.major, right.major), (left.minor, right.minor), (left.patch, right.patch)]) {
+        if (leftValue < rightValue) {
+            return -1
+        }
+        if (leftValue > rightValue) {
+            return 1
+        }
+    }
+    if (left.prerelease.isEmpty() && right.prerelease.isEmpty()) {
+        return 0
+    }
+    if (left.prerelease.isEmpty()) {
+        return 1
+    }
+    if (right.prerelease.isEmpty()) {
+        return -1
+    }
+    let shared = min(left.prerelease.size, right.prerelease.size)
+    for (index in 0..shared) {
+        let compared = compareSemanticIdentifier(left.prerelease[index], right.prerelease[index])
+        if (compared != 0) {
+            return compared
+        }
+    }
+    if (left.prerelease.size < right.prerelease.size) {
+        -1
+    } else if (left.prerelease.size > right.prerelease.size) {
+        1
+    } else {
+        0
+    }
+}
+
+private func compareSemanticIdentifier(left: SemanticPrereleaseIdentifier, right: SemanticPrereleaseIdentifier): Int64 {
+    match ((left, right)) {
+        case (SemanticPrereleaseIdentifier.Numeric(leftValue), SemanticPrereleaseIdentifier.Numeric(rightValue)) =>
+            if (leftValue < rightValue) {
+                -1
+            } else if (leftValue > rightValue) {
+                1
+            } else {
+                0
+            }
+        case (SemanticPrereleaseIdentifier.Numeric(_), SemanticPrereleaseIdentifier.Text(_)) => -1
+        case (SemanticPrereleaseIdentifier.Text(_), SemanticPrereleaseIdentifier.Numeric(_)) => 1
+        case (SemanticPrereleaseIdentifier.Text(leftValue), SemanticPrereleaseIdentifier.Text(rightValue)) =>
+            if (leftValue < rightValue) {
+                -1
+            } else if (leftValue > rightValue) {
+                1
+            } else {
+                0
+            }
+    }
 }
 
 private func validHtmlName(value: String): Bool {
@@ -1505,7 +1678,7 @@ private func canonicalDescriptor(
     inline: Array<InlineSyntaxRule>,
     block: Array<BlockSyntaxRule>
 ): String {
-    let out = StringBuilder()
+    let out = CanonicalDescriptor()
     out.append("dialect=");
     out.append(dialect.id);
     out.append("@");
@@ -1539,7 +1712,9 @@ private func canonicalDescriptor(
     out.append(limits.maximumExtensionCaptureBytes);
     out.append(":")
     out.append(limits.maximumExtensionLookaheadBytes)
-    for (manifest in dialect.manifests) {
+    let manifests = dialect.manifests.clone()
+    sortCanonicalManifests(manifests)
+    for (manifest in manifests) {
         out.append("|ext=");
         out.append(manifest.extensionId);
         out.append("@");
@@ -1578,15 +1753,25 @@ private func canonicalDescriptor(
         out.append(manifest.capabilities.postprocess)
         out.append(":");
         out.append(manifest.capabilities.transform)
-        for (dependency in manifest.dependencies.toArray()) {
+        let dependencies = manifest.dependencies.toArray()
+        sortCanonicalStrings(dependencies)
+        for (dependency in dependencies) {
             out.append(":dep=");
             out.append(dependency)
         }
-        for (constraint in manifest.dependencyConstraints.toArray()) {
+        let constraints = manifest.dependencyConstraints.toArray()
+        sortCanonicalDependencies(constraints)
+        for (constraint in constraints) {
             out.append(":dep-version=");
             out.append(constraint.extensionId);
             out.append(">=")
             out.append(constraint.minimumSemanticVersion)
+        }
+        let conflicts = manifest.conflicts.toArray()
+        sortCanonicalStrings(conflicts)
+        for (conflict in conflicts) {
+            out.append(":conflict=")
+            out.append(conflict)
         }
     }
     for (rule in inline) {
@@ -1722,6 +1907,57 @@ private func canonicalDescriptor(
         out.append(provider.version)
     }
     out.append("|spi=1|plan=1")
+    out.toString()
+}
+
+private func sortCanonicalManifests(values: Array<ExtensionManifest>): Unit {
+    for (index in 1..values.size) {
+        let value = values[index]
+        var cursor = index
+        while (cursor > 0 && canonicalManifestKey(value) < canonicalManifestKey(values[cursor - 1])) {
+            values[cursor] = values[cursor - 1]
+            cursor--
+        }
+        values[cursor] = value
+    }
+}
+
+private func canonicalManifestKey(value: ExtensionManifest): String {
+    let out = CanonicalDescriptor()
+    out.append(value.extensionId)
+    out.append(value.semanticVersion)
+    out.append(value.implementationVersion)
+    out.toString()
+}
+
+private func sortCanonicalStrings(values: Array<String>): Unit {
+    for (index in 1..values.size) {
+        let value = values[index]
+        var cursor = index
+        while (cursor > 0 && value < values[cursor - 1]) {
+            values[cursor] = values[cursor - 1]
+            cursor--
+        }
+        values[cursor] = value
+    }
+}
+
+private func sortCanonicalDependencies(values: Array<ExtensionDependency>): Unit {
+    for (index in 1..values.size) {
+        let value = values[index]
+        var cursor = index
+        while (cursor > 0 && canonicalDependencyKey(value) < canonicalDependencyKey(values[cursor - 1])) {
+            values[cursor] = values[cursor - 1]
+            cursor--
+        }
+        values[cursor] = value
+    }
+}
+
+private func canonicalDependencyKey(value: ExtensionDependency): String {
+    let out = CanonicalDescriptor()
+    out.append(value.extensionId)
+    out.append(value.minimumSemanticVersion)
     out.toString()
 }
 

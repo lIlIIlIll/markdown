@@ -3,13 +3,13 @@
   name = "markdown_cli"
   organization = ""
   description = "markdown command-line interface"
-  version = "1.0.0"
+  version = "0.8.0"
   target-dir = ""
   script-dir = ""
   output-type = "executable"
   compile-option = "-O2"
   override-compile-option = ""
-  link-option = "-L ../../target/native -lmarkdown_scanner"
+  link-option = ""
   package-configuration = {}
 
 [dependencies]

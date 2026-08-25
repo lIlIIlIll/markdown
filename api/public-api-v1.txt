@@ -30,6 +30,7 @@ artifact.cj:public let schemaVersion: String
 artifact.cj:public let sourceDigest: String
 artifact.cj:public let sourceMap: ImmutableArray<RenderedSourceMapEntry>
 artifact.cj:public let sourceSpan: ?SourceSpan
+artifact/artifact.cj:public import markdown.{ArtifactLoadResult, BinaryArtifactCodec, BinaryArtifactLoadResult, BinarySnapshotArtifact, MarkdownParseArtifact}
 ast.cj:enum-variant | Autolink
 ast.cj:enum-variant | Backslash
 ast.cj:enum-variant | Block
@@ -98,7 +99,6 @@ ast.cj:public class ImmutableArray<T> {
 ast.cj:public class Link <: InlineContainer {
 ast.cj:public class List <: MarkdownNode {
 ast.cj:public class ListItem <: MarkdownNode {
-ast.cj:public class NodeIdAllocator {
 ast.cj:public class NodeOrigin {
 ast.cj:public class Paragraph <: MarkdownNode {
 ast.cj:public class ReferenceDefinition {
@@ -122,7 +122,6 @@ ast.cj:public enum TableAlignment {
 ast.cj:public enum TaskState {
 ast.cj:public func children(): ImmutableArray<MarkdownNode> {
 ast.cj:public func isEmpty(): Bool {
-ast.cj:public func next(): NodeId {
 ast.cj:public func toArray(): Array<T> {
 ast.cj:public func validate(document: Document, limits!: ParseLimits = ParseLimits.safe()): Unit {
 ast.cj:public init( kind: NodeOriginKind, sourceNodeIds!: Array<NodeId> = [], sourceSpan!: ?SourceSpan = None, transformId!: ?String = None, extensionId!: ?String = None ) {
@@ -225,11 +224,15 @@ binary_artifact.cj:public let schemaVersion: String
 binary_artifact.cj:public static func decode(engine: MarkdownEngine, artifact: BinarySnapshotArtifact): BinaryArtifactLoadResult {
 binary_artifact.cj:public static func encode(snapshot: DocumentSnapshot): BinarySnapshotArtifact {
 capabilities.cj:public class EngineCapabilities {
+capabilities.cj:public class ExecutionModelCapabilities {
 capabilities.cj:public class ExtensionCapabilityReport {
 capabilities.cj:public func capabilities(): EngineCapabilities {
+capabilities.cj:public func executionModels(): ExecutionModelCapabilities {
 capabilities.cj:public func extension(extensionId: String): ?ExtensionCapabilityReport {
+capabilities.cj:public let asyncHtml: String
 capabilities.cj:public let builtInPluginOsSandbox: Bool
 capabilities.cj:public let capabilities: ExtensionCapabilities
+capabilities.cj:public let chunkInput: String
 capabilities.cj:public let dslSchemaVersions: ImmutableArray<String>
 capabilities.cj:public let extensionCapabilities: ImmutableArray<ExtensionCapabilityReport>
 capabilities.cj:public let extensionId: String
@@ -239,6 +242,11 @@ capabilities.cj:public let incrementalMode: String
 capabilities.cj:public let incrementalSupport: Bool
 capabilities.cj:public let losslessSupport: Bool
 capabilities.cj:public let multiDocumentSupport: Bool
+capabilities.cj:public let nativeScannerAvailable: Bool
+capabilities.cj:public let nativeScannerEnabled: Bool
+capabilities.cj:public let nativeScannerImplementation: String
+capabilities.cj:public let nativeScannerUsedForStringInput: Bool
+capabilities.cj:public let partialParse: String
 capabilities.cj:public let pluginIsolationPortVersion: String
 capabilities.cj:public let positionEncodings: ImmutableArray<String>
 capabilities.cj:public let requiredSpiVersion: String
@@ -246,11 +254,13 @@ capabilities.cj:public let semanticVersion: String
 capabilities.cj:public let serializationVersions: ImmutableArray<String>
 capabilities.cj:public let shareable: Bool
 capabilities.cj:public let spiVersions: ImmutableArray<String>
+capabilities.cj:public let streamInput: String
 capabilities.cj:public let supportedExtensions: ImmutableArray<String>
 capabilities.cj:public let supportedProfiles: ImmutableArray<String>
 capabilities.cj:public let supportedRenderers: ImmutableArray<String>
 capabilities.cj:public let supportedSyntaxKinds: ImmutableArray<String>
 capabilities.cj:public let virtualTreeSupport: Bool
+core/core.cj:public import markdown.{AcceleratedMarkdownEngine, AstInvariantValidator, BlockQuote, CancellationSource, CancellationToken, CodeBlock, CodeBlockKind, CodeSpan, Diagnostic, DiagnosticSeverity, Document, Emphasis, EngineCapabilities, ExecutionModelCapabilities, HardBreak, HardBreakKind, Heading, HtmlBlock, HtmlInline, Image, ImmutableArray, InlineContainer, InputReadFailureException, LimitExceededException, LineScannerAccelerator, Link, List, ListDelimiter, ListItem, ListKind, Markdown, MarkdownEngine, MarkdownEngineBuilder, MarkdownErrorCode, MarkdownException, MarkdownNode, MarkdownProfile, NodeCategory, NodeId, NodeKind, NodeOrigin, NodeOriginKind, OperationBudget, OwnedUtf8Input, Paragraph, ParseLimits, ParseResult, ProfileKind, ReferenceDefinition, SoftBreak, SourceBuffer, SourcePosition, SourcePositionMap, SourceSlice, SourceSpan, Strong, Text, ThematicBreak, Utf16Position, Utf8Policy, VisualPosition}
 diagnostic.cj:enum-variant | BudgetExceeded
 diagnostic.cj:enum-variant | Cancelled
 diagnostic.cj:enum-variant | Error
@@ -300,6 +310,7 @@ diagnostic.cj:public let span: ?SourceSpan
 diagnostic.cj:public let span: SourceSpan
 diagnostic.cj:public let title: String
 diagnostic.cj:public open class MarkdownException <: Exception {
+document/document.cj:public import markdown.{CrossDocumentReference, DocumentGraph, DocumentGraphEdge, DocumentInput, DocumentSnapshot, EventMode, MarkdownEvent, MarkdownEventIterator, ReparseResult}
 document_system.cj:enum-variant | PreserveUnknownHtml
 document_system.cj:enum-variant | RejectDangerous
 document_system.cj:enum-variant | Semantic
@@ -387,6 +398,7 @@ editor.cj:public func parseSnapshot(source: String): DocumentSnapshot {
 editor.cj:public func semanticNode(node: SyntaxNode): ?MarkdownNode {
 editor.cj:public func semanticNode(token: SyntaxToken): ?MarkdownNode {
 editor.cj:public func stableNodeId(nodeId: NodeId): ?StableNodeId {
+editor.cj:public func tokenAt(byteOffset: Int64): ?SyntaxToken {
 editor.cj:public init(kind: SyntaxKind, raw: String, span: SourceSpan) {
 editor.cj:public init(kind: SyntaxKind, span: SourceSpan, tokens: Array<SyntaxToken>, children!: Array<SyntaxNode> = [], leadingTrivia!: Array<Trivia> = [], trailingTrivia!: Array<Trivia> = [], semanticNodeId!: ?NodeId = None) {
 editor.cj:public init(nodeIds: Array<NodeId>) {
@@ -429,6 +441,7 @@ editor.cj:public static func formatNode(snapshot: DocumentSnapshot, nodeId: Node
 editor.cj:public static func formatRange(snapshot: DocumentSnapshot, range: SourceSpan, fallback!: RangeFormatFallback = RangeFormatFallback.PreserveSource): Array<SourceEdit> {
 editor.cj:public static func parse(source: SourceBuffer, document!: ?Document = None): SyntaxTree {
 editor.cj:public struct StableNodeId <: Equatable<StableNodeId> {
+editor/editor.cj:public import markdown.{AnnotationChannel, AnnotationKey, AnnotationStore, AstQuery, ChangedNodeSet, DiagnosticFix, DisplayWidthPolicy, ExplainResult, Fix, FixApplicability, LintCategory, LintDiagnostic, MarkdownFormatOptions, MarkdownLinter, NodeWalker, PreservingFormatter, RangeFormatFallback, ReparseResult, RewriteAction, SourceEdit, StableNodeId, SyntaxKind, SyntaxNode, SyntaxToAstMap, SyntaxToken, SyntaxTree, TransformPass, TransformPipeline, TransformPurity, TreeRewriter, Trivia, VirtualSyntaxTree, VirtualTreePage, WalkEvent}
 extension.cj:enum-variant | Any
 extension.cj:enum-variant | AstTransform
 extension.cj:enum-variant | Block
@@ -667,6 +680,7 @@ extension.cj:public static func compile(dialect: MarkdownDialect): CompiledMarkd
 extension.cj:public static func define(extensionId: String, ruleId: String): BlockSyntaxBuilder {
 extension.cj:public static func define(extensionId: String, ruleId: String): InlineSyntaxBuilder {
 extension.cj:public static func define(id: String, version: String): MarkdownDialectBuilder {
+extensions/extensions.cj:public import markdown.{BlockContentMode, BlockPayloadEmitter, BlockSyntax, BlockSyntaxBuilder, BlockSyntaxKind, BlockSyntaxMatch, BlockSyntaxRule, CompiledDialectExplanation, CompiledMarkdownDialect, DialectCompiler, DialectParserOptions, ExtensionCapabilities, ExtensionCapabilityReport, ExtensionDependency, ExtensionDocumentProcessor, ExtensionFailureException, ExtensionLintProvider, ExtensionManifest, ExtensionProcessingPhase, ExternalDialectDescriptor, InlineFlankingRule, InlineParserSpi, InlineParserSpiContext, InlineParserSpiResult, InlinePayloadEmitter, InlineSyntax, InlineSyntaxBuilder, InlineSyntaxKind, InlineSyntaxMatch, InlineSyntaxRule, MarkdownBlockLowering, MarkdownDialect, MarkdownDialectBuilder, OfficialExtensionDescriptor, OfficialExtensions, RendererAttributeKind, RendererAttributeSource, RendererAttributeSpec, RendererRule, SyntaxBacktrackingPolicy, SyntaxParameterSpec, SyntaxParameterType, SyntaxParameterValue, SyntaxPayload, SyntaxPhase, SyntaxResourceCost}
 external_descriptor.cj:public class ExternalDialectDescriptor {
 external_descriptor.cj:public func compile(): CompiledMarkdownDialect {
 external_descriptor.cj:public func toDialect(): MarkdownDialect {
@@ -686,7 +700,6 @@ facade.cj:public static func parse(source: String, profile!: MarkdownProfile = M
 facade.cj:public static func toSafeHtml(source: String, profile!: MarkdownProfile = MarkdownProfile.commonMark0312()): String {
 facade.cj:public static func toSpecHtml(source: String, profile!: MarkdownProfile = MarkdownProfile.commonMark0312()): String {
 facade.cj:public static func toText(source: String, profile!: MarkdownProfile = MarkdownProfile.commonMark0312()): String {
-fingerprint.cj:public class Sha256 {
 fingerprint.cj:public static func digest(value: String): String {
 fingerprint.cj:public static func digestBytes(input: Array<Byte>): String {
 formatter.cj:public class CanonicalMarkdownRenderer {
@@ -829,6 +842,10 @@ lint.cj:public let tieBreak: String
 lint.cj:public let title: String
 lint.cj:public static func applyFix(snapshot: DocumentSnapshot, fix: Fix): ReparseResult {
 lint.cj:public static func lint(snapshot: DocumentSnapshot): Array<LintDiagnostic> {
+native/accelerator.cj:public class NativeLineScanner <: LineScannerAccelerator {
+native/accelerator.cj:public func implementationId(): String {
+native/accelerator.cj:public func scanLines(input: Array<Byte>, capacity: Int64): ?Array<UInt64> {
+native/accelerator.cj:public init() {}
 observability.cj:public class ObservedParseResult {
 observability.cj:public class ObservedRenderedOutput {
 observability.cj:public class ParseStatistics {
@@ -886,6 +903,7 @@ official_extensions.cj:public static func p1Dialect(profile!: MarkdownProfile = 
 official_extensions.cj:public static func smartPunctuation(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
 parser.cj:enum-variant | ReplaceInvalid
 parser.cj:enum-variant | Strict
+parser.cj:public class BufferedInputSession {
 parser.cj:public class ChunkedParseSession {
 parser.cj:public class MarkdownEngine {
 parser.cj:public class MarkdownEngineBuilder {
@@ -897,6 +915,8 @@ parser.cj:public func feed(chunk: Array<Byte>): Unit {
 parser.cj:public func feed(chunk: String): Unit {
 parser.cj:public func finish(): ParseResult {
 parser.cj:public func limits(limits: ParseLimits): MarkdownEngineBuilder {
+parser.cj:public func nativeScannerEnabled(enabled: Bool): MarkdownEngineBuilder {
+parser.cj:public func newBufferedInputSession( utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): BufferedInputSession {
 parser.cj:public func newSession( utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ChunkedParseSession {
 parser.cj:public func parse( bytes: Array<Byte>, utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
 parser.cj:public func parse( input: InputStream, utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
@@ -904,6 +924,7 @@ parser.cj:public func parse( input: OwnedUtf8Input, cancellation!: CancellationT
 parser.cj:public func parse( value: String, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
 parser.cj:public func parsePartial( value: String, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
 parser.cj:public func profile(profile: MarkdownProfile): MarkdownEngineBuilder {
+parser.cj:public func tryParse( value: String, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
 parser.cj:public init() {}
 parser.cj:public init(document: Document, source: SourceBuffer, diagnostics: Array<Diagnostic>, isComplete!: Bool = true, stoppedAt!: ?SourceSpan = None, unfinishedPhase!: String = "", errors!: Array<MarkdownException> = []) {
 parser.cj:public let diagnostics: ImmutableArray<Diagnostic>
@@ -943,6 +964,7 @@ profile.cj:public static func gfmCompatible(): HtmlPolicy {
 profile.cj:public static func gfmModernV1(): MarkdownProfile {
 profile.cj:public static func safe(): HtmlPolicy {
 profile.cj:public static func specCompatible(): HtmlPolicy {
+render/render.cj:public import markdown.{AsyncHtmlRenderSession, AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, BufferedAsyncHtmlOutputSession, CanonicalMarkdownRenderer, ExtensionRendererFallback, HtmlFidelityPolicy, HtmlInputPolicy, HtmlOptions, HtmlPolicy, HtmlPolicyKind, HtmlRenderer, HtmlSanitizerPort, HtmlToMarkdownConverter, HtmlToMarkdownOptions, ImageUriPolicy, InlineEscapePolicy, LinkUriPolicy, MissingRendererPolicy, PlainTextOptions, PlainTextRenderer, RawHtmlPolicyKind, RenderStatistics, RenderedOutput, RenderedSourceMapEntry, SinkError, SinkFailureException, SinkWriteResult, StringTextSink, TextSink, TrustedHtml}
 renderer.cj:enum-variant | Complete
 renderer.cj:enum-variant | Continue
 renderer.cj:enum-variant | CustomHandler
@@ -956,6 +978,7 @@ renderer.cj:enum-variant | Paused
 renderer.cj:enum-variant | Sanitize
 renderer.cj:enum-variant | Success
 renderer.cj:public class AsyncHtmlRenderSession {
+renderer.cj:public class BufferedAsyncHtmlOutputSession {
 renderer.cj:public class HtmlOptions {
 renderer.cj:public class HtmlRenderer {
 renderer.cj:public class ImageUriPolicy {
@@ -981,7 +1004,7 @@ renderer.cj:public func resume(sink: AsyncTextSink, cancellation!: CancellationT
 renderer.cj:public func write(slice: String): SinkWriteResult {
 renderer.cj:public init( allowRelative: Bool, allowRemoteImages: Bool, allowDataImages: Bool, allowedDataMimeTypes!: Array<String> = [] ) {
 renderer.cj:public init( policy: HtmlPolicy, rawHtmlPolicy: RawHtmlPolicyKind, linkUriPolicy: LinkUriPolicy, imageUriPolicy: ImageUriPolicy, externalLinkRel!: String = "", externalLinkTarget!: String = "" ) {
-renderer.cj:public init() {}
+renderer.cj:public init() {
 renderer.cj:public init(allowRelative: Bool, allowHttp: Bool, allowHttps: Bool, allowMailto: Bool) {
 renderer.cj:public init(cause: SinkError) {
 renderer.cj:public init(includeLinkDestinations!: Bool = false, softBreak!: String = "\n") {
@@ -1027,6 +1050,14 @@ rewrite.cj:enum-variant | ReplaceChildren(Array<MarkdownNode>)
 rewrite.cj:public class TreeRewriter {
 rewrite.cj:public enum RewriteAction {
 rewrite.cj:public static func rewrite( document: Document, transform: (MarkdownNode) -> RewriteAction, budget!: OperationBudget = OperationBudget.safe(), cancellation!: CancellationToken = CancellationToken.none() ): Document {
+scanner_accelerator.cj:public class AcceleratedMarkdownEngine {
+scanner_accelerator.cj:public func acceleratedBy(accelerator: LineScannerAccelerator): AcceleratedMarkdownEngine {
+scanner_accelerator.cj:public func capabilities(): EngineCapabilities {
+scanner_accelerator.cj:public func executionModels(): ExecutionModelCapabilities {
+scanner_accelerator.cj:public func parse( bytes: Array<Byte>, utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
+scanner_accelerator.cj:public func parse( input: InputStream, utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
+scanner_accelerator.cj:public func parse( input: OwnedUtf8Input, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
+scanner_accelerator.cj:public interface LineScannerAccelerator {
 services.cj:enum-variant | BlockEnd(MarkdownNode)
 services.cj:enum-variant | BlockStart(MarkdownNode)
 services.cj:enum-variant | DocumentEnd(Document)
@@ -1069,6 +1100,8 @@ services.cj:public prop threadSafe: Bool {
 services.cj:public static func compile(passes: Array<TransformPass>): TransformPipeline {
 source.cj:enum-variant | Copy(String)
 source.cj:enum-variant | Slice(SourceSlice)
+source.cj:enum-variant | UnicodeScalar
+source.cj:enum-variant | UnicodeScalarWithTabStops
 source.cj:enum-variant | Utf16CodeUnit
 source.cj:enum-variant | Utf8Byte
 source.cj:enum-variant | Visual
@@ -1076,6 +1109,7 @@ source.cj:public class OwnedUtf8Input {
 source.cj:public class SourceBuffer {
 source.cj:public class SourcePositionMap {
 source.cj:public class SourceSlice {
+source.cj:public enum DisplayWidthPolicy {
 source.cj:public enum LiteralStorage {
 source.cj:public enum PositionEncoding {
 source.cj:public func byteLength(): Int64 {
@@ -1103,11 +1137,13 @@ source.cj:public init(line: Int64, character: Int64) {
 source.cj:public init(line: Int64, visualColumn: Int64) {
 source.cj:public init(source: SourceBuffer, span: SourceSpan) {
 source.cj:public init(source: SourceBuffer, tabStop!: Int64 = 4) {
+source.cj:public init(source: SourceBuffer, tabStop: Int64, displayWidthPolicy: DisplayWidthPolicy) {
 source.cj:public init(startByte: Int64, endByte: Int64) {
 source.cj:public init(value: String) {
 source.cj:public let byteColumn: Int64
 source.cj:public let byteOffset: Int64
 source.cj:public let character: Int64
+source.cj:public let displayWidthPolicy: DisplayWidthPolicy
 source.cj:public let endByte: Int64
 source.cj:public let line: Int64
 source.cj:public let source: SourceBuffer
@@ -1133,6 +1169,7 @@ testkit.cj:public let checks: Int64
 testkit.cj:public let failedChecks: ImmutableArray<String>
 testkit.cj:public let passed: Int64
 testkit.cj:public static func verify(engine: MarkdownEngine, sample: String): ExtensionTckReport {
+testkit/testkit.cj:public import markdown.{ExtensionTckReport, MarkdownExtensionTestKit}
 traversal.cj:enum-variant | Enter(MarkdownNode)
 traversal.cj:enum-variant | Exit(MarkdownNode)
 traversal.cj:public class AstQuery {
