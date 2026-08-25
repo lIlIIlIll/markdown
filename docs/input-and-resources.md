@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | `parse(String)` | none | no; scans the immutable String in Cangjie |
 | `parse(Array<Byte>)` | defensive copy and UTF-8 decode | only with an explicitly injected accelerator |
-| `parse(OwnedUtf8Input)` | caller transfers ownership; benchmark clones once per iteration to create a fresh transferable value | only with an explicitly injected accelerator |
+| `parse(OwnedUtf8Input)` | unsafe caller guarantees valid UTF-8 and transfers unique ownership; benchmark clones once per iteration to create a fresh transferable value, while parsing does not copy or revalidate it | only with an explicitly injected accelerator |
 | `parse(InputStream)` | fully buffers then decodes before parsing | only after buffering and only with an explicitly injected accelerator |
 
 The root package has no foreign declaration and no link option. To opt in:

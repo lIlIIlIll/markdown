@@ -120,7 +120,8 @@ public class OwnedUtf8Input {
         this.bytes = Some(bytes)
     }
 
-    // The caller must not retain or mutate aliases after transferring ownership.
+    // The caller guarantees that bytes contain valid UTF-8 and must not retain
+    // or mutate aliases after transferring ownership.
     public static unsafe func take(bytes: Array<Byte>): OwnedUtf8Input {
         OwnedUtf8Input(bytes)
     }

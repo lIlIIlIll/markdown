@@ -9,7 +9,8 @@ Allocation strategy:
 - String input uses one identity SourceBuffer byte view; strict ordinary bytes
   omit the former per-byte identity offset table.
 - `OwnedUtf8Input.take` is an explicit unsafe ownership-transfer entry that
-  avoids cloning the transferred byte array; the normal Array API retains its
+  requires already-valid UTF-8 and avoids both cloning and revalidating the
+  transferred byte array; the normal Array API retains validation and its
   immutable defensive copy.
 - Text literals of at least 256 bytes and exact LF fenced-code/raw-HTML
   literals use `SourceSlice`; decoded/normalized/small values use `Copy`.
@@ -64,9 +65,13 @@ scaling slope, adjacent growth, pathological slope, and RSS gates passed, but
 both ratio gates failed. This is retained as a historical dependency-transition
 run, not as the current release value. The sole canonical release result is
 declared in `release-evidence.json` and rendered into README,
-`docs/reports/benchmark.md`, and the acceptance report. Its current status is
-`stale-unbound`, so `MD-PERF-002` remains blocked until a clean committed source
-and exact benchmark SDK are recorded by a fresh remote run.
+`docs/reports/benchmark.md`, and the acceptance report. The 2026-08-25 canonical
+run is bound to source commit `0275f27a1d8fea38262127b245ca5e4c81c9b3a8`,
+Cangjie SDK `1.1.0-alpha.20260803040049`, the source archive, benchmark harness,
+and all three drivers. It measured CommonMark `5.842342x` and GFM `4.982426x`;
+all non-ratio gates passed, so `MD-PERF-002` remains blocked only by the two
+`2.5x` ratio limits. The evidence tree is still dirty until the reproducibility
+fixes, vendored conformance corpora, raw data, and generated reports are committed.
 
 Reference provisioning reports `lockGenerationDeterminism: not claimed / not
 tested` and `sealedLockOfflineConsumptionReproducible: true`. Its official

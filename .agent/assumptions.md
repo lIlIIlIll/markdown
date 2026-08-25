@@ -295,6 +295,16 @@
 
 ## 决策记录模板
 
+## A-034：OwnedUtf8Input 的 unsafe UTF-8 前提
+
+- 状态：`resolved`
+- 决策日期：2026-08-25
+- 涉及：`MD-IN-002`、`MD-PERF-001`、`MD-PERF-002`
+- 歧义：`OwnedUtf8Input.take` 已是 unsafe ownership-transfer API，但旧注释只写明不得保留或修改 alias，没有明确“Utf8”类型是否同时要求调用者保证字节合法；解析实现因此又用 `String.fromUtf8` 做全量二次校验。
+- 决定：unsafe `take` 同时要求输入已经是合法 UTF-8 并转移唯一所有权；解析使用 `String.withRawData` 让 String 与 SourceBuffer 直接接管同一数组。安全的 `parse(Array<Byte>)`、Strict/ReplaceInvalid 和 InputStream 入口继续执行原有验证与结构化错误，不扩大 unchecked 边界。
+- 理由：当前 SDK 明确将 `String.withRawData(Array<UInt8>)` 定义为零复制、unchecked 构造；该前提与 unsafe `OwnedUtf8Input` 的类型语义一致。两轮跨 profile A/B 和反向顺序复测 checksum 全部一致，最终无诊断 driver 候选 CommonMark/GFM geomean 为 `0.921434`/`0.964209`；baseline A/A 为 `0.997942`/`1.002247`。
+- 影响 requirements：`MD-IN-002` 的 notes 应引用本假设；普通安全输入的非法 UTF-8 行为不得改变，benchmark 必须继续披露每轮为 fresh ownership transfer 所做的 driver clone。
+
 ```text
 ### A-XXX：标题
 

@@ -178,14 +178,11 @@ public class MarkdownEngine {
         if (bytes.size > limits.maximumInputBytes) {
             throw LimitExceededException("input_bytes", limits.maximumInputBytes, bytes.size, "input")
         }
-        try {
-            let value = String.fromUtf8(bytes)
-            parseSource(SourceBuffer(value, bytes, true), [], cancellation, budget, accelerator)
-        } catch (error: MarkdownException) {
-            throw error
-        } catch (_: Exception) {
-            throw MarkdownException(MarkdownErrorCode.InvalidEncoding, "invalid UTF-8 input", phase: "input")
-        }
+        // OwnedUtf8Input.take is unsafe and requires already-valid UTF-8. Keep
+        // the transferred array as the String backing store so this explicit
+        // fast path performs neither a second validation nor a second copy.
+        let value = unsafe { String.withRawData(bytes) }
+        parseSource(SourceBuffer(value, bytes, true), [], cancellation, budget, accelerator)
     }
 
     public func parse(
