@@ -33,9 +33,10 @@ class ReleaseEvidenceTest(unittest.TestCase):
         result = self.run_checker("--release-ready")
         self.assertNotEqual(result.returncode, 0, result.stdout)
         self.assertIn("release status is not ready/complete", result.stderr)
-        self.assertIn("source commit is unbound", result.stderr)
-        self.assertIn("benchmark is not current", result.stderr)
-        self.assertIn("benchmark source commit or SDK is unbound", result.stderr)
+        self.assertIn("source commit is unbound or tree is not clean", result.stderr)
+        self.assertIn("mandatory benchmark ratio gate failed", result.stderr)
+        self.assertNotIn("benchmark is not current", result.stderr)
+        self.assertNotIn("benchmark source commit or SDK is unbound", result.stderr)
 
     def test_release_gate_checks_consistency_and_readiness(self) -> None:
         gate = RELEASE_GATE.read_text(encoding="utf-8")

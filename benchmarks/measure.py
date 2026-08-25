@@ -7,6 +7,7 @@ import hashlib
 import json
 import math
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 import platform
 import statistics
@@ -155,6 +156,10 @@ def cpu_model() -> str:
     return "unknown"
 
 
+def file_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def main() -> int:
     for executable in (DRIVER, CMARK, CMARK_GFM):
         if not executable.exists():
@@ -218,9 +223,19 @@ def main() -> int:
         "tenMiBExtraRssLe8x": extra_rss_kib <= 80 * 1024,
     }
     report = {
+        "identity": {
+            "generatedAt": datetime.now(timezone.utc).isoformat(),
+            "sourceCommit": os.environ.get("MARKDOWN_SOURCE_COMMIT", ""),
+            "productSourceArchiveSha256": os.environ.get("MARKDOWN_SOURCE_ARCHIVE_SHA256", ""),
+            "benchmarkHarnessSha256": file_sha256(Path(__file__)),
+            "markdownDriverSha256": file_sha256(DRIVER),
+            "cmarkDriverSha256": file_sha256(CMARK),
+            "cmarkGfmDriverSha256": file_sha256(CMARK_GFM),
+        },
         "environment": {"platform": platform.platform(), "machine": platform.machine(),
             "cpu": cpu_model(), "pinnedCpu": int(CPU), "cangjieOptimization": "-O2",
             "cangjieHeapSize": "2GB",
+            "cangjieSdkVersion": os.environ.get("MARKDOWN_CANGJIE_SDK_VERSION", ""),
             "cmark": "0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8",
             "cmarkGfm": "0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b"},
         "corpora": {name: {"bytes": len(value), "sha256": hashlib.sha256(value).hexdigest()}
@@ -234,20 +249,20 @@ def main() -> int:
             "cst": cst, "customExtensionHtml": extension_samples, "sourceMapTimeOverhead": source_map_overhead,
             "cstTimeOverhead": cst_overhead},
         "inputProfiles": {
-            "string": {"driverMode": "commonmark-parse-string", "perParseConversionOrCopy": "none",
+        "string": {"driverMode": "commonmark-parse-string", "perParseConversionOrCopy": "none",
                 "processPreparation": "stdin bytes are decoded once before repeated parse calls",
-                "nativeScanner": false, "samples": input_profile_samples["string"]},
+                "nativeScanner": False, "samples": input_profile_samples["string"]},
             "bytes": {"driverMode": "commonmark-parse-bytes",
                 "perParseConversionOrCopy": "defensive byte copy and UTF-8 decode",
-                "processPreparation": "stdin bytes retained by driver", "nativeScanner": true,
+                "processPreparation": "stdin bytes retained by driver", "nativeScanner": True,
                 "samples": input_profile_samples["bytes"]},
             "ownedBytes": {"driverMode": "commonmark-parse-owned",
                 "perParseConversionOrCopy": "driver clone required for each ownership transfer",
-                "processPreparation": "stdin bytes retained by driver", "nativeScanner": true,
+                "processPreparation": "stdin bytes retained by driver", "nativeScanner": True,
                 "samples": input_profile_samples["ownedBytes"]},
             "inputStream": {"driverMode": "commonmark-parse-stream",
                 "perParseConversionOrCopy": "full stream buffering and UTF-8 decode",
-                "processPreparation": "new in-memory stream per parse", "nativeScanner": true,
+                "processPreparation": "new in-memory stream per parse", "nativeScanner": True,
                 "samples": input_profile_samples["inputStream"]},
         },
         "scaling": {"samples": scaling, "slope": growth_slope, "adjacentRatios": adjacent},

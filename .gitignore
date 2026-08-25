@@ -9,3 +9,5 @@ __pycache__/
 !api/public-api-v1.txt
 !docs/reports/*.json
 !release-evidence.json
+!tests/spec/commonmark-0.31.2/spec.txt
+!tests/spec/gfm-0.29/spec.txt

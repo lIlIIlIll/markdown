@@ -2,14 +2,19 @@
 
 Status: **FAIL**
 
-Evidence status: `stale-unbound`. The raw report is the canonical remote release run, but it does not bind its tested source commit or Cangjie SDK and predates this P0 change.
+Evidence status: `current`. Canonical 2026-08-25 remote release run on Xeon Gold 6248R CPU 24 with seven alternating paired samples per corpus. Source, archive, harness, all three drivers, SDK, corpora, and raw data are bound; only the CommonMark and GFM ratio gates fail.
 
-- CommonMark parse-only geometric mean ratio vs cmark: `6.98x` (limit `2.5x`).
-- GFM parse+HTML geometric mean ratio vs cmark-gfm: `5.99x` (limit `2.5x`).
+- CommonMark parse-only geometric mean ratio vs cmark: `5.84x` (limit `2.5x`).
+- GFM parse+HTML geometric mean ratio vs cmark-gfm: `4.98x` (limit `2.5x`).
 - Raw report: `docs/reports/benchmark-raw.json`.
-- Raw SHA-256: `a107300090f599152ffd8e9020465666ed1b3b91c7e2fccd783ddcfc29d897d9`.
-- Tested source commit: `UNBOUND`.
-- Benchmark Cangjie SDK: `UNBOUND`.
+- Raw SHA-256: `1b025514500df45128e92a5fb72c77897773222e72f98e95c72db1ee89e23f57`.
+- Tested source commit: `0275f27a1d8fea38262127b245ca5e4c81c9b3a8`.
+- Benchmark Cangjie SDK: `1.1.0-alpha.20260803040049`.
+- Product source archive SHA-256: `cfad40e29f83d0d34b1327935c2c15af75cf033496aba0b85551ea437f459428`.
+- Benchmark harness SHA-256: `e35120dc0b3c9a97a297a2380f7080e10b950399621019d3532db3d629131a26`.
+- markdown driver SHA-256: `7c83262fd4fd1f6506255100688ed3f1c0379eff0be529c5840afb6e89fb3a5c`.
+- cmark driver SHA-256: `385d4f1842b2a85211de914a5e6600ba195e3203bd4f3e91531cbed216d7a95e`.
+- cmark-gfm driver SHA-256: `6f8ad2cf959ce26f8b9331c62beea9ff1ea116d4a66b9bae033d6138d362e0b4`.
 - cmark: `0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8`.
 - cmark-gfm: `0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b`.
 

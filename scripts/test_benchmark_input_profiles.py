@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 import subprocess
 import unittest
@@ -20,11 +21,25 @@ MODES = (
 
 
 class BenchmarkInputProfilesTest(unittest.TestCase):
+    def test_measurement_schema_uses_python_literals(self) -> None:
+        tree = ast.parse(MEASURE.read_text(encoding="utf-8"), filename=str(MEASURE))
+        names = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
+        self.assertTrue({"false", "true", "null"}.isdisjoint(names), names)
+
     def test_measurement_schema_declares_every_public_input_profile(self) -> None:
         source = MEASURE.read_text(encoding="utf-8")
         self.assertIn('"inputProfiles": {', source)
         for mode in MODES:
             self.assertIn(f'"driverMode": "{mode}"', source)
+        for identity_field in (
+            "sourceCommit",
+            "productSourceArchiveSha256",
+            "benchmarkHarnessSha256",
+            "markdownDriverSha256",
+            "cmarkDriverSha256",
+            "cmarkGfmDriverSha256",
+        ):
+            self.assertIn(f'"{identity_field}"', source)
 
     def test_driver_profiles_produce_the_same_parse_checksum(self) -> None:
         self.assertTrue(DRIVER.exists(), f"benchmark driver is not built: {DRIVER}")

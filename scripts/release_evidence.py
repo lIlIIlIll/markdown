@@ -41,6 +41,11 @@ Evidence status: `{benchmark['status']}`. {benchmark['note']}
 - Raw SHA-256: `{benchmark['rawSha256']}`.
 - Tested source commit: `{benchmark['sourceCommit'] or 'UNBOUND'}`.
 - Benchmark Cangjie SDK: `{benchmark['sdkVersion'] or 'UNBOUND'}`.
+- Product source archive SHA-256: `{benchmark['productSourceArchiveSha256']}`.
+- Benchmark harness SHA-256: `{benchmark['benchmarkHarnessSha256']}`.
+- markdown driver SHA-256: `{benchmark['markdownDriverSha256']}`.
+- cmark driver SHA-256: `{benchmark['cmarkDriverSha256']}`.
+- cmark-gfm driver SHA-256: `{benchmark['cmarkGfmDriverSha256']}`.
 - cmark: `{benchmark['cmark']}`.
 - cmark-gfm: `{benchmark['cmarkGfm']}`.
 
@@ -60,10 +65,11 @@ def readme_block(data: dict[str, object]) -> str:
 | Source commit | `{source['sourceCommit'] or 'UNBOUND (dirty draft)'}` |
 | CommonMark / cmark | `{benchmark['commonmarkRatio']:.2f}x` / limit `{benchmark['ratioLimit']}x` |
 | GFM HTML / cmark-gfm | `{benchmark['gfmRatio']:.2f}x` / limit `{benchmark['ratioLimit']}x` |
-| Benchmark identity | `{benchmark['status']}`; commit and SDK are not bound |
+| Benchmark identity | `{benchmark['status']}`; commit `{benchmark['sourceCommit'] or 'UNBOUND'}`; SDK `{benchmark['sdkVersion'] or 'UNBOUND'}` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
-It is a fail-closed draft, not evidence for the current uncommitted candidate.
+It is commit-bound benchmark evidence, but the release remains a fail-closed
+dirty draft until every mandatory gate passes and the evidence changes are committed.
 <!-- release-evidence:end -->"""
 
 
@@ -81,8 +87,9 @@ def acceptance_block(data: dict[str, object]) -> str:
 - Benchmark: CommonMark `{benchmark['commonmarkRatio']:.2f}x`, GFM `{benchmark['gfmRatio']:.2f}x`, status `{benchmark['status']}`.
 - Raw digest: `{benchmark['rawSha256']}`.
 
-Because source commit and benchmark SDK are unbound, this evidence is not
-release-ready and cannot change the overall `INCOMPLETE` verdict.
+The benchmark identity is bound, but both mandatory performance ratios fail and
+the evidence tree is dirty. It is not release-ready and cannot change the
+overall `INCOMPLETE` verdict.
 <!-- release-evidence:end -->"""
 
 
@@ -125,6 +132,18 @@ def validate(data: dict[str, object], release_ready: bool) -> list[str]:
         errors.append("cmark-gfm identity does not match raw benchmark")
     if raw["environment"]["cangjieOptimization"] not in data["toolchain"]["compilerFlags"]:
         errors.append("benchmark optimization is absent from compiler flags")
+    for raw_key, evidence_key in (
+        ("sourceCommit", "sourceCommit"),
+        ("productSourceArchiveSha256", "productSourceArchiveSha256"),
+        ("benchmarkHarnessSha256", "benchmarkHarnessSha256"),
+        ("markdownDriverSha256", "markdownDriverSha256"),
+        ("cmarkDriverSha256", "cmarkDriverSha256"),
+        ("cmarkGfmDriverSha256", "cmarkGfmDriverSha256"),
+    ):
+        if raw.get("identity", {}).get(raw_key) != benchmark.get(evidence_key):
+            errors.append(f"benchmark identity mismatch: {raw_key}")
+    if raw["environment"].get("cangjieSdkVersion") != benchmark["sdkVersion"]:
+        errors.append("benchmark SDK identity does not match raw benchmark")
     if benchmark["status"] == "current" and benchmark["sourceCommit"] != data["source"]["sourceCommit"]:
         errors.append("current benchmark source does not match release source")
     if release_ready:
@@ -136,6 +155,9 @@ def validate(data: dict[str, object], release_ready: bool) -> list[str]:
             errors.append("benchmark is not current")
         if not data["benchmark"]["sourceCommit"] or not data["benchmark"]["sdkVersion"]:
             errors.append("benchmark source commit or SDK is unbound")
+        if (benchmark["commonmarkRatio"] > benchmark["ratioLimit"]
+                or benchmark["gfmRatio"] > benchmark["ratioLimit"]):
+            errors.append("mandatory benchmark ratio gate failed")
     return errors
 
 

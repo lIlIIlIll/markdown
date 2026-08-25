@@ -8,13 +8,14 @@
 ## Generated Release Evidence
 
 - Version/status: `0.8.0` / `draft`.
-- Source identity: `UNBOUND`; tree state `dirty`.
+- Source identity: `0275f27a1d8fea38262127b245ca5e4c81c9b3a8`; tree state `dirty`.
 - Tests: `1423/1423` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `6.98x`, GFM `5.99x`, status `stale-unbound`.
-- Raw digest: `a107300090f599152ffd8e9020465666ed1b3b91c7e2fccd783ddcfc29d897d9`.
+- Benchmark: CommonMark `5.84x`, GFM `4.98x`, status `current`.
+- Raw digest: `1b025514500df45128e92a5fb72c77897773222e72f98e95c72db1ee89e23f57`.
 
-Because source commit and benchmark SDK are unbound, this evidence is not
-release-ready and cannot change the overall `INCOMPLETE` verdict.
+The benchmark identity is bound, but both mandatory performance ratios fail and
+the evidence tree is dirty. It is not release-ready and cannot change the
+overall `INCOMPLETE` verdict.
 <!-- release-evidence:end -->
 
 2026-08-23 dependency transition：H `db4392e2` commits the paired seven-sample
@@ -159,7 +160,7 @@ seal/path/binary identity check.
 | `MD-TST-004` | PRD §44.5-6, §51.6-7 | `pass` | 2026-08-25: arbitrary-byte fuzz found and guards two UTF-8 boundary crashes; full 1419-test suite passed |
 | `MD-TST-005` | PRD §44.7-9, §51.7 | `pass` | 2026-08-18: API snapshot, pathological corpus, and official extension TCK passed |
 | `MD-PERF-001` | PRD §45.1-3 | `pass` | 2026-08-18: 12-corpus -O2 reference-host matrix recorded raw samples, per-corpus digests, pinned CPU, SDK, reference commits, geometric means, and custom-extension cost |
-| `MD-PERF-002` | PRD §45.4, §51.7, §52 | `blocked` | 2026-08-21 current candidate on Server CPU 24: CommonMark 4.329x and GFM 3.276x versus 2.5x limits. Scaling slope 0.961, adjacent 2.400, pathological slope 0.866 and extra RSS 59632 KiB pass; only both ratio gates fail. |
+| `MD-PERF-002` | PRD §45.4, §51.7, §52 | `blocked` | 2026-08-25 commit-bound candidate on Server CPU 24: CommonMark 5.842x and GFM 4.982x versus 2.5x limits. Scaling slope 0.862, adjacent 2.076, pathological slope 0.915 and extra RSS 69700 KiB pass; only both ratio gates fail. |
 | `MD-PERF-003` | PRD §45.5 | `pass` | 2026-08-18: owned byte input, SourceSlice literals, explicit parser frames, bounded output, ordinary/pathological scaling, and RSS tests passed |
 | `MD-OBS-001` | PRD §46 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DOC-001` | PRD §47, §49, §51.7 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
@@ -478,3 +479,21 @@ full `1423/1423` Cangjie suite passed.
 The overall verdict remains **INCOMPLETE** with 122/125 requirements passing:
 `MD-PERF-002`, `MD-REL-001` and `MD-QUAL-001` remain blocked. This slice did not
 replace the canonical remote release benchmark.
+
+## 2026-08-25 Canonical Release Benchmark Acceptance
+
+The canonical remote release benchmark now binds product commit
+`0275f27a1d8fea38262127b245ca5e4c81c9b3a8`, Cangjie SDK
+`1.1.0-alpha.20260803040049`, the minimal source archive, benchmark harness,
+markdown release driver, and both reference drivers. The frozen CommonMark and
+GFM corpus digests match `release-evidence.json`; the raw report SHA-256 is
+`1b025514500df45128e92a5fb72c77897773222e72f98e95c72db1ee89e23f57`.
+
+The full fixed-CPU run exited `1`: CommonMark parse-only measured `5.842342x`
+versus cmark and GFM parse+HTML measured `4.982426x` versus cmark-gfm. Ordinary
+ratios, normal and pathological scaling, adjacent growth, and 10 MiB additional
+RSS all pass. Only the two mandatory `2.5x` ratios fail. SourceMap overhead was
+`2.31%`; CST/snapshot overhead was `1040.41%`.
+
+Therefore `MD-PERF-002`, `MD-REL-001`, and `MD-QUAL-001` remain `blocked`, and
+the final status remains **INCOMPLETE**. No threshold or assertion was weakened.

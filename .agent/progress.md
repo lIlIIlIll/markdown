@@ -1,7 +1,7 @@
 # markdown 当前进度
 
 更新时间：2026-08-25
-当前阶段：P0 correctness 与 P1 input/source-position hardening 已完成并通过全量测试；0.8.0 与 release evidence 基础设施已落地，但 canonical benchmark 身份仍未刷新，性能仍未达 GA
+当前阶段：P0 correctness 与 P1 hardening 已完成并通过全量测试；0.8.0 与 release evidence 基础设施已落地，canonical benchmark 已绑定当前产品提交，但性能仍未达 GA
 整体结论：**INCOMPLETE**。正确性、规范、构建、打包和私密安全报告门槛已通过，但需求账本仍有 3 个 `blocked` 项。
 
 ## 需求概览
@@ -92,7 +92,7 @@ GA 门槛。
 ## 当前非通过项
 
 - `MD-SEC-005` — `pass` — 2026-08-24 GitHub official API returned `{"enabled":true}`; SECURITY.md and docs/security.md link the private advisory form.
-- `MD-PERF-002` — `blocked` — On the fixed 2026-08-21 Server rerun, the current candidate measured CommonMark 4.329x and GFM 3.276x versus the 2.5x GA limits. Scaling, pathological scaling and RSS gates pass; only the two ratio gates fail.
+- `MD-PERF-002` — `blocked` — On the fixed 2026-08-25 Server rerun, commit `0275f27a` measured CommonMark 5.842x and GFM 4.982x versus the 2.5x GA limits. Ordinary, scaling, pathological scaling and RSS gates pass; only the two ratio gates fail.
 - `MD-REL-001` — `blocked` — The package, CLI, documentation, reports, example, bundle, and private reporting channel exist, but mandatory MD-PERF-002 prevents a 1.0 GA declaration.
 - `MD-QUAL-001` — `blocked` — Correctness, package, and private security reporting gates pass, but the mandatory performance success metric does not.
 
@@ -248,3 +248,11 @@ GA 门槛。
 - 新增 scanner libFuzzer、ASan/UBSan deterministic harness、4 个稳定 seed 和版本化历史 crash corpus。`scripts/fuzz_native_scanner.py --runs 10000` exit 0；mutation 在临时 corpus 中进行，ASan/UBSan clean。Cangjie 历史 crash regression 纳入全量测试。
 - 最终验证：format exit 0；`cjpm check` exit 0；API checker tests 8/8；API snapshot 1192；build-helper tests 4/4；benchmark input-profile tests 2/2；pure/native/driver/quickstart/CLI build 与 CLI smoke 全部 exit 0；full `cjpm test` exit 0，1423/1423 passed，0 skipped/error/failed。
 - 账本仍为 125 total、122 pass、3 blocked。该切片未重跑或覆盖 canonical 远端 release benchmark；`MD-PERF-002` 及其连带的 `MD-REL-001`、`MD-QUAL-001` 保持 blocked，整体仍为 INCOMPLETE。
+
+## 2026-08-25 commit-bound canonical release benchmark
+
+- 受测产品来自提交 `0275f27a1d8fea38262127b245ca5e4c81c9b3a8` 的最小源码归档（SHA-256 `cfad40e29f83d0d34b1327935c2c15af75cf033496aba0b85551ea437f459428`）；远端 release driver SHA-256 为 `7c83262fd4fd1f6506255100688ed3f1c0379eff0be529c5840afb6e89fb3a5c`。归档明确排除 `target`、`build-script-cache`、`.agents`、`.codex` 和本机构建产物。
+- 发现 CommonMark/GFM `spec.txt` 被开发机全局 `*.txt` 忽略规则静默排除；仓库 `.gitignore` 已反忽略两份冻结语料，远端用 release-evidence 中的 SHA-256 逐一验证。第一次有效采样后又发现 Python schema 误写 JSON 布尔字面量；改为 Python `True`/`False` 并增加 AST 回归，3/3 通过。失败运行均未覆盖 canonical raw。
+- 最终固定 Server CPU 24、Cangjie `1.1.0-alpha.20260803040049`、12 个 256 KiB 语料、每进程 3 iterations、每侧 warmup + 7 个交替配对样本。命令 exit `1`：CommonMark `5.842342x`、GFM `4.982426x`，只失败两个 `2.5x` ratio gate；ordinary `4.019176x`/`2.704565x`、slope `0.861705`、最大相邻 `2.076031`、pathological slope `0.914978`、extra RSS `69700 KiB` 均通过。
+- SourceMap 开销 `2.31%`，CST/snapshot 开销 `1040.41%`。1 MiB 输入 profile 中位耗时：String `0.211546s`、Array `0.221442s`、Owned `0.213213s`、InputStream `0.235104s`；各入口的复制、转换和 native scanner 语义已写入 raw。
+- canonical raw SHA-256 为 `1b025514500df45128e92a5fb72c77897773222e72f98e95c72db1ee89e23f57`。raw 同时绑定 harness `e35120dc...131a26`、markdown driver `7c83262f...3a5c`、cmark driver `385d4f18...a95e` 和 cmark-gfm driver `6f8ad2cf...e0b4`。README、benchmark report、账本和 acceptance report 已由 `release-evidence.json` 同步；整体仍为 **INCOMPLETE**。

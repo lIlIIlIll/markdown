@@ -267,16 +267,17 @@ flowchart TD
 | Release evidence | Value |
 | --- | --- |
 | Version / status | `0.8.0` / `draft` |
-| Source commit | `UNBOUND (dirty draft)` |
-| CommonMark / cmark | `6.98x` / limit `2.5x` |
-| GFM HTML / cmark-gfm | `5.99x` / limit `2.5x` |
-| Benchmark identity | `stale-unbound`; commit and SDK are not bound |
+| Source commit | `0275f27a1d8fea38262127b245ca5e4c81c9b3a8` |
+| CommonMark / cmark | `5.84x` / limit `2.5x` |
+| GFM HTML / cmark-gfm | `4.98x` / limit `2.5x` |
+| Benchmark identity | `current`; commit `0275f27a1d8fea38262127b245ca5e4c81c9b3a8`; SDK `1.1.0-alpha.20260803040049` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
-It is a fail-closed draft, not evidence for the current uncommitted candidate.
+It is commit-bound benchmark evidence, but the release remains a fail-closed
+dirty draft until every mandatory gate passes and the evidence changes are committed.
 <!-- release-evidence:end -->
 
-历史测量仅保留在[性能说明](docs/performance.md)中，不再作为“当前值”。发布报告、README 和验收报告中的 canonical 数字都来自同一个 `release-evidence.json`；只有 source commit、SDK、语料和 raw digest 全部绑定后，证据才能转为 release-ready。
+历史测量仅保留在[性能说明](docs/performance.md)中，不再作为“当前值”。发布报告、README 和验收报告中的 canonical 数字都来自同一个 `release-evidence.json`。当前 source commit、SDK、语料和 raw digest 已全部绑定；仍需两个性能 ratio gate 通过、工作树 clean 且 release 状态转为 ready，证据才能成为 release-ready。
 
 ## 功能对比
 
