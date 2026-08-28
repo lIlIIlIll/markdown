@@ -196,7 +196,6 @@ public class AstQuery {
         }
         out.toArray()
     }
-
 }
 
 private func sameNodeKind(left: NodeKind, right: NodeKind): Bool {

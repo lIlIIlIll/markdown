@@ -280,7 +280,7 @@ capabilities.cj:public let supportedProfiles: ImmutableArray<String>
 capabilities.cj:public let supportedRenderers: ImmutableArray<String>
 capabilities.cj:public let supportedSyntaxKinds: ImmutableArray<String>
 capabilities.cj:public let virtualTreeSupport: Bool
-core/core.cj:public import markdown.{AcceleratedMarkdownEngine, AstInvariantValidator, CancellationSource, CancellationToken, CodeBlockKind, CodeBlockNodeView, CodeSpanNodeView, Diagnostic, DiagnosticSeverity, Document, DocumentNodeView, EngineCapabilities, ExecutionModelCapabilities, HardBreakKind, HardBreakNodeView, HeadingNodeView, HtmlExecutionMode, HtmlExecutionPath, HtmlExecutionResult, HtmlBlockNodeView, HtmlInlineNodeView, ImageNodeView, ImmutableArray, InputReadFailureException, LimitExceededException, LineScanRecords, LineScannerAccelerator, LinkNodeView, LinkSyntaxKind, ListDelimiter, ListItemNodeView, ListKind, ListNodeView, Markdown, MarkdownEngine, MarkdownEngineBuilder, MarkdownErrorCode, MarkdownException, MarkdownProfile, NodeCategory, NodeId, NodeKind, NodeOrigin, NodeOriginKind, NodeRef, OperationBudget, OwnedUtf8Input, ParseLimits, ParseResult, ProfileKind, ReferenceDefinition, ReusableUtf8Input, SourceBuffer, SourcePosition, SourcePositionMap, SourceSlice, SourceSpan, TableAlignment, TaskState, TextNodeView, Utf16Position, Utf8Policy, VisualPosition}
+core/core.cj:public import markdown.{AcceleratedMarkdownEngine, AstInvariantValidator, CancellationSource, CancellationToken, CodeBlockKind, CodeBlockNodeView, CodeSpanNodeView, Diagnostic, DiagnosticSeverity, Document, DocumentNodeView, EngineCapabilities, EventParseResult, EventParseSummary, ExecutionModelCapabilities, HardBreakKind, HardBreakNodeView, HeadingNodeView, HtmlExecutionMode, HtmlExecutionPath, HtmlExecutionResult, HtmlBlockNodeView, HtmlInlineNodeView, ImageNodeView, ImmutableArray, InputReadFailureException, LimitExceededException, LineScanRecords, LineScannerAccelerator, LinkNodeView, LinkSyntaxKind, ListDelimiter, ListItemNodeView, ListKind, ListNodeView, Markdown, MarkdownEngine, MarkdownEventAttribute, MarkdownEventMode, MarkdownEventSink, MarkdownSourceEvent, MarkdownSourceEventKind, MarkdownEngineBuilder, MarkdownErrorCode, MarkdownException, MarkdownProfile, NodeCategory, NodeId, NodeKind, NodeOrigin, NodeOriginKind, NodeRef, OperationBudget, OwnedUtf8Input, ParseLimits, ParseResult, ProfileKind, RawBlockEventSession, ReferenceDefinition, ReusableUtf8Input, SourceBuffer, SourcePosition, SourcePositionMap, SourceSlice, SourceSpan, TableAlignment, TaskState, TextNodeView, Utf16Position, Utf8Policy, VisualPosition}
 diagnostic.cj:enum-variant | BudgetExceeded
 diagnostic.cj:enum-variant | Cancelled
 diagnostic.cj:enum-variant | Error
@@ -462,6 +462,48 @@ editor.cj:public static func formatRange(snapshot: DocumentSnapshot, range: Sour
 editor.cj:public static func parse(source: SourceBuffer, document!: ?Document = None): SyntaxTree {
 editor.cj:public struct StableNodeId <: Equatable<StableNodeId> {
 editor/editor.cj:public import markdown.{AnnotationChannel, AnnotationKey, AnnotationStore, AstQuery, ChangedNodeSet, DiagnosticFix, DisplayWidthPolicy, ExplainResult, Fix, FixApplicability, LintCategory, LintDiagnostic, MarkdownFormatOptions, MarkdownLinter, NodeRefWalker, PreservingFormatter, RangeFormatFallback, ReparseResult, RewriteAction, SourceEdit, StableNodeId, SyntaxKind, SyntaxNode, SyntaxToAstMap, SyntaxToken, SyntaxTree, TransformPass, TransformPipeline, TransformPurity, TreeRewriter, Trivia, VirtualSyntaxTree, VirtualTreePage, NodeRefWalkEvent}
+events.cj:enum-variant | BlockEnd
+events.cj:enum-variant | BlockStart
+events.cj:enum-variant | DocumentEnd
+events.cj:enum-variant | DocumentStart
+events.cj:enum-variant | InlineEnd
+events.cj:enum-variant | InlineStart
+events.cj:enum-variant | RawBlockEventMode
+events.cj:enum-variant | ResolvedEventMode
+events.cj:enum-variant | Text
+events.cj:interface-member func onEvent(event: MarkdownSourceEvent): Unit
+events.cj:public class EventParseResult {
+events.cj:public class EventParseSummary {
+events.cj:public class MarkdownSourceEvent {
+events.cj:public class RawBlockEventSession {
+events.cj:public enum MarkdownEventMode {
+events.cj:public enum MarkdownSourceEventKind {
+events.cj:public func emitEvents(source: String, sink: MarkdownEventSink, mode!: MarkdownEventMode = MarkdownEventMode.ResolvedEventMode, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): EventParseSummary {
+events.cj:public func feed(chunk: Array<Byte>): Array<MarkdownSourceEvent> {
+events.cj:public func feed(chunk: String): Array<MarkdownSourceEvent> {
+events.cj:public func finish(): Array<MarkdownSourceEvent> {
+events.cj:public func newRawBlockEventSession(utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): RawBlockEventSession {
+events.cj:public func onEvent(event: MarkdownSourceEvent): Unit {
+events.cj:public func parseEvents(source: String, mode!: MarkdownEventMode = MarkdownEventMode.ResolvedEventMode, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): EventParseResult {
+events.cj:public init(kind: MarkdownSourceEventKind, nodeKind!: ?NodeKind = None, sourceRange!: ?SourceSpan = None, textSourceRange!: ?SourceSpan = None, semanticValue!: ?String = None, attributes!: Array<MarkdownEventAttribute> = [], finalSemantics!: Bool = true) {
+events.cj:public init(mode: MarkdownEventMode, diagnostics: Array<Diagnostic>, emittedEvents: Int64) {
+events.cj:public init(mode: MarkdownEventMode, events: Array<MarkdownSourceEvent>, diagnostics: Array<Diagnostic>) {
+events.cj:public init(name: String, value: String) {
+events.cj:public interface MarkdownEventSink {
+events.cj:public let attributes: ImmutableArray<MarkdownEventAttribute>
+events.cj:public let diagnostics: ImmutableArray<Diagnostic>
+events.cj:public let emittedEvents: Int64
+events.cj:public let events: ImmutableArray<MarkdownSourceEvent>
+events.cj:public let finalSemantics: Bool
+events.cj:public let kind: MarkdownSourceEventKind
+events.cj:public let mode: MarkdownEventMode
+events.cj:public let name: String
+events.cj:public let nodeKind: ?NodeKind
+events.cj:public let semanticValue: ?String
+events.cj:public let sourceRange: ?SourceSpan
+events.cj:public let textSourceRange: ?SourceSpan
+events.cj:public let value: String
+events.cj:public struct MarkdownEventAttribute {
 execution.cj:enum-variant | FullAst
 execution.cj:enum-variant | Fused
 execution.cj:enum-variant | PreferFused

@@ -56,8 +56,12 @@ public class MarkdownExtensionTestKit {
         let repeatedRenderer = HtmlRenderer(extensionRules: engine.dialect.rendererRules.toArray())
         let firstHtml = repeatedRenderer.render(all.document)
         let repeatedHtml = repeatedRenderer.render(repeated.document)
-        if (all.document.root().asDocument().getOrThrow().dialectFingerprint ==
-            repeated.document.root().asDocument().getOrThrow().dialectFingerprint && firstHtml == repeatedHtml) {
+        if (all.document.root().asDocument().getOrThrow().dialectFingerprint == repeated
+            .document
+            .root()
+            .asDocument()
+            .getOrThrow()
+            .dialectFingerprint && firstHtml == repeatedHtml) {
             passed++
         } else {
             failures.add("determinism")

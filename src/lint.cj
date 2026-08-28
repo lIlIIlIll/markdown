@@ -109,13 +109,13 @@ public class MarkdownLinter {
                     case NodeKind.Table =>
                         let table = node.asTable().getOrThrow()
                         for (row in node.children().toArray()) {
-                        if (row.children().size != table.alignments.size) {
-                            out.add(
-                                LintDiagnostic("MDL1004_TABLE_COLUMN_MISMATCH", LintCategory.Syntax,
-                                    DiagnosticSeverity.Warning, "table row column count does not match header",
-                                    requiredLintSpan(row)))
+                            if (row.children().size != table.alignments.size) {
+                                out.add(
+                                    LintDiagnostic("MDL1004_TABLE_COLUMN_MISMATCH", LintCategory.Syntax,
+                                        DiagnosticSeverity.Warning, "table row column count does not match header",
+                                        requiredLintSpan(row)))
+                            }
                         }
-                    }
                     case NodeKind.Text =>
                         let text = node.asText().getOrThrow()
                         if (containsInvisible(text.value)) {
@@ -342,10 +342,13 @@ private func appendMarkerAndAmbiguityLint(snapshot: DocumentSnapshot, out: Array
         if (let NodeRefWalkEvent.Enter(node) <- event) {
             if (let NodeKind.Text <- node.kind) {
                 let text = node.asText().getOrThrow()
-                if (text.raw.contains("**") || text.raw.contains("__") || text.raw.contains("~~") || text.raw.contains("[")) {
-                out.add(
-                    LintDiagnostic("MDL1005_AMBIGUOUS_OR_UNCLOSED_SYNTAX", LintCategory.Syntax, DiagnosticSeverity.Info,
-                        "text contains ambiguous or unclosed Markdown syntax", requiredLintSpan(node)))
+                if (text.raw.contains("**") || text.raw.contains("__") || text.raw.contains("~~") || text
+                    .raw
+                    .contains("[")) {
+                    out.add(
+                        LintDiagnostic("MDL1005_AMBIGUOUS_OR_UNCLOSED_SYNTAX", LintCategory.Syntax,
+                            DiagnosticSeverity.Info, "text contains ambiguous or unclosed Markdown syntax",
+                            requiredLintSpan(node)))
                 }
             }
         }

@@ -24,9 +24,13 @@ available merely because the package version changed:
    required fused path fails closed when processors or extensions need a full
    AST; it never silently drops capabilities.
 
-The low-allocation source Event API remains scheduled for 1.1. Version 0.9
-removes the earlier AST-walk event adapter instead of preserving it as a
-misleading runtime compatibility layer.
+The source Event API now uses `MarkdownSourceEvent` values that cannot retain
+`Document` or `NodeRef`. `ResolvedEventMode` performs two source passes and
+emits final reference semantics from transient parser blocks;
+`RawBlockEventSession` incrementally emits only blocks proven closed and marks
+its events as non-final. The removed 0.8 AST-walk event adapter is not restored,
+so consumers must migrate to `parseEvents`, `emitEvents`, or
+`newRawBlockEventSession` instead of expecting AST objects in event values.
 
 Until each staged contract has implementation and test evidence, its
 requirement remains non-pass in `.agent/requirements.yaml`.

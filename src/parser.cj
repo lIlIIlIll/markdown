@@ -603,6 +603,7 @@ internal class ParserSession {
     private let nodes: ParserNodeFactory
     private let nativeScannerEnabled: Bool
     private let lineScannerAccelerator: ?LineScannerAccelerator
+    private let eventEmitter: ?ParserEventEmitter
     private let diagnostics = ArrayList<Diagnostic>()
     private var references: Array<ReferenceDefinition> = []
     private let referenceIndex = HashMap<String, ReferenceDefinition>()
@@ -610,10 +611,11 @@ internal class ParserSession {
     private var checkpointSteps: Int64 = 0
     private var suppressedInlineRule = ""
     private var suppressedBlockRule = ""
+    private var eventBlockCheckpoint: ?AstArenaCheckpoint = None
 
     init(profile: MarkdownProfile, limits: ParseLimits, cancellation: CancellationToken, budget: OperationBudget,
         source: SourceBuffer, dialect: CompiledMarkdownDialect, nativeScannerEnabled: Bool,
-        lineScannerAccelerator: ?LineScannerAccelerator) {
+        lineScannerAccelerator: ?LineScannerAccelerator, eventEmitter!: ?ParserEventEmitter = None) {
         this.profile = profile
         this.limits = limits
         this.cancellation = cancellation
@@ -624,6 +626,7 @@ internal class ParserSession {
             source: Some(source))
         this.nativeScannerEnabled = nativeScannerEnabled
         this.lineScannerAccelerator = lineScannerAccelerator
+        this.eventEmitter = eventEmitter
     }
 
     func parse(inputDiagnostics: Array<Diagnostic>): ParseResult {
@@ -680,6 +683,38 @@ internal class ParserSession {
             return ParseResult(document, source, diagnostics.toArray())
         }
         ParseResult(arena, source, diagnostics.toArray())
+    }
+
+    /** Two-pass source-event execution. Reference definitions are collected
+     * before block/inline lowering in resolved mode. Each completed top-level
+     * subtree is emitted from the transient parser arena and immediately
+     * rolled back, so this path never constructs a complete Document. */
+    func parseEvents(inputDiagnostics: Array<Diagnostic>, resolveReferences: Bool): Array<Diagnostic> {
+        if (eventEmitter.isNone()) {
+            throw IllegalStateException("source-event parsing requires an event emitter")
+        }
+        if (dialect.parserHotPlan.hasDocumentProcessors) {
+            throw MarkdownException(MarkdownErrorCode.ExtensionFailure,
+                "document processors require the full AST execution path", phase: "event_preflight")
+        }
+        for (diagnostic in inputDiagnostics) {
+            diagnostics.add(diagnostic)
+        }
+        let lines = splitLines(source)
+        references = if (resolveReferences && linesHaveCoreInlineSpecial(lines) && source.text().contains("[")) {
+            collectReferences(lines)
+        } else {
+            []
+        }
+        for (reference in references) {
+            if (reference.isEffective) {
+                referenceIndex.add(reference.labelNormalized, reference)
+            }
+        }
+        eventBlockCheckpoint = Some(nodes.checkpoint())
+        let _ = parseBlocks(lines)
+        eventBlockCheckpoint = None
+        diagnostics.toArray()
     }
 
     private func parseSingleFencedDocument(): ?Int64 {
@@ -1093,7 +1128,7 @@ internal class ParserSession {
                             nested = [nodes.blockQuote(nested, state.spans[spanIndex])]
                             spanIndex--
                         }
-                        frames[frames.size - 1].blocks.add(nested[0])
+                        appendParsedBlock(frames[frames.size - 1], nested[0])
                     case BlockFrameCompletionKind.ListItemFrame =>
                         let state = frame.list.getOrThrow()
                         let item = state.items[state.itemIndex]
@@ -1109,16 +1144,12 @@ internal class ParserSession {
                                 BlockParseFrame(nextItem.lines, frame.depth, frame.suppressedRule,
                                     completion: BlockFrameCompletionKind.ListItemFrame, list: Some(state)))
                         } else {
-                            frames[frames
-                                    .size - 1]
-                                .blocks
-                                .add(
-                                    nodes.list(if (state.marker.ordered) {
-                                        ListKind.Ordered
-                                    } else {
-                                        ListKind.Bullet
-                                    }, state.marker.startNumber, state.marker.delimiter, state.tight, state.nodes,
-                                        state.span))
+                            let listNode = nodes.list(if (state.marker.ordered) {
+                                ListKind.Ordered
+                            } else {
+                                ListKind.Bullet
+                            }, state.marker.startNumber, state.marker.delimiter, state.tight, state.nodes, state.span)
+                            appendParsedBlock(frames[frames.size - 1], listNode)
                         }
                     case BlockFrameCompletionKind.Extension =>
                         let state = frame.extension.getOrThrow()
@@ -1126,12 +1157,10 @@ internal class ParserSession {
                             state.span, children, state.values)
                         let origin = NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: Some(state.span),
                             extensionId: Some(state.rule.extensionId))
-                        frames[frames
-                                .size - 1]
-                            .blocks
-                            .add(
-                                nodes.customBlock(state.rule.extensionId, manifestVersion(state.rule.extensionId),
-                                    state.kindId, payload, children, Some(state.span), origin))
+                        let customNode = nodes.customBlock(state.rule.extensionId,
+                            manifestVersion(state.rule.extensionId), state.kindId, payload, children, Some(state.span),
+                            origin)
+                        appendParsedBlock(frames[frames.size - 1], customNode)
                 }
                 continue
             }
@@ -1147,7 +1176,7 @@ internal class ParserSession {
                 if (let Some(scan) <- scanExtensionBlock(lines, index, frame.depth)) {
                     frame.index = scan.nextIndex
                     if (let Some(node) <- scan.node) {
-                        frame.blocks.add(node)
+                        appendParsedBlock(frame, node)
                     } else if (let Some(state) <- scan.pending) {
                         frames.add(
                             BlockParseFrame(state.lines, frame.depth + 1, state.suppressedRule,
@@ -1158,7 +1187,7 @@ internal class ParserSession {
             }
             if (isIndentedCode(line.text)) {
                 let (node, next) = parseIndentedCode(lines, index)
-                frame.blocks.add(node)
+                appendParsedBlock(frame, node)
                 frame.index = next
                 continue
             }
@@ -1171,23 +1200,22 @@ internal class ParserSession {
             if (first == b'`' || first == b'~') {
                 if (isFenceStart(line.text)) {
                     let (node, next) = parseFencedCode(lines, index)
-                    frame.blocks.add(node)
+                    appendParsedBlock(frame, node)
                     frame.index = next
                     continue
                 }
             }
             if (first == b'#') {
                 if (isAtxHeading(line.text)) {
-                    frame.blocks.add(parseAtxHeading(line))
+                    appendParsedBlock(frame, parseAtxHeading(line))
                     frame.index++
                     continue
                 }
             }
             if (first == b'*' || first == b'_' || first == b'-') {
                 if (isThematicBreak(line.text)) {
-                    frame
-                        .blocks
-                        .add(nodes.thematicBreak(firstNonSpace(line.text), mappedSpan(line.startByte, line.endByte)))
+                    appendParsedBlock(frame,
+                        nodes.thematicBreak(firstNonSpace(line.text), mappedSpan(line.startByte, line.endByte)))
                     frame.index++
                     continue
                 }
@@ -1216,14 +1244,14 @@ internal class ParserSession {
             }
             if (isGfmProfile() && isTableStart(lines, index)) {
                 let (node, next) = parseTable(lines, index)
-                frame.blocks.add(node)
+                appendParsedBlock(frame, node)
                 frame.index = next
                 continue
             }
             if (first == b'<') {
                 if (isHtmlBlock(line.text)) {
                     let (node, next) = parseHtmlBlock(lines, index)
-                    frame.blocks.add(node)
+                    appendParsedBlock(frame, node)
                     frame.index = next
                     continue
                 }
@@ -1237,16 +1265,27 @@ internal class ParserSession {
                     2
                 }
                 let children = parseInlineLineRange(lines, index, setextMarker)
-                frame.blocks.add(nodes.heading(level, children, mappedSpan(line.startByte, lines[setextMarker].endByte)))
+                appendParsedBlock(frame,
+                    nodes.heading(level, children, mappedSpan(line.startByte, lines[setextMarker].endByte)))
                 frame.index = setextMarker + 1
                 continue
             }
             let (node, next) = parseParagraph(lines, index)
-            frame.blocks.add(node)
+            appendParsedBlock(frame, node)
             frame.index = next
         }
         suppressedBlockRule = ""
         result
+    }
+
+    private func appendParsedBlock(frame: BlockParseFrame, node: Int64): Unit {
+        if (eventEmitter.isSome() && let BlockFrameCompletionKind.Root <- frame.completion) {
+            eventEmitter.getOrThrow().emitTopLevel(nodes, node)
+            nodes.rollback(eventBlockCheckpoint.getOrThrow())
+            eventBlockCheckpoint = Some(nodes.checkpoint())
+        } else {
+            frame.blocks.add(node)
+        }
     }
 
     private func parseAtxHeading(line: LineRecord): Int64 {
@@ -5605,7 +5644,7 @@ private func nextRuneOffset(text: String, offset: Int64): Int64 {
     }
 }
 
-private func decodeUtf8Input(bytes: Array<Byte>, policy: Utf8Policy): DecodedInput {
+internal func decodeUtf8Input(bytes: Array<Byte>, policy: Utf8Policy): DecodedInput {
     match (policy) {
         case Utf8Policy.Strict => try {
             let value = String.fromUtf8(bytes)

@@ -107,17 +107,21 @@ private func applyAction(document: Document, builder: AstArenaBuilder, node: Nod
             if (let NodeKind.Text <- node.kind) {
                 [appendReplacedText(builder, node, raw, value, "tree-rewriter/replace-text")]
             } else {
-                throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation,
-                    "ReplaceText applies only to Text", phase: "transform", span: node.span)
+                throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation, "ReplaceText applies only to Text",
+                    phase: "transform", span: node.span)
             }
         case RewriteAction.DetachLiteral => [appendDetachedLiteral(builder, node)]
         case RewriteAction.Replace(value) =>
             document.requireOwned(value)
-            if (value == node) { [base] } else { [cloneSubtree(value, builder, budget, cancellation)] }
-        case RewriteAction.InsertBefore(values) =>
-            concatenateIndexes(cloneSubtrees(document, values, builder, budget, cancellation), [base])
-        case RewriteAction.InsertAfter(values) =>
-            concatenateIndexes([base], cloneSubtrees(document, values, builder, budget, cancellation))
+            if (value == node) {
+                [base]
+            } else {
+                [cloneSubtree(value, builder, budget, cancellation)]
+            }
+        case RewriteAction.InsertBefore(values) => concatenateIndexes(
+            cloneSubtrees(document, values, builder, budget, cancellation), [base])
+        case RewriteAction.InsertAfter(values) => concatenateIndexes([base],
+            cloneSubtrees(document, values, builder, budget, cancellation))
         case RewriteAction.ReplaceChildren(values) =>
             let children = cloneSubtrees(document, values, builder, budget, cancellation)
             [builder.appendPersistentCopy(node, children, "tree-rewriter/replace-children")]
@@ -152,8 +156,7 @@ private func appendMappedText(builder: AstArenaBuilder, node: NodeRef, value: St
     appendReplacedText(builder, node, text.raw, value, "tree-rewriter/map-text")
 }
 
-private func appendReplacedText(builder: AstArenaBuilder, node: NodeRef, raw: String, value: String,
-    transformId: String): Int64 {
+private func appendReplacedText(builder: AstArenaBuilder, node: NodeRef, raw: String, value: String, transformId: String): Int64 {
     let text = node.asText().getOrThrow()
     let origin = NodeOrigin(NodeOriginKind.Transformed, sourceNodeIds: [node.nodeId], sourceSpan: node.span,
         transformId: Some(transformId))
@@ -195,8 +198,7 @@ private func cloneSubtree(root: NodeRef, builder: AstArenaBuilder, budget: Opera
         for (child in frame.node.children().toArray()) {
             children.add(outputs[child.index])
         }
-        outputs.add(frame.node.index,
-            builder.appendPersistentCopy(frame.node, children.toArray(), "tree-rewriter/clone"))
+        outputs.add(frame.node.index, builder.appendPersistentCopy(frame.node, children.toArray(), "tree-rewriter/clone"))
     }
     outputs[root.index]
 }

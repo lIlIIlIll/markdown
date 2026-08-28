@@ -18,12 +18,14 @@ event and fused-render surfaces. A-036 records authorization for breaking change
 7. Run all correctness, API, consumer, fuzz, complexity and fixed-Server canonical gates.
    Event/fused measurements cannot replace the full-AST `<=2.5x` GA gates.
 
-Current state: steps 1-4 are implemented and full-suite/API verified. `Document`
+Current state: steps 1-5 are implemented and full-suite/API verified. `Document`
 is the sole semantic AST owner; parser, renderer, formatter, lint, rewrite,
 editor, artifact and traversal use `NodeRef`/typed value views, with no legacy
 object-tree adapter. Step 5's capability-preserving fused HTML execution is
-implemented; the misleading AST-walk Event facade was removed, while the real
-Resolved/RawBlock source API remains an explicit 1.1 requirement under A-037.
+implemented. The real source-driven Resolved/RawBlock API is also implemented:
+Resolved performs reference collection before transient block lowering, while
+RawBlock incrementally emits proven-closed blocks without retaining Document or
+NodeRef values. Focused Event tests pass 7/7 and the full suite passes 1454/1454.
 Step 6 is ongoing and retains only bidirectionally measured candidates; R42
 reuses table-cell classification, R43 reuses reference-definition normalization,
 R45 compacts the inline-piece payload, R49/R50 delay Text materialization, R51
@@ -148,7 +150,7 @@ CommonMark/GFM 官方语料为 652/652 与 671/671；随后执行
 后续依赖顺序冻结为：
 
 ```text
-allocation profile and performance convergence
+full-AST allocation profile and performance convergence
 → full correctness/performance/package gate rerun
 → final 125/125 audit
 ```

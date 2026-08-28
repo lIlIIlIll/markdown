@@ -39,8 +39,9 @@ extend MarkdownEngine {
             case HtmlExecutionMode.PreferFused => match (renderFusedPlain(source, cancellation, budget)) {
                 case Some(value) => HtmlExecutionResult(value, HtmlExecutionPath.Fused)
                 case None => HtmlExecutionResult(
-                    htmlRenderer(options: options).render(parse(source, cancellation: cancellation, budget: budget).document,
-                        cancellation: cancellation, budget: budget), HtmlExecutionPath.FullAst)
+                    htmlRenderer(options: options).render(
+                        parse(source, cancellation: cancellation, budget: budget).document, cancellation: cancellation,
+                        budget: budget), HtmlExecutionPath.FullAst)
             }
             case HtmlExecutionMode.RequireFused => match (renderFusedPlain(source, cancellation, budget)) {
                 case Some(value) => HtmlExecutionResult(value, HtmlExecutionPath.Fused)
@@ -50,11 +51,10 @@ extend MarkdownEngine {
         }
     }
 
-    private func renderFusedPlain(source: String, cancellation: CancellationToken,
-        budget: OperationBudget): ?String {
-        if (dialect.parserHotPlan.hasInlineDsl || dialect.parserHotPlan.hasBlockDsl ||
-            dialect.parserHotPlan.hasInlineSpi || dialect.parserHotPlan.hasDocumentProcessors ||
-            dialect.rendererHotPlan.hasCustomRules) {
+    private func renderFusedPlain(source: String, cancellation: CancellationToken, budget: OperationBudget): ?String {
+        if (dialect.parserHotPlan.hasInlineDsl || dialect.parserHotPlan.hasBlockDsl || dialect
+            .parserHotPlan
+            .hasInlineSpi || dialect.parserHotPlan.hasDocumentProcessors || dialect.rendererHotPlan.hasCustomRules) {
             return None
         }
         if (source.size > limits.maximumInputBytes) {
@@ -119,8 +119,8 @@ private func fusedPlainPreflight(source: String, maximumLineBytes: Int64): Bool 
             if (index - lineStart > maximumLineBytes) {
                 throw LimitExceededException("line_bytes", maximumLineBytes, index - lineStart, "line_scan")
             }
-            if (index > lineStart && (source[lineStart] == b' ' || source[lineStart] == 9 ||
-                source[index - 1] == b' ' || source[index - 1] == 9)) {
+            if (index > lineStart && (source[lineStart] == b' ' || source[lineStart] == 9 || source[index - 1] == b' ' ||
+                source[index - 1] == 9)) {
                 return false
             }
             if (byte == 13 && index + 1 < source.size && source[index + 1] != 10) {
@@ -138,18 +138,17 @@ private func fusedPlainPreflight(source: String, maximumLineBytes: Int64): Bool 
     if (source.size - lineStart > maximumLineBytes) {
         throw LimitExceededException("line_bytes", maximumLineBytes, source.size - lineStart, "line_scan")
     }
-    if (source.size > lineStart && (source[lineStart] == b' ' || source[lineStart] == 9 ||
-        source[source.size - 1] == b' ' || source[source.size - 1] == 9)) {
+    if (source.size > lineStart && (source[lineStart] == b' ' || source[lineStart] == 9 || source[source.size - 1] ==
+        b' ' || source[source.size - 1] == 9)) {
         return false
     }
     true
 }
 
 private func fusedMarkdownSpecial(byte: Byte): Bool {
-    byte == b'\\' || byte == b'`' || byte == b'*' || byte == b'_' || byte == b'{' || byte == b'}' ||
-        byte == b'[' || byte == b']' || byte == b'(' || byte == b')' || byte == b'<' || byte == b'>' ||
-        byte == b'&' || byte == b'#' || byte == b'+' || byte == b'-' || byte == b'.' || byte == b'!' ||
-        byte == b'|' || byte == b'~' || byte == b':'
+    byte == b'\\' || byte == b'`' || byte == b'*' || byte == b'_' || byte == b'{' || byte == b'}' || byte == b'[' ||
+        byte == b']' || byte == b'(' || byte == b')' || byte == b'<' || byte == b'>' || byte == b'&' || byte == b'#' ||
+        byte == b'+' || byte == b'-' || byte == b'.' || byte == b'!' || byte == b'|' || byte == b'~' || byte == b':'
 }
 
 private func fusedWrite(out: StringBuilder, value: String, budget: OperationBudget): Unit {

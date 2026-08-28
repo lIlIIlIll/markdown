@@ -257,6 +257,25 @@ internal class ParserNodeFactory {
         snapshot.nodeAt(index)
     }
 
+    /** Read-only access used by the source-event lowering path while the
+     * parser-owned subtree is still transient. No Document snapshot is
+     * created, and the caller must finish before the next rollback. */
+    func eventRecord(index: Int64): ArenaNodeRecord {
+        arena.recordAt(index)
+    }
+
+    func eventPayload(index: Int64): ArenaNodePayload {
+        arena.payloadAt(index)
+    }
+
+    func eventChildIndex(index: Int64): Int64 {
+        arena.childIndexAt(index)
+    }
+
+    func eventSourceText(span: SourceSpan): String {
+        source.getOrThrow().slice(span)
+    }
+
     /** Inspect a completed parser-owned subtree without snapshot allocation. */
     func containsLink(index: Int64): Bool {
         let stack = ArrayList<Int64>()

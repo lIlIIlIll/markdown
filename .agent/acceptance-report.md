@@ -2,7 +2,7 @@
 
 ## Final Status
 
-**INCOMPLETE** — 125 项需求中 121 项为 `pass`，仍有 1 项 pending、0 项 implemented_unverified 和 3 项 blocked；真正的 Resolved/RawBlock source event 按冻结决策留到 1.1，当前 1.0 GA 仍被性能门槛及其发布依赖阻塞。
+**INCOMPLETE** — 125 项需求中 122 项为 `pass`，0 项 pending、0 项 implemented_unverified、3 项 blocked；Resolved/RawBlock source event 已闭环，当前仍被两个 canonical 性能比值及其发布依赖阻塞。
 
 <!-- release-evidence:start -->
 ## Generated Release Evidence
@@ -62,9 +62,9 @@ seal/path/binary identity check.
 
 | 状态 | 数量 |
 | --- | ---: |
-| `pass` | 121 |
+| `pass` | 122 |
 | `implemented_unverified` | 0 |
-| `pending` | 1 |
+| `pending` | 0 |
 | `blocked` | 3 |
 
 ## Itemized Verdict
@@ -142,7 +142,7 @@ seal/path/binary identity check.
 | `MD-FMT-002` | PRD §26.2, §26.4, §44.4, §51.5 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-FMT-003` | PRD §26.5, §54.39 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-FMT-004` | PRD §26.6 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
-| `MD-EVT-001` | PRD §27, §54.10 | `pending` | Existing events are produced by walking a completed AST and hold Document/MarkdownNode values; true RawBlock chunk events, two-pass Resolved source events and fused HTML execution are not implemented. |
+| `MD-EVT-001` | PRD §27, §54.10 | `pass` | Source-driven Resolved mode performs reference collection before transient block lowering; RawBlock sessions emit closed blocks across arbitrary UTF-8 chunks with non-final semantics; event values retain no Document/NodeRef. Focused 7/7 and full 1454/1454 tests pass, and explicit fused/full execution tests remain green. |
 | `MD-EXT-001` | PRD §28.1-2, §54.34 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-EXT-002` | PRD §28.3-4, §37, §54.34 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-EXT-003` | PRD §28.5, §53.5, §54.33 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
@@ -1101,3 +1101,20 @@ reverse corpus order, so it was rejected as non-attributable. Raw SHA-256 values
 are `79022665fa692cf31a081ff8ce2f5f7cbbe2175fe6a0752c46d97624e9fdfe37` and
 `eccaa4ca3bc8f2a8cfffd7de085412a3eb2a31a69277571fc8bbc7a835c3e332`.
 The parser remains byte-identical to R115 and the verdict is unchanged.
+
+## 2026-08-28 Source-driven Event API closure
+
+`MarkdownSourceEvent` values contain only kinds, source ranges, attributes and
+semantic text; they cannot retain `Document` or `NodeRef`. Resolved execution
+collects references before lowering transient top-level blocks and rolls each
+block back immediately after emission. RawBlock execution buffers incomplete
+UTF-8 and unfinished blocks, emits proven-closed blocks before `finish()`, and
+marks all events non-final. Document processors fail closed because they require
+the full AST, while FullAst/PreferFused/RequireFused HTML execution remains
+explicit and capability-preserving.
+
+`SourceEventApiTest` passed 7/7; the complete suite passed 1454/1454 with zero
+skipped/error/failed. Format passed, API checker self-tests passed 9/9, and the
+v0.9 snapshot verified 1311 declarations. `MD-EVT-001` is therefore `pass`.
+The ledger is 122/125 pass with only `MD-PERF-002`, `MD-REL-001` and
+`MD-QUAL-001` blocked; final status remains **INCOMPLETE**.

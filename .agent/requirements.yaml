@@ -1437,13 +1437,22 @@ requirements:
   - 事件值不引用 Document 或 AST node
   - RawBlock 随 chunk 增量产生已闭合 block；Resolved 对 replayable source 两遍执行
   - FullAst/PreferFused/RequireFused 显式报告实际 HTML 执行路径且不静默降低能力
-  status: pending
-  implementation: []
-  tests: []
+  status: pass
+  implementation:
+  - 'src/events.cj: source-driven Resolved/RawBlock event values, direct sink lowering and incremental raw-block session'
+  - 'src/parser.cj: two-pass resolved execution and transient top-level arena rollback after emission'
+  - 'src/parser_node_factory.cj: read-only transient arena access used before rollback'
+  - 'src/execution.cj: explicit FullAst/PreferFused/RequireFused HTML execution path reporting and fail-closed preflight'
+  - 'src/core/core.cj: curated public Event API exports'
+  tests:
+  - 'src/events_test.cj: resolved references, raw non-final semantics, early closed-block emission, balanced event/range contracts, lifecycle, cumulative limits and split UTF-8 chunks'
+  - 'src/execution_test.cj: explicit full/fused path selection and fail-closed capability guards'
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-27: the misleading AST-walk adapter was removed from source, markdown.document exports and the v0.9 API snapshot; this proves scope honesty, not Event implementation'
-  notes: 'A-037: §54.10 schedules this API for 1.1. It remains pending until a real source-driven two-mode implementation satisfies every §27 acceptance item.'
+  - '2026-08-28: focused SourceEventApiTest exit 0, 7/7; full cjpm test exit 0, 1454/1454 with zero skipped/error/failed'
+  - '2026-08-28: check_format exit 0; check_public_api verified the v0.9 snapshot at 1311 declarations; checker self-tests passed 9/9'
+  notes: 'A-037 scheduled the genuine API for 1.1; the delivered implementation now satisfies §27 without retaining Document/NodeRef values or substituting event/fused results for the canonical full-AST benchmark.'
 - id: MD-EXT-001
   source: PRD §28.1-2, §54.34
   target: '1.0'

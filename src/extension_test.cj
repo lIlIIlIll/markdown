@@ -375,9 +375,9 @@ class ExtensionDslTest {
             case NodeKind.Paragraph =>
                 let text = paragraph.children()[0]
                 match (text.kind) {
-                case NodeKind.Text => @Expect(text.asText().getOrThrow().value, "%%%unknown")
-                case _ => @Expect(false)
-            }
+                    case NodeKind.Text => @Expect(text.asText().getOrThrow().value, "%%%unknown")
+                    case _ => @Expect(false)
+                }
             case _ => @Expect(false)
         }
         let unclosed = engine.parse(":::note\nbody")

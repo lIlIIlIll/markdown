@@ -39,7 +39,7 @@
 - **安全输出默认开启**：`HtmlOptions.safe()` 转义 raw HTML，分离链接与图片 URI 策略，并受 cancellation 与 output budget 约束。
 - **AST 可回溯到源码**：不可变节点携带 UTF-8 byte `SourceSpan`；同时提供 UTF-16、visual position、`SourceSlice` 与 `AstQuery`。
 - **扩展是版本化协议**：`ExtensionManifest`、`MarkdownDialect`、`BlockSyntax`、`InlineSyntax` 与 `RendererRule` 共同定义依赖、冲突、优先级、能力和输出降级。
-- **边界可观察**：支持 String、bytes、stream、chunked input，具有资源上限、operation budget、取消、结构化诊断与 partial result。
+- **边界可观察**：支持 String、bytes、buffered stream/chunks，以及不持有 AST 的 Resolved/RawBlock source events；具有资源上限、operation budget、取消、结构化诊断与 partial result。
 - **不只生成 HTML**：同一文档可输出 Safe/Spec/GFM HTML、纯文本、canonical Markdown、source map、CST/snapshot，并可通过 `markdown` CLI lint、format、check 与 explain。
 
 ## 快速开始

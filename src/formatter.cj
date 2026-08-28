@@ -104,8 +104,8 @@ public class CanonicalMarkdownRenderer {
             case NodeKind.Paragraph => pushNodes(node.children(), stack)
             case NodeKind.Heading =>
                 pushNodes(node.children(), stack)
-                stack.add(FormatAction.TextValue(repeatString(options.headingMarker,
-                    node.asHeading().getOrThrow().level) + " "))
+                stack.add(
+                    FormatAction.TextValue(repeatString(options.headingMarker, node.asHeading().getOrThrow().level) + " "))
             case NodeKind.BlockQuote =>
                 stack.add(FormatAction.TextValue("\n"))
                 pushNodes(node.children(), stack)
@@ -193,8 +193,7 @@ public class CanonicalMarkdownRenderer {
         stack.add(FormatAction.TextValue(marker))
     }
 
-    private func pushWrapped(opener: String, closer: String, children: NodeChildren,
-        stack: ArrayList<FormatAction>): Unit {
+    private func pushWrapped(opener: String, closer: String, children: NodeChildren, stack: ArrayList<FormatAction>): Unit {
         stack.add(FormatAction.TextValue(closer))
         pushNodes(children, stack)
         stack.add(FormatAction.TextValue(opener))
@@ -235,8 +234,8 @@ public class CanonicalMarkdownRenderer {
             value >= 128
     }
 
-    private func formatCustom(extensionId: String, localKindId: String, payload: CustomPayload,
-        children: NodeChildren, span: ?SourceSpan, block: Bool, stack: ArrayList<FormatAction>): Unit {
+    private func formatCustom(extensionId: String, localKindId: String, payload: CustomPayload, children: NodeChildren,
+        span: ?SourceSpan, block: Bool, stack: ArrayList<FormatAction>): Unit {
         for (index in 0..extensionRules.size) {
             let rule = extensionRules[index]
             if (rule.extensionId == extensionId && rule.localKindId == localKindId) {

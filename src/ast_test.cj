@@ -14,14 +14,15 @@ class AstContractTest {
     @TestCase
     func constructsImmutableTypedAstAndValidatesIt(): Unit {
         let builder = AstArenaBuilder()
-        let text = builder.append(NodeKind.Text, NodeCategory.Inline, Some(SourceSpan(2, 8)), NodeOriginKind.Parsed,
-            [], payload: ArenaNodePayload.TextValue(LiteralStorage.Copy("标题"), LiteralStorage.Copy("标题"), None))
+        let text = builder.append(NodeKind.Text, NodeCategory.Inline, Some(SourceSpan(2, 8)), NodeOriginKind.Parsed, [],
+            payload: ArenaNodePayload.TextValue(LiteralStorage.Copy("标题"), LiteralStorage.Copy("标题"), None))
         let original: Array<Int64> = [text]
-        let heading = builder.append(NodeKind.Heading, NodeCategory.Block, Some(SourceSpan(0, 8)),
-            NodeOriginKind.Parsed, original, payload: ArenaNodePayload.HeadingValue(1))
+        let heading = builder.append(NodeKind.Heading, NodeCategory.Block, Some(SourceSpan(0, 8)), NodeOriginKind.Parsed,
+            original, payload: ArenaNodePayload.HeadingValue(1))
         original[0] = heading
         let _ = builder.append(NodeKind.Document, NodeCategory.Block, Some(SourceSpan(0, 8)), NodeOriginKind.Parsed,
-            [heading], payload: ArenaNodePayload.DocumentValue(MarkdownProfile.commonMark0312(), "test-fingerprint",
+            [heading],
+            payload: ArenaNodePayload.DocumentValue(MarkdownProfile.commonMark0312(), "test-fingerprint",
                 ImmutableArray<ReferenceDefinition>([])))
         let document = builder.freeze()
         match (document.children()[0].kind) {
@@ -36,8 +37,8 @@ class AstContractTest {
     @TestCase
     func rejectsDuplicateNodeIdsWithoutRecursingForever(): Unit {
         let builder = AstArenaBuilder()
-        let text = builder.append(NodeKind.Text, NodeCategory.Inline, Some(SourceSpan(0, 1)), NodeOriginKind.Parsed,
-            [], payload: ArenaNodePayload.TextValue(LiteralStorage.Copy("x"), LiteralStorage.Copy("x"), None))
+        let text = builder.append(NodeKind.Text, NodeCategory.Inline, Some(SourceSpan(0, 1)), NodeOriginKind.Parsed, [],
+            payload: ArenaNodePayload.TextValue(LiteralStorage.Copy("x"), LiteralStorage.Copy("x"), None))
         try {
             builder.append(NodeKind.Paragraph, NodeCategory.Block, Some(SourceSpan(0, 1)), NodeOriginKind.Parsed,
                 [text, text])
@@ -50,12 +51,13 @@ class AstContractTest {
     @TestCase
     func rejectsChildSpanOutsideParent(): Unit {
         let builder = AstArenaBuilder()
-        let text = builder.append(NodeKind.Text, NodeCategory.Inline, Some(SourceSpan(2, 3)), NodeOriginKind.Parsed,
-            [], payload: ArenaNodePayload.TextValue(LiteralStorage.Copy("x"), LiteralStorage.Copy("x"), None))
+        let text = builder.append(NodeKind.Text, NodeCategory.Inline, Some(SourceSpan(2, 3)), NodeOriginKind.Parsed, [],
+            payload: ArenaNodePayload.TextValue(LiteralStorage.Copy("x"), LiteralStorage.Copy("x"), None))
         let paragraph = builder.append(NodeKind.Paragraph, NodeCategory.Block, Some(SourceSpan(0, 1)),
             NodeOriginKind.Parsed, [text])
         let _ = builder.append(NodeKind.Document, NodeCategory.Block, Some(SourceSpan(0, 3)), NodeOriginKind.Parsed,
-            [paragraph], payload: ArenaNodePayload.DocumentValue(MarkdownProfile.commonMark0312(), "test",
+            [paragraph],
+            payload: ArenaNodePayload.DocumentValue(MarkdownProfile.commonMark0312(), "test",
                 ImmutableArray<ReferenceDefinition>([])))
         let document = builder.freeze()
         expectInvariantFailure(document)
@@ -69,7 +71,8 @@ class AstContractTest {
         let paragraph = builder.append(NodeKind.Paragraph, NodeCategory.Block, Some(SourceSpan(0, 1)),
             NodeOriginKind.Parsed, [nested])
         let _ = builder.append(NodeKind.Document, NodeCategory.Block, Some(SourceSpan(0, 1)), NodeOriginKind.Parsed,
-            [paragraph], payload: ArenaNodePayload.DocumentValue(MarkdownProfile.commonMark0312(), "test",
+            [paragraph],
+            payload: ArenaNodePayload.DocumentValue(MarkdownProfile.commonMark0312(), "test",
                 ImmutableArray<ReferenceDefinition>([])))
         let document = builder.freeze()
         expectInvariantFailure(document)

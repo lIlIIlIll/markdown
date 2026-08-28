@@ -505,3 +505,24 @@ GA 门槛。
 - Fresh R57 DWARF profiles used the exact canonical driver and 1 MiB inputs with zero lost samples. CommonMark official-spec parse captured `1442` samples: GC phase transition was `19.01%`, allocation/memset `5.16%`, native line scan `4.87%`, `parseInline` `4.78%`, block parse `3.10%`, fenced code `1.86%`, line splitting `1.85%` and reference collection `1.85%`. GFM large-table HTML captured `3228` samples: GC was `22.12%`, parser `tableRow` `7.70%`, arena table-row renderer `6.15%`, allocation/memset `5.46%`, memmove `3.39%`, `StringBuilder.append` `2.20%` and `escapeText` `2.16%`. Perf/report SHA-256 values are `9b2b71325f2c73155150149065d33a072812cdc41f4ccf57789852297b700690`/`28d27491196ca1b1366da432da563f0ec65f21b7bbe8918695d0b79d89aeb5a9` and `1afea3c9bc579f5887cdf1c56f5adcb3cc7e2a346ae54d0b79b31ff6a6c42875`/`0d8d657d8928a2079af9d8923466bf2892bf2fe9692ff877f1cbd9fbaa231a3f`.
 - R59 lets scanner-proven plain GFM table cells materialize their Text node directly from the source span instead of allocating a temporary substring that `parseInline` immediately discarded. Extension dispatch, escaped pipes, GFM autolinks and complex inline syntax retain the previous path. `cjpm check`, parser `9/9`, GFM corpus `671/671`, individual format and full `1444/1444` pass. The exact minimal archive is `6441b794528e7e0c3898ea59b6015524b9e9285fb8c4342dbcbef7b8673c51fe`; fresh Server driver is `94f1740f563d0e4f6ad16b417bdfcc067bf18efbcb3daa1aa0928eeb1b700c52`.
 - R59's 24-round target repeat measured large-table GFM parse `0.969778/0.981236`, GFM HTML `1.027501/0.976378`, and ordinary CommonMark HTML `0.997565/1.010526`; raw SHA-256 is `3509da0f716c05ec0d792d835d65a40691b06d4ecd1b4115f431228907beb6fe`. The eight-corpus four-profile forward/reverse geomeans were CommonMark parse `0.999050/1.000306`, CommonMark HTML `1.012185/0.970230`, GFM parse `0.991040/1.002942`, and GFM HTML `1.003067/0.969408`, with no stable same-corpus regression above `10%`; raw SHA-256 is `2e8a725fb7514a6798a404dbe76ffe5492f5b3d8cd97a14c5f95d8122f08981a`. A 100-iteration target PMU pair measured time `0.997711`, cycles `0.999309`, instructions `0.994340`, and branches `1.001405`; raw hashes are `fd912ae5f784de33fa190a2df1e6f00431880c78da548ca35db983531bb5e60c`, `09594492def5ce48419bfd392dad73bc1a6f2f75ae5aad4e5268b4dfbbbda86d`, `fbe416ed868b12664dc2dbdbde670711e5e7ca9aed78358138dcb5d8001774af`, and `82b2401d824290e2ff585101d9f328e0dd90cc42eb76d489f695c6753b451f99`. R59 is retained in the current R60 product source; its phase evidence was superseded as canonical identity by the complete R60 run.
+
+## 2026-08-28 Source-driven Event API closure
+
+- Added `MarkdownSourceEvent` values containing only node kinds, source ranges,
+  attributes and semantic text; they cannot retain `Document` or `NodeRef`.
+- Resolved execution collects reference definitions first, lowers each completed
+  top-level subtree directly from the transient parser arena, then rolls it back.
+  RawBlock execution deliberately skips resolution, marks every event non-final,
+  buffers incomplete UTF-8/unfinished blocks, and emits proven-closed blocks
+  before `finish()`.
+- `emitEvents()` provides a direct sink path without a complete AST or event
+  array. `parseEvents()` is the collecting convenience. Document processors fail
+  closed because they require full-AST semantics. Existing
+  FullAst/PreferFused/RequireFused HTML execution remains explicit and cannot
+  silently lower capabilities.
+- `SourceEventApiTest` passed 7/7; the complete suite passed 1454/1454 with zero
+  skipped/error/failed. Format passed, API checker tests passed 9/9, and the v0.9
+  snapshot verified 1311 public declarations.
+- `MD-EVT-001` is now `pass`. The ledger is 122/125 pass, 0 pending, 0
+  implemented_unverified and 3 blocked. Only canonical performance and its
+  release/quality dependents remain non-pass; overall status stays **INCOMPLETE**.
