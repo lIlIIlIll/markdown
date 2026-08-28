@@ -599,6 +599,7 @@ internal class ParserSession {
     private let cancellation: CancellationToken
     private let budget: OperationBudget
     private let source: SourceBuffer
+    private let decodedSourceBytes: ?Array<Byte>
     private let dialect: CompiledMarkdownDialect
     private let nodes: ParserNodeFactory
     private let nativeScannerEnabled: Bool
@@ -621,6 +622,7 @@ internal class ParserSession {
         this.cancellation = cancellation
         this.budget = budget
         this.source = source
+        this.decodedSourceBytes = source.decodedBytesForNative()
         this.dialect = dialect
         this.nodes = ParserNodeFactory(limits.maximumAstNodes, estimatedInputBytes: source.byteLength(),
             source: Some(source))
@@ -1962,19 +1964,35 @@ internal class ParserSession {
             scanStep()
             if (text[index] == b'*' || text[index] == b'_') {
                 hasDelimiterPieces = true
-                let bytes = match (delimiterBytes) {
-                    case Some(value) => value
-                    case None =>
-                        let value = text.toArray()
-                        delimiterBytes = Some(value)
-                        value
-                }
                 flushPieceText(pieces, plainStart, index, baseOffset)
                 let run = delimiterRunLength(text, index, text[index])
                 delimiterMarkerBytes += run
-                pieces.add(
-                    InlinePiece(baseOffset + index, run, text[index], delimiterCanOpenBytes(bytes, index, run,
-                        text[index]), delimiterCanCloseBytes(bytes, index, run, text[index])))
+                let (canOpen, canClose) = match (decodedSourceBytes) {
+                    case Some(bytes) =>
+                        if (sourceIdentity && baseOffset >= 0 && baseOffset + text.size <= bytes.size) {
+                            delimiterFlankingBytes(bytes, baseOffset, baseOffset + text.size, baseOffset + index, run,
+                                text[index])
+                        } else {
+                            let local = match (delimiterBytes) {
+                                case Some(value) => value
+                                case None =>
+                                    let value = text.toArray()
+                                    delimiterBytes = Some(value)
+                                    value
+                            }
+                            delimiterFlankingBytes(local, 0, local.size, index, run, text[index])
+                        }
+                    case None =>
+                        let local = match (delimiterBytes) {
+                            case Some(value) => value
+                            case None =>
+                                let value = text.toArray()
+                                delimiterBytes = Some(value)
+                                value
+                        }
+                        delimiterFlankingBytes(local, 0, local.size, index, run, text[index])
+                }
+                pieces.add(InlinePiece(baseOffset + index, run, text[index], canOpen, canClose))
                 index += run
                 plainStart = index
                 continue
@@ -3569,6 +3587,14 @@ private class ReferenceDefinitionParser {
         if (leadingWhitespace(lines[start].text) > 3) {
             return None
         }
+        if (let Some((label, normalized, destinationRaw, destination, titleRaw, title)) <- simpleReferenceDefinition(
+            lines[start].text)) {
+            let next = start + 1
+            if (!titleRaw.isEmpty() || next >= lines.size || isBlank(lines[next].text) ||
+                !standaloneReferenceTitle(trimAscii(lines[next].text))) {
+                return Some((label, normalized, destinationRaw, destination, titleRaw, title, next))
+            }
+        }
         let header = StringBuilder()
         header.append(trimAscii(lines[start].text))
         if (!header.toString().startsWith("[")) {
@@ -3622,6 +3648,80 @@ private class ReferenceDefinitionParser {
         }
         None
     }
+}
+
+/** Single-line reference definitions dominate generated and API documents.
+ * Accept only the allocation-light subset whose destination and optional title
+ * need no escape/entity lowering; every ambiguous or multiline form falls back
+ * to the complete parser above. */
+private func simpleReferenceDefinition(line: String): ?(String, String, String, String, String, String) {
+    let text = trimAscii(line)
+    if (text.size < 4 || text[0] != b'[') {
+        return None
+    }
+    let close = findReferenceLabelClose(text)
+    if (close <= 1 || close + 1 >= text.size || text[close + 1] != b':') {
+        return None
+    }
+    let label = text[1..close]
+    if (label.size > 999 || containsUnescapedOpenBracket(label)) {
+        return None
+    }
+    let normalized = normalizeReferenceLabel(label)
+    if (normalized.isEmpty()) {
+        return None
+    }
+    let target = trimAscii(text[close + 2..])
+    if (target.isEmpty() || target[0] == b'<') {
+        return None
+    }
+    var index: Int64 = 0
+    while (index < target.size) {
+        let byte = target[index]
+        if (byte == b' ' || byte == b'\t' || byte == 10 || byte == 13) {
+            break
+        }
+        if (byte == b'\\' || byte == b'&' || byte == b'(' || byte == b')') {
+            return None
+        }
+        index++
+    }
+    if (index == 0) {
+        return None
+    }
+    let destination = target[..index]
+    index = skipLinkWhitespace(target, index)
+    if (index == target.size) {
+        return Some((label, normalized, destination, destination, "", ""))
+    }
+    let opener = target[index]
+    let closer: Byte = if (opener == b'"') {
+        b'"'
+    } else if (opener == b'\'') {
+        b'\''
+    } else if (opener == b'(') {
+        b')'
+    } else {
+        return None
+    }
+    let titleStart = index + 1
+    index = titleStart
+    while (index < target.size && target[index] != closer) {
+        let byte = target[index]
+        if (byte == b'\\' || byte == b'&' || byte == 10 || byte == 13) {
+            return None
+        }
+        index++
+    }
+    if (index >= target.size) {
+        return None
+    }
+    let title = target[titleStart..index]
+    index = skipLinkWhitespace(target, index + 1)
+    if (index != target.size) {
+        return None
+    }
+    Some((label, normalized, destination, destination, title, title))
 }
 
 private func startsReferenceTitle(value: String): Bool {
@@ -4775,7 +4875,22 @@ private func decodeLinkValue(value: String): String {
 }
 
 private func mayContainExtendedAutolink(value: String): Bool {
-    value.contains("www.") || value.contains("://") || value.contains("@")
+    var index: Int64 = 0
+    while (index < value.size) {
+        let byte = value[index]
+        if (byte == b'@') {
+            return true
+        }
+        if (byte == b'w' && index + 3 < value.size && value[index + 1] == b'w' && value[index + 2] == b'w' &&
+            value[index + 3] == b'.') {
+            return true
+        }
+        if (byte == b':' && index + 2 < value.size && value[index + 1] == b'/' && value[index + 2] == b'/') {
+            return true
+        }
+        index++
+    }
+    false
 }
 
 private func decodeEntity(raw: String): String {
@@ -5577,9 +5692,22 @@ private func delimiterCanOpen(text: String, start: Int64, width: Int64, marker: 
     }
 }
 
-private func delimiterCanOpenBytes(bytes: Array<Byte>, start: Int64, width: Int64, marker: Byte): Bool {
-    let previous = previousDelimiterClass(bytes, start)
-    let next = nextDelimiterClass(bytes, start + width)
+private func delimiterFlankingBytes(bytes: Array<Byte>, rangeStart: Int64, rangeEnd: Int64, start: Int64, width: Int64,
+    marker: Byte): (Bool, Bool) {
+    let previous: Byte = if (start <= rangeStart) {
+        0
+    } else {
+        var previousStart = start - 1
+        while (previousStart > rangeStart && (bytes[previousStart] & 0b1100_0000) == 0b1000_0000) {
+            previousStart--
+        }
+        delimiterClass(bytes, previousStart)
+    }
+    let next: Byte = if (start + width >= rangeEnd) {
+        0
+    } else {
+        delimiterClass(bytes, start + width)
+    }
     let previousWhitespace = previous == 0
     let nextWhitespace = next == 0
     let previousPunctuation = previous == 1
@@ -5587,9 +5715,9 @@ private func delimiterCanOpenBytes(bytes: Array<Byte>, start: Int64, width: Int6
     let leftFlanking = !nextWhitespace && (!nextPunctuation || previousWhitespace || previousPunctuation)
     let rightFlanking = !previousWhitespace && (!previousPunctuation || nextWhitespace || nextPunctuation)
     if (marker == b'_') {
-        leftFlanking && (!rightFlanking || previousPunctuation)
+        (leftFlanking && (!rightFlanking || previousPunctuation), rightFlanking && (!leftFlanking || nextPunctuation))
     } else {
-        leftFlanking
+        (leftFlanking, rightFlanking)
     }
 }
 
@@ -5607,40 +5735,6 @@ private func delimiterCanClose(text: String, start: Int64, width: Int64, marker:
     } else {
         rightFlanking
     }
-}
-
-private func delimiterCanCloseBytes(bytes: Array<Byte>, start: Int64, width: Int64, marker: Byte): Bool {
-    let previous = previousDelimiterClass(bytes, start)
-    let next = nextDelimiterClass(bytes, start + width)
-    let previousWhitespace = previous == 0
-    let nextWhitespace = next == 0
-    let previousPunctuation = previous == 1
-    let nextPunctuation = next == 1
-    let leftFlanking = !nextWhitespace && (!nextPunctuation || previousWhitespace || previousPunctuation)
-    let rightFlanking = !previousWhitespace && (!previousPunctuation || nextWhitespace || nextPunctuation)
-    if (marker == b'_') {
-        rightFlanking && (!leftFlanking || nextPunctuation)
-    } else {
-        rightFlanking
-    }
-}
-
-private func previousDelimiterClass(bytes: Array<Byte>, offset: Int64): Byte {
-    if (offset <= 0) {
-        return 0
-    }
-    var start = offset - 1
-    while (start > 0 && (bytes[start] & 0b1100_0000) == 0b1000_0000) {
-        start--
-    }
-    delimiterClass(bytes, start)
-}
-
-private func nextDelimiterClass(bytes: Array<Byte>, offset: Int64): Byte {
-    if (offset >= bytes.size) {
-        return 0
-    }
-    delimiterClass(bytes, offset)
 }
 
 private func delimiterClass(bytes: Array<Byte>, offset: Int64): Byte {
