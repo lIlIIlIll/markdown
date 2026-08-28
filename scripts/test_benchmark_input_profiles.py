@@ -6,6 +6,7 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 import subprocess
+import sys
 import unittest
 
 
@@ -20,9 +21,31 @@ MODES = (
     "commonmark-parse-stream",
 )
 GFM_MODES = ("gfm-parse", "gfm-html")
+sys.path.insert(0, str(ROOT / "benchmarks"))
+import measure
 
 
 class BenchmarkInputProfilesTest(unittest.TestCase):
+    def test_generated_release_values_do_not_change_readme_corpus(self) -> None:
+        prefix = b"# README\n"
+        suffix = b"\nStable API documentation.\n"
+        first = (prefix + measure.RELEASE_EVIDENCE_START + b"\nratio: 2.43x\n"
+            + measure.RELEASE_EVIDENCE_END + suffix)
+        second = (prefix + measure.RELEASE_EVIDENCE_START + b"\nratio: 9.99x; dirty\n"
+            + measure.RELEASE_EVIDENCE_END + suffix)
+        self.assertEqual(
+            measure.normalize_generated_release_evidence(first),
+            measure.normalize_generated_release_evidence(second),
+        )
+
+    def test_readme_corpus_rejects_missing_or_ambiguous_evidence_markers(self) -> None:
+        with self.assertRaisesRegex(ValueError, "exactly one release-evidence start marker"):
+            measure.normalize_generated_release_evidence(b"# README\n")
+        duplicate = (measure.RELEASE_EVIDENCE_START + measure.RELEASE_EVIDENCE_END
+            + measure.RELEASE_EVIDENCE_START + measure.RELEASE_EVIDENCE_END)
+        with self.assertRaisesRegex(ValueError, "exactly one release-evidence start marker"):
+            measure.normalize_generated_release_evidence(duplicate)
+
     def test_measurement_schema_uses_python_literals(self) -> None:
         tree = ast.parse(MEASURE.read_text(encoding="utf-8"), filename=str(MEASURE))
         names = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}

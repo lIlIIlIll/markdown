@@ -278,7 +278,7 @@ The table is generated from [`release-evidence.json`](release-evidence.json).
 The source identity or evidence tree is not yet release-bound. The release remains fail-closed until its status is ready and every mandatory gate passes.
 <!-- release-evidence:end -->
 
-历史测量仅保留在[性能说明](docs/performance.md)中，不再作为“当前值”。发布报告、README 和验收报告中的 canonical 数字都来自同一个 `release-evidence.json`。当前 benchmark 已绑定 source commit anchor、精确源码归档、SDK、语料和 raw digest，但仓库工作树仍标记为 dirty；仍需提交后刷新源码身份、通过两个性能 ratio gate 并将 release 状态转为 ready，证据才能成为 release-ready。
+历史测量仅保留在[性能说明](docs/performance.md)中，不再作为“当前值”。发布报告、README 和验收报告中的 canonical 数字都来自同一个 `release-evidence.json`；当前状态以自动生成表为准。canonical raw 绑定 source commit、精确源码归档、SDK、语料 checksum、benchmark harness 和 driver identity。测量 `readme-api` 语料时会规范化移除自动生成的 release-evidence 区块，避免结果写回改变下一轮输入。
 
 ## 功能对比
 

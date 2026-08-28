@@ -2,7 +2,7 @@
 
 Use release builds on the pinned reference host. Record SDK/compiler, CPU affinity, corpus digest, reference implementation version, warmup, raw samples, median/geometric mean, peak additional memory, and optional feature overhead.
 
-The corpus includes official examples, README/API docs, large code/table/reference documents, CJK, emoji, deep lists, pathological delimiters, long lines, and extensions. Scaling uses 1/2/4/8/16 MiB with at least seven samples; log-log slope above 1.35 or adjacent doubling above 3.0 fails.
+The corpus includes official examples, README/API docs, large code/table/reference documents, CJK, emoji, deep lists, pathological delimiters, long lines, and extensions. The README/API profile replaces the generated `release-evidence` block with one fixed marker before sizing and hashing the input. Benchmark results can therefore be written back without recursively changing the next run's corpus; missing or duplicate markers fail closed. Scaling uses 1/2/4/8/16 MiB with at least seven samples; log-log slope above 1.35 or adjacent doubling above 3.0 fails.
 
 Allocation strategy:
 

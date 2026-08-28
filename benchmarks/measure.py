@@ -30,6 +30,9 @@ PATHOLOGICAL_SIZES = (64, 128, 256, 512)
 GFM_PHASE_BYTES = 1024 * 1024
 GFM_PHASE_ITERATIONS = 1
 GFM_PHASE_CORPORA = ("official-spec", "large-table", "many-references", "pathological-delimiters", "ordinary")
+RELEASE_EVIDENCE_START = b"<!-- release-evidence:start -->"
+RELEASE_EVIDENCE_END = b"<!-- release-evidence:end -->"
+RELEASE_EVIDENCE_PLACEHOLDER = b"<!-- release-evidence:normalized -->\n"
 
 
 def run_sample(command: list[str], data: bytes) -> dict[str, float | int | str]:
@@ -104,9 +107,24 @@ def valid_utf8_prefix(data: bytes, size: int) -> bytes:
     return prefix + b" " * (size - len(prefix))
 
 
+def normalize_generated_release_evidence(document: bytes) -> bytes:
+    """Remove generated release values from benchmark documentation input."""
+    start = document.find(RELEASE_EVIDENCE_START)
+    if start < 0 or document.find(RELEASE_EVIDENCE_START, start + 1) >= 0:
+        raise ValueError("README must contain exactly one release-evidence start marker")
+    end = document.find(RELEASE_EVIDENCE_END, start + len(RELEASE_EVIDENCE_START))
+    if end < 0 or document.find(RELEASE_EVIDENCE_END, end + 1) >= 0:
+        raise ValueError("README must contain exactly one release-evidence end marker")
+    end += len(RELEASE_EVIDENCE_END)
+    if end < len(document) and document[end:end + 1] == b"\n":
+        end += 1
+    return document[:start] + RELEASE_EVIDENCE_PLACEHOLDER + document[end:]
+
+
 def benchmark_corpora() -> dict[str, bytes]:
     official = (ROOT / "tests/spec/commonmark-0.31.2/spec.txt").read_bytes()
-    docs = (ROOT / "README.md").read_bytes() + (ROOT / "docs/api.md").read_bytes()
+    readme = normalize_generated_release_evidence((ROOT / "README.md").read_bytes())
+    docs = readme + (ROOT / "docs/api.md").read_bytes()
     code = b"```cj\n" + (b"let parsed = Markdown.parse(\"# heading\")\n" * 8192) + b"```\n"
     table = (b"| name | value | note |\n| :--- | ---: | :---: |\n| row | 42 | ok |\n" * 4096)
     references = (b"[label]: https://example.com/path \"title\"\n\nUse [label] repeatedly.\n\n" * 4096)
