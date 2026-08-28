@@ -111,6 +111,17 @@ public class AstArenaTests {
     }
 
     @TestCase
+    public func preservesCompactSpanBoundaryAndRejectsOverflow(): Unit {
+        let builder = AstArenaBuilder()
+        let boundary = builder.append(NodeKind.Text, NodeCategory.Inline,
+            Some(SourceSpan(AST_SOURCE_OFFSET_MAX - 1, AST_SOURCE_OFFSET_MAX)), NodeOriginKind.Parsed, [])
+        @Expect(builder.recordAt(boundary).span,
+            Some(SourceSpan(AST_SOURCE_OFFSET_MAX - 1, AST_SOURCE_OFFSET_MAX)))
+        @ExpectThrows[LimitExceededException](builder.append(NodeKind.Text, NodeCategory.Inline,
+            Some(SourceSpan(AST_SOURCE_OFFSET_MAX, AST_SOURCE_OFFSET_MAX + 1)), NodeOriginKind.Parsed, []))
+    }
+
+    @TestCase
     public func rollbackDiscardsSpeculationAcrossChunkBoundaries(): Unit {
         let builder = AstArenaBuilder()
         let retained = builder.append(NodeKind.Text, NodeCategory.Inline, Some(SourceSpan(0, 1)), NodeOriginKind.Parsed,

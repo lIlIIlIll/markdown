@@ -7,6 +7,7 @@ import std.sync.AtomicInt64
 // to the storage implementation instead of being parser tuning knobs.
 internal let AST_NODE_CHUNK_SIZE: Int64 = 4096
 internal let AST_CHILD_CHUNK_SIZE: Int64 = 16384
+internal let AST_SOURCE_OFFSET_MAX: Int64 = 4294967294
 private let NEXT_ARENA_DOCUMENT_ID = AtomicInt64(1)
 private let ARENA_PAYLOAD_EMPTY: Int64 = -1
 private let ARENA_PAYLOAD_TABLE_ROW_BODY: Int64 = -2
@@ -17,6 +18,107 @@ private let ARENA_PAYLOAD_TABLE_CELL_CENTER: Int64 = -6
 private let ARENA_PAYLOAD_TABLE_CELL_RIGHT: Int64 = -7
 private let ARENA_PAYLOAD_LIST_ITEM_PLAIN: Int64 = -8
 private let ARENA_PAYLOAD_TEXT_SOURCE: Int64 = -9
+private let ARENA_PAYLOAD_HEADING_1: Int64 = -10
+private let ARENA_PAYLOAD_HEADING_2: Int64 = -11
+private let ARENA_PAYLOAD_HEADING_3: Int64 = -12
+private let ARENA_PAYLOAD_HEADING_4: Int64 = -13
+private let ARENA_PAYLOAD_HEADING_5: Int64 = -14
+private let ARENA_PAYLOAD_HEADING_6: Int64 = -15
+private let ARENA_PAYLOAD_THEMATIC_DASH: Int64 = -16
+private let ARENA_PAYLOAD_THEMATIC_STAR: Int64 = -17
+private let ARENA_PAYLOAD_THEMATIC_UNDERSCORE: Int64 = -18
+private let ARENA_PAYLOAD_HARD_BREAK_BACKSLASH: Int64 = -19
+private let ARENA_PAYLOAD_HARD_BREAK_SPACES: Int64 = -20
+private let ARENA_PAYLOAD_BULLET_LIST_LOOSE: Int64 = -21
+private let ARENA_PAYLOAD_BULLET_LIST_TIGHT: Int64 = -22
+private let ARENA_PAYLOAD_ORDERED_ZERO_PERIOD_LOOSE: Int64 = -23
+private let ARENA_PAYLOAD_ORDERED_ZERO_PERIOD_TIGHT: Int64 = -24
+private let ARENA_PAYLOAD_ORDERED_ZERO_PAREN_LOOSE: Int64 = -25
+private let ARENA_PAYLOAD_ORDERED_ZERO_PAREN_TIGHT: Int64 = -26
+private let ARENA_PAYLOAD_ORDERED_ONE_PERIOD_LOOSE: Int64 = -27
+private let ARENA_PAYLOAD_ORDERED_ONE_PERIOD_TIGHT: Int64 = -28
+private let ARENA_PAYLOAD_ORDERED_ONE_PAREN_LOOSE: Int64 = -29
+private let ARENA_PAYLOAD_ORDERED_ONE_PAREN_TIGHT: Int64 = -30
+private let ARENA_PAYLOAD_INLINE_MIN: Int64 = ARENA_PAYLOAD_ORDERED_ONE_PAREN_TIGHT
+private let COMPACT_ARENA_INDEX_MAX: Int64 = 4294967295
+private let COMPACT_ORIGIN_METADATA_MAX: Int64 = 16777214
+
+private func compactArenaIndex(value: Int64, field: String): UInt32 {
+    if (value < 0 || value > COMPACT_ARENA_INDEX_MAX) {
+        throw IllegalArgumentException("arena ${field} exceeds compact index range")
+    }
+    UInt32(value)
+}
+
+private func compactSourceOffset(value: Int64, field: String): UInt32 {
+    if (value < 0 || value > AST_SOURCE_OFFSET_MAX) {
+        throw LimitExceededException("input_bytes", AST_SOURCE_OFFSET_MAX, value, field)
+    }
+    UInt32(value)
+}
+
+private func compactPayloadIndex(value: Int64): UInt32 {
+    compactArenaIndex(value - ARENA_PAYLOAD_INLINE_MIN, "payload index")
+}
+
+private func nodeKindTag(kind: NodeKind): Int64 {
+    match (kind) {
+        case NodeKind.Document => 0
+        case NodeKind.BlockQuote => 1
+        case NodeKind.List => 2
+        case NodeKind.ListItem => 3
+        case NodeKind.Paragraph => 4
+        case NodeKind.Heading => 5
+        case NodeKind.ThematicBreak => 6
+        case NodeKind.CodeBlock => 7
+        case NodeKind.HtmlBlock => 8
+        case NodeKind.Table => 9
+        case NodeKind.TableRow => 10
+        case NodeKind.TableCell => 11
+        case NodeKind.CustomBlock => 12
+        case NodeKind.Text => 13
+        case NodeKind.SoftBreak => 14
+        case NodeKind.HardBreak => 15
+        case NodeKind.CodeSpan => 16
+        case NodeKind.Emphasis => 17
+        case NodeKind.Strong => 18
+        case NodeKind.Strikethrough => 19
+        case NodeKind.Link => 20
+        case NodeKind.Image => 21
+        case NodeKind.HtmlInline => 22
+        case NodeKind.CustomInline => 23
+    }
+}
+
+private func nodeKindFromTag(tag: Int64): NodeKind {
+    match (tag) {
+        case 0 => NodeKind.Document
+        case 1 => NodeKind.BlockQuote
+        case 2 => NodeKind.List
+        case 3 => NodeKind.ListItem
+        case 4 => NodeKind.Paragraph
+        case 5 => NodeKind.Heading
+        case 6 => NodeKind.ThematicBreak
+        case 7 => NodeKind.CodeBlock
+        case 8 => NodeKind.HtmlBlock
+        case 9 => NodeKind.Table
+        case 10 => NodeKind.TableRow
+        case 11 => NodeKind.TableCell
+        case 12 => NodeKind.CustomBlock
+        case 13 => NodeKind.Text
+        case 14 => NodeKind.SoftBreak
+        case 15 => NodeKind.HardBreak
+        case 16 => NodeKind.CodeSpan
+        case 17 => NodeKind.Emphasis
+        case 18 => NodeKind.Strong
+        case 19 => NodeKind.Strikethrough
+        case 20 => NodeKind.Link
+        case 21 => NodeKind.Image
+        case 22 => NodeKind.HtmlInline
+        case 23 => NodeKind.CustomInline
+        case _ => throw IllegalStateException("unknown arena node kind tag")
+    }
+}
 
 private func originKindTag(kind: NodeOriginKind): Int64 {
     match (kind) {
@@ -30,6 +132,7 @@ private func originKindTag(kind: NodeOriginKind): Int64 {
 
 private func originKindFromTag(tag: Int64): NodeOriginKind {
     match (tag) {
+        case 0 => NodeOriginKind.Parsed
         case 1 => NodeOriginKind.ExtensionGenerated
         case 2 => NodeOriginKind.Transformed
         case 3 => NodeOriginKind.Synthetic
@@ -38,45 +141,76 @@ private func originKindFromTag(tag: Int64): NodeOriginKind {
     }
 }
 
+private func compactNodeIdentity(kind: NodeKind, originKind: NodeOriginKind, originMetadataIndex: Int64): UInt32 {
+    let metadataTag = if (let NodeOriginKind.Parsed <- originKind) {
+        0
+    } else {
+        if (originMetadataIndex < 0 || originMetadataIndex > COMPACT_ORIGIN_METADATA_MAX) {
+            throw LimitExceededException("ast_nodes", COMPACT_ORIGIN_METADATA_MAX + 1, originMetadataIndex + 1,
+                "origin_metadata")
+        }
+        originMetadataIndex + 1
+    }
+    UInt32((metadataTag << 8) | (originKindTag(originKind) << 5) | nodeKindTag(kind))
+}
+
 /** Compact semantic header stored in the node arena. Kind-specific payloads
  * are stored separately so traversing the tree does not trace payload objects.
  */
 public struct ArenaNodeRecord {
-    public let kind: NodeKind
-    private let spanStartByte: Int64
-    private let spanEndByte: Int64
-    private let originDescriptor: Int64
-    public let firstChild: Int64
-    public let childCount: Int64
-    public let payloadIndex: Int64
+    private let identityDescriptorValue: UInt32
+    private let spanStartByteValue: UInt32
+    private let spanEndByteValue: UInt32
+    private let firstChildValue: UInt32
+    private let childCountValue: UInt32
+    private let payloadIndexValue: UInt32
 
     internal init(kind: NodeKind, span: ?SourceSpan, originKind: NodeOriginKind, originMetadataIndex: Int64,
         firstChild: Int64, childCount: Int64, payloadIndex: Int64) {
-        this.kind = kind
+        identityDescriptorValue = compactNodeIdentity(kind, originKind, originMetadataIndex)
         match (span) {
             case Some(value) =>
-                spanStartByte = value.startByte
-                spanEndByte = value.endByte
+                spanStartByteValue = compactSourceOffset(value.startByte, "ast_span_start")
+                spanEndByteValue = compactSourceOffset(value.endByte, "ast_span_end")
             case None =>
-                spanStartByte = -1
-                spanEndByte = -1
+                spanStartByteValue = UInt32.Max
+                spanEndByteValue = UInt32.Max
         }
-        originDescriptor = if (let NodeOriginKind.Parsed <- originKind) {
-            -1
-        } else {
-            originMetadataIndex * 8 + originKindTag(originKind)
+        firstChildValue = compactArenaIndex(firstChild, "first child")
+        childCountValue = compactArenaIndex(childCount, "child count")
+        payloadIndexValue = compactPayloadIndex(payloadIndex)
+    }
+
+    public prop firstChild: Int64 {
+        get() {
+            Int64(firstChildValue)
         }
-        this.firstChild = firstChild
-        this.childCount = childCount
-        this.payloadIndex = payloadIndex
+    }
+
+    public prop kind: NodeKind {
+        get() {
+            nodeKindFromTag(Int64(identityDescriptorValue & 0x1Fu32))
+        }
+    }
+
+    public prop childCount: Int64 {
+        get() {
+            Int64(childCountValue)
+        }
+    }
+
+    public prop payloadIndex: Int64 {
+        get() {
+            Int64(payloadIndexValue) + ARENA_PAYLOAD_INLINE_MIN
+        }
     }
 
     public prop span: ?SourceSpan {
         get() {
-            if (spanStartByte < 0) {
+            if (spanStartByteValue == UInt32.Max) {
                 None
             } else {
-                Some(SourceSpan(spanStartByte, spanEndByte))
+                Some(SourceSpan(Int64(spanStartByteValue), Int64(spanEndByteValue)))
             }
         }
     }
@@ -95,20 +229,16 @@ public struct ArenaNodeRecord {
 
     public prop originKind: NodeOriginKind {
         get() {
-            if (originDescriptor < 0) {
-                NodeOriginKind.Parsed
-            } else {
-                originKindFromTag(originDescriptor % 8)
-            }
+            originKindFromTag(Int64((identityDescriptorValue >> 5) & 0x7u32))
         }
     }
 
     public prop originMetadataIndex: Int64 {
         get() {
-            if (originDescriptor < 0) {
+            if (let NodeOriginKind.Parsed <- originKind) {
                 -1
             } else {
-                originDescriptor / 8
+                Int64(identityDescriptorValue >> 8) - 1
             }
         }
     }
@@ -147,6 +277,27 @@ private func inlineArenaPayload(encoded: Int64): ArenaNodePayload {
         case -7 => ArenaNodePayload.TableCellValue(TableAlignment.Right)
         case -8 => ArenaNodePayload.ListItemValue(TaskState.NotTask, noMarkerSpan)
         case -9 => ArenaNodePayload.TextSourceValue
+        case -10 => ArenaNodePayload.HeadingValue(1)
+        case -11 => ArenaNodePayload.HeadingValue(2)
+        case -12 => ArenaNodePayload.HeadingValue(3)
+        case -13 => ArenaNodePayload.HeadingValue(4)
+        case -14 => ArenaNodePayload.HeadingValue(5)
+        case -15 => ArenaNodePayload.HeadingValue(6)
+        case -16 => ArenaNodePayload.ThematicBreakValue(b'-')
+        case -17 => ArenaNodePayload.ThematicBreakValue(b'*')
+        case -18 => ArenaNodePayload.ThematicBreakValue(b'_')
+        case -19 => ArenaNodePayload.HardBreakValue(HardBreakKind.Backslash)
+        case -20 => ArenaNodePayload.HardBreakValue(HardBreakKind.Spaces)
+        case -21 => ArenaNodePayload.ListValue(ListKind.Bullet, 0, ListDelimiter.None, false)
+        case -22 => ArenaNodePayload.ListValue(ListKind.Bullet, 0, ListDelimiter.None, true)
+        case -23 => ArenaNodePayload.ListValue(ListKind.Ordered, 0, ListDelimiter.Period, false)
+        case -24 => ArenaNodePayload.ListValue(ListKind.Ordered, 0, ListDelimiter.Period, true)
+        case -25 => ArenaNodePayload.ListValue(ListKind.Ordered, 0, ListDelimiter.Parenthesis, false)
+        case -26 => ArenaNodePayload.ListValue(ListKind.Ordered, 0, ListDelimiter.Parenthesis, true)
+        case -27 => ArenaNodePayload.ListValue(ListKind.Ordered, 1, ListDelimiter.Period, false)
+        case -28 => ArenaNodePayload.ListValue(ListKind.Ordered, 1, ListDelimiter.Period, true)
+        case -29 => ArenaNodePayload.ListValue(ListKind.Ordered, 1, ListDelimiter.Parenthesis, false)
+        case -30 => ArenaNodePayload.ListValue(ListKind.Ordered, 1, ListDelimiter.Parenthesis, true)
         case _ => throw IllegalStateException("unknown inline arena payload encoding")
     }
 }
@@ -163,9 +314,9 @@ internal class ArenaNodeChunk {
 }
 
 internal class ArenaChildChunk {
-    let nodeIndexes: Array<Int64>
+    let nodeIndexes: Array<UInt32>
 
-    init(nodeIndexes: Array<Int64>) {
+    init(nodeIndexes: Array<UInt32>) {
         if (nodeIndexes.size > AST_CHILD_CHUNK_SIZE) {
             throw IllegalArgumentException("child arena chunk exceeds 16384 entries")
         }
@@ -396,7 +547,7 @@ public class Document {
         if (index < 0 || index >= physicalChildCount) {
             throw IndexOutOfBoundsException("child arena index is outside the snapshot")
         }
-        childChunks[index / AST_CHILD_CHUNK_SIZE].nodeIndexes[index % AST_CHILD_CHUNK_SIZE]
+        Int64(childChunks[index / AST_CHILD_CHUNK_SIZE].nodeIndexes[index % AST_CHILD_CHUNK_SIZE])
     }
 }
 
@@ -911,7 +1062,7 @@ internal class AstArenaBuilder {
     private let nodeTailCapacity: Int64
     private let childTailCapacity: Int64
     private var nodeTail: ArrayList<ArenaNodeRecord>
-    private var childTail: ArrayList<Int64>
+    private var childTail: ArrayList<UInt32>
     private let payloads: ArrayList<ArenaNodePayload>
     private let originMetadata: ArrayList<NodeOrigin>
     private let parentIndexes: ArrayList<Int64>
@@ -937,7 +1088,7 @@ internal class AstArenaBuilder {
         frozenNodeChunks = ArrayList<ArenaNodeChunk>()
         frozenChildChunks = ArrayList<ArenaChildChunk>()
         nodeTail = ArrayList<ArenaNodeRecord>(nodeTailCapacity)
-        childTail = ArrayList<Int64>(childTailCapacity)
+        childTail = ArrayList<UInt32>(childTailCapacity)
         payloads = ArrayList<ArenaNodePayload>()
         originMetadata = ArrayList<NodeOrigin>()
         parentIndexes = ArrayList<Int64>()
@@ -965,7 +1116,7 @@ internal class AstArenaBuilder {
         frozenNodeChunks = ArrayList<ArenaNodeChunk>()
         frozenChildChunks = ArrayList<ArenaChildChunk>()
         nodeTail = ArrayList<ArenaNodeRecord>(nodeTailCapacity)
-        childTail = ArrayList<Int64>(childTailCapacity)
+        childTail = ArrayList<UInt32>(childTailCapacity)
         payloads = ArrayList<ArenaNodePayload>()
         payloads.add(all: base.payloadArray())
         originMetadata = ArrayList<NodeOrigin>()
@@ -1218,12 +1369,12 @@ internal class AstArenaBuilder {
                 index++
             }
         }
-        let retainedChildren = ArrayList<Int64>()
+        let retainedChildren = ArrayList<UInt32>()
         let retainedChildStart = (checkpoint.childCount / AST_CHILD_CHUNK_SIZE) * AST_CHILD_CHUNK_SIZE
         if (checkpoint.childCount % AST_CHILD_CHUNK_SIZE != 0) {
             var index = retainedChildStart
             while (index < checkpoint.childCount) {
-                retainedChildren.add(childIndexAt(index))
+                retainedChildren.add(compactArenaIndex(childIndexAt(index), "child index"))
                 index++
             }
         }
@@ -1265,12 +1416,13 @@ internal class AstArenaBuilder {
                 var offset: Int64 = 0
                 while (offset < record.childCount) {
                     let childOffset = record.firstChild + offset
-                    let child = if (childOffset < retainedChildStart || checkpoint.childCount % AST_CHILD_CHUNK_SIZE == 0) {
+                    let child = Int64(if (childOffset < retainedChildStart ||
+                        checkpoint.childCount % AST_CHILD_CHUNK_SIZE == 0) {
                         frozenChildChunks[childOffset / AST_CHILD_CHUNK_SIZE].nodeIndexes[childOffset %
                                 AST_CHILD_CHUNK_SIZE]
                     } else {
                         retainedChildren[childOffset - retainedChildStart]
-                    }
+                    })
                     parentIndexes[child] = parent
                     offset++
                 }
@@ -1400,9 +1552,9 @@ internal class AstArenaBuilder {
         }
         let frozenCount = frozenChildChunks.size * AST_CHILD_CHUNK_SIZE
         if (index < frozenCount) {
-            return frozenChildChunks[index / AST_CHILD_CHUNK_SIZE].nodeIndexes[index % AST_CHILD_CHUNK_SIZE]
+            return Int64(frozenChildChunks[index / AST_CHILD_CHUNK_SIZE].nodeIndexes[index % AST_CHILD_CHUNK_SIZE])
         }
-        childTail[index - frozenCount]
+        Int64(childTail[index - frozenCount])
     }
 
     internal func payloadAt(index: Int64): ArenaNodePayload {
@@ -1421,7 +1573,7 @@ internal class AstArenaBuilder {
     }
 
     private func appendChild(index: Int64): Unit {
-        childTail.add(index)
+        childTail.add(compactArenaIndex(index, "child index"))
         childCountValue++
         if (childTail.size == AST_CHILD_CHUNK_SIZE) {
             freezeChildTail()
@@ -1451,7 +1603,7 @@ internal class AstArenaBuilder {
                 childTail.toArray()
             }
             frozenChildChunks.add(ArenaChildChunk(indexes))
-            childTail = ArrayList<Int64>(childTailCapacity)
+            childTail = ArrayList<UInt32>(childTailCapacity)
         }
     }
 
@@ -1471,6 +1623,27 @@ internal class AstArenaBuilder {
     private func storePayload(payload: ArenaNodePayload): Int64 {
         match (payload) {
             case ArenaNodePayload.Empty => ARENA_PAYLOAD_EMPTY
+            case ArenaNodePayload.HeadingValue(level) => match (level) {
+                case 1 => ARENA_PAYLOAD_HEADING_1
+                case 2 => ARENA_PAYLOAD_HEADING_2
+                case 3 => ARENA_PAYLOAD_HEADING_3
+                case 4 => ARENA_PAYLOAD_HEADING_4
+                case 5 => ARENA_PAYLOAD_HEADING_5
+                case 6 => ARENA_PAYLOAD_HEADING_6
+                case _ => storeSidePayload(payload)
+            }
+            case ArenaNodePayload.ThematicBreakValue(marker) => match (marker) {
+                case b'-' => ARENA_PAYLOAD_THEMATIC_DASH
+                case b'*' => ARENA_PAYLOAD_THEMATIC_STAR
+                case b'_' => ARENA_PAYLOAD_THEMATIC_UNDERSCORE
+                case _ => storeSidePayload(payload)
+            }
+            case ArenaNodePayload.HardBreakValue(syntaxKind) => match (syntaxKind) {
+                case HardBreakKind.Backslash => ARENA_PAYLOAD_HARD_BREAK_BACKSLASH
+                case HardBreakKind.Spaces => ARENA_PAYLOAD_HARD_BREAK_SPACES
+            }
+            case ArenaNodePayload.ListValue(kind, start, delimiter, tight) => inlineListPayload(kind, start, delimiter,
+                tight, payload)
             case ArenaNodePayload.TableRowValue(header) =>
                 if (header) {
                     ARENA_PAYLOAD_TABLE_ROW_HEADER
@@ -1501,6 +1674,62 @@ internal class AstArenaBuilder {
         let index = payloads.size
         payloads.add(payload)
         index
+    }
+
+    private func inlineListPayload(kind: ListKind, start: Int64, delimiter: ListDelimiter, tight: Bool,
+        payload: ArenaNodePayload): Int64 {
+        match (kind) {
+            case ListKind.Bullet =>
+                if (start == 0) {
+                    match (delimiter) {
+                        case ListDelimiter.None =>
+                            if (tight) {
+                                ARENA_PAYLOAD_BULLET_LIST_TIGHT
+                            } else {
+                                ARENA_PAYLOAD_BULLET_LIST_LOOSE
+                            }
+                        case _ => storeSidePayload(payload)
+                    }
+                } else {
+                    storeSidePayload(payload)
+                }
+            case ListKind.Ordered =>
+                if (start == 0) {
+                    match (delimiter) {
+                        case ListDelimiter.Period =>
+                            if (tight) {
+                                ARENA_PAYLOAD_ORDERED_ZERO_PERIOD_TIGHT
+                            } else {
+                                ARENA_PAYLOAD_ORDERED_ZERO_PERIOD_LOOSE
+                            }
+                        case ListDelimiter.Parenthesis =>
+                            if (tight) {
+                                ARENA_PAYLOAD_ORDERED_ZERO_PAREN_TIGHT
+                            } else {
+                                ARENA_PAYLOAD_ORDERED_ZERO_PAREN_LOOSE
+                            }
+                        case ListDelimiter.None => storeSidePayload(payload)
+                    }
+                } else if (start == 1) {
+                    match (delimiter) {
+                        case ListDelimiter.Period =>
+                            if (tight) {
+                                ARENA_PAYLOAD_ORDERED_ONE_PERIOD_TIGHT
+                            } else {
+                                ARENA_PAYLOAD_ORDERED_ONE_PERIOD_LOOSE
+                            }
+                        case ListDelimiter.Parenthesis =>
+                            if (tight) {
+                                ARENA_PAYLOAD_ORDERED_ONE_PAREN_TIGHT
+                            } else {
+                                ARENA_PAYLOAD_ORDERED_ONE_PAREN_LOOSE
+                            }
+                        case ListDelimiter.None => storeSidePayload(payload)
+                    }
+                } else {
+                    storeSidePayload(payload)
+                }
+        }
     }
 
     private func replacementOriginMetadataIndex(previous: ArenaNodeRecord, originKind: NodeOriginKind,
