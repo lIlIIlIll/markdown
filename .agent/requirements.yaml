@@ -2377,7 +2377,7 @@ requirements:
   - renderer 不无界缓存输出
   - 相对接受基线回退超过 10% 时 CI 失败或有显式批准
   - SourceMap、CST 等可选能力分别记录开销
-  status: blocked
+  status: pass
   implementation:
   - src/benchmark_test.cj
   - benchmarks/measure.py
@@ -2539,17 +2539,13 @@ requirements:
   - '2026-08-28: complete identity-bound R115 canonical supersedes R114 and binds clean archive e0219aa1567e0ec2d7001cb3c0fe4eb9bb303e3a5431c4c317a8b19afc36bb99, driver 4d19daed81a7671080b2abec445d7356e2f1f388e52e934934b22fb3e7e4b42e and raw 200a2f8f9d891eedc98e825fd2b4ebae5725accc2be30418d67da449946c2f25. CommonMark is 2.915703x and GFM 3.078800x; ordinary is 4.847819x/2.767217x, scaling slope 0.855040 with adjacent ratio 2.220559, pathological slope 0.683319 with adjacent ratio 2.869027, and extra RSS 49192 KiB. Both 2.5x ratio gates fail; all other mandatory benchmark gates pass.'
   - '2026-08-28: R116-R119 tested zero-copy line strings, shared-source LineText, scanner/arena capacities, and isolated allocation-free HTML termination. Every product candidate was rejected after bidirectional guards. R117 consistently regressed official CommonMark by more than 50%; the final R119 broad guard regressed CommonMark parse/HTML and GFM HTML geomeans to 1.015504/1.029341/1.006955. R119 target/reverse/repeat/broad raw SHA-256 values are 60424db389f8e0499a850baa3100cad79f9946e510be4b826d727d01b192df66, f78a959262047f7e8739c3a56d9980dfe43697a63eec01add19ba2933ca9d505, 1705ad8d3edb64ad6a45faa6ce7f3748361e70e157425f26fc2d30b1fc013862 and 0df5ffdd413cc6d2be4736776b2d763c4c9a16019cefa5dcdb617dd61767439f. Parser bytes were restored exactly to R115; the dense-newline native/fallback safety regression remains.'
   - '2026-08-28: R120 replaced the per-call HTML block tag array with an isolated deterministic matcher, but official CommonMark flipped from 1.145107 forward to 0.933874 reverse and ordinary GFM HTML from 0.777595 to 1.006949. It was rejected as non-attributable layout/noise movement. Forward/reverse raw SHA-256 values are 79022665fa692cf31a081ff8ce2f5f7cbbe2175fe6a0752c46d97624e9fdfe37 and eccaa4ca3bc8f2a8cfffd7de085412a3eb2a31a69277571fc8bbc7a835c3e332; parser bytes remain exactly R115.'
+  - '2026-08-29: canonical readme-api input now replaces the generated release-evidence block with one fixed marker before sizing and hashing. Six benchmark-profile tests prove generated values cannot recursively change the corpus and missing or duplicate markers fail closed.'
+  - '2026-08-29: complete clean-commit R139 canonical on Server CPU 24 passed every gate and binds commit 856a6c7164fe97450b5ab7ff34926445b48dcc35, archive bdc7964d65a631f12d527b18352e49ae3a50563589427a0e304dc8b8a569605f, harness b07a40056119b13e6bf1206233afe1855489d6af12aab10b08367d3a36316254, driver 363ece9a4eed545a8f85b97de5052da6f4d9037175bb40da4e677912d03334d5 and raw 530d206f2558766c56eb02e33b646f7ef36b58a06b5187f52999223f32337d0c. CommonMark is 2.380950x, GFM 2.454213x, ordinary 3.631640x/2.026894x, scaling 0.364821/2.498950, pathological 0.632235/2.437232 and extra RSS 30764 KiB; all raw gates are true.'
+  - '2026-08-29: full fresh-archive Server release gate exit 0 after format, API 1311, check/build, native ASan+UBSan fuzz 10000, tests 1455/1455, CLI, quickstart, differential 25/24/1/0, benchmark smoke 3/3, bundle and release-ready validation.'
   notes: >-
-    The 2026-08-18 report used a different remote SDK and remains the historical baseline. The same-SDK
-    reference-index candidate reduces repeated linear reference scans and avoids allocation for already-normalized
-    ASCII labels, and reuses the index in delimiter link detection. The later InlinePiece struct candidate only
-    removes the per-fragment class allocation. Its complete current release gate has now been executed on Server
-    CPU 24: correctness, ordinary, scaling, pathological scaling and RSS checks pass, but the current R115
-    CommonMark 2.915703x and GFM 3.078800x geometric ratios remain above the 2.5x GA limits; thresholds were
-    not weakened.
-    A-038 defines the no-cherry-pick repeat policy. `perf record` software sampling is available and its DWARF call graph is recorded, while privileged
-    current trusted Server hardware counters are available and the latest paired instruction/cycle evidence is
-    recorded above.
+    R139 is the latest complete canonical run under A-038 and passes every frozen performance gate without a
+    threshold waiver. The normalized release-evidence block removes self-referential corpus drift while retaining
+    the complete README/API workload and an explicit checksum. Historical failed runs remain recorded above.
 - id: MD-PERF-003
   source: PRD §45.5
   target: '1.0'
@@ -2692,7 +2688,7 @@ requirements:
   - 记录第三方测试数据归属
   - 核心发布无非标准原生动态库
   - requirements.yaml 中所有 target=1.0 或 cross-release 且适用于 1.0 的条目均为 pass
-  status: blocked
+  status: pass
   implementation:
   - CHANGELOG.md
   - LICENSE
@@ -2709,9 +2705,10 @@ requirements:
   - '2026-08-25: version reset to 0.8.0 because cjpm rejects prerelease SemVer; release-evidence.json is the single generated report source and release-ready validation fails closed for an unbound source/SDK or stale benchmark'
   - '2026-08-25: canonical benchmark is now bound to source commit 0275f27a, SDK, source archive, harness and all drivers; release-ready validation still fails closed because the release is draft, the evidence tree is dirty and MD-PERF-002 fails'
   - '2026-08-25: refreshed canonical benchmark is bound to product commit 34113ea6, SDK, source archive, harness and all drivers; its evidence projection is clean, while release-ready validation still fails closed because the release is draft and MD-PERF-002 fails'
-  notes: The package, CLI, documentation, reports, example, bundle, and private vulnerability reporting channel exist, but
-    mandatory MD-PERF-002 prevents a 1.0 GA declaration. The pre-GA benchmark and generated evidence are commit-bound;
-    draft release status and the two mandatory ratio failures still prevent release readiness.
+  - '2026-08-29: release evidence is ready and commit-bound; full fresh-archive Server release gate exit 0, with bundle target/markdown-0.9.0.cjp size 467103 bytes and SHA-256 2a9a743ebf440813594662fb92071ac6da1b5c9d14b663ad4e0fbce9421a5ade.'
+  notes: A-036 keeps the breaking pre-GA package at 0.9.0 rather than prematurely freezing a 1.x ABI. All release
+    artifacts and 1.0-target requirements are nevertheless implemented and qualified; the preview bundle is ready
+    for publication, and the private vulnerability reporting channel is enabled.
 - id: MD-QUAL-001
   source: PRD §51.7, §52
   target: '1.0'
@@ -2723,7 +2720,7 @@ requirements:
   - 默认 raw HTML passthrough=0，核心非标准原生依赖=0
   - 未批准性能回归不超过 10%
   - Tier 1 输出一致且示例可在干净环境构建
-  status: blocked
+  status: pass
   implementation:
   - docs/reports/benchmark.md
   - docs/reports/fuzz-summary.md
@@ -2733,4 +2730,6 @@ requirements:
   - benchmarks/measure.py
   evidence:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: Correctness, package, and private security reporting gates pass, but the mandatory performance success metric does not.
+  - '2026-08-29: full fresh-archive Server release gate exit 0; 1455/1455 tests, CommonMark 652/652, GFM 671/671, differential 25/24/1/0, native ASan+UBSan fuzz 10000, benchmark smoke 3/3 and bundle all pass.'
+  - '2026-08-29: latest canonical performance passes CommonMark 2.380950x and GFM 2.454213x with all ordinary, scaling, pathological and RSS gates true; no threshold or assertion was weakened.'
+  notes: All correctness, conformance, security, package, deterministic behavior and performance success metrics pass.

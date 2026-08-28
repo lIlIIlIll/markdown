@@ -268,14 +268,14 @@ flowchart TD
 <!-- release-evidence:start -->
 | Release evidence | Value |
 | --- | --- |
-| Version / status | `0.9.0` / `draft` |
-| Source commit | `UNCOMMITTED-R137` |
-| CommonMark / cmark | `2.27x` / limit `2.5x` |
-| GFM HTML / cmark-gfm | `2.43x` / limit `2.5x` |
-| Benchmark identity | `current`; commit `UNCOMMITTED-R137`; SDK `1.1.0-alpha.20260803040049` |
+| Version / status | `0.9.0` / `ready` |
+| Source commit | `856a6c7164fe97450b5ab7ff34926445b48dcc35` |
+| CommonMark / cmark | `2.38x` / limit `2.5x` |
+| GFM HTML / cmark-gfm | `2.45x` / limit `2.5x` |
+| Benchmark identity | `current`; commit `856a6c7164fe97450b5ab7ff34926445b48dcc35`; SDK `1.1.0-alpha.20260803040049` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
-The source identity or evidence tree is not yet release-bound. The release remains fail-closed until its status is ready and every mandatory gate passes.
+The benchmark and source identities are commit-bound and the evidence tree is clean. The preview release evidence is ready and every mandatory gate passes.
 <!-- release-evidence:end -->
 
 历史测量仅保留在[性能说明](docs/performance.md)中，不再作为“当前值”。发布报告、README 和验收报告中的 canonical 数字都来自同一个 `release-evidence.json`；当前状态以自动生成表为准。canonical raw 绑定 source commit、精确源码归档、SDK、语料 checksum、benchmark harness 和 driver identity。测量 `readme-api` 语料时会规范化移除自动生成的 release-evidence 区块，避免结果写回改变下一轮输入。

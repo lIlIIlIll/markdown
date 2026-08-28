@@ -2,19 +2,21 @@
 
 ## Final Status
 
-**INCOMPLETE** — 125 项需求中 122 项为 `pass`，0 项 pending、0 项 implemented_unverified、3 项 blocked；Resolved/RawBlock source event 已闭环，当前仍被两个 canonical 性能比值及其发布依赖阻塞。
+**COMPLETE** — 125 项规范性需求全部为 `pass`；clean-commit canonical 性能、完整 fresh-archive release gate、发布物和证据一致性均已通过。
 
 <!-- release-evidence:start -->
 ## Generated Release Evidence
 
-- Version/status: `0.9.0` / `draft`.
-- Source identity: `UNCOMMITTED-R137`; tree state `dirty`.
+- Version/status: `0.9.0` / `ready`.
+- Source identity: `856a6c7164fe97450b5ab7ff34926445b48dcc35`; tree state `clean`.
 - Tests: `1455/1455` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `2.27x`, GFM `2.43x`, status `current`.
-- Raw digest: `0db8982b98758b98a7bf82c4adb202a51f5b28daab5555689ec92db41bd0722f`.
+- Benchmark: CommonMark `2.38x`, GFM `2.45x`, status `current`.
+- Raw digest: `530d206f2558766c56eb02e33b646f7ef36b58a06b5187f52999223f32337d0c`.
 
-The benchmark source identity or evidence tree is not release-bound. One or more mandatory release-evidence gates remain incomplete.
+The benchmark identity is bound and the evidence tree is clean. All mandatory performance ratios and release-evidence gates pass.
 <!-- release-evidence:end -->
+
+本报告后续按时间保留历史失败与候选淘汰记录；这些历史段落不覆盖上述最终状态和 R139/R140 验收证据。
 
 ## 2026-08-27 Parser Phase Evidence
 
@@ -61,10 +63,10 @@ seal/path/binary identity check.
 
 | 状态 | 数量 |
 | --- | ---: |
-| `pass` | 122 |
+| `pass` | 125 |
 | `implemented_unverified` | 0 |
 | `pending` | 0 |
-| `blocked` | 3 |
+| `blocked` | 0 |
 
 ## Itemized Verdict
 
@@ -186,20 +188,24 @@ seal/path/binary identity check.
 | `MD-TST-004` | PRD §44.5-6, §51.6-7 | `pass` | 2026-08-25: arbitrary-byte fuzz found and guards two UTF-8 boundary crashes; full 1419-test suite passed |
 | `MD-TST-005` | PRD §44.7-9, §51.7 | `pass` | 2026-08-18: API snapshot, pathological corpus, and official extension TCK passed |
 | `MD-PERF-001` | PRD §45.1-3 | `pass` | 2026-08-18: 12-corpus -O2 reference-host matrix recorded raw samples, per-corpus digests, pinned CPU, SDK, reference commits, geometric means, and custom-extension cost |
-| `MD-PERF-002` | PRD §45.4, §51.7, §52 | `blocked` | 2026-08-28 R115 canonical on Server CPU 24: CommonMark 2.916x and GFM 3.079x versus 2.5x limits. Ordinary 4.848x/2.767x, scaling slope 0.855, adjacent 2.221, pathological slope 0.683, pathological adjacent 2.869 and extra RSS 49192 KiB pass; only both ratio gates fail. |
+| `MD-PERF-002` | PRD §45.4, §51.7, §52 | `pass` | R139 clean-commit canonical: CommonMark 2.380950x, GFM 2.454213x, ordinary 3.631640x/2.026894x, scaling 0.364821/2.498950, pathological 0.632235/2.437232 and extra RSS 30764 KiB; all raw gates true. |
 | `MD-PERF-003` | PRD §45.5 | `pass` | 2026-08-18: owned byte input, SourceSlice literals, explicit parser frames, bounded output, ordinary/pathological scaling, and RSS tests passed |
 | `MD-OBS-001` | PRD §46 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DOC-001` | PRD §47, §49, §51.7 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DOC-002` | PRD §47, §49, §51.7 | `pass` | 2026-08-18: examples/quickstart built and ran using only the public package API |
 | `MD-COMP-001` | PRD §48.1-2 | `pass` | The 0.9 API snapshot verifies 1269 declarations; migration and compatibility docs record the arena/value-view reset, scanner valid-prefix adapter and Event 1.1 boundary. |
 | `MD-COMP-002` | PRD §48.3-6 | `pass` | SPI v2, artifact v2 and the final 0.9 AST surface are snapshotted and tested; the removed AST-walk Event facade is explicitly excluded from the stable contract. |
-| `MD-REL-001` | PRD §49, §50 M6, §51 | `blocked` | The package, CLI, documentation, reports, example, bundle, and private reporting channel exist, but mandatory MD-PERF-002 prevents a 1.0 GA declaration. |
-| `MD-QUAL-001` | PRD §51.7, §52 | `blocked` | Correctness, package, and private security reporting gates pass, but the mandatory performance success metric does not. |
+| `MD-REL-001` | PRD §49, §50 M6, §51 | `pass` | R140 fresh-archive release gate exit 0; 0.9.0 preview bundle is 467103 bytes, SHA-256 2a9a743ebf440813594662fb92071ac6da1b5c9d14b663ad4e0fbce9421a5ade. |
+| `MD-QUAL-001` | PRD §51.7, §52 | `pass` | 1455/1455 tests, 652/652 CommonMark, 671/671 GFM, differential 25/24/1/0, native sanitizer fuzz 10000, benchmark smoke 3/3 and every canonical performance gate pass. |
 
 ## Validation Evidence
 
 | Command | Exit | Result |
 | --- | ---: | --- |
+| Server CPU 24 `MARKDOWN_BENCH_* python3 benchmarks/measure.py` on clean commit `856a6c7` | 0 | R139 CommonMark 2.380950x, GFM 2.454213x; every timing, scaling and RSS gate true; raw SHA-256 530d206f...337d0c |
+| Server fresh archive `CC=/usr/bin/clang AR=/usr/bin/ar scripts/release_gate.sh` | 0 | format; API 1311; check/build; native ASan+UBSan fuzz 10000; tests 1455/1455; CLI; quickstart; differential 25/24/1/0; benchmark smoke 3/3; bundle; release-ready; final output `release gate: pass` |
+| `python3 scripts/test_benchmark_input_profiles.py` | 0 | 6/6, including generated-evidence corpus stability and fail-closed marker validation |
+| `python3 scripts/release_evidence.py --release-ready` | 0 | commit, archive, SDK, harness, drivers, raw digest, ratios and generated projections are consistent |
 | `scripts/check_format.sh` | 0 | all Cangjie source matches cjfmt |
 | `cjlint -f src` | 0 | 0 errors; 476 advisory diagnostics |
 | `cjpm check` | 0 | dependency graph valid |
@@ -213,7 +219,7 @@ seal/path/binary identity check.
 | `python3 scripts/test_release_evidence.py` | 0 | 3/3 consistency and fail-closed regressions passed |
 | `python3 scripts/test_benchmark_input_profiles.py` | 0 | String/Array/Owned/Stream modes execute and produce identical parse checksums |
 | `python3 scripts/release_evidence.py` | 0 | README, benchmark report, acceptance projection, raw/corpus/API digests and ratios match the canonical evidence file |
-| `python3 scripts/release_evidence.py --release-ready` | 1 (expected) | correctly rejects draft release status and the failed mandatory benchmark ratios; source and benchmark identities are current and clean |
+| historical `python3 scripts/release_evidence.py --release-ready` | 1 (expected) | pre-R139 draft evidence correctly failed closed; superseded by the passing current row above |
 | `python3 scripts/differential_test.py` | 0 | 25 comparisons: 24 exact, 1 classified, 0 unexpected |
 | `cjpm bench --filter MarkdownReleaseBenchmarks ...` | 0 | 3/3 benchmark smoke cases; socket permission required |
 | remote `python3` wrapper importing `benchmarks/measure.py` on authorized SSH Server (CPU 24) | 1 | 2026-08-19 final candidate: CommonMark 6.137x, GFM 5.459x, ordinary/scaling and RSS gates pass, ratio and pathological slope gates fail; same-SDK paired baseline 6.945x/5.670x |
@@ -222,7 +228,7 @@ seal/path/binary identity check.
 | `MARKDOWN_BENCH_CPU=24 ... python3 benchmarks/measure.py` on authorized SSH Server, per-corpus alternating pairs | 1 | 2026-08-21 current renderer/reference-link candidate: CommonMark 4.329x, GFM 3.276x; slope 0.961, adjacent 2.400, pathological slope 0.866, RSS 59632 KiB pass; only both 2.5x ratio gates fail; raw SHA-256 1a6bc4...c011 |
 | `python3 /tmp/markdown_pair_link_attribute_cache.py baseline-first ...` on Server CPU 24 | 0 | S0 run 1 checksums matched; many-reference GFM 0.97497 and GFM geomean 1.01269 failed 0.95/0.98 stop-go limits; raw SHA-256 8dd1a3...055d |
 | `python3 /tmp/markdown_pair_link_attribute_cache.py candidate-first ...` on Server CPU 24 | 0 | S0 run 2 checksums matched; many-reference GFM 0.97300 and GFM geomean 0.99982 failed 0.95/0.98 stop-go limits; raw SHA-256 1a45f6...d18c |
-| `scripts/release_gate.sh` | 1 | fail-closed at performance after format/API/check/build/1410 tests/CLI/example/differential/benchmark smoke passed |
+| historical 2026-08-18 `scripts/release_gate.sh` | 1 | failed closed at the then-current performance gate; superseded by R140 exit 0 above |
 | `cjpm bundle --skip-test` after the full 1410-test gate | 0 | target/markdown-1.0.0.cjp; 343528 bytes; SHA-256 aab2e233b88b495c0221eb36e673c0d6a19184721b1776620525283098882529 |
 | `cjpm test --no-color --no-progress --report-path /tmp/markdown-p0-final-tests-2 --report-format xml` | 0 | 1413 passed, 0 skipped/error/failed |
 | `cjpm bundle --skip-test` for 0.8.0 | 0 | target/markdown-0.8.0.cjp; 374 KiB; SHA-256 8782dcc16ea5063e70e51ac74efdbc87c33fdd19885beaa63feeebfb67cfd527 |
@@ -235,9 +241,10 @@ seal/path/binary identity check.
 
 ## Release Decision
 
-The package must not be released or described as COMPLETE. The final bundle
-succeeded, and GitHub Private Vulnerability Reporting is enabled, but
-`benchmarks/measure.py` exits 1. No waiver or threshold reduction was applied.
+**COMPLETE.** The 0.9.0 breaking pre-GA preview is release-ready. All 125 ledger
+items pass, the current canonical benchmark and fresh-archive release gate exit
+0, the bundle is reproducible from public package inputs, and GitHub Private
+Vulnerability Reporting is enabled. No waiver or threshold reduction was used.
 
 ## 2026-08-18 Performance Investigation Addendum
 
