@@ -892,9 +892,11 @@ internal class ParserSession {
         } else {
             3
         }
-        // One packed UInt64 per line is bounded, compact, and lets the native
-        // pass stop safely when unusually dense input exceeds the estimate.
-        let capacity = max(16, bytes.size / 8 + 16)
+        // One packed UInt64 per line is bounded and compact. A 16-byte average
+        // covers the standard/profile corpora while halving the GC array that
+        // the old eight-byte estimate had to initialize. Inputs with denser
+        // line breaks safely fall back to the complete Cangjie scanner.
+        let capacity = max(16, bytes.size / 16 + 16)
         let scanResult = match (accelerator.scanLineRecords(bytes, capacity)) {
             case Some(value) => value
             case None => return None
@@ -2612,6 +2614,9 @@ internal class ParserSession {
         if (input.isEmpty()) {
             return []
         }
+        if (let Some(values) <- resolveSingleDelimiterPair(input, text, baseOffset, sourceIdentity)) {
+            return values
+        }
         // A match can add at most one wrapper for each delimiter piece. Fixed
         // parser-owned arrays avoid one heap object plus three traced references
         // per piece while keeping the exact CommonMark matching algorithm.
@@ -2704,6 +2709,102 @@ internal class ParserSession {
             cursor = originalNext
         }
         materializePieceLinks(head, -1, pieces, next, text, baseOffset, sourceIdentity)
+    }
+
+    /** The overwhelmingly common emphasis shape has one opener and one closer.
+     * Resolve that pair without allocating the six indexed-arena arrays needed
+     * by the general CommonMark delimiter-stack algorithm. Runs longer than
+     * two, mixed markers, and rule-of-three cases stay on the general path. */
+    private func resolveSingleDelimiterPair(input: ArrayList<InlinePiece>, text: String, baseOffset: Int64,
+        sourceIdentity: Bool): ?Array<Int64> {
+        var openerIndex: Int64 = -1
+        var closerIndex: Int64 = -1
+        for (index in 0..input.size) {
+            let piece = input[index]
+            if (piece.marker == b'*' || piece.marker == b'_') {
+                if (openerIndex < 0) {
+                    openerIndex = index
+                } else if (closerIndex < 0) {
+                    closerIndex = index
+                } else {
+                    return None
+                }
+            }
+        }
+        if (openerIndex < 0 || closerIndex <= openerIndex) {
+            return None
+        }
+        let opener = input[openerIndex]
+        let closer = input[closerIndex]
+        if (!opener.canOpen || !closer.canClose || opener.marker != closer.marker || opener.length != closer.length || (opener
+            .length != 1 && opener.length != 2)) {
+            return None
+        }
+        let adjacent = openerIndex + 1 == closerIndex
+        let ruleOfThreeBlocks = !adjacent && (opener.canClose || closer.canOpen) && (opener.length + closer.length) % 3 ==
+            0 && (opener.length % 3 != 0 || closer.length % 3 != 0)
+        if (ruleOfThreeBlocks) {
+            return None
+        }
+        budget.consumeDelimiter()
+        let children = ArrayList<Int64>()
+        appendUndelimitedPieceRange(children, input, openerIndex + 1, closerIndex, text, baseOffset, sourceIdentity)
+        let span = mappedSpan(opener.start, closer.start + closer.length)
+        let wrapped = if (opener.length == 2) {
+            nodes.inlineContainer(NodeKind.Strong, children.toArray(), span)
+        } else {
+            nodes.inlineContainer(NodeKind.Emphasis, children.toArray(), span)
+        }
+        let values = ArrayList<Int64>()
+        appendUndelimitedPieceRange(values, input, 0, openerIndex, text, baseOffset, sourceIdentity)
+        values.add(wrapped)
+        appendUndelimitedPieceRange(values, input, closerIndex + 1, input.size, text, baseOffset, sourceIdentity)
+        Some(values.toArray())
+    }
+
+    private func appendUndelimitedPieceRange(out: ArrayList<Int64>, input: ArrayList<InlinePiece>, first: Int64,
+        end: Int64, text: String, baseOffset: Int64, sourceIdentity: Bool): Unit {
+        var index = first
+        while (index < end) {
+            let piece = input[index]
+            if (piece.node >= 0) {
+                out.add(piece.node)
+                index++
+                continue
+            }
+            let runStart = piece.start
+            var runEnd = runStart
+            var decoded: ?StringBuilder = None
+            while (index < end) {
+                let current = input[index]
+                if (current.node >= 0 || current.start != runEnd) {
+                    break
+                }
+                let localStart = current.start - baseOffset
+                let localEnd = localStart + current.length
+                if (current.marker == b'\\' || current.marker == b'&') {
+                    let builder = match (decoded) {
+                        case Some(value) => value
+                        case None =>
+                            let value = StringBuilder()
+                            value.append(text[runStart - baseOffset..localStart])
+                            decoded = Some(value)
+                            value
+                    }
+                    appendDecodedInlinePiece(builder, current, text[localStart..localEnd])
+                } else if (let Some(builder) <- decoded) {
+                    builder.append(text[localStart..localEnd])
+                }
+                runEnd = current.start + current.length
+                index++
+            }
+            match (decoded) {
+                case Some(builder) =>
+                    let raw = text[runStart - baseOffset..runEnd - baseOffset]
+                    out.add(parsedText(raw, builder.toString(), runStart, runEnd))
+                case None => out.add(materializeTextRange(text, baseOffset, runStart, runEnd - runStart, sourceIdentity))
+            }
+        }
     }
 
     private func materializeUndelimitedPieces(input: ArrayList<InlinePiece>, text: String, baseOffset: Int64,

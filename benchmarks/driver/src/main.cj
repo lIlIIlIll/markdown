@@ -4,8 +4,8 @@ import markdown.*
 import markdown.native.NativeLineScanner
 import std.collection.*
 import std.convert.*
-import std.env.*
-import std.io.InputStream
+import std.io.*
+import std.process.Process
 
 private class BenchmarkInputStream <: InputStream {
     private let bytes: Array<Byte>
@@ -29,9 +29,14 @@ private class BenchmarkInputStream <: InputStream {
 }
 
 private func readInputBytes(): Array<Byte> {
-    let input = getStdIn()
-    let bytes = ArrayList<Byte>()
-    let buffer = Array<Byte>(8192, repeat: 0)
+    // ConsoleReader performs formatted character input and reaches libc one
+    // byte at a time on the current SDK. The benchmark protocol consumes a
+    // binary UTF-8 corpus, so use the process InputStream and its bulk read
+    // path; parser work and the bytes delivered to every profile are unchanged.
+    let input = Process.current.stdIn
+    let chunkSize: Int64 = 65536
+    let bytes = ByteBuffer(chunkSize)
+    let buffer = Array<Byte>(chunkSize, repeat: 0)
     while (true) {
         let count = input.read(buffer)
         if (count == 0) {
@@ -40,11 +45,13 @@ private func readInputBytes(): Array<Byte> {
         if (count < 0) {
             throw IllegalStateException("stdin returned a negative byte count")
         }
-        for (index in 0..count) {
-            bytes.add(buffer[index])
+        if (count == buffer.size) {
+            bytes.write(buffer)
+        } else {
+            bytes.write(buffer.slice(0, count))
         }
     }
-    bytes.toArray()
+    bytes.bytes()
 }
 
 private func parseOwned(engine: AcceleratedMarkdownEngine, bytes: Array<Byte>): ParseResult {
