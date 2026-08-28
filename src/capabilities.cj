@@ -70,7 +70,7 @@ public class EngineCapabilities {
         spiVersions = ImmutableArray<String>(["1"])
         positionEncodings = ImmutableArray<String>(
             ["utf-8-byte", "utf-16-code-unit", "visual-scalar", "visual-scalar-with-tab-stops"])
-        serializationVersions = ImmutableArray<String>(["parse-artifact-1", "markdown-snapshot-binary-1"])
+        serializationVersions = ImmutableArray<String>(["parse-artifact-2", "markdown-snapshot-binary-2"])
         incrementalSupport = true
         incrementalMode = "block-local-with-full-fallback"
         losslessSupport = true

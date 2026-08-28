@@ -27,26 +27,27 @@ public class ParseStatistics {
         var nodes: Int64 = 0;
         var depth: Int64 = 0;
         var maximumDepth: Int64 = 0
-        for (event in result.document.walk()) {
+        for (event in result.ast.walk()) {
             match (event) {
-                case WalkEvent.Enter(_) =>
+                case NodeRefWalkEvent.Enter(_) =>
                     nodes++;
                     depth++
                     if (depth > maximumDepth) {
                         maximumDepth = depth
                     }
-                case WalkEvent.Exit(_) => depth--
+                case NodeRefWalkEvent.Exit(_) => depth--
             }
         }
         nodeCount = nodes
         maxDepth = maximumDepth
-        referenceCount = result.document.references.size
+        let root = result.ast.root().asDocument().getOrThrow()
+        referenceCount = root.references.size
         extensionCallbackCount = budget.usedExtensionCallbacks()
         scanSteps = budget.usedScanSteps()
         parseDurationNanos = duration
         diagnosticCount = result.diagnostics.size
-        profileId = result.document.profile.id
-        dialectFingerprint = result.document.dialectFingerprint
+        profileId = root.profile.id
+        dialectFingerprint = root.dialectFingerprint
     }
 }
 

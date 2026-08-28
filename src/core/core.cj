@@ -1,11 +1,12 @@
 package markdown.core
 
-public import markdown.{AcceleratedMarkdownEngine, AstInvariantValidator, BlockQuote, CancellationSource, 
-    CancellationToken, CodeBlock, CodeBlockKind, CodeSpan, Diagnostic, DiagnosticSeverity, Document, Emphasis, 
-    EngineCapabilities, ExecutionModelCapabilities, HardBreak, HardBreakKind, Heading, HtmlBlock, HtmlInline, Image, 
-    ImmutableArray, InlineContainer, InputReadFailureException, LimitExceededException, LineScannerAccelerator, Link, 
-    List, ListDelimiter, ListItem, ListKind, Markdown, MarkdownEngine, MarkdownEngineBuilder, MarkdownErrorCode, 
-    MarkdownException, MarkdownNode, MarkdownProfile, NodeCategory, NodeId, NodeKind, NodeOrigin, NodeOriginKind, 
-    OperationBudget, OwnedUtf8Input, Paragraph, ParseLimits, ParseResult, ProfileKind, ReferenceDefinition, SoftBreak, 
-    SourceBuffer, SourcePosition, SourcePositionMap, SourceSlice, SourceSpan, Strong, Text, ThematicBreak, Utf16Position, 
-    Utf8Policy, VisualPosition}
+public import markdown.{AcceleratedMarkdownEngine, AstInvariantValidator, CancellationSource, CancellationToken, 
+    CodeBlockKind, CodeBlockNodeView, CodeSpanNodeView, Diagnostic, DiagnosticSeverity, Document, DocumentNodeView, 
+    EngineCapabilities, ExecutionModelCapabilities, HardBreakKind, HardBreakNodeView, HeadingNodeView, HtmlExecutionMode, 
+    HtmlExecutionPath, HtmlExecutionResult, HtmlBlockNodeView, HtmlInlineNodeView, ImageNodeView, ImmutableArray, 
+    InputReadFailureException, LimitExceededException, LineScanRecords, LineScannerAccelerator, LinkNodeView, 
+    LinkSyntaxKind, ListDelimiter, ListItemNodeView, ListKind, ListNodeView, Markdown, MarkdownEngine, 
+    MarkdownEngineBuilder, MarkdownErrorCode, MarkdownException, MarkdownProfile, NodeCategory, NodeId, NodeKind, 
+    NodeOrigin, NodeOriginKind, NodeRef, OperationBudget, OwnedUtf8Input, ParseLimits, ParseResult, ProfileKind, 
+    ReferenceDefinition, ReusableUtf8Input, SourceBuffer, SourcePosition, SourcePositionMap, SourceSlice, SourceSpan, 
+    TableAlignment, TaskState, TextNodeView, Utf16Position, Utf8Policy, VisualPosition}

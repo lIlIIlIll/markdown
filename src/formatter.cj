@@ -65,7 +65,7 @@ public class MarkdownFormatOptions {
 
 internal enum FormatAction {
     | TextValue(String)
-    | NodeValue(MarkdownNode)
+    | NodeValue(NodeRef)
 }
 
 public class CanonicalMarkdownRenderer {
@@ -80,7 +80,7 @@ public class CanonicalMarkdownRenderer {
     public func render(document: Document): String {
         let out = StringBuilder()
         let stack = ArrayList<FormatAction>()
-        stack.add(FormatAction.NodeValue(document))
+        stack.add(FormatAction.NodeValue(document.root()))
         while (!stack.isEmpty()) {
             let action = stack.remove(at: stack.size - 1)
             match (action) {
@@ -98,72 +98,77 @@ public class CanonicalMarkdownRenderer {
         value
     }
 
-    private func formatNode(node: MarkdownNode, stack: ArrayList<FormatAction>, out: StringBuilder): Unit {
-        match (node) {
-            case document: Document => pushSeparated(document.children(), "\n\n", stack)
-            case paragraph: Paragraph => pushNodes(paragraph.children(), stack)
-            case heading: Heading =>
-                pushNodes(heading.children(), stack)
-                stack.add(FormatAction.TextValue(repeatString(options.headingMarker, heading.level) + " "))
-            case quotedBlock: BlockQuote =>
+    private func formatNode(node: NodeRef, stack: ArrayList<FormatAction>, out: StringBuilder): Unit {
+        match (node.kind) {
+            case NodeKind.Document => pushSeparated(node.children(), "\n\n", stack)
+            case NodeKind.Paragraph => pushNodes(node.children(), stack)
+            case NodeKind.Heading =>
+                pushNodes(node.children(), stack)
+                stack.add(FormatAction.TextValue(repeatString(options.headingMarker,
+                    node.asHeading().getOrThrow().level) + " "))
+            case NodeKind.BlockQuote =>
                 stack.add(FormatAction.TextValue("\n"))
-                pushNodes(quotedBlock.children(), stack)
+                pushNodes(node.children(), stack)
                 stack.add(FormatAction.TextValue("> "))
-            case list: List => pushList(list, stack)
-            case item: ListItem => pushNodes(item.children(), stack)
-            case _: ThematicBreak => out.append("---")
-            case code: CodeBlock => formatCodeBlock(code, out)
-            case html: HtmlBlock => out.append(html.literal)
-            case table: Table => formatTable(table, out)
-            case _: TableRow => throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation,
+            case NodeKind.List => pushList(node, stack)
+            case NodeKind.ListItem => pushNodes(node.children(), stack)
+            case NodeKind.ThematicBreak => out.append("---")
+            case NodeKind.CodeBlock => formatCodeBlock(node.asCodeBlock().getOrThrow(), out)
+            case NodeKind.HtmlBlock => out.append(node.asHtmlBlock().getOrThrow().literal)
+            case NodeKind.Table => formatTable(node, out)
+            case NodeKind.TableRow => throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation,
                 "TableRow must be formatted through Table", phase: "format", span: node.span)
-            case _: TableCell => throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation,
+            case NodeKind.TableCell => throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation,
                 "TableCell must be formatted through Table", phase: "format", span: node.span)
-            case text: Text => out.append(escapeMarkdownText(text.value))
-            case _: SoftBreak => out.append("\n")
-            case _: HardBreak => out.append("\\\n")
-            case code: CodeSpan => formatCodeSpan(code, out)
-            case emphasis: Emphasis =>
-                if (isSimpleDelimiterContent(emphasis) && !endsWithDelimiter(out)) {
-                    pushDelimited(options.emphasisMarker, emphasis.children(), stack)
+            case NodeKind.Text => out.append(escapeMarkdownText(node.asText().getOrThrow().value))
+            case NodeKind.SoftBreak => out.append("\n")
+            case NodeKind.HardBreak => out.append("\\\n")
+            case NodeKind.CodeSpan => formatCodeSpan(node.asCodeSpan().getOrThrow(), out)
+            case NodeKind.Emphasis =>
+                if (isSimpleDelimiterContent(node) && !endsWithDelimiter(out)) {
+                    pushDelimited(options.emphasisMarker, node.children(), stack)
                 } else {
-                    pushWrapped("<em>", "</em>", emphasis.children(), stack)
+                    pushWrapped("<em>", "</em>", node.children(), stack)
                 }
-            case strong: Strong =>
-                if (isSimpleDelimiterContent(strong) && !endsWithDelimiter(out)) {
-                    pushDelimited(options.strongMarker, strong.children(), stack)
+            case NodeKind.Strong =>
+                if (isSimpleDelimiterContent(node) && !endsWithDelimiter(out)) {
+                    pushDelimited(options.strongMarker, node.children(), stack)
                 } else {
-                    pushWrapped("<strong>", "</strong>", strong.children(), stack)
+                    pushWrapped("<strong>", "</strong>", node.children(), stack)
                 }
-            case strike: Strikethrough =>
-                if (isSimpleDelimiterContent(strike) && !out.toString().endsWith("~")) {
-                    pushDelimited("~~", strike.children(), stack)
+            case NodeKind.Strikethrough =>
+                if (isSimpleDelimiterContent(node) && !out.toString().endsWith("~")) {
+                    pushDelimited("~~", node.children(), stack)
                 } else {
-                    pushWrapped("<del>", "</del>", strike.children(), stack)
+                    pushWrapped("<del>", "</del>", node.children(), stack)
                 }
-            case link: Link =>
+            case NodeKind.Link =>
+                let link = node.asLink().getOrThrow()
                 stack.add(
                     FormatAction.TextValue("](" + formatDestination(link.destination) + formatTitle(link.title) + ")"))
-                pushNodes(link.children(), stack)
+                pushNodes(node.children(), stack)
                 stack.add(FormatAction.TextValue("["))
-            case image: Image =>
+            case NodeKind.Image =>
+                let image = node.asImage().getOrThrow()
                 out.append("![")
-                out.append(escapeMarkdownText(plainTextOfFormatter(image)))
+                out.append(escapeMarkdownText(plainTextOfFormatter(node)))
                 out.append("](")
                 out.append(formatDestination(image.destination))
                 out.append(formatTitle(image.title))
                 out.append(")")
-            case html: HtmlInline => out.append(html.literal)
-            case custom: CustomBlock => formatCustom(custom.extensionId, custom.localKindId, custom.payload,
-                custom.children(), custom.span, true, stack)
-            case custom: CustomInline => formatCustom(custom.extensionId, custom.localKindId, custom.payload,
-                custom.children(), custom.span, false, stack)
-            case _ => throw MarkdownException(MarkdownErrorCode.UnsupportedNode, "unsupported MarkdownNode subtype",
-                phase: "format", span: node.span)
+            case NodeKind.HtmlInline => out.append(node.asHtmlInline().getOrThrow().literal)
+            case NodeKind.CustomBlock =>
+                let custom = node.asCustomBlock().getOrThrow()
+                formatCustom(custom.extensionId, custom.localKindId, custom.payload, node.children(), node.span, true,
+                    stack)
+            case NodeKind.CustomInline =>
+                let custom = node.asCustomInline().getOrThrow()
+                formatCustom(custom.extensionId, custom.localKindId, custom.payload, node.children(), node.span, false,
+                    stack)
         }
     }
 
-    private func pushSeparated(nodes: ImmutableArray<MarkdownNode>, separator: String, stack: ArrayList<FormatAction>): Unit {
+    private func pushSeparated(nodes: NodeChildren, separator: String, stack: ArrayList<FormatAction>): Unit {
         var index = nodes.size - 1
         while (index >= 0) {
             stack.add(FormatAction.NodeValue(nodes[index]))
@@ -174,7 +179,7 @@ public class CanonicalMarkdownRenderer {
         }
     }
 
-    private func pushNodes(nodes: ImmutableArray<MarkdownNode>, stack: ArrayList<FormatAction>): Unit {
+    private func pushNodes(nodes: NodeChildren, stack: ArrayList<FormatAction>): Unit {
         var index = nodes.size - 1
         while (index >= 0) {
             stack.add(FormatAction.NodeValue(nodes[index]));
@@ -182,13 +187,13 @@ public class CanonicalMarkdownRenderer {
         }
     }
 
-    private func pushDelimited(marker: String, children: ImmutableArray<MarkdownNode>, stack: ArrayList<FormatAction>): Unit {
+    private func pushDelimited(marker: String, children: NodeChildren, stack: ArrayList<FormatAction>): Unit {
         stack.add(FormatAction.TextValue(marker))
         pushNodes(children, stack)
         stack.add(FormatAction.TextValue(marker))
     }
 
-    private func pushWrapped(opener: String, closer: String, children: ImmutableArray<MarkdownNode>,
+    private func pushWrapped(opener: String, closer: String, children: NodeChildren,
         stack: ArrayList<FormatAction>): Unit {
         stack.add(FormatAction.TextValue(closer))
         pushNodes(children, stack)
@@ -200,7 +205,7 @@ public class CanonicalMarkdownRenderer {
         current.endsWith("*") || current.endsWith("_")
     }
 
-    private func isSimpleDelimiterContent(node: MarkdownNode): Bool {
+    private func isSimpleDelimiterContent(node: NodeRef): Bool {
         let children = node.children()
         if (children.isEmpty()) {
             return false
@@ -209,8 +214,9 @@ public class CanonicalMarkdownRenderer {
         var lastByte: Byte = 0
         var hasText = false
         for (child in children.toArray()) {
-            match (child) {
-                case text: Text =>
+            match (child.kind) {
+                case NodeKind.Text =>
+                    let text = child.asText().getOrThrow()
                     if (!text.value.isEmpty()) {
                         if (!hasText) {
                             firstByte = text.value[0]
@@ -230,7 +236,7 @@ public class CanonicalMarkdownRenderer {
     }
 
     private func formatCustom(extensionId: String, localKindId: String, payload: CustomPayload,
-        children: ImmutableArray<MarkdownNode>, span: ?SourceSpan, block: Bool, stack: ArrayList<FormatAction>): Unit {
+        children: NodeChildren, span: ?SourceSpan, block: Bool, stack: ArrayList<FormatAction>): Unit {
         for (index in 0..extensionRules.size) {
             let rule = extensionRules[index]
             if (rule.extensionId == extensionId && rule.localKindId == localKindId) {
@@ -286,13 +292,15 @@ public class CanonicalMarkdownRenderer {
             phase: "format", span: span)
     }
 
-    private func pushList(list: List, stack: ArrayList<FormatAction>): Unit {
-        let children = list.children()
+    private func pushList(node: NodeRef, stack: ArrayList<FormatAction>): Unit {
+        let list = node.asList().getOrThrow()
+        let children = node.children()
         var index = children.size - 1
         while (index >= 0) {
-            match (children[index]) {
-                case item: ListItem =>
-                    pushNodes(item.children(), stack)
+            match (children[index].kind) {
+                case NodeKind.ListItem =>
+                    let item = children[index].asListItem().getOrThrow()
+                    pushNodes(children[index].children(), stack)
                     let marker = match (list.listKind) {
                         case ListKind.Bullet => options.bulletMarker
                         case ListKind.Ordered => "${list.start + index}${options.orderedDelimiter}"
@@ -313,7 +321,7 @@ public class CanonicalMarkdownRenderer {
         }
     }
 
-    private func formatCodeBlock(code: CodeBlock, out: StringBuilder): Unit {
+    private func formatCodeBlock(code: CodeBlockNodeView, out: StringBuilder): Unit {
         let fence = chooseFence(code.literal)
         out.append(fence)
         if (!code.language.isEmpty()) {
@@ -344,7 +352,7 @@ public class CanonicalMarkdownRenderer {
         repeatString(marker, max(options.minimumFenceLength, longest + 1))
     }
 
-    private func formatCodeSpan(code: CodeSpan, out: StringBuilder): Unit {
+    private func formatCodeSpan(code: CodeSpanNodeView, out: StringBuilder): Unit {
         var longest: Int64 = 0
         var current: Int64 = 0
         var index: Int64 = 0
@@ -369,8 +377,9 @@ public class CanonicalMarkdownRenderer {
         out.append(marker)
     }
 
-    private func formatTable(table: Table, out: StringBuilder): Unit {
-        let rows = table.children()
+    private func formatTable(node: NodeRef, out: StringBuilder): Unit {
+        let table = node.asTable().getOrThrow()
+        let rows = node.children()
         if (rows.isEmpty()) {
             return
         }
@@ -395,11 +404,11 @@ public class CanonicalMarkdownRenderer {
         }
     }
 
-    private func formatTableRow(node: MarkdownNode, out: StringBuilder): Unit {
-        match (node) {
-            case row: TableRow =>
+    private func formatTableRow(node: NodeRef, out: StringBuilder): Unit {
+        match (node.kind) {
+            case NodeKind.TableRow =>
                 out.append("|")
-                for (cell in row.children().toArray()) {
+                for (cell in node.children().toArray()) {
                     let text = escapeTableCell(plainTextOfFormatter(cell))
                     if (options.tablePadding) {
                         out.append(" ${text} |")
@@ -413,17 +422,17 @@ public class CanonicalMarkdownRenderer {
     }
 }
 
-private func plainTextOfFormatter(node: MarkdownNode): String {
+private func plainTextOfFormatter(node: NodeRef): String {
     let out = StringBuilder()
-    let stack = ArrayList<MarkdownNode>()
+    let stack = ArrayList<NodeRef>()
     stack.add(node)
     while (!stack.isEmpty()) {
         let current = stack.remove(at: stack.size - 1)
-        match (current) {
-            case text: Text => out.append(text.value)
-            case code: CodeSpan => out.append(code.literal)
-            case _: SoftBreak => out.append(" ")
-            case _: HardBreak => out.append(" ")
+        match (current.kind) {
+            case NodeKind.Text => out.append(current.asText().getOrThrow().value)
+            case NodeKind.CodeSpan => out.append(current.asCodeSpan().getOrThrow().literal)
+            case NodeKind.SoftBreak => out.append(" ")
+            case NodeKind.HardBreak => out.append(" ")
             case _ =>
                 let children = current.children()
                 var index = children.size - 1

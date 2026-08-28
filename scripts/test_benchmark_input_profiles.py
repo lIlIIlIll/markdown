@@ -13,11 +13,13 @@ ROOT = Path(__file__).resolve().parents[1]
 DRIVER = ROOT / "benchmarks" / "driver" / "target" / "release" / "bin" / "main"
 MEASURE = ROOT / "benchmarks" / "measure.py"
 MODES = (
+    "commonmark-parse",
     "commonmark-parse-string",
     "commonmark-parse-bytes",
     "commonmark-parse-owned",
     "commonmark-parse-stream",
 )
+GFM_MODES = ("gfm-parse", "gfm-html")
 
 
 class BenchmarkInputProfilesTest(unittest.TestCase):
@@ -40,6 +42,9 @@ class BenchmarkInputProfilesTest(unittest.TestCase):
             "cmarkGfmDriverSha256",
         ):
             self.assertIn(f'"{identity_field}"', source)
+        self.assertIn('"phaseProfiles": {"gfm": gfm_phases}', source)
+        self.assertIn('"diagnosticOnly": True', source)
+        self.assertIn('"gfm-parse"', source)
 
     def test_driver_profiles_produce_the_same_parse_checksum(self) -> None:
         self.assertTrue(DRIVER.exists(), f"benchmark driver is not built: {DRIVER}")
@@ -55,6 +60,19 @@ class BenchmarkInputProfilesTest(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr.decode(errors="replace"))
             checksums.append(result.stdout.decode().strip())
         self.assertEqual(len(set(checksums)), 1, checksums)
+
+    def test_gfm_phase_profiles_are_executable(self) -> None:
+        self.assertTrue(DRIVER.exists(), f"benchmark driver is not built: {DRIVER}")
+        source = "| a | b |\n| - | - |\n| ~~x~~ | https://example.com |\n".encode()
+        for mode in GFM_MODES:
+            result = subprocess.run(
+                [str(DRIVER), mode, "2"],
+                input=source,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr.decode(errors="replace"))
+            self.assertGreater(int(result.stdout.decode().strip()), 0)
 
 
 if __name__ == "__main__":

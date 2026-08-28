@@ -11,6 +11,7 @@ public enum Utf8Policy {
 }
 
 public class ParseResult {
+    /** Complete immutable arena Document produced by the parser. */
     public let document: Document
     public let source: SourceBuffer
     public let diagnostics: ImmutableArray<Diagnostic>
@@ -28,6 +29,12 @@ public class ParseResult {
         this.stoppedAt = stoppedAt
         this.unfinishedPhase = unfinishedPhase
         this.errors = ImmutableArray<MarkdownException>(errors)
+    }
+
+    public prop ast: Document {
+        get() {
+            document
+        }
     }
 }
 
@@ -127,7 +134,8 @@ public class MarkdownEngine {
             parse(value, cancellation: cancellation, budget: budget)
         } catch (error: MarkdownException) {
             let source = SourceBuffer(value)
-            let document = Document(NodeId(1), [], SourceSpan(0, source.byteLength()), profile, dialect.fingerprint)
+            let document = ParserNodeFactory(limits.maximumAstNodes).finishDocument([],
+                SourceSpan(0, source.byteLength()), profile, dialect.fingerprint, [])
             ParseResult(document, source, [], isComplete: false, stoppedAt: error.span, unfinishedPhase: error.phase,
                 errors: [error])
         }
@@ -165,6 +173,28 @@ public class MarkdownEngine {
     ): ParseResult {
         let noAccelerator: ?LineScannerAccelerator = None
         parseOwnedWithAccelerator(input, cancellation, budget, noAccelerator)
+    }
+
+    public func parse(
+        input: ReusableUtf8Input,
+        cancellation!: CancellationToken = CancellationToken.none(),
+        budget!: OperationBudget = OperationBudget.safe()
+    ): ParseResult {
+        let noAccelerator: ?LineScannerAccelerator = None
+        parseReusableWithAccelerator(input, cancellation, budget, noAccelerator)
+    }
+
+    internal func parseReusableWithAccelerator(
+        input: ReusableUtf8Input,
+        cancellation: CancellationToken,
+        budget: OperationBudget,
+        accelerator: ?LineScannerAccelerator
+    ): ParseResult {
+        cancellation.throwIfCancelled(phase: "input")
+        if (input.byteLength() > limits.maximumInputBytes) {
+            throw LimitExceededException("input_bytes", limits.maximumInputBytes, input.byteLength(), "input")
+        }
+        parseSource(input.sourceBuffer(), [], cancellation, budget, accelerator)
     }
 
     internal func parseOwnedWithAccelerator(
@@ -368,15 +398,30 @@ internal struct LineRecord {
     // Nested/normalized lines conservatively retain the source value unless a
     // caller can prove that the transformed content is plain.
     let hasCoreInlineSpecial: Bool
+    // Root scanner classification. Transformed lines default to true so they
+    // never enter the delimiter-free construction path without proof.
+    let hasCoreDelimiter: Bool
+    // Escape, entity, and code-span markers are the only delimiter-free core
+    // constructs that can lower back to Text and require piece coalescing.
+    // Older accelerators and transformed lines conservatively keep this true.
+    let hasTextLoweringCandidate: Bool
+    // Reference definitions can only begin on a line containing an opening
+    // bracket. Root scanners record that fact while locating line boundaries
+    // so reference collection can skip impossible lines without rescanning.
+    let hasReferenceOpener: Bool
 
     init(text: String, startByte: Int64, endByte: Int64, endWithNewline: Int64, allowSetext!: Bool = true,
-        hasCoreInlineSpecial!: Bool = true) {
+        hasCoreInlineSpecial!: Bool = true, hasCoreDelimiter!: Bool = true, hasTextLoweringCandidate!: Bool = true,
+        hasReferenceOpener!: Bool = true) {
         this.text = text
         this.startByte = startByte
         this.endByte = endByte
         this.endWithNewline = endWithNewline
         this.allowSetext = allowSetext
         this.hasCoreInlineSpecial = hasCoreInlineSpecial
+        this.hasCoreDelimiter = hasCoreDelimiter
+        this.hasTextLoweringCandidate = hasTextLoweringCandidate
+        this.hasReferenceOpener = hasReferenceOpener
     }
 }
 
@@ -409,28 +454,27 @@ internal struct InlinePiece {
     let marker: Byte
     let canOpen: Bool
     let canClose: Bool
-    let nodes: Array<MarkdownNode>
+    let node: Int64
 
-    init(start: Int64, length: Int64, marker: Byte, canOpen: Bool, canClose: Bool, nodes!: Array<MarkdownNode> = []) {
+    init(start: Int64, length: Int64, marker: Byte, canOpen: Bool, canClose: Bool, node!: Int64 = -1) {
         this.start = start
         this.length = length
         this.marker = marker
         this.canOpen = canOpen
         this.canClose = canClose
-        this.nodes = nodes
+        this.node = node
     }
 }
 
-internal class InlinePieceLink {
-    let identity: Int64
-    var piece: InlinePiece
-    var previous: ?InlinePieceLink = None
-    var next: ?InlinePieceLink = None
-    var active: Bool = true
+internal struct TableCellRange {
+    let start: Int64
+    let end: Int64
+    let hasEscapedPipe: Bool
 
-    init(identity: Int64, piece: InlinePiece) {
-        this.identity = identity
-        this.piece = piece
+    init(start: Int64, end: Int64, hasEscapedPipe: Bool) {
+        this.start = start
+        this.end = end
+        this.hasEscapedPipe = hasEscapedPipe
     }
 }
 
@@ -473,7 +517,7 @@ internal class PendingListState {
     let items: Array<PendingListItemState>
     let span: SourceSpan
     let nextIndex: Int64
-    let nodes = ArrayList<MarkdownNode>()
+    let nodes = ArrayList<Int64>()
     var itemIndex: Int64 = 0
 
     init(marker: ListMarkerInfo, tight: Bool, items: Array<PendingListItemState>, span: SourceSpan, nextIndex: Int64) {
@@ -514,11 +558,11 @@ internal class PendingExtensionState {
 }
 
 internal class ExtensionBlockScan {
-    let node: ?MarkdownNode
+    let node: ?Int64
     let pending: ?PendingExtensionState
     let nextIndex: Int64
 
-    init(node: ?MarkdownNode, pending: ?PendingExtensionState, nextIndex: Int64) {
+    init(node: ?Int64, pending: ?PendingExtensionState, nextIndex: Int64) {
         this.node = node
         this.pending = pending
         this.nextIndex = nextIndex
@@ -533,7 +577,7 @@ internal class BlockParseFrame {
     let quoteState: ?PendingQuoteState
     let list: ?PendingListState
     let extension: ?PendingExtensionState
-    let blocks = ArrayList<MarkdownNode>()
+    let blocks = ArrayList<Int64>()
     var index: Int64 = 0
 
     init(lines: Array<LineRecord>, depth: Int64, suppressedRule: String,
@@ -556,7 +600,7 @@ internal class ParserSession {
     private let budget: OperationBudget
     private let source: SourceBuffer
     private let dialect: CompiledMarkdownDialect
-    private let ids: NodeIdAllocator
+    private let nodes: ParserNodeFactory
     private let nativeScannerEnabled: Bool
     private let lineScannerAccelerator: ?LineScannerAccelerator
     private let diagnostics = ArrayList<Diagnostic>()
@@ -576,7 +620,8 @@ internal class ParserSession {
         this.budget = budget
         this.source = source
         this.dialect = dialect
-        this.ids = NodeIdAllocator(limits.maximumAstNodes)
+        this.nodes = ParserNodeFactory(limits.maximumAstNodes, estimatedInputBytes: source.byteLength(),
+            source: Some(source))
         this.nativeScannerEnabled = nativeScannerEnabled
         this.lineScannerAccelerator = lineScannerAccelerator
     }
@@ -585,52 +630,184 @@ internal class ParserSession {
         for (diagnostic in inputDiagnostics) {
             diagnostics.add(diagnostic)
         }
-        let lines = splitLines(source)
-        references = if (source.text().contains("[")) {
-            collectReferences(lines)
+        let blocks = if (let Some(block) <- parseSingleFencedDocument()) {
+            references = []
+            [block]
         } else {
-            []
-        }
-        for (reference in references) {
-            if (reference.isEffective) {
-                referenceIndex.add(reference.labelNormalized, reference)
+            let lines = splitLines(source)
+            references = if (linesHaveCoreInlineSpecial(lines) && source.text().contains("[")) {
+                collectReferences(lines)
+            } else {
+                []
             }
+            for (reference in references) {
+                if (reference.isEffective) {
+                    referenceIndex.add(reference.labelNormalized, reference)
+                }
+            }
+            parseBlocks(lines)
         }
-        let blocks = parseBlocks(lines)
-        var document = Document(
-            ids.next(),
-            blocks,
-            SourceSpan(0, source.byteLength()),
-            profile,
-            dialect.fingerprint,
-            references: references
-        )
+        let arena = nodes.finishDocument(blocks, SourceSpan(0, source.byteLength()), profile, dialect.fingerprint,
+            references)
         // Parser construction maintains dense NodeIds, category-safe children,
         // and nested spans as local invariants. Rewalking every node here would
         // duplicate the whole parse on the production hot path. Publicly
         // supplied and extension-transformed trees are still validated at their
         // trust boundaries below and by AstInvariantValidator.
-        for (index in 0..dialect.documentProcessors.size) {
-            let processor = dialect.documentProcessors[index]
-            cancellation.throwIfCancelled(phase: "extension_process")
-            budget.consumeExtensionCallback()
-            budget.consumeTransform()
-            try {
-                document = processor.process(document, budget, cancellation)
-            } catch (error: ExtensionFailureException) {
-                throw error
-            } catch (error: Exception) {
-                let manifest = extensionManifest(processor.extensionId)
-                throw ExtensionFailureException(processor.extensionId, manifest.semanticVersion,
-                    manifest.implementationVersion, "extension_process", error, ruleId: Some(processor.processorId))
+        if (dialect.parserHotPlan.hasDocumentProcessors) {
+            var document = arena
+            for (index in 0..dialect.documentProcessors.size) {
+                let processor = dialect.documentProcessors[index]
+                cancellation.throwIfCancelled(phase: "extension_process")
+                budget.consumeExtensionCallback()
+                budget.consumeTransform()
+                try {
+                    document = processor.process(document, budget, cancellation)
+                } catch (error: ExtensionFailureException) {
+                    throw error
+                } catch (error: Exception) {
+                    let manifest = extensionManifest(processor.extensionId)
+                    throw ExtensionFailureException(processor.extensionId, manifest.semanticVersion,
+                        manifest.implementationVersion, "extension_process", error, ruleId: Some(processor.processorId))
+                }
+                let root = document.root().asDocument().getOrThrow()
+                if (!root.profile.sameIdentity(profile) || root.dialectFingerprint != dialect.fingerprint) {
+                    throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation,
+                        "document processor changed profile or dialect identity", phase: "extension_process")
+                }
+                AstInvariantValidator().validate(document, limits: limits)
             }
-            if (!document.profile.sameIdentity(profile) || document.dialectFingerprint != dialect.fingerprint) {
-                throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation,
-                    "document processor changed profile or dialect identity", phase: "extension_process")
-            }
-            AstInvariantValidator().validate(document, limits: limits)
+            return ParseResult(document, source, diagnostics.toArray())
         }
-        ParseResult(document, source, diagnostics.toArray())
+        ParseResult(arena, source, diagnostics.toArray())
+    }
+
+    private func parseSingleFencedDocument(): ?Int64 {
+        if (!source.hasIdentityMapping() || (dialect.parserOptions.extensionsEnabled && dialect
+            .parserHotPlan
+            .hasBlockDsl)) {
+            return None
+        }
+        let value = source.text()
+        var openerStart: Int64 = 0
+        if (value.size >= 3 && value[0] == 0xEF && value[1] == 0xBB && value[2] == 0xBF) {
+            openerStart = 3
+        }
+        if (openerStart + 3 > value.size) {
+            return None
+        }
+        let possibleMarker = value[openerStart]
+        if ((possibleMarker != b'`' && possibleMarker != b'~') || value[openerStart + 1] != possibleMarker ||
+            value[openerStart + 2] != possibleMarker) {
+            return None
+        }
+        var openerEnd = openerStart
+        while (openerEnd < value.size && value[openerEnd] != b'\n' && value[openerEnd] != b'\r') {
+            openerEnd++
+        }
+        if (openerEnd - openerStart > limits.maximumLineBytes) {
+            throw LimitExceededException("line_bytes", limits.maximumLineBytes, openerEnd - openerStart, "input",
+                span: Some(mappedSpan(openerStart, openerEnd)))
+        }
+        // The source-slice fast path preserves LF bytes exactly. CRLF and lone
+        // CR still use the general parser, which performs newline lowering.
+        if (openerEnd < value.size && value[openerEnd] == b'\r') {
+            return None
+        }
+        let opener = value[openerStart..openerEnd]
+        if (!isFenceStart(opener)) {
+            return None
+        }
+        let leading = leadingSpaces(opener)
+        // Indented fences strip up to the opener indentation from every body
+        // line, so they require the existing bounded literal builder.
+        if (leading != 0) {
+            return None
+        }
+        let marker = opener[0]
+        var fenceLength: Int64 = 0
+        while (fenceLength < opener.size && opener[fenceLength] == marker) {
+            fenceLength++
+        }
+        let infoStart = skipAsciiSpace(opener, fenceLength)
+        let infoRaw = opener[infoStart..]
+        let language = decodeLinkValue(firstWord(infoRaw))
+        var cursor = if (openerEnd < value.size) {
+            openerEnd + 1
+        } else {
+            openerEnd
+        }
+        let contentStart = cursor
+        var contentEnd = cursor
+        var blockEnd = openerEnd
+        var closingSpan: ?SourceSpan = None
+        var lineCount: Int64 = 1
+        var cancellationCheckpoint = cursor + 4096
+        while (cursor < value.size) {
+            if (cursor >= cancellationCheckpoint) {
+                cancellation.throwIfCancelled(phase: "parse")
+                cancellationCheckpoint = cursor + 4096
+            }
+            let lineStart = cursor
+            while (cursor < value.size && value[cursor] != b'\n' && value[cursor] != b'\r') {
+                cursor++
+            }
+            let lineEnd = cursor
+            if (lineEnd - lineStart > limits.maximumLineBytes) {
+                throw LimitExceededException("line_bytes", limits.maximumLineBytes, lineEnd - lineStart, "input",
+                    span: Some(mappedSpan(lineStart, lineEnd)))
+            }
+            if (cursor < value.size && value[cursor] == b'\r') {
+                return None
+            }
+            lineCount++
+            let nextLine = if (cursor < value.size) {
+                cursor + 1
+            } else {
+                cursor
+            }
+            if (isFenceCloseRange(value, lineStart, lineEnd, marker, fenceLength)) {
+                closingSpan = Some(mappedSpan(lineStart, lineEnd))
+                blockEnd = lineEnd
+                cursor = nextLine
+                while (cursor < value.size) {
+                    let trailingStart = cursor
+                    while (cursor < value.size && value[cursor] != b'\n' && value[cursor] != b'\r') {
+                        if (value[cursor] != b' ' && value[cursor] != b'\t') {
+                            return None
+                        }
+                        cursor++
+                    }
+                    if (cursor - trailingStart > limits.maximumLineBytes) {
+                        throw LimitExceededException("line_bytes", limits.maximumLineBytes, cursor - trailingStart,
+                            "input", span: Some(mappedSpan(trailingStart, cursor)))
+                    }
+                    if (cursor < value.size && value[cursor] == b'\r') {
+                        return None
+                    }
+                    lineCount++
+                    if (cursor < value.size) {
+                        cursor++
+                    }
+                }
+                break
+            }
+            contentEnd = nextLine
+            blockEnd = lineEnd
+            cursor = nextLine
+        }
+        scanSteps(value.size + lineCount)
+        let literalStorage = if (contentEnd > contentStart) {
+            ensureLiteralBytes(contentEnd - contentStart, "block_parse")
+            LiteralStorage.Slice(source.sourceSlice(mappedSpan(contentStart, contentEnd)))
+        } else {
+            LiteralStorage.Copy("")
+        }
+        Some(
+            nodes.codeBlock(CodeBlockKind.Fenced, literalStorage, mappedSpan(openerStart, blockEnd),
+                fenceCharacter: Some(marker), fenceLength: fenceLength,
+                openingFenceSpan: Some(mappedSpan(openerStart, openerStart + fenceLength)),
+                closingFenceSpan: closingSpan, infoRaw: infoRaw, language: language))
     }
 
     private func splitLines(source: SourceBuffer): Array<LineRecord> {
@@ -647,6 +824,15 @@ internal class ParserSession {
         splitLinesCangjie(value)
     }
 
+    private func linesHaveCoreInlineSpecial(lines: Array<LineRecord>): Bool {
+        for (line in lines) {
+            if (line.hasCoreInlineSpecial) {
+                return true
+            }
+        }
+        false
+    }
+
     private func splitLinesAccelerated(
         value: String,
         bytes: Array<Byte>,
@@ -654,44 +840,77 @@ internal class ParserSession {
     ): ?Array<LineRecord> {
         if (value.size == 0) {
             scanSteps(0)
-            return Some([LineRecord("", 0, 0, 0, hasCoreInlineSpecial: false)])
+            return Some(
+                [LineRecord("", 0, 0, 0, hasCoreInlineSpecial: false, hasCoreDelimiter: false,
+                    hasTextLoweringCandidate: false)])
+        }
+        let recordFormat = accelerator.recordFormatVersion()
+        if (recordFormat != 1 && recordFormat != 2 && recordFormat != 3 && recordFormat != 4) {
+            throw IllegalStateException("line scanner accelerator returned an unsupported record format")
+        }
+        let recordShift: Int64 = if (recordFormat == 4) {
+            6
+        } else if (recordFormat == 3) {
+            5
+        } else if (recordFormat == 2) {
+            4
+        } else {
+            3
         }
         // One packed UInt64 per line is bounded, compact, and lets the native
         // pass stop safely when unusually dense input exceeds the estimate.
         let capacity = max(16, bytes.size / 8 + 16)
-        let records = match (accelerator.scanLines(bytes, capacity)) {
+        let scanResult = match (accelerator.scanLineRecords(bytes, capacity)) {
             case Some(value) => value
             case None => return None
         }
-        if (records.size <= 0 || records.size > capacity) {
+        let records = scanResult.records
+        let recordCount = scanResult.count
+        if (recordCount <= 0 || recordCount > records.size || records.size > capacity) {
             throw IllegalStateException("line scanner accelerator returned an invalid record count")
         }
         scanSteps(value.size)
-        let lines = ArrayList<LineRecord>()
+        // The native pass has already produced the exact line count. Fill the
+        // final parser-owned array directly instead of growing an ArrayList
+        // and copying every LineRecord again in toArray().
+        let lines = Array<LineRecord>(recordCount, repeat: LineRecord("", 0, 0, 0))
         var start: Int64 = if (bytes.size >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF) {
             3
         } else {
             0
         }
-        for (lineIndex in 0..records.size) {
+        for (lineIndex in 0..recordCount) {
             let packed = records[lineIndex]
-            let endWithNewline = Int64(packed >> 3)
+            let endWithNewline = Int64(packed >> recordShift)
             let newlineWidth = Int64(packed & 0x3u64)
             let end = endWithNewline - newlineWidth
             if (endWithNewline < start || endWithNewline > bytes.size || end < start || newlineWidth > 2 || (lineIndex +
-                1 == records.size && (endWithNewline != bytes.size || newlineWidth != 0)) || (lineIndex + 1 < records
-                .size && !validAcceleratedNewline(bytes, end, endWithNewline))) {
+                1 == recordCount && (endWithNewline != bytes.size || newlineWidth != 0)) || (lineIndex + 1 < recordCount &&
+                !validAcceleratedNewline(bytes, end, endWithNewline))) {
                 throw IllegalStateException("line scanner accelerator returned an invalid packed record")
             }
             if (end - start > limits.maximumLineBytes) {
                 throw LimitExceededException("line_bytes", limits.maximumLineBytes, end - start, "input",
                     span: Some(mappedSpan(start, end)))
             }
-            lines.add(
-                LineRecord(value[start..end], start, end, endWithNewline, hasCoreInlineSpecial: (packed & 0x4u64) != 0u64))
+            lines[lineIndex] = LineRecord(value[start..end], start, end, endWithNewline,
+                hasCoreInlineSpecial: (packed & 0x4u64) != 0u64,
+                hasCoreDelimiter: if (recordFormat == 2 || recordFormat == 3 || recordFormat == 4) {
+                    (packed & 0x8u64) != 0u64
+                } else {
+                    true
+                }, hasTextLoweringCandidate: if (recordFormat == 3 || recordFormat == 4) {
+                    (packed & 0x10u64) != 0u64
+                } else {
+                    true
+                }, hasReferenceOpener: if (recordFormat == 4) {
+                    (packed & 0x20u64) != 0u64
+                } else {
+                    true
+                })
             start = endWithNewline
         }
-        Some(lines.toArray())
+        Some(lines)
     }
 
     private func validAcceleratedNewline(bytes: Array<Byte>, end: Int64, endWithNewline: Int64): Bool {
@@ -708,6 +927,9 @@ internal class ParserSession {
         var index: Int64 = 0
         var pendingScanSteps: Int64 = 0
         var lineHasCoreInlineSpecial = false
+        var lineHasCoreDelimiter = false
+        var lineHasTextLoweringCandidate = false
+        var lineHasReferenceOpener = false
         if (value.size >= 3 && value[0] == 0xEF && value[1] == 0xBB && value[2] == 0xBF) {
             start = 3
             index = 3
@@ -721,6 +943,15 @@ internal class ParserSession {
             if (coreInlineSpecialByte(value[index])) {
                 lineHasCoreInlineSpecial = true
             }
+            if (value[index] == b'*' || value[index] == b'_') {
+                lineHasCoreDelimiter = true
+            }
+            if (textLoweringCandidateByte(value[index])) {
+                lineHasTextLoweringCandidate = true
+            }
+            if (value[index] == b'[') {
+                lineHasReferenceOpener = true
+            }
             if (value[index] == 10 || value[index] == 13) {
                 let end = index
                 if (end - start > limits.maximumLineBytes) {
@@ -731,9 +962,14 @@ internal class ParserSession {
                     index++
                 }
                 lines.add(
-                    LineRecord(value[start..end], start, end, index + 1, hasCoreInlineSpecial: lineHasCoreInlineSpecial))
+                    LineRecord(value[start..end], start, end, index + 1, hasCoreInlineSpecial: lineHasCoreInlineSpecial,
+                        hasCoreDelimiter: lineHasCoreDelimiter, hasTextLoweringCandidate: lineHasTextLoweringCandidate,
+                        hasReferenceOpener: lineHasReferenceOpener))
                 start = index + 1
                 lineHasCoreInlineSpecial = false
+                lineHasCoreDelimiter = false
+                lineHasTextLoweringCandidate = false
+                lineHasReferenceOpener = false
             }
             index++
         }
@@ -744,8 +980,10 @@ internal class ParserSession {
             throw LimitExceededException("line_bytes", limits.maximumLineBytes, value.size - start, "input",
                 span: Some(mappedSpan(start, value.size)))
         }
-        lines.add(LineRecord(value[start..], start, value.size, value.size,
-            hasCoreInlineSpecial: lineHasCoreInlineSpecial))
+        lines.add(
+            LineRecord(value[start..], start, value.size, value.size, hasCoreInlineSpecial: lineHasCoreInlineSpecial,
+                hasCoreDelimiter: lineHasCoreDelimiter, hasTextLoweringCandidate: lineHasTextLoweringCandidate,
+                hasReferenceOpener: lineHasReferenceOpener))
         lines.toArray()
     }
 
@@ -755,6 +993,10 @@ internal class ParserSession {
         var index: Int64 = 0
         while (index < lines.size) {
             scanStep()
+            if (!lines[index].hasReferenceOpener) {
+                index++
+                continue
+            }
             if (isQuoteLine(lines[index].text)) {
                 let marker = quoteMarker(lines[index].text)
                 var contentStart = marker + 1
@@ -801,13 +1043,12 @@ internal class ParserSession {
             let referenceIndent = leadingWhitespace(lines[index].text)
             let mayStartReference = referenceIndent <= 3 && referenceIndent < lines[index].text.size &&
                 lines[index].text[referenceIndent] == b'['
-            if (mayStartReference && let Some((label, destinationRaw, destination, titleRaw, title, next)) <- parseReferenceDefinitionAt(
-                lines, index)) {
+            if (mayStartReference && let Some((label, normalized, destinationRaw, destination, titleRaw, title, next)) <- ReferenceDefinitionParser
+                .parse(lines, index)) {
                 if (out.size >= limits.maximumReferences) {
                     throw LimitExceededException("references", limits.maximumReferences, out.size + 1,
                         "reference_collection", span: Some(mappedSpan(lines[index].startByte, lines[next - 1].endByte)))
                 }
-                let normalized = normalizeReferenceLabel(label)
                 let effective = effectiveLabels.add(normalized)
                 out.add(
                     ReferenceDefinition(
@@ -832,10 +1073,10 @@ internal class ParserSession {
         out.toArray()
     }
 
-    private func parseBlocks(lines: Array<LineRecord>, extensionDepth!: Int64 = 0): Array<MarkdownNode> {
+    private func parseBlocks(lines: Array<LineRecord>, extensionDepth!: Int64 = 0): Array<Int64> {
         let frames = ArrayList<BlockParseFrame>()
         frames.add(BlockParseFrame(lines, extensionDepth, suppressedBlockRule))
-        var result: Array<MarkdownNode> = []
+        var result: Array<Int64> = []
         while (!frames.isEmpty()) {
             let frame = frames[frames.size - 1]
             suppressedBlockRule = frame.suppressedRule
@@ -849,7 +1090,7 @@ internal class ParserSession {
                         var nested = children
                         var spanIndex = state.spans.size - 1
                         while (spanIndex >= 0) {
-                            nested = [BlockQuote(ids.next(), nested, state.spans[spanIndex])]
+                            nested = [nodes.blockQuote(nested, state.spans[spanIndex])]
                             spanIndex--
                         }
                         frames[frames.size - 1].blocks.add(nested[0])
@@ -859,7 +1100,7 @@ internal class ParserSession {
                         state
                             .nodes
                             .add(
-                                ListItem(ids.next(), children, item.span, taskState: item.taskState,
+                                nodes.listItem(children, item.span, taskState: item.taskState,
                                     markerSpan: item.markerSpan))
                         state.itemIndex++
                         if (state.itemIndex < state.items.size) {
@@ -872,12 +1113,12 @@ internal class ParserSession {
                                     .size - 1]
                                 .blocks
                                 .add(
-                                    List(ids.next(), if (state.marker.ordered) {
+                                    nodes.list(if (state.marker.ordered) {
                                         ListKind.Ordered
                                     } else {
                                         ListKind.Bullet
-                                    }, state.marker.startNumber, state.marker.delimiter, state.tight,
-                                        state.nodes.toArray(), state.span))
+                                    }, state.marker.startNumber, state.marker.delimiter, state.tight, state.nodes,
+                                        state.span))
                         }
                     case BlockFrameCompletionKind.Extension =>
                         let state = frame.extension.getOrThrow()
@@ -889,7 +1130,7 @@ internal class ParserSession {
                                 .size - 1]
                             .blocks
                             .add(
-                                CustomBlock(ids.next(), state.rule.extensionId, manifestVersion(state.rule.extensionId),
+                                nodes.customBlock(state.rule.extensionId, manifestVersion(state.rule.extensionId),
                                     state.kindId, payload, children, Some(state.span), origin))
                 }
                 continue
@@ -902,7 +1143,7 @@ internal class ParserSession {
                 frame.index++
                 continue
             }
-            if (dialect.parserOptions.extensionsEnabled && dialect.blockRules.size > 0) {
+            if (dialect.parserOptions.extensionsEnabled && dialect.parserHotPlan.hasBlockDsl) {
                 if (let Some(scan) <- scanExtensionBlock(lines, index, frame.depth)) {
                     frame.index = scan.nextIndex
                     if (let Some(node) <- scan.node) {
@@ -946,7 +1187,7 @@ internal class ParserSession {
                 if (isThematicBreak(line.text)) {
                     frame
                         .blocks
-                        .add(ThematicBreak(ids.next(), firstNonSpace(line.text), mappedSpan(line.startByte, line.endByte)))
+                        .add(nodes.thematicBreak(firstNonSpace(line.text), mappedSpan(line.startByte, line.endByte)))
                     frame.index++
                     continue
                 }
@@ -996,9 +1237,7 @@ internal class ParserSession {
                     2
                 }
                 let children = parseInlineLineRange(lines, index, setextMarker)
-                frame
-                    .blocks
-                    .add(Heading(ids.next(), level, children, mappedSpan(line.startByte, lines[setextMarker].endByte)))
+                frame.blocks.add(nodes.heading(level, children, mappedSpan(line.startByte, lines[setextMarker].endByte)))
                 frame.index = setextMarker + 1
                 continue
             }
@@ -1010,7 +1249,7 @@ internal class ParserSession {
         result
     }
 
-    private func parseAtxHeading(line: LineRecord): Heading {
+    private func parseAtxHeading(line: LineRecord): Int64 {
         let leading = leadingSpaces(line.text)
         var level: Int64 = 0
         while (leading + level < line.text.size && level < 6 && line.text[leading + level] == b'#') {
@@ -1021,12 +1260,54 @@ internal class ParserSession {
             contentStart++
         }
         let content = stripClosingAtx(line.text[contentStart..])
-        Heading(ids.next(), level, parseInline(content, line.startByte + contentStart, 0),
+        nodes.heading(level, parseInline(content, line.startByte + contentStart, 0),
             mappedSpan(line.startByte, line.endByte))
     }
 
-    private func parseParagraph(lines: Array<LineRecord>, start: Int64): (Paragraph, Int64) {
-        let children = ArrayList<MarkdownNode>()
+    private func parseParagraph(lines: Array<LineRecord>, start: Int64): (Int64, Int64) {
+        let firstLine = lines[start]
+        if (start == 0 && !isGfmProfile() && source.hasIdentityMapping() && !firstLine.text.isEmpty() &&
+            firstLine.text[0] == b'|' &&
+            !(dialect.parserOptions.extensionsEnabled && (dialect.parserHotPlan.hasBlockDsl || dialect
+            .parserHotPlan
+            .hasInlineDsl || dialect.parserHotPlan.hasInlineSpi))) {
+            if (let Some(result) <- parseCommonMarkPipeParagraphDocument(lines)) {
+                return result
+            }
+        }
+        let firstNext = start + 1
+        var firstHasContinuation = firstNext < lines.size
+        if (firstHasContinuation) {
+            firstHasContinuation = !isBlank(lines[firstNext].text)
+        }
+        if (firstHasContinuation) {
+            firstHasContinuation = !isAnyBlockStart(lines, firstNext)
+        }
+        if (firstHasContinuation && (firstLine.text.contains("*") || firstLine.text.contains("_") ||
+            firstLine.text.contains("`"))) {
+            var end = firstNext
+            var last = firstLine
+            while (end < lines.size) {
+                last = lines[end]
+                let next = end + 1
+                var hasContinuation = next < lines.size
+                if (hasContinuation) {
+                    hasContinuation = !isBlank(lines[next].text)
+                }
+                if (hasContinuation) {
+                    hasContinuation = !isAnyBlockStart(lines, next)
+                }
+                end = next
+                if (!hasContinuation) {
+                    break
+                }
+            }
+            let rawParagraph = source.text()[firstLine.startByte..last.endByte]
+            let children = parseInline(rawParagraph, firstLine.startByte, 0)
+            return (nodes.paragraph(children, mappedSpan(firstLine.startByte, last.endByte)), end)
+        }
+        let checkpoint = nodes.checkpoint()
+        let children = ArrayList<Int64>()
         var index = start
         var last = lines[start]
         while (index < lines.size) {
@@ -1051,7 +1332,9 @@ internal class ParserSession {
             } else {
                 content = stripTrailingSpaces(content)
             }
-            for (child in parseInline(content, line.startByte + contentStart, 0, knownPlain: !line.hasCoreInlineSpecial)) {
+            for (child in parseInline(content, line.startByte + contentStart, 0, knownPlain: !line.hasCoreInlineSpecial,
+                knownDelimiterFree: line.hasCoreInlineSpecial && !line.hasCoreDelimiter,
+                knownNoTextLowering: !line.hasTextLoweringCandidate)) {
                 children.add(child)
             }
             last = line
@@ -1059,11 +1342,11 @@ internal class ParserSession {
             if (hasContinuation) {
                 let breakSpan = mappedSpan(line.startByte + contentStart + content.size, lines[nextIndex].startByte)
                 if (breakKind == 1) {
-                    children.add(HardBreak(ids.next(), HardBreakKind.Backslash, breakSpan))
+                    children.add(nodes.hardBreak(HardBreakKind.Backslash, breakSpan))
                 } else if (breakKind == 2) {
-                    children.add(HardBreak(ids.next(), HardBreakKind.Spaces, breakSpan))
+                    children.add(nodes.hardBreak(HardBreakKind.Spaces, breakSpan))
                 } else {
-                    children.add(SoftBreak(ids.next(), breakSpan))
+                    children.add(nodes.softBreak(breakSpan))
                 }
             } else {
                 break
@@ -1080,16 +1363,48 @@ internal class ParserSession {
                 sourceText, b'>', paragraphStart, paragraphEnd))
             if (needsCombinedInline) {
                 let rawParagraph = sourceText[paragraphStart..paragraphEnd]
+                nodes.rollback(checkpoint)
                 children.clear()
                 for (child in parseInline(rawParagraph, lines[start].startByte, 0)) {
                     children.add(child)
                 }
             }
         }
-        (Paragraph(ids.next(), children.toArray(), mappedSpan(lines[start].startByte, last.endByte)), index)
+        (nodes.paragraph(children, mappedSpan(lines[start].startByte, last.endByte)), index)
     }
 
-    private func parseFencedCode(lines: Array<LineRecord>, start: Int64): (CodeBlock, Int64) {
+    private func parseCommonMarkPipeParagraphDocument(lines: Array<LineRecord>): ?(Int64, Int64) {
+        var contentLineCount = lines.size
+        let value = source.text()
+        let sourceLength = source.byteLength()
+        if (contentLineCount > 0 && lines[contentLineCount - 1].startByte == sourceLength &&
+            lines[contentLineCount - 1].endByte == sourceLength) {
+            contentLineCount--
+        }
+        if (contentLineCount <= 0) {
+            return None
+        }
+        for (index in 0..contentLineCount) {
+            let line = lines[index]
+            if (line.text.isEmpty() || line.text[0] != b'|' || line.hasCoreInlineSpecial ||
+                line.text[line.text.size - 1] == b' ' || line.text[line.text.size - 1] == b'\t') {
+                return None
+            }
+        }
+        cancellation.throwIfCancelled(phase: "parse")
+        let children = ArrayList<Int64>()
+        for (index in 0..contentLineCount) {
+            let line = lines[index]
+            children.add(materializeTextRange(value, line.startByte, line.startByte, line.endByte - line.startByte, true))
+            if (index + 1 < contentLineCount) {
+                children.add(nodes.softBreak(mappedSpan(line.endByte, lines[index + 1].startByte)))
+            }
+        }
+        let paragraphEnd = lines[contentLineCount - 1].endByte
+        Some((nodes.paragraph(children, mappedSpan(0, paragraphEnd)), contentLineCount))
+    }
+
+    private func parseFencedCode(lines: Array<LineRecord>, start: Int64): (Int64, Int64) {
         let opener = lines[start]
         let leading = leadingSpaces(opener.text)
         let marker = opener.text[leading]
@@ -1141,22 +1456,13 @@ internal class ParserSession {
             }
             LiteralStorage.Copy(literal.finish())
         }
-        (CodeBlock(
-                ids.next(),
-                CodeBlockKind.Fenced,
-                literalStorage,
-                mappedSpan(opener.startByte, endByte),
-                Some(marker),
-                fenceLength,
-                Some(mappedSpan(opener.startByte + leading, opener.startByte + leading + fenceLength)),
-                closingSpan,
-                infoRaw,
-                language,
-                ""
-            ), index)
+        (nodes.codeBlock(CodeBlockKind.Fenced, literalStorage, mappedSpan(opener.startByte, endByte),
+                fenceCharacter: Some(marker), fenceLength: fenceLength,
+                openingFenceSpan: Some(mappedSpan(opener.startByte + leading, opener.startByte + leading + fenceLength)),
+                closingFenceSpan: closingSpan, infoRaw: infoRaw, language: language), index)
     }
 
-    private func parseIndentedCode(lines: Array<LineRecord>, start: Int64): (CodeBlock, Int64) {
+    private func parseIndentedCode(lines: Array<LineRecord>, start: Int64): (Int64, Int64) {
         let parts = ArrayList<String>()
         var index = start
         var last = lines[start]
@@ -1177,7 +1483,8 @@ internal class ParserSession {
         }
         let literal = joinStrings(parts.toArray(), "\n")
         ensureLiteralBytes(literal.size, "block_parse")
-        (CodeBlock(ids.next(), CodeBlockKind.Indented, literal, mappedSpan(lines[start].startByte, last.endByte)), index)
+        (nodes.codeBlock(CodeBlockKind.Indented, LiteralStorage.Copy(literal),
+                mappedSpan(lines[start].startByte, last.endByte)), index)
     }
 
     private func scanQuote(lines: Array<LineRecord>, start: Int64, depth: Int64): PendingQuoteState {
@@ -1398,7 +1705,7 @@ internal class ParserSession {
         PendingListState(firstMarker, tight, items.toArray(), mappedSpan(lines[start].startByte, last.endByte), index)
     }
 
-    private func parseHtmlBlock(lines: Array<LineRecord>, start: Int64): (HtmlBlock, Int64) {
+    private func parseHtmlBlock(lines: Array<LineRecord>, start: Int64): (Int64, Int64) {
         let literal = BoundedLiteralBuilder(limits.maximumLiteralBytes, budget, cancellation, "block_parse")
         let blockType = htmlBlockType(lines[start].text)
         var index = start
@@ -1419,16 +1726,16 @@ internal class ParserSession {
             index++
         }
         let span = mappedSpan(lines[start].startByte, last.endByte)
-        (HtmlBlock(ids.next(), storageForLiteral(literal.finish(), span), blockType, span), index)
+        (nodes.htmlBlock(storageForLiteral(literal.finish(), span), blockType, span), index)
     }
 
-    private func parseTable(lines: Array<LineRecord>, start: Int64): (Table, Int64) {
+    private func parseTable(lines: Array<LineRecord>, start: Int64): (Int64, Int64) {
         let alignments = tableAlignments(lines[start + 1].text)
         if (alignments.size > limits.maximumTableColumns) {
             throw LimitExceededException("table_columns", limits.maximumTableColumns, alignments.size, "block_parse",
                 span: Some(mappedSpan(lines[start + 1].startByte, lines[start + 1].endByte)))
         }
-        let rows = ArrayList<MarkdownNode>()
+        let rows = ArrayList<Int64>()
         rows.add(tableRow(lines[start], true, alignments))
         var index = start + 2
         var last = lines[start + 1]
@@ -1443,26 +1750,113 @@ internal class ParserSession {
             last = lines[index]
             index++
         }
-        (Table(ids.next(), alignments, rows.toArray(), mappedSpan(lines[start].startByte, last.endByte)), index)
+        (nodes.table(alignments, rows, mappedSpan(lines[start].startByte, last.endByte)), index)
     }
 
-    private func tableRow(line: LineRecord, header: Bool, alignments: Array<TableAlignment>): TableRow {
-        let parts = splitTable(line.text)
-        let cells = ArrayList<MarkdownNode>()
-        for (index in 0..alignments.size) {
-            let value = if (index < parts.size) {
-                unescapeTablePipes(parts[index])
-            } else {
-                ""
-            }
-            cells.add(
-                TableCell(ids.next(), alignments[index], parseInline(value, line.startByte, 1),
-                    mappedSpan(line.startByte, line.endByte)))
+    private func tableRow(line: LineRecord, header: Bool, alignments: Array<TableAlignment>): Int64 {
+        let cells = ArrayList<Int64>()
+        let text = line.text
+        let hasExtensionDispatch = dialect.parserOptions.extensionsEnabled && (dialect.parserHotPlan.hasInlineDsl || dialect
+            .parserHotPlan
+            .hasInlineSpi)
+        var rangeStart: Int64 = if (text.startsWith("|")) {
+            1
+        } else {
+            0
         }
-        TableRow(ids.next(), header, cells.toArray(), mappedSpan(line.startByte, line.endByte))
+        let endLimit = if (text.endsWith("|")) {
+            text.size - 1
+        } else {
+            text.size
+        }
+        var index = rangeStart
+        var column: Int64 = 0
+        var backslashes: Int64 = 0
+        var escapedPipe = false
+        var hasCoreInlineSpecial = false
+        var hasCoreDelimiter = false
+        var hasTextLoweringCandidate = false
+        var mayContainGfmAutolink = false
+        while (index <= endLimit && column < alignments.size) {
+            if (index == endLimit || (text[index] == b'|' && backslashes % 2 == 0)) {
+                var cellStart = rangeStart
+                var cellEnd = index
+                while (cellStart < cellEnd && (text[cellStart] == b' ' || text[cellStart] == b'\t')) {
+                    cellStart++
+                }
+                while (cellEnd > cellStart && (text[cellEnd - 1] == b' ' || text[cellEnd - 1] == b'\t')) {
+                    cellEnd--
+                }
+                let sourceStart = line.startByte + cellStart
+                let sourceEnd = line.startByte + cellEnd
+                let inlineChildren: Array<Int64> = if (!escapedPipe && !hasCoreInlineSpecial && !mayContainGfmAutolink &&
+                    !hasExtensionDispatch) {
+                    if (cellStart == cellEnd) {
+                        []
+                    } else {
+                        // The row scan already proved that this source range has
+                        // no inline lowering. Avoid allocating a temporary cell
+                        // substring that parseInline would discard in its plain
+                        // source-text fast path.
+                        scanSteps(cellEnd - cellStart)
+                        [parsedSourceText(sourceStart, sourceEnd)]
+                    }
+                } else {
+                    let raw = text[cellStart..cellEnd]
+                    let value = if (escapedPipe) {
+                        unescapeTablePipes(raw)
+                    } else {
+                        raw
+                    }
+                    parseInline(value, sourceStart, 1, knownPlain: !hasCoreInlineSpecial && !mayContainGfmAutolink,
+                        knownDelimiterFree: !hasCoreDelimiter, sourceIdentity: !escapedPipe,
+                        knownNoGfmAutolink: !mayContainGfmAutolink, knownNoTextLowering: !hasTextLoweringCandidate)
+                }
+                cells.add(nodes.tableCell(alignments[column], inlineChildren, mappedSpan(sourceStart, sourceEnd)))
+                column++
+                rangeStart = index + 1
+                escapedPipe = false
+                backslashes = 0
+                hasCoreInlineSpecial = false
+                hasCoreDelimiter = false
+                hasTextLoweringCandidate = false
+                mayContainGfmAutolink = false
+            } else {
+                let byte = text[index]
+                if (coreInlineSpecialByte(byte)) {
+                    hasCoreInlineSpecial = true
+                }
+                if (byte == b'*' || byte == b'_') {
+                    hasCoreDelimiter = true
+                }
+                if (textLoweringCandidateByte(byte)) {
+                    hasTextLoweringCandidate = true
+                }
+                if (byte == b'w' || byte == b':' || byte == b'@') {
+                    mayContainGfmAutolink = true
+                }
+                if (byte == b'\\') {
+                    backslashes++
+                } else {
+                    if (byte == b'|' && backslashes % 2 == 1) {
+                        escapedPipe = true
+                    }
+                    backslashes = 0
+                }
+            }
+            index++
+        }
+        while (column < alignments.size) {
+            let empty = line.endByte
+            cells.add(nodes.tableCell(alignments[column], [], mappedSpan(empty, empty)))
+            column++
+        }
+        nodes.tableRow(header, cells, mappedSpan(line.startByte, line.endByte))
     }
 
-    private func parseInline(text: String, baseOffset: Int64, depth: Int64, knownPlain!: Bool = false): Array<MarkdownNode> {
+    private func parseInline(text: String, baseOffset: Int64, depth: Int64, knownPlain!: Bool = false,
+        knownDelimiterFree!: Bool = false, sourceIdentity!: Bool = true, knownNoGfmAutolink!: Bool = false,
+        knownNoTextLowering!: Bool = false): Array<Int64> {
         if (depth > limits.maximumNestingDepth) {
             throw LimitExceededException("nesting_depth", limits.maximumNestingDepth, depth, "inline_parse",
                 span: Some(mappedSpan(baseOffset, baseOffset + text.size)))
@@ -1470,15 +1864,16 @@ internal class ParserSession {
         if (text.isEmpty()) {
             return []
         }
-        let hasExtensionDispatch = dialect.parserOptions.extensionsEnabled && (dialect.inlineRules.size > 0 ||
-            dialect.parserSpis.size > 0)
-        let hasGfmAutolinkCandidate = isGfmProfile() && mayContainExtendedAutolink(text)
+        let hasExtensionDispatch = dialect.parserOptions.extensionsEnabled && (dialect.parserHotPlan.hasInlineDsl || dialect
+            .parserHotPlan
+            .hasInlineSpi)
+        let hasGfmAutolinkCandidate = isGfmProfile() && !knownNoGfmAutolink && mayContainExtendedAutolink(text)
         if (knownPlain && !hasExtensionDispatch && !hasGfmAutolinkCandidate) {
             // splitLines already classified this line while finding its end.
             // Keep the accounting side effects of the old plain-text scan but
             // avoid walking the same bytes a second time.
             scanSteps(text.size)
-            return [parsedText(text, text, baseOffset, baseOffset + text.size)]
+            return [materializeTextRange(text, baseOffset, baseOffset, text.size, sourceIdentity)]
         }
         if (!hasExtensionDispatch) {
             var plain = true
@@ -1493,8 +1888,14 @@ internal class ParserSession {
             }
             if (plain) {
                 scanSteps(text.size)
-                return [parsedText(text, text, baseOffset, baseOffset + text.size)]
+                return [materializeTextRange(text, baseOffset, baseOffset, text.size, sourceIdentity)]
             }
+        }
+        if (knownDelimiterFree && !hasExtensionDispatch) {
+            if (knownNoTextLowering) {
+                return parseDirectDelimiterFreeInline(text, baseOffset, depth, sourceIdentity, hasGfmAutolinkCandidate)
+            }
+            return parseDelimiterFreeInline(text, baseOffset, depth, sourceIdentity, hasGfmAutolinkCandidate)
         }
         // Avoid rescanning the remaining line for every unmatched link opener. A
         // closing bracket inside a code span may make this conservative (we may
@@ -1505,6 +1906,7 @@ internal class ParserSession {
         var index: Int64 = 0
         var delimiterBytes: ?Array<Byte> = None
         var hasDelimiterPieces = false
+        var delimiterMarkerBytes: Int64 = 0
         while (index < text.size) {
             if (!hasExtensionDispatch && text[index] < 0x80 && text[index] != 10 && text[index] != 13 &&
                 !coreInlineSpecialByte(text[index])) {
@@ -1526,14 +1928,46 @@ internal class ParserSession {
                         delimiterBytes = Some(value)
                         value
                 }
-                flushPieceText(pieces, text, plainStart, index, baseOffset)
+                flushPieceText(pieces, plainStart, index, baseOffset)
                 let run = delimiterRunLength(text, index, text[index])
+                delimiterMarkerBytes += run
                 pieces.add(
                     InlinePiece(baseOffset + index, run, text[index], delimiterCanOpenBytes(bytes, index, run,
                         text[index]), delimiterCanCloseBytes(bytes, index, run, text[index])))
                 index += run
                 plainStart = index
                 continue
+            }
+            if (!hasExtensionDispatch && text[index] == b'\\' && index + 1 < text.size && isAsciiPunctuation(
+                text[index + 1])) {
+                flushPieceText(pieces, plainStart, index, baseOffset)
+                pieces.add(InlinePiece(baseOffset + index, 2, b'\\', false, false))
+                index += 2
+                plainStart = index
+                continue
+            }
+            if (!hasExtensionDispatch && text[index] == b'&') {
+                let semicolon = findByte(text, b';', index + 1)
+                if (semicolon > index) {
+                    let raw = text[index..semicolon + 1]
+                    if (decodeEntity(raw) != raw) {
+                        flushPieceText(pieces, plainStart, index, baseOffset)
+                        pieces.add(InlinePiece(baseOffset + index, semicolon + 1 - index, b'&', false, false))
+                        index = semicolon + 1
+                        plainStart = index
+                        continue
+                    }
+                }
+            }
+            if (!hasExtensionDispatch && text[index] == b'`') {
+                let marker = codeMarker(text, index)
+                if (findExactCodeCloser(text, index, marker.size) < 0) {
+                    // An unmatched code marker is ordinary source text. Keep it
+                    // in the pending range instead of allocating a Text node
+                    // that coalescing would immediately orphan.
+                    index += marker.size
+                    continue
+                }
             }
             if (text[index] == 10 || text[index] == 13) {
                 var contentEnd = index
@@ -1551,47 +1985,52 @@ internal class ParserSession {
                         hardKind = 2
                     }
                 }
-                flushPieceText(pieces, text, plainStart, contentEnd, baseOffset)
+                flushPieceText(pieces, plainStart, contentEnd, baseOffset)
                 var next = index + 1
                 if (text[index] == 13 && next < text.size && text[next] == 10) {
                     next++
                 }
                 let span = mappedSpan(baseOffset + contentEnd, baseOffset + next)
-                let breakNode: MarkdownNode = if (hardKind == 1) {
-                    HardBreak(ids.next(), HardBreakKind.Backslash, span)
+                let breakNode: Int64 = if (hardKind == 1) {
+                    nodes.hardBreak(HardBreakKind.Backslash, span)
                 } else if (hardKind == 2) {
-                    HardBreak(ids.next(), HardBreakKind.Spaces, span)
+                    nodes.hardBreak(HardBreakKind.Spaces, span)
                 } else {
-                    SoftBreak(ids.next(), span)
+                    nodes.softBreak(span)
                 }
-                pieces.add(InlinePiece(baseOffset + contentEnd, 0, 0, false, false, nodes: [breakNode]))
+                pieces.add(InlinePiece(baseOffset + contentEnd, 0, 0, false, false, node: breakNode))
                 index = next
                 plainStart = index
                 continue
             }
             let cannotCloseBracket = (text[index] == b'[' || (text[index] == b'!' && index + 1 < text.size &&
                 text[index + 1] == b'[')) && lastClosingBracket <= index
-            let special: ?(MarkdownNode, Int64) = if (!cannotCloseBracket && (hasExtensionDispatch ||
-                coreInlineSpecialByte(text[index]))) {
-                inlineSpecial(text, index, baseOffset, depth)
+            let special: ?(Int64, Int64) = if (!cannotCloseBracket && (hasExtensionDispatch || coreInlineSpecialByte(
+                text[index]))) {
+                inlineSpecial(text, index, baseOffset, depth, sourceIdentity)
             } else {
                 None
             }
             if (let Some((node, next)) <- special) {
-                flushPieceText(pieces, text, plainStart, index, baseOffset)
-                pieces.add(InlinePiece(baseOffset + index, 0, 0, false, false, nodes: [node]))
+                flushPieceText(pieces, plainStart, index, baseOffset)
+                pieces.add(InlinePiece(baseOffset + index, 0, 0, false, false, node: node))
                 index = next
                 plainStart = index
             } else {
                 index = nextRuneOffset(text, index)
             }
         }
-        flushPieceText(pieces, text, plainStart, text.size, baseOffset)
-        let resolved = coalesceTextNodes(if (hasDelimiterPieces) {
-            resolveDelimiterPieces(pieces)
+        flushPieceText(pieces, plainStart, text.size, baseOffset)
+        let materialized = if (hasDelimiterPieces) {
+            resolveDelimiterPieces(pieces, delimiterMarkerBytes, text, baseOffset, sourceIdentity)
         } else {
-            materializeUndelimitedPieces(pieces)
-        })
+            materializeUndelimitedPieces(pieces, text, baseOffset, sourceIdentity)
+        }
+        let resolved = if (materialized.size <= 1 || !hasExtensionDispatch) {
+            materialized
+        } else {
+            coalesceTextNodes(materialized)
+        }
         if (hasGfmAutolinkCandidate) {
             expandGfmAutolinks(resolved)
         } else {
@@ -1599,13 +2038,17 @@ internal class ParserSession {
         }
     }
 
-    private func inlineSpecial(text: String, start: Int64, baseOffset: Int64, depth: Int64): ?(MarkdownNode, Int64) {
-        if (dialect.parserOptions.extensionsEnabled && (dialect.parserSpis.size > 0 || dialect.inlineRules.size > 0)) {
-            for (spiIndex in 0..dialect.parserSpis.size) {
-                let spi = dialect.parserSpis[spiIndex]
+    private func inlineSpecial(text: String, start: Int64, baseOffset: Int64, depth: Int64, sourceIdentity: Bool): ?(Int64, 
+        Int64) {
+        if (dialect.parserOptions.extensionsEnabled && (dialect.parserHotPlan.hasInlineSpi || dialect
+            .parserHotPlan
+            .hasInlineDsl)) {
+            let parserSpis = dialect.parserHotPlan.parserSpis(text[start])
+            for (spiIndex in 0..parserSpis.size) {
+                let spi = parserSpis[spiIndex]
                 cancellation.throwIfCancelled(phase: "extension_parse")
                 budget.consumeExtensionCallback()
-                let context = InlineParserSpiContext(text, start, spi.maximumLookahead, baseOffset, source, ids, budget,
+                let context = InlineParserSpiContext(text, start, spi.maximumLookahead, baseOffset, source, budget,
                     cancellation)
                 try {
                     match (spi.tryParse(context)) {
@@ -1618,16 +2061,25 @@ internal class ParserSession {
                             if (node.extensionId != spi.extensionId || node.localKindId != spi.ruleId) {
                                 throw IllegalStateException("parser SPI returned a node with mismatched identity")
                             }
-                            if (let Some(span) <- node.span) {
-                                let allowed = context.sourceSpan(start, nextOffset)
-                                if (!allowed.containsSpan(span)) {
-                                    throw IllegalStateException("parser SPI node span is outside consumed input")
-                                }
-                            } else {
-                                throw IllegalStateException("parser SPI parsed node must have a SourceSpan")
+                            let allowed = context.sourceSpan(start, nextOffset)
+                            if (!allowed.containsSpan(node.span)) {
+                                throw IllegalStateException("parser SPI node span is outside consumed input")
                             }
                             cancellation.throwIfCancelled(phase: "extension_parse")
-                            return Some((node, nextOffset))
+                            let children = ArrayList<Int64>()
+                            for (child in node.children.toArray()) {
+                                if (!node.span.containsSpan(child.span)) {
+                                    throw IllegalStateException("parser SPI child span is outside its custom node")
+                                }
+                                children.add(
+                                    nodes.text(LiteralStorage.Copy(child.raw), LiteralStorage.Copy(child.value),
+                                        child.span))
+                            }
+                            let origin = NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: Some(node.span),
+                                extensionId: Some(node.extensionId))
+                            return Some(
+                                (nodes.customInline(node.extensionId, node.extensionSemanticVersion, node.localKindId,
+                                        node.payload, children.toArray(), Some(node.span), origin), nextOffset))
                     }
                 } catch (error: ExtensionFailureException) {
                     throw error
@@ -1642,8 +2094,9 @@ internal class ParserSession {
                         })))
                 }
             }
-            for (ruleIndex in 0..dialect.inlineRules.size) {
-                let rule = dialect.inlineRules[ruleIndex]
+            let inlineRules = dialect.parserHotPlan.inlineRules(text[start])
+            for (ruleIndex in 0..inlineRules.size) {
+                let rule = inlineRules[ruleIndex]
                 let identity = "${rule.extensionId}/${rule.ruleId}"
                 if (identity == suppressedInlineRule || !startsAt(text, rule.opener, start)) {
                     continue
@@ -1659,13 +2112,13 @@ internal class ParserSession {
                     budget.consumeExtensionCallback()
                     budget.consumeScan(steps: syntaxRuleCost(rule.resourceCost, rule.opener.size))
                     let span = mappedSpan(baseOffset + start, baseOffset + next)
-                    let children: Array<MarkdownNode> = []
+                    let children: Array<Int64> = []
                     let payload = emitInlinePayload(rule, rule.opener, span, children)
                     let origin = NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: Some(span),
                         extensionId: Some(rule.extensionId))
                     return Some(
-                        (CustomInline(ids.next(), rule.extensionId, manifestVersion(rule.extensionId), rule.ruleId,
-                                payload, children, Some(span), origin), next))
+                        (nodes.customInline(rule.extensionId, manifestVersion(rule.extensionId), rule.ruleId, payload,
+                                children, Some(span), origin), next))
                 }
                 let bodyStart = start + rule.opener.size
                 let end = findCustomInlineCloser(text, start, bodyStart, rule)
@@ -1683,14 +2136,14 @@ internal class ParserSession {
                 budget.consumeExtensionCallback()
                 budget.consumeScan(steps: syntaxRuleCost(rule.resourceCost, end + rule.closer.size - start))
                 let body = text[bodyStart..end]
-                let children: Array<MarkdownNode>
+                let children: Array<Int64>
                 if (rule.parseChildren) {
                     if (rule.allowNesting) {
-                        children = parseInline(body, baseOffset + bodyStart, depth + 1)
+                        children = parseInline(body, baseOffset + bodyStart, depth + 1, sourceIdentity: sourceIdentity)
                     } else {
                         let previous = suppressedInlineRule
                         suppressedInlineRule = identity
-                        children = parseInline(body, baseOffset + bodyStart, depth + 1)
+                        children = parseInline(body, baseOffset + bodyStart, depth + 1, sourceIdentity: sourceIdentity)
                         suppressedInlineRule = previous
                     }
                 } else if (!rule.emitContent || body.isEmpty()) {
@@ -1703,7 +2156,7 @@ internal class ParserSession {
                 let origin = NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: Some(span),
                     extensionId: Some(rule.extensionId))
                 return Some(
-                    (CustomInline(ids.next(), rule.extensionId, manifestVersion(rule.extensionId), rule.ruleId, payload,
+                    (nodes.customInline(rule.extensionId, manifestVersion(rule.extensionId), rule.ruleId, payload,
                             children, Some(span), origin), end + rule.closer.size))
             }
         }
@@ -1734,7 +2187,7 @@ internal class ParserSession {
                 let literal = normalizeCodeLiteral(text[start + marker.size..end])
                 ensureLiteralBytes(literal.size, "inline_parse", consumeBudget: false)
                 return Some(
-                    (CodeSpan(ids.next(), literal, marker, mappedSpan(baseOffset + start, baseOffset + end + marker.size)),
+                    (nodes.codeSpan(literal, marker, mappedSpan(baseOffset + start, baseOffset + end + marker.size)),
                         end + marker.size))
             }
             return Some((parsedText(marker, marker, baseOffset + start, baseOffset + start + marker.size), start + marker
@@ -1744,8 +2197,10 @@ internal class ParserSession {
             let end = findString(text, "~~", start + 2)
             if (end > start + 2) {
                 return Some(
-                    (Strikethrough(ids.next(), parseInline(text[start + 2..end], baseOffset + start + 2, depth + 1),
-                            mappedSpan(baseOffset + start, baseOffset + end + 2)), end + 2))
+                    (nodes.inlineContainer(NodeKind.Strikethrough,
+                            parseInline(text[start + 2..end], baseOffset + start + 2, depth + 1,
+                                sourceIdentity: sourceIdentity), mappedSpan(baseOffset + start, baseOffset + end + 2)),
+                        end + 2))
             }
         }
         if ((startsAt(text, "***", start) || startsAt(text, "___", start)) && (start + 3 == text.size ||
@@ -1756,8 +2211,10 @@ internal class ParserSession {
             let end = findMatchingDelimiter(text, start, 1, text[start], referenceIndex)
             if (end > start + 1) {
                 return Some(
-                    (Emphasis(ids.next(), parseInline(text[start + 1..end], baseOffset + start + 1, depth + 1),
-                            mappedSpan(baseOffset + start, baseOffset + end + 1)), end + 1))
+                    (nodes.inlineContainer(NodeKind.Emphasis,
+                            parseInline(text[start + 1..end], baseOffset + start + 1, depth + 1,
+                                sourceIdentity: sourceIdentity), mappedSpan(baseOffset + start, baseOffset + end + 1)),
+                        end + 1))
             }
         }
         if (startsAt(text, "**", start) || startsAt(text, "__", start)) {
@@ -1769,8 +2226,10 @@ internal class ParserSession {
             let end = findMatchingDelimiter(text, start, 2, text[start], referenceIndex)
             if (end > start + 2) {
                 return Some(
-                    (Strong(ids.next(), parseInline(text[start + 2..end], baseOffset + start + 2, depth + 1),
-                            mappedSpan(baseOffset + start, baseOffset + end + 2)), end + 2))
+                    (nodes.inlineContainer(NodeKind.Strong,
+                            parseInline(text[start + 2..end], baseOffset + start + 2, depth + 1,
+                                sourceIdentity: sourceIdentity), mappedSpan(baseOffset + start, baseOffset + end + 2)),
+                        end + 2))
             }
             if (run == 2) {
                 let raw = text[start..start + run]
@@ -1789,15 +2248,17 @@ internal class ParserSession {
             let end = findMatchingDelimiter(text, start, 1, text[start], referenceIndex)
             if (end > start + 1) {
                 return Some(
-                    (Emphasis(ids.next(), parseInline(text[start + 1..end], baseOffset + start + 1, depth + 1),
-                            mappedSpan(baseOffset + start, baseOffset + end + 1)), end + 1))
+                    (nodes.inlineContainer(NodeKind.Emphasis,
+                            parseInline(text[start + 1..end], baseOffset + start + 1, depth + 1,
+                                sourceIdentity: sourceIdentity), mappedSpan(baseOffset + start, baseOffset + end + 1)),
+                        end + 1))
             }
         }
         if (text[start] == b'!' && start + 1 < text.size && text[start + 1] == b'[') {
-            return parseLinkOrImage(text, start, true, baseOffset, depth)
+            return parseLinkOrImage(text, start, true, baseOffset, depth, sourceIdentity)
         }
         if (text[start] == b'[') {
-            return parseLinkOrImage(text, start, false, baseOffset, depth)
+            return parseLinkOrImage(text, start, false, baseOffset, depth, sourceIdentity)
         }
         if (text[start] == b'<') {
             if (isLegacyGfmComment(text, start)) {
@@ -1814,14 +2275,14 @@ internal class ParserSession {
                         body
                     }
                     return Some(
-                        (Link(ids.next(), body, destination, "", "", LinkSyntaxKind.Autolink,
+                        (nodes.link(body, destination, "", "", LinkSyntaxKind.Autolink,
                                 [parsedText(body, body, baseOffset + start + 1, baseOffset + end)],
                                 mappedSpan(baseOffset + start, baseOffset + end + 1)), end + 1))
                 }
                 if (isInlineHtml(body)) {
                     ensureLiteralBytes(end + 1 - start, "inline_parse", consumeBudget: false)
                     return Some(
-                        (HtmlInline(ids.next(), text[start..end + 1], mappedSpan(baseOffset + start, baseOffset + end + 1)),
+                        (nodes.htmlInline(text[start..end + 1], mappedSpan(baseOffset + start, baseOffset + end + 1)),
                             end + 1))
                 }
             }
@@ -1829,8 +2290,8 @@ internal class ParserSession {
         None
     }
 
-    private func parseLinkOrImage(text: String, start: Int64, image: Bool, baseOffset: Int64, depth: Int64): ?(MarkdownNode, 
-        Int64) {
+    private func parseLinkOrImage(text: String, start: Int64, image: Bool, baseOffset: Int64, depth: Int64,
+        sourceIdentity: Bool): ?(Int64, Int64) {
         let labelStart = if (image) {
             start + 2
         } else {
@@ -1851,17 +2312,19 @@ internal class ParserSession {
                     throw LimitExceededException("url_bytes", limits.maximumUrlBytes, destination.size, "inline_parse",
                         span: Some(mappedSpan(baseOffset + start, baseOffset + end + 1)))
                 }
-                let children = parseInline(label, baseOffset + labelStart, depth + 1)
+                let checkpoint = nodes.checkpoint()
+                let children = parseInline(label, baseOffset + labelStart, depth + 1, sourceIdentity: sourceIdentity)
                 if (!image && containsLinkNode(children)) {
+                    nodes.rollback(checkpoint)
                     return None
                 }
                 if (image) {
                     return Some(
-                        (Image(ids.next(), destinationRaw, destination, titleRaw, title, LinkSyntaxKind.Inline, children,
+                        (nodes.image(destinationRaw, destination, titleRaw, title, LinkSyntaxKind.Inline, children,
                                 mappedSpan(baseOffset + start, baseOffset + end + 1)), end + 1))
                 }
                 return Some(
-                    (Link(ids.next(), destinationRaw, destination, titleRaw, title, LinkSyntaxKind.Inline, children,
+                    (nodes.link(destinationRaw, destination, titleRaw, title, LinkSyntaxKind.Inline, children,
                             mappedSpan(baseOffset + start, baseOffset + end + 1)), end + 1))
             }
         }
@@ -1883,19 +2346,20 @@ internal class ParserSession {
             endOffset = refEnd + 1
         }
         if (let Some(reference) <- lookupReference(refLabel)) {
-            let children = parseInline(label, baseOffset + labelStart, depth + 1)
+            let checkpoint = nodes.checkpoint()
+            let children = parseInline(label, baseOffset + labelStart, depth + 1, sourceIdentity: sourceIdentity)
             if (!image && containsLinkNode(children)) {
+                nodes.rollback(checkpoint)
                 return None
             }
             if (image) {
                 return Some(
-                    (Image(ids.next(), reference.destinationRaw, reference.destination, reference.titleRaw,
-                            reference.title, syntax, children, mappedSpan(baseOffset + start, baseOffset + endOffset)),
-                        endOffset))
+                    (nodes.image(reference.destinationRaw, reference.destination, reference.titleRaw, reference.title,
+                            syntax, children, mappedSpan(baseOffset + start, baseOffset + endOffset)), endOffset))
             }
             return Some(
-                (Link(ids.next(), reference.destinationRaw, reference.destination, reference.titleRaw, reference.title,
-                        syntax, children, mappedSpan(baseOffset + start, baseOffset + endOffset)), endOffset))
+                (nodes.link(reference.destinationRaw, reference.destination, reference.titleRaw, reference.title, syntax,
+                        children, mappedSpan(baseOffset + start, baseOffset + endOffset)), endOffset))
         }
         None
     }
@@ -1905,51 +2369,239 @@ internal class ParserSession {
         referenceIndex.get(normalized)
     }
 
-    private func containsLinkNode(nodes: Array<MarkdownNode>): Bool {
-        for (node in nodes) {
-            for (event in node.walk()) {
-                if (let WalkEvent.Enter(_: Link) <- event) {
-                    return true
-                }
+    private func containsLinkNode(values: Array<Int64>): Bool {
+        for (value in values) {
+            if (nodes.containsLink(value)) {
+                return true
             }
         }
         false
     }
 
-    private func flushPieceText(out: ArrayList<InlinePiece>, text: String, start: Int64, end: Int64, baseOffset: Int64): Unit {
-        if (end > start) {
-            let raw = text[start..end]
-            let node = parsedText(raw, raw, baseOffset + start, baseOffset + end)
-            out.add(InlinePiece(baseOffset + start, 0, 0, false, false, nodes: [node]))
+    /** Scanner-proven delimiter-free input without escape, entity, or
+     * code-span markers can materialize semantic boundaries directly. This
+     * avoids the InlinePiece arena while preserving the same scan accounting
+     * and final AST shape as the conservative path below. */
+    private func parseDirectDelimiterFreeInline(text: String, baseOffset: Int64, depth: Int64, sourceIdentity: Bool,
+        hasGfmAutolinkCandidate: Bool): Array<Int64> {
+        let lastClosingBracket = lastUnescapedClosingBracket(text)
+        let values = ArrayList<Int64>()
+        var plainStart: Int64 = 0
+        var index: Int64 = 0
+        while (index < text.size) {
+            if (text[index] < 0x80 && text[index] != 10 && text[index] != 13 && !coreInlineSpecialByte(text[index])) {
+                let runStart = index
+                while (index < text.size && text[index] < 0x80 && text[index] != 10 && text[index] != 13 &&
+                        !coreInlineSpecialByte(text[index])) {
+                    index++
+                }
+                scanSteps(index - runStart)
+                continue
+            }
+            scanStep()
+            if (text[index] == 10 || text[index] == 13) {
+                var contentEnd = index
+                var spaces: Int64 = 0
+                while (contentEnd > plainStart && text[contentEnd - 1] == b' ') {
+                    contentEnd--
+                    spaces++
+                }
+                flushDirectText(values, text, plainStart, contentEnd, baseOffset, sourceIdentity)
+                var next = index + 1
+                if (text[index] == 13 && next < text.size && text[next] == 10) {
+                    next++
+                }
+                let span = mappedSpan(baseOffset + contentEnd, baseOffset + next)
+                values.add(if (spaces >= 2) {
+                    nodes.hardBreak(HardBreakKind.Spaces, span)
+                } else {
+                    nodes.softBreak(span)
+                })
+                index = next
+                plainStart = index
+                continue
+            }
+            let cannotCloseBracket = (text[index] == b'[' || (text[index] == b'!' && index + 1 < text.size &&
+                text[index + 1] == b'[')) && lastClosingBracket <= index
+            let special: ?(Int64, Int64) = if (!cannotCloseBracket && coreInlineSpecialByte(text[index])) {
+                inlineSpecial(text, index, baseOffset, depth, sourceIdentity)
+            } else {
+                None
+            }
+            if (let Some((node, next)) <- special) {
+                flushDirectText(values, text, plainStart, index, baseOffset, sourceIdentity)
+                values.add(node)
+                index = next
+                plainStart = index
+            } else {
+                index = nextRuneOffset(text, index)
+            }
+        }
+        flushDirectText(values, text, plainStart, text.size, baseOffset, sourceIdentity)
+        let resolved = values.toArray()
+        if (hasGfmAutolinkCandidate) {
+            expandGfmAutolinks(resolved)
+        } else {
+            resolved
         }
     }
 
-    private func resolveDelimiterPieces(input: ArrayList<InlinePiece>): Array<MarkdownNode> {
+    private func flushDirectText(out: ArrayList<Int64>, text: String, start: Int64, end: Int64, baseOffset: Int64,
+        sourceIdentity: Bool): Unit {
+        if (end > start) {
+            out.add(materializeTextRange(text, baseOffset, baseOffset + start, end - start, sourceIdentity))
+        }
+    }
+
+    /** Root-line fast path selected only from scanner-proven input. Keeping it
+     * out of parseInline preserves the delimiter arena's code layout for every
+     * unclassified, transformed, extension, and delimiter-bearing input. */
+    private func parseDelimiterFreeInline(text: String, baseOffset: Int64, depth: Int64, sourceIdentity: Bool,
+        hasGfmAutolinkCandidate: Bool): Array<Int64> {
+        let lastClosingBracket = lastUnescapedClosingBracket(text)
+        let pieces = ArrayList<InlinePiece>()
+        var plainStart: Int64 = 0
+        var index: Int64 = 0
+        while (index < text.size) {
+            if (text[index] < 0x80 && text[index] != 10 && text[index] != 13 && !coreInlineSpecialByte(text[index])) {
+                let runStart = index
+                while (index < text.size && text[index] < 0x80 && text[index] != 10 && text[index] != 13 &&
+                        !coreInlineSpecialByte(text[index])) {
+                    index++
+                }
+                scanSteps(index - runStart)
+                continue
+            }
+            scanStep()
+            if (text[index] == 10 || text[index] == 13) {
+                var contentEnd = index
+                var hardKind: Int64 = 0
+                if (contentEnd > plainStart && text[contentEnd - 1] == b'\\' && !isEscaped(text, contentEnd - 1)) {
+                    contentEnd--
+                    hardKind = 1
+                } else {
+                    var spaces: Int64 = 0
+                    while (contentEnd > plainStart && text[contentEnd - 1] == b' ') {
+                        contentEnd--;
+                        spaces++
+                    }
+                    if (spaces >= 2) {
+                        hardKind = 2
+                    }
+                }
+                flushPieceText(pieces, plainStart, contentEnd, baseOffset)
+                var next = index + 1
+                if (text[index] == 13 && next < text.size && text[next] == 10) {
+                    next++
+                }
+                let span = mappedSpan(baseOffset + contentEnd, baseOffset + next)
+                let breakNode = if (hardKind == 1) {
+                    nodes.hardBreak(HardBreakKind.Backslash, span)
+                } else if (hardKind == 2) {
+                    nodes.hardBreak(HardBreakKind.Spaces, span)
+                } else {
+                    nodes.softBreak(span)
+                }
+                pieces.add(InlinePiece(baseOffset + contentEnd, 0, 0, false, false, node: breakNode))
+                index = next
+                plainStart = index
+                continue
+            }
+            if (text[index] == b'\\' && index + 1 < text.size && isAsciiPunctuation(text[index + 1])) {
+                flushPieceText(pieces, plainStart, index, baseOffset)
+                pieces.add(InlinePiece(baseOffset + index, 2, b'\\', false, false))
+                index += 2
+                plainStart = index
+                continue
+            }
+            if (text[index] == b'&') {
+                let semicolon = findByte(text, b';', index + 1)
+                if (semicolon > index) {
+                    let raw = text[index..semicolon + 1]
+                    if (decodeEntity(raw) != raw) {
+                        flushPieceText(pieces, plainStart, index, baseOffset)
+                        pieces.add(InlinePiece(baseOffset + index, semicolon + 1 - index, b'&', false, false))
+                        index = semicolon + 1
+                        plainStart = index
+                        continue
+                    }
+                }
+            }
+            if (text[index] == b'`') {
+                let marker = codeMarker(text, index)
+                if (findExactCodeCloser(text, index, marker.size) < 0) {
+                    index += marker.size
+                    continue
+                }
+            }
+            let cannotCloseBracket = (text[index] == b'[' || (text[index] == b'!' && index + 1 < text.size &&
+                text[index + 1] == b'[')) && lastClosingBracket <= index
+            let special: ?(Int64, Int64) = if (!cannotCloseBracket && coreInlineSpecialByte(text[index])) {
+                inlineSpecial(text, index, baseOffset, depth, sourceIdentity)
+            } else {
+                None
+            }
+            if (let Some((node, next)) <- special) {
+                flushPieceText(pieces, plainStart, index, baseOffset)
+                pieces.add(InlinePiece(baseOffset + index, 0, 0, false, false, node: node))
+                index = next
+                plainStart = index
+            } else {
+                index = nextRuneOffset(text, index)
+            }
+        }
+        flushPieceText(pieces, plainStart, text.size, baseOffset)
+        let resolved = materializeUndelimitedPieces(pieces, text, baseOffset, sourceIdentity)
+        if (hasGfmAutolinkCandidate) {
+            expandGfmAutolinks(resolved)
+        } else {
+            resolved
+        }
+    }
+
+    private func flushPieceText(out: ArrayList<InlinePiece>, start: Int64, end: Int64, baseOffset: Int64): Unit {
+        if (end > start) {
+            // Keep ordinary source text as a range until the delimiter result
+            // is known. This avoids creating nodes that coalescing or a failed
+            // speculative construct would immediately discard.
+            out.add(InlinePiece(baseOffset + start, end - start, 0, false, false))
+        }
+    }
+
+    private func resolveDelimiterPieces(input: ArrayList<InlinePiece>, delimiterBytes: Int64, text: String,
+        baseOffset: Int64, sourceIdentity: Bool): Array<Int64> {
         if (input.isEmpty()) {
             return []
         }
-        let links = ArrayList<InlinePieceLink>()
-        var previous: ?InlinePieceLink = None
+        // A match can add at most one wrapper for each delimiter piece. Fixed
+        // parser-owned arrays avoid one heap object plus three traced references
+        // per piece while keeping the exact CommonMark matching algorithm.
+        let capacity = input.size + delimiterBytes / 2 + 1
+        let pieces = Array<InlinePiece>(capacity, repeat: InlinePiece(0, 0, 0, false, false))
+        let previous = Array<Int64>(capacity, repeat: -1)
+        let next = Array<Int64>(capacity, repeat: -1)
         for (index in 0..input.size) {
-            let link = InlinePieceLink(index + 1, input[index])
-            link.previous = previous
-            if (let Some(value) <- previous) {
-                value.next = Some(link)
+            pieces[index] = input[index]
+            previous[index] = index - 1
+            next[index] = if (index + 1 < input.size) {
+                index + 1
+            } else {
+                -1
             }
-            links.add(link)
-            previous = Some(link)
         }
-        var head: ?InlinePieceLink = Some(links[0])
-        let starOpeners = ArrayList<InlinePieceLink>()
-        let underscoreOpeners = ArrayList<InlinePieceLink>()
+        var pieceCount = input.size
+        var head: Int64 = 0
+        let starOpeners = Array<Int64>(input.size, repeat: -1)
+        let underscoreOpeners = Array<Int64>(input.size, repeat: -1)
+        var starOpenerCount: Int64 = 0
+        var underscoreOpenerCount: Int64 = 0
         let starBottoms = Array<Int64>(6, repeat: 0)
         let underscoreBottoms = Array<Int64>(6, repeat: 0)
-        var cursor = head
-        var nextIdentity = input.size + 1
-        while (let Some(closerLink) <- cursor) {
-            let originalNext = closerLink.next
-            var closer = closerLink.piece
-            if (closer.marker != 0 && closer.length > 0 && closer.canClose) {
+        var cursor: Int64 = head
+        while (cursor >= 0) {
+            let originalNext = next[cursor]
+            var closer = pieces[cursor]
+            if ((closer.marker == b'*' || closer.marker == b'_') && closer.length > 0 && closer.canClose) {
                 let openers = if (closer.marker == b'*') {
                     starOpeners
                 } else {
@@ -1960,164 +2612,241 @@ internal class ParserSession {
                 } else {
                     underscoreBottoms
                 }
+                let openerCount = if (closer.marker == b'*') {
+                    starOpenerCount
+                } else {
+                    underscoreOpenerCount
+                }
                 var keepClosing = true
-                while (keepClosing && closerLink.active && closer.length > 0) {
-                    match (findDelimiterOpener(openers, bottoms, closerLink)) {
-                        case Some(openerLink) =>
-                            budget.consumeDelimiter()
-                            var opener = openerLink.piece
-                            let use = if (opener.length >= 2 && closer.length >= 2) {
-                                2
-                            } else {
-                                1
-                            }
-                            let children = materializePieceLinks(openerLink.next, closerLink.identity)
-                            let openerConsumedStart = opener.start + opener.length - use
-                            let closerConsumedEnd = closer.start + use
-                            let span = mappedSpan(openerConsumedStart, closerConsumedEnd)
-                            let wrapped: MarkdownNode = if (use == 2) {
-                                Strong(ids.next(), children, span)
-                            } else {
-                                Emphasis(ids.next(), children, span)
-                            }
-                            opener.length -= use
-                            closer.start += use
-                            closer.length -= use
-                            openerLink.piece = opener
-                            closerLink.piece = closer
-                            head = replaceDelimitedRange(head, openerLink, closerLink,
-                                InlinePieceLink(nextIdentity,
-                                    InlinePiece(openerConsumedStart, 0, 0, false, false, nodes: [wrapped])))
-                            nextIdentity++
-                        case None => keepClosing = false
+                while (keepClosing && previous[cursor] != -2 && closer.length > 0) {
+                    let openerIndex = findDelimiterOpener(openers, openerCount, bottoms, cursor, pieces, previous, next)
+                    if (openerIndex < 0) {
+                        keepClosing = false
+                        continue
                     }
+                    budget.consumeDelimiter()
+                    var opener = pieces[openerIndex]
+                    let use = if (opener.length >= 2 && closer.length >= 2) {
+                        2
+                    } else {
+                        1
+                    }
+                    let children = materializePieceLinks(next[openerIndex], cursor, pieces, next, text, baseOffset,
+                        sourceIdentity)
+                    let openerConsumedStart = opener.start + opener.length - use
+                    let closerConsumedEnd = closer.start + use
+                    let span = mappedSpan(openerConsumedStart, closerConsumedEnd)
+                    let wrapped: Int64 = if (use == 2) {
+                        nodes.inlineContainer(NodeKind.Strong, children, span)
+                    } else {
+                        nodes.inlineContainer(NodeKind.Emphasis, children, span)
+                    }
+                    opener.length -= use
+                    closer.start += use
+                    closer.length -= use
+                    pieces[openerIndex] = opener
+                    pieces[cursor] = closer
+                    let wrappedIndex = pieceCount
+                    pieces[wrappedIndex] = InlinePiece(openerConsumedStart, 0, 0, false, false, node: wrapped)
+                    pieceCount++
+                    head = replaceDelimitedRange(head, openerIndex, cursor, wrappedIndex, pieces, previous, next)
                 }
             }
-            if (closerLink.active && closer.length > 0 && closer.canOpen) {
+            if (previous[cursor] != -2 && (closer.marker == b'*' || closer.marker == b'_') && closer.length > 0 && closer
+                .canOpen) {
                 if (closer.marker == b'*') {
-                    starOpeners.add(closerLink)
+                    starOpeners[starOpenerCount] = cursor
+                    starOpenerCount++
                 } else if (closer.marker == b'_') {
-                    underscoreOpeners.add(closerLink)
+                    underscoreOpeners[underscoreOpenerCount] = cursor
+                    underscoreOpenerCount++
                 }
             }
             cursor = originalNext
         }
-        materializePieceLinks(head, -1)
+        materializePieceLinks(head, -1, pieces, next, text, baseOffset, sourceIdentity)
     }
 
-    private func materializeUndelimitedPieces(input: ArrayList<InlinePiece>): Array<MarkdownNode> {
-        let nodes = ArrayList<MarkdownNode>()
-        for (piece in input) {
-            for (node in piece.nodes) {
-                nodes.add(node)
+    private func materializeUndelimitedPieces(input: ArrayList<InlinePiece>, text: String, baseOffset: Int64,
+        sourceIdentity: Bool): Array<Int64> {
+        let values = ArrayList<Int64>()
+        var index: Int64 = 0
+        while (index < input.size) {
+            let piece = input[index]
+            if (piece.node >= 0) {
+                values.add(piece.node)
+                index++
+                continue
+            }
+            let runStart = piece.start
+            var runEnd = runStart
+            var decoded: ?StringBuilder = None
+            while (index < input.size) {
+                let current = input[index]
+                if (current.node >= 0 || current.start != runEnd) {
+                    break
+                }
+                let localStart = current.start - baseOffset
+                let localEnd = localStart + current.length
+                if (current.marker == b'\\' || current.marker == b'&') {
+                    let builder = match (decoded) {
+                        case Some(value) => value
+                        case None =>
+                            let value = StringBuilder()
+                            value.append(text[runStart - baseOffset..localStart])
+                            decoded = Some(value)
+                            value
+                    }
+                    appendDecodedInlinePiece(builder, current, text[localStart..localEnd])
+                } else if (let Some(builder) <- decoded) {
+                    builder.append(text[localStart..localEnd])
+                }
+                runEnd = current.start + current.length
+                index++
+            }
+            match (decoded) {
+                case Some(builder) =>
+                    let raw = text[runStart - baseOffset..runEnd - baseOffset]
+                    values.add(parsedText(raw, builder.toString(), runStart, runEnd))
+                case None => values.add(materializeTextRange(text, baseOffset, runStart, runEnd - runStart,
+                    sourceIdentity))
             }
         }
-        nodes.toArray()
+        values.toArray()
     }
 
-    private func findDelimiterOpener(openers: ArrayList<InlinePieceLink>, bottoms: Array<Int64>,
-        closerLink: InlinePieceLink): ?InlinePieceLink {
-        let closer = closerLink.piece
+    private func appendDecodedInlinePiece(out: StringBuilder, piece: InlinePiece, raw: String): Unit {
+        if (piece.marker == b'\\') {
+            out.append(raw[1..])
+        } else {
+            out.append(decodeEntity(raw))
+        }
+    }
+
+    private func findDelimiterOpener(openers: Array<Int64>, openerCount: Int64, bottoms: Array<Int64>,
+        closerIndex: Int64, pieces: Array<InlinePiece>, previous: Array<Int64>, next: Array<Int64>): Int64 {
+        let closer = pieces[closerIndex]
         let configuration = (if (closer.canOpen) {
             3
         } else {
             0
         }) + closer.length % 3
-        var index = openers.size - 1
+        var index = openerCount - 1
         while (index >= bottoms[configuration]) {
-            let openerLink = openers[index]
-            let opener = openerLink.piece
-            if (!openerLink.active || opener.length == 0) {
+            let openerIndex = openers[index]
+            let opener = pieces[openerIndex]
+            if (previous[openerIndex] == -2 || opener.length == 0) {
                 index--
                 continue
             }
-            let adjacent = match (openerLink.next) {
-                case Some(value) => value.identity == closerLink.identity
-                case None => false
-            }
+            let adjacent = next[openerIndex] == closerIndex
             if (!adjacent) {
                 let ruleOfThreeBlocks = (opener.canClose || closer.canOpen) && (opener.length + closer.length) % 3 == 0 &&
                     (opener.length % 3 != 0 || closer.length % 3 != 0)
                 if (!ruleOfThreeBlocks) {
-                    return Some(openerLink)
+                    return openerIndex
                 }
             }
             index--
         }
-        bottoms[configuration] = openers.size
-        None
+        bottoms[configuration] = openerCount
+        -1
     }
 
     private func replaceDelimitedRange(
-        head: ?InlinePieceLink,
-        opener: InlinePieceLink,
-        closer: InlinePieceLink,
-        wrapped: InlinePieceLink
-    ): ?InlinePieceLink {
-        var cursor = opener.next
-        while (let Some(value) <- cursor) {
-            if (value.identity == closer.identity) {
+        head: Int64,
+        opener: Int64,
+        closer: Int64,
+        wrapped: Int64,
+        pieces: Array<InlinePiece>,
+        previous: Array<Int64>,
+        next: Array<Int64>
+    ): Int64 {
+        var cursor = next[opener]
+        while (cursor >= 0) {
+            if (cursor == closer) {
                 break
             }
-            value.active = false
-            cursor = value.next
+            previous[cursor] = -2
+            cursor = next[cursor]
         }
-        let left = if (opener.piece.length > 0) {
-            Some(opener)
+        let left = if (pieces[opener].length > 0) {
+            opener
         } else {
-            opener.active = false
-            opener.previous
+            let value = previous[opener]
+            previous[opener] = -2
+            value
         }
-        let right = if (closer.piece.length > 0) {
-            Some(closer)
+        let right = if (pieces[closer].length > 0) {
+            closer
         } else {
-            closer.active = false
-            closer.next
+            let value = next[closer]
+            previous[closer] = -2
+            value
         }
-        wrapped.previous = left
-        wrapped.next = right
-        match (left) {
-            case Some(value) => value.next = Some(wrapped)
-            case None => ()
+        previous[wrapped] = left
+        next[wrapped] = right
+        if (left >= 0) {
+            next[left] = wrapped
         }
-        if (let Some(value) <- right) {
-            value.previous = Some(wrapped)
+        if (right >= 0) {
+            previous[right] = wrapped
         }
-        match (left) {
-            case Some(_) => head
-            case None => Some(wrapped)
+        if (left >= 0) {
+            head
+        } else {
+            wrapped
         }
     }
 
-    private func materializePieceLinks(first: ?InlinePieceLink, stopIdentity: Int64): Array<MarkdownNode> {
-        let out = ArrayList<MarkdownNode>()
+    private func materializePieceLinks(first: Int64, stopIndex: Int64, pieces: Array<InlinePiece>, next: Array<Int64>,
+        text: String, baseOffset: Int64, sourceIdentity: Bool): Array<Int64> {
+        let out = ArrayList<Int64>()
         var cursor = first
-        while (let Some(link) <- cursor) {
-            if (link.identity == stopIdentity) {
+        while (cursor >= 0) {
+            if (cursor == stopIndex) {
                 break
             }
-            let piece = link.piece
-            if (link.active) {
-                if (piece.marker != 0 && piece.length > 0) {
-                    let raw = repeatDelimiter(piece.marker, piece.length)
-                    out.add(parsedText(raw, raw, piece.start, piece.start + piece.length))
-                } else {
-                    for (node in piece.nodes) {
-                        out.add(node)
-                    }
-                }
+            let piece = pieces[cursor]
+            if (piece.node >= 0) {
+                out.add(piece.node)
+                cursor = next[cursor]
+                continue
             }
-            cursor = link.next
+            let runStart = piece.start
+            var runEnd = runStart
+            var decoded: ?StringBuilder = None
+            while (cursor >= 0 && cursor != stopIndex) {
+                let current = pieces[cursor]
+                if (current.node >= 0 || current.start != runEnd) {
+                    break
+                }
+                let localStart = current.start - baseOffset
+                let localEnd = localStart + current.length
+                if (current.marker == b'\\' || current.marker == b'&') {
+                    let builder = match (decoded) {
+                        case Some(value) => value
+                        case None =>
+                            let value = StringBuilder()
+                            value.append(text[runStart - baseOffset..localStart])
+                            decoded = Some(value)
+                            value
+                    }
+                    appendDecodedInlinePiece(builder, current, text[localStart..localEnd])
+                } else if (let Some(builder) <- decoded) {
+                    builder.append(text[localStart..localEnd])
+                }
+                runEnd = current.start + current.length
+                cursor = next[cursor]
+            }
+            match (decoded) {
+                case Some(builder) =>
+                    let raw = text[runStart - baseOffset..runEnd - baseOffset]
+                    out.add(parsedText(raw, builder.toString(), runStart, runEnd))
+                case None => out.add(materializeTextRange(text, baseOffset, runStart, runEnd - runStart, sourceIdentity))
+            }
         }
         out.toArray()
-    }
-
-    private func repeatDelimiter(marker: Byte, count: Int64): String {
-        let out = StringBuilder()
-        for (_ in 0..count) {
-            out.appendFromUtf8([marker])
-        }
-        out.toString()
     }
 
     private func scanStep(): Unit {
@@ -2138,8 +2867,13 @@ internal class ParserSession {
         start: Int64,
         extensionDepth: Int64
     ): ?ExtensionBlockScan {
-        for (ruleIndex in 0..dialect.blockRules.size) {
-            let rule = dialect.blockRules[ruleIndex]
+        let trimmed = trimAscii(lines[start].text)
+        if (trimmed.isEmpty()) {
+            return None
+        }
+        let blockRules = dialect.parserHotPlan.blockRules(trimmed[0])
+        for (ruleIndex in 0..blockRules.size) {
+            let rule = blockRules[ruleIndex]
             let identity = "${rule.extensionId}/${rule.ruleId}"
             if (identity == suppressedBlockRule) {
                 continue
@@ -2147,7 +2881,6 @@ internal class ParserSession {
             if (rule.documentStartOnly && lines[start].startByte > 3) {
                 continue
             }
-            let trimmed = trimAscii(lines[start].text)
             if (!trimmed.startsWith(rule.openerPrefix)) {
                 continue
             }
@@ -2184,12 +2917,12 @@ internal class ParserSession {
                     steps: syntaxRuleCost(rule.resourceCost, lines[start].endByte - lines[start].startByte))
                 let span = mappedSpan(lines[start].startByte, lines[start].endByte)
                 ensureLiteralBytes(captured.size, "extension_parse", consumeBudget: false)
-                let children: Array<MarkdownNode> = match (rule.contentMode) {
+                let children: Array<Int64> = match (rule.contentMode) {
                     case BlockContentMode.Markdown =>
                         if (captured.isEmpty()) {
                             []
                         } else {
-                            [Paragraph(ids.next(),
+                            [nodes.paragraph(
                                 parseInline(captured, lines[start].startByte + rule.openerPrefix.size, extensionDepth + 1),
                                 span)]
                         }
@@ -2211,7 +2944,7 @@ internal class ParserSession {
                 return Some(
                     ExtensionBlockScan(
                         Some(
-                            CustomBlock(ids.next(), rule.extensionId, manifestVersion(rule.extensionId), kindId, payload,
+                            nodes.customBlock(rule.extensionId, manifestVersion(rule.extensionId), kindId, payload,
                                 children, Some(span), origin)), noPending, start + 1))
             }
             var index = start + 1
@@ -2272,14 +3005,14 @@ internal class ParserSession {
                     } else {
                         identity
                     }
-                    let noNode: ?MarkdownNode = None
+                    let noNode: ?Int64 = None
                     return Some(
                         ExtensionBlockScan(noNode,
                             Some(
                                 PendingExtensionState(rule, name, parameters, literal, values, span, kindId, childLines,
                                     childSuppression, index + 1)), index + 1))
                 case BlockContentMode.Literal =>
-                    let children: Array<MarkdownNode> = []
+                    let children: Array<Int64> = []
                     let payload = emitBlockPayload(rule, kindId, parameters, literal, span, children, values)
                     let origin = NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: Some(span),
                         extensionId: Some(rule.extensionId))
@@ -2287,8 +3020,8 @@ internal class ParserSession {
                     return Some(
                         ExtensionBlockScan(
                             Some(
-                                CustomBlock(ids.next(), rule.extensionId, manifestVersion(rule.extensionId), kindId,
-                                    payload, children, Some(span), origin)), noPending, index + 1))
+                                nodes.customBlock(rule.extensionId, manifestVersion(rule.extensionId), kindId, payload,
+                                    children, Some(span), origin)), noPending, index + 1))
             }
         }
         None
@@ -2301,10 +3034,14 @@ internal class ParserSession {
         if (isBlockStart(lines, index)) {
             return true
         }
-        if (dialect.parserOptions.extensionsEnabled && dialect.blockRules.size > 0) {
+        if (dialect.parserOptions.extensionsEnabled && dialect.parserHotPlan.hasBlockDsl) {
             let trimmed = trimAscii(lines[index].text)
-            for (ruleIndex in 0..dialect.blockRules.size) {
-                let rule = dialect.blockRules[ruleIndex]
+            if (trimmed.isEmpty()) {
+                return false
+            }
+            let rules = dialect.parserHotPlan.blockRules(trimmed[0])
+            for (ruleIndex in 0..rules.size) {
+                let rule = rules[ruleIndex]
                 let identity = "${rule.extensionId}/${rule.ruleId}"
                 if (identity != suppressedBlockRule && trimmed.startsWith(rule.openerPrefix)) {
                     return true
@@ -2324,11 +3061,11 @@ internal class ParserSession {
         ""
     }
 
-    private func emitInlinePayload(rule: InlineSyntaxRule, literal: String, span: SourceSpan,
-        children: Array<MarkdownNode>): CustomPayload {
+    private func emitInlinePayload(rule: InlineSyntaxRule, literal: String, span: SourceSpan, children: Array<Int64>): CustomPayload {
         match (rule.emitter) {
             case Some(emitter) => try {
-                emitter.emit(InlineSyntaxMatch(rule.extensionId, rule.ruleId, literal, span, children))
+                emitter.emit(
+                    InlineSyntaxMatch(rule.extensionId, rule.ruleId, literal, span, syntaxChildSummaries(children)))
             } catch (error: Exception) {
                 let manifest = extensionManifest(rule.extensionId)
                 throw ExtensionFailureException(rule.extensionId, manifest.semanticVersion,
@@ -2339,11 +3076,12 @@ internal class ParserSession {
     }
 
     private func emitBlockPayload(rule: BlockSyntaxRule, name: String, parameters: String, literal: String,
-        span: SourceSpan, children: Array<MarkdownNode>, values: HashMap<String, SyntaxParameterValue>): CustomPayload {
+        span: SourceSpan, children: Array<Int64>, values: HashMap<String, SyntaxParameterValue>): CustomPayload {
         match (rule.emitter) {
             case Some(emitter) => try {
                 emitter.emit(
-                    BlockSyntaxMatch(rule.extensionId, rule.ruleId, name, parameters, literal, span, children, values))
+                    BlockSyntaxMatch(rule.extensionId, rule.ruleId, name, parameters, literal, span,
+                        syntaxChildSummaries(children), values))
             } catch (error: Exception) {
                 let manifest = extensionManifest(rule.extensionId)
                 throw ExtensionFailureException(rule.extensionId, manifest.semanticVersion,
@@ -2353,9 +3091,27 @@ internal class ParserSession {
         }
     }
 
+    private func syntaxChildSummaries(children: Array<Int64>): Array<SyntaxChildSummary> {
+        let values = ArrayList<SyntaxChildSummary>()
+        for (child in children) {
+            let snapshot = nodes.snapshotNode(child)
+            values.add(SyntaxChildSummary(snapshot.kind, snapshot.span, arenaSummaryText(snapshot)))
+        }
+        values.toArray()
+    }
+
+    private func arenaSummaryText(node: NodeRef): String {
+        match (node.kind) {
+            case NodeKind.Text => node.asText().getOrThrow().value
+            case NodeKind.CodeSpan => node.asCodeSpan().getOrThrow().literal
+            case _ => ""
+        }
+    }
+
     private func hasLiteralBackslashRuleAt(text: String, start: Int64): Bool {
-        for (index in 0..dialect.inlineRules.size) {
-            let rule = dialect.inlineRules[index]
+        let rules = dialect.parserHotPlan.inlineRules(text[start])
+        for (index in 0..rules.size) {
+            let rule = rules[index]
             if (let InlineEscapePolicy.LiteralBackslash <- rule.escapePolicy) {
                 if (startsAt(text, rule.opener, start)) {
                     return true
@@ -2394,72 +3150,31 @@ internal class ParserSession {
         false
     }
 
-    private func parseReferenceDefinitionAt(
-        lines: Array<LineRecord>,
-        start: Int64
-    ): ?(String, String, String, String, String, Int64) {
-        if (leadingWhitespace(lines[start].text) > 3) {
-            return None
-        }
-        let header = StringBuilder()
-        header.append(trimAscii(lines[start].text))
-        if (!header.toString().startsWith("[")) {
-            return None
-        }
-        var next = start + 1
-        var close = findReferenceLabelClose(header.toString())
-        while (close < 0 && next < lines.size && !isBlank(lines[next].text)) {
-            header.append("\n")
-            header.append(lines[next].text)
-            next++
-            close = findReferenceLabelClose(header.toString())
-        }
-        let text = header.toString()
-        if (close <= 1 || close + 1 >= text.size || text[close + 1] != b':') {
-            return None
-        }
-        let label = text[1..close]
-        if (label.size > 999 || containsUnescapedOpenBracket(label) || normalizeReferenceLabel(label).isEmpty()) {
-            return None
-        }
-        let candidate = StringBuilder()
-        candidate.append(text[close + 2..])
-        while (next <= lines.size) {
-            let source = candidate.toString()
-            if (!trimAscii(source).isEmpty()) {
-                if (let Some((end, destinationRaw, destination, titleRaw, title)) <- parseInlineLinkTarget(source + ")",
-                    0)) {
-                    if (end == source.size) {
-                        if (titleRaw.isEmpty() && next < lines.size && !isBlank(lines[next].text) &&
-                            standaloneReferenceTitle(trimAscii(lines[next].text))) {
-                            candidate.append("\n")
-                            candidate.append(lines[next].text)
-                            next++
-                            continue
-                        }
-                        return Some((label, destinationRaw, destination, titleRaw, title, next))
-                    }
-                }
-            }
-            if (next >= lines.size || isBlank(lines[next].text)) {
-                break
-            }
-            candidate.append("\n")
-            candidate.append(lines[next].text)
-            next++
-        }
-        None
-    }
-
     private func mappedSpan(decodedStart: Int64, decodedEnd: Int64): SourceSpan {
         SourceSpan(source.originalOffset(decodedStart), source.originalOffset(decodedEnd))
     }
 
-    private func parsedText(raw: String, value: String, decodedStart: Int64, decodedEnd: Int64): Text {
+    private func parsedText(raw: String, value: String, decodedStart: Int64, decodedEnd: Int64): Int64 {
         storedText(raw, value, mappedSpan(decodedStart, decodedEnd))
     }
 
-    private func storedText(raw: String, value: String, span: SourceSpan): Text {
+    private func parsedSourceText(decodedStart: Int64, decodedEnd: Int64): Int64 {
+        let span = mappedSpan(decodedStart, decodedEnd)
+        ensureLiteralBytes(span.length(), "inline_parse", consumeBudget: false)
+        nodes.sourceText(span)
+    }
+
+    private func materializeTextRange(text: String, baseOffset: Int64, decodedStart: Int64, length: Int64,
+        sourceIdentity: Bool): Int64 {
+        if (sourceIdentity) {
+            return parsedSourceText(decodedStart, decodedStart + length)
+        }
+        let localStart = decodedStart - baseOffset
+        let raw = text[localStart..localStart + length]
+        parsedText(raw, raw, decodedStart, decodedStart + length)
+    }
+
+    private func storedText(raw: String, value: String, span: SourceSpan): Int64 {
         ensureLiteralBytes(max(raw.size, value.size), "inline_parse", consumeBudget: false)
         let useSlice = if (span.length() >= 256) {
             source.matches(span, raw)
@@ -2477,7 +3192,7 @@ internal class ParserSession {
             LiteralStorage.Copy(value)
         }
         let normalized: ?String = None
-        Text(ids.next(), rawStorage, valueStorage, span, normalized, NodeOrigin.parsed(span))
+        nodes.text(rawStorage, valueStorage, span, normalized: normalized)
     }
 
     private func storageForLiteral(value: String, span: SourceSpan): LiteralStorage {
@@ -2488,20 +3203,36 @@ internal class ParserSession {
         }
     }
 
-    private func coalesceTextNodes(nodes: Array<MarkdownNode>): Array<MarkdownNode> {
-        let out = ArrayList<MarkdownNode>()
-        for (node in nodes) {
-            match (node) {
-                case current: Text =>
+    private func coalesceTextNodes(values: Array<Int64>): Array<Int64> {
+        let out = ArrayList<Int64>()
+        for (node in values) {
+            if (let Some(currentSpan) <- nodes.sourceTextSpan(node)) {
+                if (!out.isEmpty()) {
+                    if (let Some(previousSpan) <- nodes.sourceTextSpan(out[out.size - 1])) {
+                        if (previousSpan.endByte == currentSpan.startByte) {
+                            let mergedSpan = SourceSpan(previousSpan.startByte, currentSpan.endByte)
+                            ensureLiteralBytes(mergedSpan.length(), "inline_parse", consumeBudget: false)
+                            nodes.replaceSourceText(out[out.size - 1], mergedSpan)
+                            nodes.abandon(node)
+                            continue
+                        }
+                    }
+                } else {
+                    out.add(node)
+                    continue
+                }
+            }
+            match (nodes.textPayload(node)) {
+                case Some(current) =>
                     if (!out.isEmpty()) {
-                        match (out[out.size - 1]) {
-                            case previous: Text =>
-                                let previousSpan = requiredNodeSpan(previous)
-                                let currentSpan = requiredNodeSpan(current)
+                        match (nodes.textPayload(out[out.size - 1])) {
+                            case Some(previous) =>
+                                let previousSpan = requiredNodeSpan(out[out.size - 1])
+                                let currentSpan = requiredNodeSpan(node)
                                 if (previousSpan.endByte == currentSpan.startByte) {
                                     let mergedSpan = SourceSpan(previousSpan.startByte, currentSpan.endByte)
-                                    let raw = previous.raw + current.raw
-                                    let value = previous.value + current.value
+                                    let raw = previous.rawStorage.text() + current.rawStorage.text()
+                                    let value = previous.valueStorage.text() + current.valueStorage.text()
                                     ensureLiteralBytes(max(raw.size, value.size), "inline_parse", consumeBudget: false)
                                     let useSlice = if (mergedSpan.length() >= 256) {
                                         source.matches(mergedSpan, raw)
@@ -2518,48 +3249,62 @@ internal class ParserSession {
                                     } else {
                                         LiteralStorage.Copy(value)
                                     }
-                                    out[out.size - 1] = Text(previous.nodeId, rawStorage, valueStorage, mergedSpan,
-                                        previous.normalized, NodeOrigin.parsed(mergedSpan))
+                                    nodes.replaceText(out[out.size - 1], rawStorage, valueStorage, mergedSpan,
+                                        normalized: previous.normalized)
+                                    nodes.abandon(node)
                                     continue
                                 }
                             case _ => ()
                         }
                     }
-                    out.add(current)
+                    out.add(node)
                 case _ => out.add(node)
             }
         }
         out.toArray()
     }
 
-    private func expandGfmAutolinks(nodes: Array<MarkdownNode>): Array<MarkdownNode> {
-        let out = ArrayList<MarkdownNode>()
-        for (node in nodes) {
-            match (node) {
-                case text: Text => for (expanded in expandGfmText(text)) {
-                    out.add(expanded)
-                }
+    private func expandGfmAutolinks(values: Array<Int64>): Array<Int64> {
+        let out = ArrayList<Int64>()
+        for (node in values) {
+            match (nodes.textPayload(node)) {
+                case Some(payload) =>
+                    let text = payload.valueStorage.text()
+                    if (mayContainExtendedAutolink(text)) {
+                        for (expanded in expandGfmText(node, text)) {
+                            out.add(expanded)
+                        }
+                    } else {
+                        out.add(node)
+                    }
                 case _ => out.add(node)
             }
         }
         out.toArray()
     }
 
-    private func expandGfmText(textNode: Text): Array<MarkdownNode> {
-        let value = textNode.value
+    private func expandGfmText(textNode: Int64, value: String): Array<Int64> {
         let span = requiredNodeSpan(textNode)
-        let out = ArrayList<MarkdownNode>()
+        let out = ArrayList<Int64>()
         var plainStart: Int64 = 0
         var index: Int64 = 0
+        var reusedOriginal = false
         while (index < value.size) {
             let kind = extendedAutolinkStart(value, index)
             if (kind > 0) {
                 let end = extendedAutolinkEnd(value, index, kind)
                 if (end > index) {
                     if (index > plainStart) {
-                        out.add(
-                            storedText(value[plainStart..index], value[plainStart..index],
-                                SourceSpan(span.startByte + plainStart, span.startByte + index)))
+                        let plain = value[plainStart..index]
+                        let plainSpan = SourceSpan(span.startByte + plainStart, span.startByte + index)
+                        if (!reusedOriginal) {
+                            let storage = storageForLiteral(plain, plainSpan)
+                            nodes.replaceText(textNode, storage, storage, plainSpan)
+                            out.add(textNode)
+                            reusedOriginal = true
+                        } else {
+                            out.add(storedText(plain, plain, plainSpan))
+                        }
                     }
                     let label = value[index..end]
                     let destination = if (kind == 1) {
@@ -2570,9 +3315,16 @@ internal class ParserSession {
                         label
                     }
                     let linkSpan = SourceSpan(span.startByte + index, span.startByte + end)
-                    out.add(
-                        Link(ids.next(), label, destination, "", "", LinkSyntaxKind.ExtendedAutolink,
-                            [storedText(label, label, linkSpan)], linkSpan))
+                    let labelNode = if (!reusedOriginal) {
+                        let storage = storageForLiteral(label, linkSpan)
+                        nodes.replaceText(textNode, storage, storage, linkSpan)
+                        reusedOriginal = true
+                        textNode
+                    } else {
+                        storedText(label, label, linkSpan)
+                    }
+                    out.add(nodes.link(label, destination, "", "", LinkSyntaxKind.ExtendedAutolink, [labelNode],
+                        linkSpan))
                     index = end
                     plainStart = end
                     continue
@@ -2581,9 +3333,16 @@ internal class ParserSession {
             index = nextRuneOffset(value, index)
         }
         if (plainStart < value.size) {
-            out.add(
-                storedText(value[plainStart..], value[plainStart..], SourceSpan(span.startByte + plainStart,
-                    span.endByte)))
+            let plain = value[plainStart..]
+            let plainSpan = SourceSpan(span.startByte + plainStart, span.endByte)
+            if (!reusedOriginal) {
+                let storage = storageForLiteral(plain, plainSpan)
+                nodes.replaceText(textNode, storage, storage, plainSpan)
+                out.add(textNode)
+                reusedOriginal = true
+            } else {
+                out.add(storedText(plain, plain, plainSpan))
+            }
         }
         if (out.isEmpty()) {
             [textNode]
@@ -2592,15 +3351,15 @@ internal class ParserSession {
         }
     }
 
-    private func requiredNodeSpan(node: MarkdownNode): SourceSpan {
-        match (node.span) {
+    private func requiredNodeSpan(node: Int64): SourceSpan {
+        match (nodes.span(node)) {
             case Some(span) => span
             case None => throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation,
                 "parsed inline node is missing span", phase: "inline_parse")
         }
     }
 
-    private func parseInlineLineRange(lines: Array<LineRecord>, start: Int64, end: Int64): Array<MarkdownNode> {
+    private func parseInlineLineRange(lines: Array<LineRecord>, start: Int64, end: Int64): Array<Int64> {
         let combined = StringBuilder()
         var hasDelimiter = false
         for (index in start..end) {
@@ -2614,9 +3373,10 @@ internal class ParserSession {
             combined.append(content)
         }
         if (hasDelimiter) {
-            return parseInline(combined.toString(), lines[start].startByte + leadingWhitespace(lines[start].text), 0)
+            return parseInline(combined.toString(), lines[start].startByte + leadingWhitespace(lines[start].text), 0,
+                sourceIdentity: false)
         }
-        let out = ArrayList<MarkdownNode>()
+        let out = ArrayList<Int64>()
         for (index in start..end) {
             let contentStart = leadingWhitespace(lines[index].text)
             let content = stripTrailingSpaces(lines[index].text[contentStart..])
@@ -2624,7 +3384,7 @@ internal class ParserSession {
                 out.add(child)
             }
             if (index + 1 < end) {
-                out.add(SoftBreak(ids.next(), mappedSpan(lines[index].endByte, lines[index + 1].startByte)))
+                out.add(nodes.softBreak(mappedSpan(lines[index].endByte, lines[index + 1].startByte)))
             }
         }
         out.toArray()
@@ -2658,6 +3418,69 @@ internal class ParserSession {
         }
         let body = text[start + 4..end]
         body.isEmpty() || body.startsWith(">") || body.startsWith("->") || body.contains("--") || body.endsWith("-")
+    }
+}
+
+private class ReferenceDefinitionParser {
+    static func parse(
+        lines: Array<LineRecord>,
+        start: Int64
+    ): ?(String, String, String, String, String, String, Int64) {
+        if (leadingWhitespace(lines[start].text) > 3) {
+            return None
+        }
+        let header = StringBuilder()
+        header.append(trimAscii(lines[start].text))
+        if (!header.toString().startsWith("[")) {
+            return None
+        }
+        var next = start + 1
+        var close = findReferenceLabelClose(header.toString())
+        while (close < 0 && next < lines.size && !isBlank(lines[next].text)) {
+            header.append("\n")
+            header.append(lines[next].text)
+            next++
+            close = findReferenceLabelClose(header.toString())
+        }
+        let text = header.toString()
+        if (close <= 1 || close + 1 >= text.size || text[close + 1] != b':') {
+            return None
+        }
+        let label = text[1..close]
+        if (label.size > 999 || containsUnescapedOpenBracket(label)) {
+            return None
+        }
+        let normalized = normalizeReferenceLabel(label)
+        if (normalized.isEmpty()) {
+            return None
+        }
+        let candidate = StringBuilder()
+        candidate.append(text[close + 2..])
+        while (next <= lines.size) {
+            let source = candidate.toString()
+            if (!trimAscii(source).isEmpty()) {
+                if (let Some((end, destinationRaw, destination, titleRaw, title)) <- parseInlineLinkTarget(source + ")",
+                    0)) {
+                    if (end == source.size) {
+                        if (titleRaw.isEmpty() && next < lines.size && !isBlank(lines[next].text) &&
+                            standaloneReferenceTitle(trimAscii(lines[next].text))) {
+                            candidate.append("\n")
+                            candidate.append(lines[next].text)
+                            next++
+                            continue
+                        }
+                        return Some((label, normalized, destinationRaw, destination, titleRaw, title, next))
+                    }
+                }
+            }
+            if (next >= lines.size || isBlank(lines[next].text)) {
+                break
+            }
+            candidate.append("\n")
+            candidate.append(lines[next].text)
+            next++
+        }
+        None
     }
 }
 
@@ -2984,6 +3807,33 @@ private func isFenceClose(text: String, marker: Byte, minimum: Int64): Bool {
         return false
     }
     trimAscii(text[leading + count..]).isEmpty()
+}
+
+private func isFenceCloseRange(text: String, start: Int64, end: Int64, marker: Byte, minimum: Int64): Bool {
+    var index = start
+    var leading: Int64 = 0
+    while (index < end && text[index] == b' ' && leading <= 3) {
+        index++
+        leading++
+    }
+    if (leading > 3) {
+        return false
+    }
+    var count: Int64 = 0
+    while (index < end && text[index] == marker) {
+        index++
+        count++
+    }
+    if (count < minimum) {
+        return false
+    }
+    while (index < end) {
+        if (text[index] != b' ' && text[index] != b'\t') {
+            return false
+        }
+        index++
+    }
+    true
 }
 
 private func isQuoteLine(text: String): Bool {
@@ -3377,20 +4227,28 @@ private func isTableStart(lines: Array<LineRecord>, index: Int64): Bool {
     if (index + 1 >= lines.size || !isTableRow(lines[index].text)) {
         return false
     }
-    let cells = splitTable(lines[index + 1].text)
-    if (splitTable(lines[index].text).size != cells.size) {
+    let delimiter = lines[index + 1].text
+    let cells = splitTableRanges(delimiter)
+    if (splitTableRanges(lines[index].text).size != cells.size) {
         return false
     }
     if (cells.isEmpty()) {
         return false
     }
     for (cell in cells) {
-        let stripped = stripColons(trimAscii(cell))
-        if (stripped.isEmpty()) {
+        var start = cell.start
+        var end = cell.end
+        if (start < end && delimiter[start] == b':') {
+            start++
+        }
+        if (start < end && delimiter[end - 1] == b':') {
+            end--
+        }
+        if (start == end) {
             return false
         }
-        for (i in 0..stripped.size) {
-            if (stripped[i] != b'-') {
+        for (i in start..end) {
+            if (delimiter[i] != b'-') {
                 return false
             }
         }
@@ -3398,8 +4256,8 @@ private func isTableStart(lines: Array<LineRecord>, index: Int64): Bool {
     true
 }
 
-private func splitTable(text: String): Array<String> {
-    let out = ArrayList<String>()
+private func splitTableRanges(text: String): Array<TableCellRange> {
+    let out = ArrayList<TableCellRange>()
     var start: Int64 = if (text.startsWith("|")) {
         1
     } else {
@@ -3411,10 +4269,29 @@ private func splitTable(text: String): Array<String> {
         text.size
     }
     var index = start
+    var backslashes: Int64 = 0
+    var escapedPipe = false
     while (index <= endLimit) {
-        if (index == endLimit || (text[index] == b'|' && !isEscaped(text, index))) {
-            out.add(trimAscii(text[start..index]))
+        if (index == endLimit || (text[index] == b'|' && backslashes % 2 == 0)) {
+            var cellStart = start
+            var cellEnd = index
+            while (cellStart < cellEnd && (text[cellStart] == b' ' || text[cellStart] == b'\t')) {
+                cellStart++
+            }
+            while (cellEnd > cellStart && (text[cellEnd - 1] == b' ' || text[cellEnd - 1] == b'\t')) {
+                cellEnd--
+            }
+            out.add(TableCellRange(cellStart, cellEnd, escapedPipe))
             start = index + 1
+            escapedPipe = false
+            backslashes = 0
+        } else if (text[index] == b'\\') {
+            backslashes++
+        } else {
+            if (text[index] == b'|' && backslashes % 2 == 1) {
+                escapedPipe = true
+            }
+            backslashes = 0
         }
         index++
     }
@@ -3439,10 +4316,9 @@ private func unescapeTablePipes(value: String): String {
 
 private func tableAlignments(text: String): Array<TableAlignment> {
     let out = ArrayList<TableAlignment>()
-    for (cell in splitTable(text)) {
-        let trimmed = trimAscii(cell)
-        let left = trimmed.startsWith(":")
-        let right = trimmed.endsWith(":")
+    for (cell in splitTableRanges(text)) {
+        let left = cell.start < cell.end && text[cell.start] == b':'
+        let right = cell.start < cell.end && text[cell.end - 1] == b':'
         out.add(if (left && right) {
             TableAlignment.Center
         } else if (left) {
@@ -3454,18 +4330,6 @@ private func tableAlignments(text: String): Array<TableAlignment> {
         })
     }
     out.toArray()
-}
-
-private func stripColons(text: String): String {
-    var start: Int64 = 0
-    var end = text.size
-    if (start < end && text[start] == b':') {
-        start++
-    }
-    if (end > start && text[end - 1] == b':') {
-        end--
-    }
-    text[start..end]
 }
 
 private func firstWord(text: String): String {
@@ -3623,6 +4487,7 @@ private func splitLinkTarget(text: String): (String, String) {
 private func parseInlineLinkTarget(text: String, start: Int64): ?(Int64, String, String, String, String) {
     var index = skipLinkWhitespace(text, start)
     var destinationRaw = ""
+    var destinationNeedsDecode = false
     if (index < text.size && text[index] == b'<') {
         let destinationStart = index + 1
         index = destinationStart
@@ -3631,8 +4496,12 @@ private func parseInlineLinkTarget(text: String, start: Int64): ?(Int64, String,
                 return None
             }
             if (text[index] == b'\\' && index + 1 < text.size) {
+                destinationNeedsDecode = true
                 index += 2
             } else {
+                if (text[index] == b'&') {
+                    destinationNeedsDecode = true
+                }
                 index = nextRuneOffset(text, index)
             }
         }
@@ -3647,6 +4516,7 @@ private func parseInlineLinkTarget(text: String, start: Int64): ?(Int64, String,
         while (index < text.size) {
             let byte = text[index]
             if (byte == b'\\' && index + 1 < text.size) {
+                destinationNeedsDecode = true
                 index += 2
                 continue
             }
@@ -3669,6 +4539,9 @@ private func parseInlineLinkTarget(text: String, start: Int64): ?(Int64, String,
             if (byte == b' ' || byte == b'\t' || byte == 10 || byte == 13) {
                 break
             }
+            if (byte == b'&') {
+                destinationNeedsDecode = true
+            }
             index = nextRuneOffset(text, index)
         }
         if (depth != 0) {
@@ -3679,6 +4552,7 @@ private func parseInlineLinkTarget(text: String, start: Int64): ?(Int64, String,
     let afterDestination = index
     index = skipLinkWhitespace(text, index)
     var titleRaw = ""
+    var titleNeedsDecode = false
     if (index < text.size && text[index] != b')') {
         if (index == afterDestination) {
             return None
@@ -3697,8 +4571,12 @@ private func parseInlineLinkTarget(text: String, start: Int64): ?(Int64, String,
         index = titleStart
         while (index < text.size && text[index] != closer) {
             if (text[index] == b'\\' && index + 1 < text.size) {
+                titleNeedsDecode = true
                 index += 2
             } else {
+                if (text[index] == b'&') {
+                    titleNeedsDecode = true
+                }
                 index = nextRuneOffset(text, index)
             }
         }
@@ -3712,7 +4590,15 @@ private func parseInlineLinkTarget(text: String, start: Int64): ?(Int64, String,
     if (index >= text.size || text[index] != b')') {
         return None
     }
-    Some((index, destinationRaw, decodeLinkValue(destinationRaw), titleRaw, decodeLinkValue(titleRaw)))
+    Some((index, destinationRaw, if (destinationNeedsDecode) {
+            decodeLinkValue(destinationRaw)
+        } else {
+            destinationRaw
+        }, titleRaw, if (titleNeedsDecode) {
+            decodeLinkValue(titleRaw)
+        } else {
+            titleRaw
+        }))
 }
 
 private func skipLinkWhitespace(text: String, start: Int64): Int64 {
@@ -3859,6 +4745,10 @@ private func isAsciiPunctuation(byte: Byte): Bool {
 private func coreInlineSpecialByte(byte: Byte): Bool {
     byte == b'\\' || byte == b'&' || byte == b'`' || byte == b'~' || byte == b'*' || byte == b'_' || byte == b'!' ||
         byte == b'[' || byte == b'<'
+}
+
+private func textLoweringCandidateByte(byte: Byte): Bool {
+    byte == b'\\' || byte == b'&' || byte == b'`'
 }
 
 private func autolinkKind(body: String): Int64 {
@@ -4548,12 +5438,12 @@ private func delimiterCanOpen(text: String, start: Int64, width: Int64, marker: 
 }
 
 private func delimiterCanOpenBytes(bytes: Array<Byte>, start: Int64, width: Int64, marker: Byte): Bool {
-    let previous = previousRuneBytes(bytes, start)
-    let next = nextRuneBytes(bytes, start + width)
-    let previousWhitespace = runeIsWhitespace(previous)
-    let nextWhitespace = runeIsWhitespace(next)
-    let previousPunctuation = runeIsPunctuationOrSymbol(previous)
-    let nextPunctuation = runeIsPunctuationOrSymbol(next)
+    let previous = previousDelimiterClass(bytes, start)
+    let next = nextDelimiterClass(bytes, start + width)
+    let previousWhitespace = previous == 0
+    let nextWhitespace = next == 0
+    let previousPunctuation = previous == 1
+    let nextPunctuation = next == 1
     let leftFlanking = !nextWhitespace && (!nextPunctuation || previousWhitespace || previousPunctuation)
     let rightFlanking = !previousWhitespace && (!previousPunctuation || nextWhitespace || nextPunctuation)
     if (marker == b'_') {
@@ -4580,12 +5470,12 @@ private func delimiterCanClose(text: String, start: Int64, width: Int64, marker:
 }
 
 private func delimiterCanCloseBytes(bytes: Array<Byte>, start: Int64, width: Int64, marker: Byte): Bool {
-    let previous = previousRuneBytes(bytes, start)
-    let next = nextRuneBytes(bytes, start + width)
-    let previousWhitespace = runeIsWhitespace(previous)
-    let nextWhitespace = runeIsWhitespace(next)
-    let previousPunctuation = runeIsPunctuationOrSymbol(previous)
-    let nextPunctuation = runeIsPunctuationOrSymbol(next)
+    let previous = previousDelimiterClass(bytes, start)
+    let next = nextDelimiterClass(bytes, start + width)
+    let previousWhitespace = previous == 0
+    let nextWhitespace = next == 0
+    let previousPunctuation = previous == 1
+    let nextPunctuation = next == 1
     let leftFlanking = !nextWhitespace && (!nextPunctuation || previousWhitespace || previousPunctuation)
     let rightFlanking = !previousWhitespace && (!previousPunctuation || nextWhitespace || nextPunctuation)
     if (marker == b'_') {
@@ -4595,24 +5485,43 @@ private func delimiterCanCloseBytes(bytes: Array<Byte>, start: Int64, width: Int
     }
 }
 
-private func previousRuneBytes(bytes: Array<Byte>, offset: Int64): ?Rune {
+private func previousDelimiterClass(bytes: Array<Byte>, offset: Int64): Byte {
     if (offset <= 0) {
-        return None
+        return 0
     }
     var start = offset - 1
     while (start > 0 && (bytes[start] & 0b1100_0000) == 0b1000_0000) {
         start--
     }
-    let (rune, _) = Rune.fromUtf8(bytes, start)
-    Some(rune)
+    delimiterClass(bytes, start)
 }
 
-private func nextRuneBytes(bytes: Array<Byte>, offset: Int64): ?Rune {
+private func nextDelimiterClass(bytes: Array<Byte>, offset: Int64): Byte {
     if (offset >= bytes.size) {
-        return None
+        return 0
+    }
+    delimiterClass(bytes, offset)
+}
+
+private func delimiterClass(bytes: Array<Byte>, offset: Int64): Byte {
+    let byte = bytes[offset]
+    if (byte < 0x80) {
+        if (byte == b' ' || (byte >= 0x09 && byte <= 0x0D)) {
+            return 0
+        }
+        if ((byte >= b'a' && byte <= b'z') || (byte >= b'A' && byte <= b'Z') || (byte >= b'0' && byte <= b'9')) {
+            return 2
+        }
+        return 1
     }
     let (rune, _) = Rune.fromUtf8(bytes, offset)
-    Some(rune)
+    if (rune.isWhiteSpace()) {
+        return 0
+    }
+    if (rune.isLetter() || rune.isNumber()) {
+        return 2
+    }
+    1
 }
 
 private func previousRune(text: String, offset: Int64): ?Rune {

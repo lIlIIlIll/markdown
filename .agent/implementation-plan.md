@@ -1,5 +1,135 @@
 # markdown 实施计划
 
+## 0.9 breaking execution-model implementation (2026-08-26)
+
+This section supersedes compatibility-preserving 0.8 notes for AST, parser SPI,
+event and fused-render surfaces. A-036 records authorization for breaking changes.
+
+1. Retain performance candidates only after fixed-host A/A and bidirectional A/B.
+2. Move manifests/docs to 0.9 and freeze arena/value-view, SPI v2, event and fused contracts.
+3. Compile non-semantic `ParserHotPlan`/`RendererHotPlan`; dispatch DSL and SPI by first byte.
+4. Replace the object tree with `Document`-owned 4096-record and 16384-child COW chunks,
+   `NodeRef`, typed value views and compact origin metadata. Migrate parser, renderer,
+   transforms, editor, artifact v2 and consumers without a runtime adapter.
+5. Replace AST-walk events with chunk-incremental RawBlock and two-pass Resolved source
+   events. Add FullAst/PreferFused/RequireFused HTML execution and report the actual path.
+6. Optimize inline arenas, delimiter stacks, references, table ranges, source cursor and
+   HTML writer one variable at a time, retaining only cross-profile wins.
+7. Run all correctness, API, consumer, fuzz, complexity and fixed-Server canonical gates.
+   Event/fused measurements cannot replace the full-AST `<=2.5x` GA gates.
+
+Current state: steps 1-4 are implemented and full-suite/API verified. `Document`
+is the sole semantic AST owner; parser, renderer, formatter, lint, rewrite,
+editor, artifact and traversal use `NodeRef`/typed value views, with no legacy
+object-tree adapter. Step 5's capability-preserving fused HTML execution is
+implemented; the misleading AST-walk Event facade was removed, while the real
+Resolved/RawBlock source API remains an explicit 1.1 requirement under A-037.
+Step 6 is ongoing and retains only bidirectionally measured candidates; R42
+reuses table-cell classification, R43 reuses reference-definition normalization,
+R45 compacts the inline-piece payload, R49/R50 delay Text materialization, R51
+guards GFM autolink expansion, R52 bypasses the piece arena for scanner-proven
+delimiter-free text, and R55 directly copies parser-owned paragraph/list/table/
+table-row child lists into the chunked arena without an intermediate array.
+R57 removes the delimiter arena's separate active bitmap and reuses its integer
+link state for invalidation. R59 directly materializes scanner-proven plain table
+cells from source spans, and R60 renders a single Text cell without allocating a
+generic inline render frame. R65 removes the delimiter resolver's redundant
+piece traversal. R66-R69 were rejected by the bidirectional official-GFM guard;
+R70 proved source reordering does not change compiler emission order. R71 moved
+reference parsing across a type boundary and is cross-profile neutral, but R72
+proved that shrinking the helper still shifts later ParserSession functions and
+recreates the official-GFM regression. R73 showed a separate `.cj` file remains
+one package code-layout unit, and R74's smaller delimiter indexes failed the same
+repeat guard. R75 exposed that rollback copied the retained arena prefix; retained
+R76 adds a trusted same-chunk rollback and uses it to discard provisional
+per-line paragraph nodes before cross-line delimiter reparse. R77's delimiter
+flag substitution changed semantics and was rejected on checksum mismatch. R78
+explored parser-owned fixed node/child tails but was abandoned before timing
+because its release build could not be cleanly qualified under concurrent
+resource pressure and its large value-array initialization increased codegen
+risk. Retained R79 avoids provisional per-line AST construction when a
+multi-line paragraph beginning with `*`, `_`, or backtick is guaranteed to take
+the existing combined-inline path. Full `1445/1445` tests and the bidirectional
+four-profile guard pass with checksum parity and no stable same-corpus regression
+above `10%`. Its identity-bound full release run is now complete and supersedes
+R76 under A-038, even though CommonMark moved opposite to the phase guard.
+R80's direct per-line reference precheck was rejected after official CommonMark
+regressed without a many-reference benefit. Retained R81 transfers exactly full
+parser-owned node/child backing arrays into immutable arena chunks while partial
+tails and public defensive copies keep the safe path. Full `1445/1445` tests and
+the four-profile guard pass; its combined geomeans versus R79 are `0.895032`,
+`0.971884`, `0.974208` and `0.967475`. R82 then removed an intermediate
+delimiter-child Array, but its initial official CommonMark gain did not reproduce
+in the complete guard and pathological parsing was neutral, so it was rejected.
+Fresh R81 profiling makes GC, inline scanning, GFM `String.indexOf`, node-tail
+growth and remaining string arrays the next evidence-backed axes. R81 is now
+the sole canonical result after its complete identity-bound Server run.
+R83 proved that replacing the three GFM autolink `String.indexOf` probes with a
+single scalar byte loop is not viable: official GFM regressed by about `14.9%`
+in both orders. Future string work must retain the runtime's optimized search or
+eliminate the probe from an earlier proven classification; another scalar scan
+is excluded.
+R84 proved a global node-chunk increase from `4096` to `8192` is also excluded:
+official CommonMark improved, but CJK CommonMark regressed about `64.6%` in both
+orders. Further arena work must reduce record size or allocate adaptively with
+evidence; it must not globally increase large-object/partial-tail capacity.
+R85 kept the runtime string search and changed only GFM autolink probe order;
+five-corpus 24-round bidirectional results stayed within noise (`0.980726` to
+`1.003493`) and did not improve official-spec. Probe reordering is therefore
+excluded unless a future profile demonstrates a materially different corpus mix.
+R86 avoided Unicode lowercase for labels proven ASCII, but a 48-round repeat
+measured no many-reference gain and a `1.095619` readme CommonMark regression
+against baseline A/A `1.003235`. The candidate was rejected; reference
+normalization micro-branches are excluded until profiles show normalization is a
+dominant cost rather than code-layout/GC noise.
+R87 borrowed the owned/reusable source byte buffer for delimiter classification.
+Its initial and 48-round official CommonMark gain disappeared in the complete
+guard: CommonMark parse geomean was `1.010531`, pathological was neutral and CJK
+was order-sensitive. GFM's `0.980099` geomean was concentrated outside the
+delimiter-heavy target. The candidate was rejected; future source-buffer work
+must first prove the avoided copy in allocation/perf evidence and improve the
+target corpus in the complete guard.
+R88 transferred the parser side-payload list into a sealed read-only snapshot.
+Its repeated official CommonMark gain also disappeared in the full guard:
+CommonMark/GFM parse were `1.005788/0.996691`, while GFM HTML regressed to
+`1.012627` and official GFM HTML was `1.127099/1.057778`. A 12-iteration long
+sample then measured official CommonMark `0.980107` against A/A `0.956626`, so
+the apparent parse win is not attributable. A final payload copy is not a large
+enough axis to justify the extra storage state and is excluded. Future promotion
+guards use at least 12 in-process iterations; three-iteration subprocess samples
+remain exploratory only.
+R89-R94 then tested six one-variable SSSE3/SSE2/scalar scanner dispatch shapes.
+Every shape traded long-line gains for stable short-line corpus regressions, so
+the native scanner was restored exactly and scanner code-layout tuning is no
+longer the primary axis. R95's smaller packed-record capacity was also rejected
+because it did not improve CommonMark.
+Retained R96 instead removes the full `LineRecord`/per-line `String` pipeline for
+the conservative case of one identity-mapped, LF-only, unindented fenced-code
+document. The path constructs the same complete arena AST and falls back for BOM
+mapping ambiguity, CRLF, indentation, DSL participation, or nonblank trailing
+content. Its 24-round-per-direction Server guard improves 1 MiB large-code
+CommonMark to `0.556121` of R81 while ordinary CommonMark/GFM remain within A/A
+noise; all `1446/1446` local and remote tests pass. R96 became the structural
+baseline, not a lightweight parser or benchmark-only execution model.
+R97 proved that replacing the remaining multi-line paragraph `String.contains`
+probes with existing exact scanner flags is below measurement resolution across
+official/readme/emoji/ordinary profiles. It was rejected and restored exactly;
+future work must remove a material intermediate representation or allocation
+phase rather than add more paragraph-probe micro-branches.
+Source reordering, visibility widening and artificial padding remain excluded.
+R102 then retains the scanner trust boundary and adds a narrower paragraph-level
+materializer only after validated line scanning and block selection. It applies
+to a CommonMark-only whole document whose lines begin with `|` and are proven to
+contain neither core inline syntax nor hard-break whitespace. It constructs the
+same source-backed Text/SoftBreak/Paragraph/Document arena graph through the
+limit-aware factory. Its target guard improves large-table CommonMark to
+`0.647552` of R96; large-code and the twelve-profile broad guard remain below the
+stable `10%` rejection limit, and local plus remote tests pass `1447/1447`.
+Step 7's current authoritative R115 Server gate is CommonMark `2.915703x` and GFM
+`3.078800x`; ordinary is `4.847819x/2.767217x`. The two `2.5x` limits fail, so the
+performance limits and their release/quality dependents remain the three blocked
+requirements.
+
 ## 0. 2026-08-18 最终实施校准
 
 本计划的 S0-S11 主链路已有可运行实现，最终全量测试为 1410/1410，
@@ -337,3 +467,137 @@ S0 契约与证据基础
 - 已发布 profile、AST、diagnostic、SPI 或 artifact 的语义变更必须走兼容性评审。
 - `blocked` 不是完成态；必须记录阻塞证据、责任人/外部依赖和解除条件。
 - `acceptance-report.md` 与账本不一致时，以账本为准并重新生成报告。
+
+## 8. R98-R101 candidate disposition（2026-08-28）
+
+R98-R101 tested a complete-AST document-level plain-paragraph path. The first
+effective form produced large long-line and CommonMark table gains only because
+it bypassed the configured scanner validation boundary; local and remote full
+suites caught this in the malformed/unsupported accelerator cases. Reusing
+validated LineRecords fixed correctness but made long-line neutral and caused a
+stable `16.3%` large-code regression; moving the general route behind a helper
+did not isolate that regression. The entire candidate and its added test were
+therefore removed, and R96 product bytes were restored before the independent
+R102 paragraph-level candidate.
+
+## 9. R102 retained pipe-paragraph slice（2026-08-28）
+
+R102 does not reintroduce the rejected document-level scanner bypass. The
+configured accelerator still runs first, malformed or unsupported records still
+fail closed, and the block parser still chooses paragraph semantics before the
+specialized materializer is considered. The specialized path consumes only the
+already-validated `LineRecord` array and retains all node limits, literal limits,
+cancellation, exact byte spans, node origins and postorder IDs. GFM and all
+extension/SPI cases conservatively use the general parser.
+
+Promotion evidence includes a 24-round bidirectional target plus A/A, a 48-round
+large-code guard, ordinary CommonMark/GFM and long-line guards, and a twelve-
+profile broad guard. No stable non-target regression exceeded `10%`; both local
+and Server suites passed `1447/1447`. The identity-bound full release benchmark
+therefore supersedes R96 under A-038, while retaining the `INCOMPLETE` state
+because CommonMark `3.282625x` and GFM `2.992156x` remain above `2.5x`.
+
+## 10. R103-R112 rejected allocation/fence/scanner slices（2026-08-28）
+
+R103-R107 proved that changing arena initialization globally, or even adding a
+profile-gated constructor hint, is not an isolated sparse-document optimization.
+The runtime/compiler layout and GC effects produced stable dense-AST or GFM
+regressions up to `62.9%`; the strongest CommonMark-only target gain still cost
+about `9-10%` on large-code GFM HTML. These variants are rejected rather than
+trading one mandatory ratio against the other.
+
+R108-R109 then tested a distinct optional C closing-fence pass. Perf showed that
+this duplicated the full input scan: even the `memchr` version remained `21.0%`
+slower for large-code CommonMark. The accelerator API and C entry were removed.
+R110 also showed that moving the same scan into an Array-backed helper regresses
+GFM HTML by `10.2%`, despite focused correctness passing. The fenced-document
+axis is therefore closed for this phase. Fresh ordinary CommonMark perf then
+attributed `53.88%` to the native line scanner. R111 isolated the overlapping
+SSE2-window hypothesis: scalar completion after a CR/LF-bearing window improved
+ordinary by only `1.9%` while regressing large-code CommonMark by `13.2%` against
+an A/A ratio of `0.9800`. It was rejected and the scanner restored exactly to
+R102. The next slice must re-profile scanner cost below the aggregate symbol or
+return to representative ordinary/official inline, allocation and GC hotspots;
+it must not infer that overlapping SIMD loads explain the `53.88%` attribution.
+R102 remained the canonical baseline through R112 and no requirement state changed.
+
+## 11. R113 retained AVX2 non-pipe scanner slice（2026-08-28）
+
+R113 keeps the existing SSE2/scalar scanner for non-x86, CPUs without AVX2 and
+pipe-prefixed documents, while runtime-detected AVX2-capable x86_64 scans other
+input in semantically identical 32-byte chunks. This preserves packed record v3,
+exact line flags, validation, fallback and the complete arena AST contract. The
+pipe exclusion is evidence-driven: unconditional R112 regressed the retained R102
+large-table path by `22.1%`, while R113 measured it at `1.003656` of R102.
+
+Local ASan+UBSan fuzz passed `1000` runs, InputBehaviorTest passed `12/12`, and
+the remote full suite passed `1447/1447`. The 24-round target and twelve-profile
+broad guards had no stable single-corpus regression above `10%`. Per A-038, the
+complete fixed-Server CPU 24 run supersedes R102: CommonMark improves from
+`3.282625x` to `3.176050x` and GFM from `2.992156x` to `2.975849x`. All scaling,
+pathological and RSS gates pass; both mandatory `2.5x` ratios remain blocked.
+
+## 12. R114 reference-opener line classification（2026-08-28）
+
+The existing single-pass native and Cangjie line scanners now record whether a
+root line contains `[`. `collectReferences` consumes that conservative negative
+proof before any previous-line, indentation, or reference grammar work. Packed
+records use v4 with six low bits; third-party v1-v3 records default to `true`, so
+compatibility never suppresses a possible definition. The optimization leaves
+reference normalization, effective-definition order, limits, AST identity and
+SourceSpan unchanged.
+
+Sanitizer fuzz, focused input/parser tests, release build, and remote `1447/1447`
+tests pass. Direct R113/R114 paired guards retain the slice with no stable
+single-profile regression above `10%`. The complete R114 canonical run is
+authoritative under A-038 despite large reference-driver timing movement:
+CommonMark `3.295073x`, GFM `3.183832x`, ordinary CommonMark `6.645361x`.
+The next slice must target the measured `17.4%` GC/allocation share and line
+String materialization; another reference or scanner micro-branch is unlikely to
+close the remaining gap.
+
+## 13. R115 retained scanner valid-prefix transfer（2026-08-28）
+
+The native scanner previously allocated its estimated-capacity record array and
+then copied the valid prefix through `slice` before the parser allocated its
+`LineRecord` array. R115 removes only that trim copy. `LineScanRecords` carries
+the backing array and valid count; the parser rejects non-positive counts,
+counts beyond the array, and arrays beyond the requested capacity before reading
+records. The existing `scanLines` SPI remains usable through a default adapter,
+so third-party scanners do not need an immediate source migration.
+
+The target and broad paired guards preserve every checksum and have no stable
+single-profile regression above `10%`; the remote full suite passes `1447/1447`.
+The clean identity-bound canonical run supersedes R114: CommonMark is
+`2.915703x`, GFM `3.078800x`, and ordinary `4.847819x/2.767217x`. The remaining
+gap is still dominated by parser/GC/string allocation rather than packed-record
+copying. The next candidate should therefore address per-line String
+materialization or measured inline/arena allocation, not add another scanner
+classification branch.
+
+## 14. R116-R119 allocation and string candidates（2026-08-28）
+
+Four candidate families tested the remaining line/string allocation hypothesis.
+Zero-copy per-line strings, a shared-source `LineText` representation, scanner
+capacity changes, and allocation-free HTML terminator matching all preserved
+checksums and passed their focused correctness gates. None passed the required
+bidirectional cross-profile performance gate. In particular, `LineText`
+consistently regressed official-spec CommonMark by more than `50%`; isolating
+the HTML matcher reduced layout sensitivity but still regressed twelve-profile
+CommonMark parse/HTML geomeans by `1.55%/2.93%`.
+
+All product candidates were exactly rolled back to the R115 parser. Only the
+dense-newline native/fallback equivalence regression remains. The measured
+result rules out interface-based per-line views and small helper/capacity
+changes as the next implementation axis. Further work must begin with a fresh
+allocation/perf profile and target a dominant persistent-AST or renderer cost;
+it must not repeat the already indexed delimiter arena, arena checkpoint
+rollback, parser-owned child buffers, reference `HashMap`, or packed scanner
+work that is present in the current source.
+
+R120 also proved that replacing the temporary HTML block-tag array with an
+isolated deterministic matcher is not a promotable optimization: official and
+ordinary GFM results reversed sign between corpus orders. The parser was
+restored exactly. Future candidates must be selected from stable sampled costs
+that execute in ordinary and official profiles, not rare HTML helpers whose
+binary-layout movement is larger than their attributable work.

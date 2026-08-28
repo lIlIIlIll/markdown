@@ -115,25 +115,20 @@ public class InlineParserSpiContext {
     public let maximumLookahead: Int64
     private let baseByteOffset: Int64
     private let source: SourceBuffer
-    private let ids: NodeIdAllocator
     public let budget: OperationBudget
     public let cancellation: CancellationToken
 
     internal init(input: String, startOffset: Int64, maximumLookahead: Int64, baseByteOffset: Int64,
-        source: SourceBuffer, ids: NodeIdAllocator, budget: OperationBudget, cancellation: CancellationToken) {
+        source: SourceBuffer, budget: OperationBudget, cancellation: CancellationToken) {
         this.input = input
         this.startOffset = startOffset
         this.maximumLookahead = maximumLookahead
         this.baseByteOffset = baseByteOffset
         this.source = source
-        this.ids = ids
         this.budget = budget
         this.cancellation = cancellation
     }
 
-    public func nextNodeId(): NodeId {
-        ids.next()
-    }
     public func sourceSpan(localStart: Int64, localEnd: Int64): SourceSpan {
         if (localStart < 0 || localEnd < localStart || localEnd > input.size) {
             throw IllegalArgumentException("SPI span is outside inline input")
@@ -142,18 +137,109 @@ public class InlineParserSpiContext {
     }
 }
 
+public class InlineParserSpiText {
+    public let raw: String
+    public let value: String
+    public let span: SourceSpan
+    public init(raw: String, value: String, span: SourceSpan) {
+        this.raw = raw
+        this.value = value
+        this.span = span
+    }
+}
+
+public class InlineParserSpiNode {
+    public let extensionId: String
+    public let extensionSemanticVersion: String
+    public let localKindId: String
+    public let payload: CustomPayload
+    public let span: SourceSpan
+    public let children: ImmutableArray<InlineParserSpiText>
+    public init(extensionId: String, extensionSemanticVersion: String, localKindId: String, payload: CustomPayload,
+        span: SourceSpan, children!: Array<InlineParserSpiText> = []) {
+        this.extensionId = extensionId
+        this.extensionSemanticVersion = extensionSemanticVersion
+        this.localKindId = localKindId
+        this.payload = payload
+        this.span = span
+        this.children = ImmutableArray<InlineParserSpiText>(children)
+    }
+}
+
 public enum InlineParserSpiResult {
     | NoMatch
-    | Matched(CustomInline, Int64)
+    | Matched(InlineParserSpiNode, Int64)
 }
 
 public interface InlineParserSpi {
     prop extensionId: String
     prop ruleId: String
+    prop triggerBytes: Array<Byte>
     prop maximumLookahead: Int64
     prop priority: Int64
     prop deterministic: Bool
     func tryParse(context: InlineParserSpiContext): InlineParserSpiResult
+}
+
+internal class ParserHotPlan {
+    internal let hasInlineDsl: Bool
+    internal let hasBlockDsl: Bool
+    internal let hasInlineSpi: Bool
+    internal let hasDocumentProcessors: Bool
+    private let inlineDslByFirstByte: Array<ImmutableArray<InlineSyntaxRule>>
+    private let blockDslByFirstByte: Array<ImmutableArray<BlockSyntaxRule>>
+    private let inlineSpiByFirstByte: Array<ImmutableArray<InlineParserSpi>>
+
+    internal init(inlineRules: Array<InlineSyntaxRule>, blockRules: Array<BlockSyntaxRule>,
+        parserSpis: Array<InlineParserSpi>, documentProcessors: Array<ExtensionDocumentProcessor>) {
+        hasInlineDsl = !inlineRules.isEmpty()
+        hasBlockDsl = !blockRules.isEmpty()
+        hasInlineSpi = !parserSpis.isEmpty()
+        hasDocumentProcessors = !documentProcessors.isEmpty()
+        let inlineBuckets = Array<ArrayList<InlineSyntaxRule>>(256) {_ => ArrayList<InlineSyntaxRule>()}
+        let blockBuckets = Array<ArrayList<BlockSyntaxRule>>(256) {_ => ArrayList<BlockSyntaxRule>()}
+        let spiBuckets = Array<ArrayList<InlineParserSpi>>(256) {_ => ArrayList<InlineParserSpi>()}
+        for (rule in inlineRules) {
+            inlineBuckets[Int64(rule.opener[0])].add(rule)
+        }
+        for (rule in blockRules) {
+            blockBuckets[Int64(rule.openerPrefix[0])].add(rule)
+        }
+        for (spi in parserSpis) {
+            for (trigger in spi.triggerBytes) {
+                spiBuckets[Int64(trigger)].add(spi)
+            }
+        }
+        inlineDslByFirstByte = Array<ImmutableArray<InlineSyntaxRule>>(256) {
+            index => ImmutableArray<InlineSyntaxRule>(inlineBuckets[index].toArray())
+        }
+        blockDslByFirstByte = Array<ImmutableArray<BlockSyntaxRule>>(256) {
+            index => ImmutableArray<BlockSyntaxRule>(blockBuckets[index].toArray())
+        }
+        inlineSpiByFirstByte = Array<ImmutableArray<InlineParserSpi>>(256) {
+            index => ImmutableArray<InlineParserSpi>(spiBuckets[index].toArray())
+        }
+    }
+
+    internal func inlineRules(firstByte: Byte): ImmutableArray<InlineSyntaxRule> {
+        inlineDslByFirstByte[Int64(firstByte)]
+    }
+
+    internal func blockRules(firstByte: Byte): ImmutableArray<BlockSyntaxRule> {
+        blockDslByFirstByte[Int64(firstByte)]
+    }
+
+    internal func parserSpis(firstByte: Byte): ImmutableArray<InlineParserSpi> {
+        inlineSpiByFirstByte[Int64(firstByte)]
+    }
+}
+
+internal class RendererHotPlan {
+    internal let hasCustomRules: Bool
+
+    internal init(rendererRules: Array<RendererRule>) {
+        hasCustomRules = !rendererRules.isEmpty()
+    }
 }
 
 public enum ExtensionProcessingPhase {
@@ -222,13 +308,25 @@ public class InlineSyntaxMatch {
     public let ruleId: String
     public let literal: String
     public let span: SourceSpan
-    public let children: ImmutableArray<MarkdownNode>
-    public init(extensionId: String, ruleId: String, literal: String, span: SourceSpan, children: Array<MarkdownNode>) {
+    public let children: ImmutableArray<SyntaxChildSummary>
+    public init(extensionId: String, ruleId: String, literal: String, span: SourceSpan,
+        children: Array<SyntaxChildSummary>) {
         this.extensionId = extensionId
         this.ruleId = ruleId
         this.literal = literal
         this.span = span
-        this.children = ImmutableArray<MarkdownNode>(children)
+        this.children = ImmutableArray<SyntaxChildSummary>(children)
+    }
+}
+
+public class SyntaxChildSummary {
+    public let kind: NodeKind
+    public let span: ?SourceSpan
+    public let semanticText: String
+    public init(kind: NodeKind, span: ?SourceSpan, semanticText: String) {
+        this.kind = kind
+        this.span = span
+        this.semanticText = semanticText
     }
 }
 
@@ -435,18 +533,18 @@ public class BlockSyntaxMatch {
     public let parametersRaw: String
     public let literal: String
     public let span: SourceSpan
-    public let children: ImmutableArray<MarkdownNode>
+    public let children: ImmutableArray<SyntaxChildSummary>
     private let typedValues: HashMap<String, SyntaxParameterValue>
 
     public init(extensionId: String, ruleId: String, name: String, parametersRaw: String, literal: String,
-        span: SourceSpan, children: Array<MarkdownNode>, typedValues: HashMap<String, SyntaxParameterValue>) {
+        span: SourceSpan, children: Array<SyntaxChildSummary>, typedValues: HashMap<String, SyntaxParameterValue>) {
         this.extensionId = extensionId
         this.ruleId = ruleId
         this.name = name
         this.parametersRaw = parametersRaw
         this.literal = literal
         this.span = span
-        this.children = ImmutableArray<MarkdownNode>(children)
+        this.children = ImmutableArray<SyntaxChildSummary>(children)
         this.typedValues = typedValues
     }
 
@@ -798,6 +896,8 @@ public class CompiledMarkdownDialect {
     public let parserSpis: ImmutableArray<InlineParserSpi>
     public let documentProcessors: ImmutableArray<ExtensionDocumentProcessor>
     public let lintProviders: ImmutableArray<ExtensionLintProvider>
+    internal let parserHotPlan: ParserHotPlan
+    internal let rendererHotPlan: RendererHotPlan
 
     internal init(
         dialect: MarkdownDialect,
@@ -821,6 +921,8 @@ public class CompiledMarkdownDialect {
         this.parserSpis = ImmutableArray<InlineParserSpi>(parserSpis)
         this.documentProcessors = ImmutableArray<ExtensionDocumentProcessor>(documentProcessors)
         this.lintProviders = ImmutableArray<ExtensionLintProvider>(lintProviders)
+        parserHotPlan = ParserHotPlan(inlineRules, blockRules, parserSpis, documentProcessors)
+        rendererHotPlan = RendererHotPlan(dialect.rendererRules)
     }
 
     public static func builtin(profile: MarkdownProfile): CompiledMarkdownDialect {
@@ -928,6 +1030,15 @@ public class DialectCompiler {
             validateIdentifier("parser SPI rule id", spi.ruleId)
             if (spi.maximumLookahead <= 0) {
                 fail("parser SPI lookahead must be bounded")
+            }
+            if (spi.triggerBytes.isEmpty()) {
+                fail("parser SPI trigger bytes must not be empty")
+            }
+            let triggers = HashSet<Byte>()
+            for (trigger in spi.triggerBytes) {
+                if (!triggers.add(trigger)) {
+                    fail("parser SPI trigger bytes must not contain duplicates")
+                }
             }
             if (!spi.deterministic) {
                 fail("non-deterministic parser SPI is not supported")

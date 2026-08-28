@@ -10,9 +10,9 @@ class TreeRewriterTest {
         let document = MarkdownEngine.builder().build().parse("# Keep\n\nchange me").document
         let headingBefore = document.children()[0]
         let rewritten = TreeRewriter.rewrite(document, {
-            node => match (node) {
-                case text: Text =>
-                    if (text.value == "change me") {
+            node => match (node.kind) {
+                case NodeKind.Text =>
+                    if (node.asText().getOrThrow().value == "change me") {
                         RewriteAction.MapText("changed")
                     } else {
                         RewriteAction.Keep

@@ -5,8 +5,8 @@
 | 项目名称       | `markdown`                         |
 | 公开根命名空间    | `markdown`                            |
 | 产品类型       | 仓颉 Markdown 解析、转换、渲染与工具基础库            |
-| PRD 版本     | 2.0                                   |
-| 目标产品版本     | `markdown 1.0`                     |
+| PRD 版本     | 2.1                                   |
+| 目标产品版本     | `markdown 0.9` breaking pre-GA       |
 | 文档状态       | Draft for Review                      |
 | 目标用户       | 仓颉应用、CLI、TUI、IDE、文档系统、静态站点及 Agent 开发者 |
 | 核心实现约束     | 纯仓颉实现、无网络副作用、无非标准原生运行时依赖              |
@@ -20,7 +20,7 @@
 
 本文使用以下规范词：
 
-* **必须**：`markdown 1.0` 发布阻断要求。
+* **必须**：`markdown 0.9` 发布阻断要求；满足后才可进入 1.0 GA 冻结。
 * **应该**：原则上应实现，只有明确记录理由时可以推迟。
 * **可以**：可选能力。
 * **P0**：1.0 GA 范围。
@@ -1367,6 +1367,19 @@ AST 必须：
 * 支持 SourceSpan；
 * 支持 Node Origin。
 
+0.9 的公开 AST 必须由 `Document` snapshot 持有 arena；节点身份使用轻量
+`NodeRef`，类型化访问使用 value view。不得为每个语法节点构造独立、互相引用的
+公开 class 对象树，也不得保留 0.8 object-tree AST 的运行时兼容适配器。
+
+arena 的固定契约：
+
+* node record 使用 4096 条固定 chunk；
+* child id 使用 16384 条固定 chunk；
+* snapshot/transform 以 copy-on-write chunk 实现结构共享；
+* Parsed origin 由 node span 派生，不为每个普通解析节点分配 `NodeOrigin` 对象；
+* extension、transform、synthetic 和 deserialized origin 才保存附加 metadata；
+* `Document` 的生命期覆盖所有 `NodeRef`/view，跨 document 的引用必须拒绝。
+
 ## 20.2 Block 节点
 
 | 节点              | 主要字段                                           |
@@ -1413,7 +1426,7 @@ AST 必须：
 * 1.0 不保证跨编辑稳定；
 * P2 可以增加 StableNodeId。
 
-推荐 1.0 按确定性节点创建顺序分配。
+0.9 按确定性 arena record 创建顺序分配。
 
 ## 20.5 Node Origin
 
@@ -1927,15 +1940,8 @@ formatChangedRanges
 
 P1 提供：
 
-```text
-DocumentStart
-BlockStart
-InlineStart
-Text
-InlineEnd
-BlockEnd
-DocumentEnd
-```
+事件值不得引用 `Document`、`MarkdownNode` 或其他已构造 AST 对象。事件至少包含
+kind、source range、必要属性和文本的 source range/semantic value。
 
 必须区分两种模式：
 
@@ -1946,15 +1952,21 @@ RawBlockEventMode
 
 `ResolvedEventMode`：
 
-* 完成引用解析后产生完整语义事件。
+* 对 replayable `SourceBuffer` 执行两遍：第一遍建立 reference index，第二遍产生完整语义事件；
+* chunked 输入在 finish 前允许缓存，但不得伪装为增量输出。
 
 `RawBlockEventMode`：
 
-* 可以更早输出 block；
+* 必须随 chunk 增量输出已经闭合的 block；
 * 不承诺引用已解析；
 * 不得伪装为最终语义事件。
 
 从完整 AST walk 产生事件不能被描述为低内存流式解析。
+
+HTML 便利入口必须提供显式执行选择 `FullAst`、`PreferFused`、`RequireFused`，
+并在结果中报告实际使用的 `FullAst` 或 `Fused` 路径。document processor、需要完整
+AST 的 transform、artifact/CST/annotation 或无法等价 lower 的扩展存在时，
+`PreferFused` 回退完整 AST，`RequireFused` 返回结构化错误；不得静默降低能力。
 
 ---
 
@@ -2581,7 +2593,7 @@ P1 提供稳定 parse artifact：
 
 ```text
 MarkdownParseArtifact {
-    schemaVersion
+    schemaVersion = 2
     libraryVersion
     parserPlanVersion
     profileId
@@ -2593,6 +2605,9 @@ MarkdownParseArtifact {
     diagnostics
 }
 ```
+
+schema v2 绑定 arena node/child chunks、紧凑 origin metadata、原始输入身份与
+decode policy。0.8 schema v1 不提供尽量恢复；读取时必须返回 CacheMiss。
 
 读取时必须验证：
 
@@ -3254,6 +3269,10 @@ Cancellation → 中止超大输入
 
 ## 48.4 AST 兼容性
 
+0.9 是 GA 前明确的 breaking reset：删除 0.8 object-tree AST、修改 NodeOrigin
+表示、升级 SPI/event/artifact schema 都允许，但必须同步 migration、API snapshot、
+consumer fixture 和 changelog。0.9 不提供旧 AST runtime adapter。
+
 1.x 中：
 
 * 删除公开节点属于 breaking；
@@ -3265,6 +3284,10 @@ Cancellation → 中止超大输入
 ## 48.5 SPI
 
 扩展 SPI 必须单独版本化。
+
+0.9 的 Inline Parser SPI v2 必须声明非空、无重复的 `triggerBytes`；编译后的
+dialect 只在当前位置首字节命中时调用 SPI。Syntax DSL 也按 opener 首字节调度。
+内部 hot plan 不进入 semantic fingerprint。
 
 不兼容 SPI 必须在 engine build 阶段拒绝。
 
@@ -3729,4 +3752,3 @@ String → HTML
 * 规范测试；
 
 的实现，都不满足本 PRD 对“完整 Markdown 库”的定义。
-

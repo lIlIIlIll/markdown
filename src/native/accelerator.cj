@@ -1,6 +1,6 @@
 package markdown.native
 
-import markdown.LineScannerAccelerator
+import markdown.{LineScanRecords, LineScannerAccelerator}
 
 foreign func MD_Markdown_ScanLines(
     input: CPointer<UInt8>,
@@ -14,10 +14,21 @@ public class NativeLineScanner <: LineScannerAccelerator {
     public init() {}
 
     public func implementationId(): String {
-        "markdown-c-scanner-v1"
+        "markdown-c-scanner-v4"
+    }
+
+    public func recordFormatVersion(): Int64 {
+        4
     }
 
     public func scanLines(input: Array<Byte>, capacity: Int64): ?Array<UInt64> {
+        match (scanLineRecords(input, capacity)) {
+            case Some(result) => Some(result.records.slice(0, result.count))
+            case None => None
+        }
+    }
+
+    public func scanLineRecords(input: Array<Byte>, capacity: Int64): ?LineScanRecords {
         if (capacity <= 0) {
             return None
         }
@@ -38,6 +49,6 @@ public class NativeLineScanner <: LineScannerAccelerator {
         if (scannedLines <= 0 || scannedLines > capacity) {
             throw IllegalStateException("native line scanner returned an invalid record count")
         }
-        Some(records.slice(0, scannedLines))
+        Some(LineScanRecords(records, scannedLines))
     }
 }

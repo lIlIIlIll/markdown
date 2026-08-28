@@ -11,7 +11,7 @@ input can request preservation of unknown tags. Supported semantic tags lower
 to headings, paragraphs, emphasis, strong, code, deletion, links, quotes,
 lists, breaks, and thematic breaks.
 
-`BinaryArtifactCodec` implements `markdown-snapshot-binary-1`. Length-prefixed
+`BinaryArtifactCodec` implements `markdown-snapshot-binary-2`. Length-prefixed
 UTF-8 fields bind profile, dialect/engine fingerprints, source digest, AST
 digest, CST digest, and source. Decode is size-bounded and fail-closed: any
 schema, identity, digest, invariant, truncation, UTF-8, or trailing-byte issue

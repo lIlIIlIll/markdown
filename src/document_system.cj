@@ -57,9 +57,9 @@ public class DocumentGraph {
             let snapshot = engine.parseSnapshot(input.source)
             ids.add(input.id);
             snapshots.add(input.id, snapshot)
-            for (link in AstQuery.links(snapshot.result.document)) {
+            for (link in AstQuery.links(snapshot.result.ast)) {
                 if (documentDestination(link.destination)) {
-                    edges.add(DocumentGraphEdge(input.id, link.destination, link.nodeId))
+                    edges.add(DocumentGraphEdge(input.id, link.destination, link.node.nodeId))
                 }
             }
         }
@@ -74,7 +74,8 @@ public class DocumentGraph {
         let normalized = normalizeGraphLabel(label)
         for (id in documentIds.toArray()) {
             if (let Some(snapshot) <- snapshots.get(id)) {
-                for (definition in snapshot.result.document.references.toArray()) {
+                let root = snapshot.result.ast.root().asDocument().getOrThrow()
+                for (definition in root.references.toArray()) {
                     if (definition.isEffective && definition.labelNormalized == normalized) {
                         return Some(CrossDocumentReference(id, definition))
                     }
@@ -222,7 +223,7 @@ public class VirtualSyntaxTree {
         }
         let nodes = ArrayList<NodeId>()
         for (event in snapshot.result.document.walk()) {
-            if (let WalkEvent.Enter(node) <- event) {
+            if (let NodeRefWalkEvent.Enter(node) <- event) {
                 budget.consumeRenderedNode()
                 if (let Some(span) <- node.span) {
                     if (documentSpansOverlap(span, range)) {

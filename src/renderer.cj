@@ -61,7 +61,7 @@ public class StringTextSink <: TextSink {
         SinkWriteResult.Success
     }
 
-    internal func writeFromNode(slice: String, node: MarkdownNode): SinkWriteResult {
+    internal func writeFromNode(slice: String, node: NodeRef): SinkWriteResult {
         record(slice, node.span, Some(node.nodeId), false)
         builder.append(slice)
         SinkWriteResult.Success
@@ -79,11 +79,15 @@ public class StringTextSink <: TextSink {
     }
 
     private func record(slice: String, sourceSpan: ?SourceSpan, nodeId: ?NodeId, generated: Bool): Unit {
-        if (slice.isEmpty()) {
+        recordSize(slice.size, sourceSpan, nodeId, generated)
+    }
+
+    private func recordSize(size: Int64, sourceSpan: ?SourceSpan, nodeId: ?NodeId, generated: Bool): Unit {
+        if (size == 0) {
             return
         }
         if (let Some(entries) <- mappedEntries) {
-            let end = outputOffset + slice.size
+            let end = outputOffset + size
             entries.add(RenderedSourceMapEntry(SourceSpan(outputOffset, end), sourceSpan, nodeId, generated))
             outputOffset = end
         }
@@ -205,17 +209,17 @@ public class TrustedHtml {
 
 public interface ExtensionRendererFallback {
     prop extensionId: String
-    func renderHtml(node: MarkdownNode): TrustedHtml
+    func renderHtml(node: NodeRef): TrustedHtml
 }
 
-internal class RenderFrame {
-    let node: MarkdownNode
+internal struct ArenaRenderFrame {
+    let node: NodeRef
     let exiting: Bool
     let tableHeader: Bool
     let suppressParagraph: Bool
     let newlineAfter: Bool
 
-    init(node: MarkdownNode, exiting: Bool, tableHeader!: Bool = false, suppressParagraph!: Bool = false,
+    init(node: NodeRef, exiting: Bool, tableHeader!: Bool = false, suppressParagraph!: Bool = false,
         newlineAfter!: Bool = false) {
         this.node = node
         this.exiting = exiting
@@ -328,24 +332,29 @@ public class HtmlRenderer {
         Sha256.digest(out.toString())
     }
 
+    /** Renders the canonical arena AST directly. */
     public func render(
-        document: Document,
+        ast: Document,
         cancellation!: CancellationToken = CancellationToken.none(),
         budget!: OperationBudget = OperationBudget.safe()
     ): String {
         let sink = StringTextSink()
-        renderTo(document, sink, cancellation: cancellation, budget: budget)
+        renderArenaTo(ast, sink, cancellation, budget)
         sink.content()
     }
 
     public func renderTo(
-        document: Document,
+        ast: Document,
         sink: TextSink,
         cancellation!: CancellationToken = CancellationToken.none(),
         budget!: OperationBudget = OperationBudget.safe()
     ): Unit {
-        let stack = ArrayList<RenderFrame>()
-        stack.add(RenderFrame(document, false))
+        renderArenaTo(ast, sink, cancellation, budget)
+    }
+
+    private func renderArenaTo(ast: Document, sink: TextSink, cancellation: CancellationToken, budget: OperationBudget): Unit {
+        let stack = ArrayList<ArenaRenderFrame>()
+        stack.add(ArenaRenderFrame(ast.root(), false))
         var checkpoints: Int64 = 0
         while (!stack.isEmpty()) {
             let frame = stack.remove(at: stack.size - 1)
@@ -355,36 +364,33 @@ public class HtmlRenderer {
                 checkpoints = 0
             }
             if (frame.exiting) {
-                writeHtmlExit(frame, sink, cancellation, budget)
+                writeArenaExit(frame, sink, cancellation, budget)
             } else {
                 budget.consumeRenderedNode()
-                writeHtmlEnter(frame, stack, sink, cancellation, budget)
+                writeArenaEnter(frame, stack, sink, cancellation, budget)
             }
         }
     }
 
-    private func writeHtmlEnter(
-        frame: RenderFrame,
-        stack: ArrayList<RenderFrame>,
-        sink: TextSink,
-        cancellation: CancellationToken,
-        budget: OperationBudget
-    ): Unit {
+    private func writeArenaEnter(frame: ArenaRenderFrame, stack: ArrayList<ArenaRenderFrame>, sink: TextSink,
+        cancellation: CancellationToken, budget: OperationBudget): Unit {
         let node = frame.node
-        match (node) {
-            case _: Document => pushContainer(frame, stack)
-            case heading: Heading =>
-                write("<h${heading.level}>", sink, cancellation, budget)
-                pushContainer(frame, stack)
-            case _: Paragraph =>
+        match (node.kind) {
+            case NodeKind.Document => pushArenaContainer(frame, stack)
+            case NodeKind.Heading =>
+                let level = node.asHeading().getOrThrow().level
+                write("<h${level}>", sink, cancellation, budget)
+                pushArenaContainer(frame, stack)
+            case NodeKind.Paragraph =>
                 if (!frame.suppressParagraph) {
                     write("<p>", sink, cancellation, budget)
                 }
-                pushContainer(frame, stack)
-            case _: BlockQuote =>
+                pushArenaContainer(frame, stack)
+            case NodeKind.BlockQuote =>
                 write("<blockquote>\n", sink, cancellation, budget)
-                pushContainer(frame, stack)
-            case list: List =>
+                pushArenaContainer(frame, stack)
+            case NodeKind.List =>
+                let list = node.asList().getOrThrow()
                 match (list.listKind) {
                     case ListKind.Bullet => write("<ul>\n", sink, cancellation, budget)
                     case ListKind.Ordered =>
@@ -394,9 +400,10 @@ public class HtmlRenderer {
                             write("<ol start=\"${list.start}\">\n", sink, cancellation, budget)
                         }
                 }
-                stack.add(RenderFrame(list, true))
-                pushChildren(list, stack, suppressParagraph: list.tight)
-            case item: ListItem =>
+                stack.add(ArenaRenderFrame(node, true))
+                pushArenaChildren(node, stack, suppressParagraph: list.tight)
+            case NodeKind.ListItem =>
+                let item = node.asListItem().getOrThrow()
                 match (item.taskState) {
                     case TaskState.Checked => write(
                         "<li class=\"task-list-item\"><input type=\"checkbox\" disabled=\"\" checked=\"\"> ", sink,
@@ -406,25 +413,27 @@ public class HtmlRenderer {
                         budget)
                     case TaskState.NotTask => write("<li>", sink, cancellation, budget)
                 }
-                let children = item.children()
-                let startsWithBlock = children.size > 0 && !isParagraphNode(children[0])
+                let children = node.children()
+                let startsWithBlock = children.size > 0 && !isArenaParagraphNode(children[0])
                 if (children.size > 0 && (!frame.suppressParagraph || startsWithBlock)) {
                     write("\n", sink, cancellation, budget)
                 }
-                stack.add(RenderFrame(item, true, suppressParagraph: frame.suppressParagraph))
+                stack.add(ArenaRenderFrame(node, true, suppressParagraph: frame.suppressParagraph))
                 var childIndex = children.size - 1
                 while (childIndex >= 0) {
-                    let childSuppress = frame.suppressParagraph && isParagraphNode(children[childIndex])
+                    let childSuppress = frame.suppressParagraph && isArenaParagraphNode(children[childIndex])
                     stack.add(
-                        RenderFrame(children[childIndex], false, suppressParagraph: childSuppress,
+                        ArenaRenderFrame(children[childIndex], false, suppressParagraph: childSuppress,
                             newlineAfter: childSuppress && childIndex + 1 < children.size))
                     childIndex--
                 }
-            case _: ThematicBreak => write("<hr />\n", sink, cancellation, budget)
-            case code: CodeBlock =>
-                var classAttribute = ""
-                if (!code.language.isEmpty()) {
-                    classAttribute = " class=\"language-${escapeAttribute(code.language, safe: isSafePolicy())}\""
+            case NodeKind.ThematicBreak => write("<hr />\n", sink, cancellation, budget)
+            case NodeKind.CodeBlock =>
+                let code = node.asCodeBlock().getOrThrow()
+                let classAttribute = if (code.language.isEmpty()) {
+                    ""
+                } else {
+                    " class=\"language-${escapeAttribute(code.language, safe: isSafePolicy())}\""
                 }
                 let literal = if (code.literal.isEmpty() || code.literal.endsWith("\n")) {
                     code.literal
@@ -432,41 +441,45 @@ public class HtmlRenderer {
                     code.literal + "\n"
                 }
                 write("<pre><code${classAttribute}>", sink, cancellation, budget)
-                writeFromNode(escapeText(literal), code, sink, cancellation, budget)
+                writeFromNode(escapeText(literal), node, sink, cancellation, budget)
                 write("</code></pre>\n", sink, cancellation, budget)
-            case html: HtmlBlock => writeRawHtml(html, true, sink, cancellation, budget)
-            case table: Table => renderTable(table, sink, cancellation, budget)
-            case row: TableRow =>
+            case NodeKind.HtmlBlock => writeArenaRawHtml(node.asHtmlBlock().getOrThrow().literal, true, node, sink,
+                cancellation, budget)
+            case NodeKind.Table => renderArenaTable(node, sink, cancellation, budget)
+            case NodeKind.TableRow =>
+                let row = node.asTableRow().getOrThrow()
                 write("<tr>\n", sink, cancellation, budget)
-                stack.add(RenderFrame(row, true, tableHeader: row.header))
-                pushChildren(row, stack, tableHeader: row.header)
-            case cell: TableCell =>
+                stack.add(ArenaRenderFrame(node, true, tableHeader: row.header))
+                pushArenaChildren(node, stack, tableHeader: row.header)
+            case NodeKind.TableCell =>
                 let tag = if (frame.tableHeader) {
                     "th"
                 } else {
                     "td"
                 }
-                let alignment = alignmentAttribute(cell.alignment)
+                let alignment = alignmentAttribute(node.asTableCell().getOrThrow().alignment)
                 write("<${tag}${alignment}>", sink, cancellation, budget)
-                stack.add(RenderFrame(cell, true, tableHeader: frame.tableHeader))
-                pushChildren(cell, stack, tableHeader: frame.tableHeader)
-            case text: Text => writeFromNode(escapeText(text.value), text, sink, cancellation, budget)
-            case _: SoftBreak => write("\n", sink, cancellation, budget)
-            case _: HardBreak => write("<br />\n", sink, cancellation, budget)
-            case code: CodeSpan =>
+                stack.add(ArenaRenderFrame(node, true, tableHeader: frame.tableHeader))
+                pushArenaChildren(node, stack, tableHeader: frame.tableHeader)
+            case NodeKind.Text => writeFromNode(escapeText(node.asText().getOrThrow().value), node, sink, cancellation,
+                budget)
+            case NodeKind.SoftBreak => write("\n", sink, cancellation, budget)
+            case NodeKind.HardBreak => write("<br />\n", sink, cancellation, budget)
+            case NodeKind.CodeSpan =>
                 write("<code>", sink, cancellation, budget)
-                writeFromNode(escapeText(code.literal), code, sink, cancellation, budget)
+                writeFromNode(escapeText(node.asCodeSpan().getOrThrow().literal), node, sink, cancellation, budget)
                 write("</code>", sink, cancellation, budget)
-            case _: Emphasis =>
+            case NodeKind.Emphasis =>
                 write("<em>", sink, cancellation, budget)
-                pushContainer(frame, stack)
-            case _: Strong =>
+                pushArenaContainer(frame, stack)
+            case NodeKind.Strong =>
                 write("<strong>", sink, cancellation, budget)
-                pushContainer(frame, stack)
-            case _: Strikethrough =>
+                pushArenaContainer(frame, stack)
+            case NodeKind.Strikethrough =>
                 write("<del>", sink, cancellation, budget)
-                pushContainer(frame, stack)
-            case link: Link =>
+                pushArenaContainer(frame, stack)
+            case NodeKind.Link =>
+                let link = node.asLink().getOrThrow()
                 let href = if (isAllowedLink(link.destination)) {
                     " href=\"${escapeAttribute(encodeUri(link.destination), safe: isSafePolicy())}\""
                 } else {
@@ -477,10 +490,10 @@ public class HtmlRenderer {
                 } else {
                     " title=\"${escapeAttribute(link.title, safe: isSafePolicy())}\""
                 }
-                let external = externalAttributes(link.destination)
-                write("<a${href}${title}${external}>", sink, cancellation, budget)
-                pushContainer(frame, stack)
-            case image: Image =>
+                write("<a${href}${title}${externalAttributes(link.destination)}>", sink, cancellation, budget)
+                pushArenaContainer(frame, stack)
+            case NodeKind.Image =>
+                let image = node.asImage().getOrThrow()
                 let src = if (isAllowedImage(image.destination)) {
                     " src=\"${escapeAttribute(encodeUri(image.destination), safe: isSafePolicy())}\""
                 } else {
@@ -491,101 +504,185 @@ public class HtmlRenderer {
                 } else {
                     " title=\"${escapeAttribute(image.title, safe: isSafePolicy())}\""
                 }
-                write("<img${src} alt=\"${escapeAttribute(plainTextOf(image), safe: isSafePolicy())}\"${title} />", sink,
-                    cancellation, budget)
-            case html: HtmlInline => writeRawHtml(html, false, sink, cancellation, budget)
-            case custom: CustomBlock => renderCustomEnter(custom.extensionId, custom.localKindId, frame, stack, sink,
+                write("<img${src} alt=\"${escapeAttribute(arenaPlainText(node), safe: isSafePolicy())}\"${title} />",
+                    sink, cancellation, budget)
+            case NodeKind.HtmlInline => writeArenaRawHtml(node.asHtmlInline().getOrThrow().literal, false, node, sink,
                 cancellation, budget)
-            case custom: CustomInline => renderCustomEnter(custom.extensionId, custom.localKindId, frame, stack, sink,
-                cancellation, budget)
-            case _ => throw MarkdownException(MarkdownErrorCode.UnsupportedNode, "unsupported MarkdownNode subtype",
-                phase: "render", span: node.span)
+            case NodeKind.CustomBlock => renderArenaCustomEnter(node, frame, stack, sink, cancellation, budget)
+            case NodeKind.CustomInline => renderArenaCustomEnter(node, frame, stack, sink, cancellation, budget)
         }
     }
 
-    private func writeHtmlExit(
-        frame: RenderFrame,
-        sink: TextSink,
-        cancellation: CancellationToken,
-        budget: OperationBudget
-    ): Unit {
-        match (frame.node) {
-            case _: Document => ()
-            case heading: Heading => write("</h${heading.level}>\n", sink, cancellation, budget)
-            case _: Paragraph =>
+    private func writeArenaExit(frame: ArenaRenderFrame, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        match (frame.node.kind) {
+            case NodeKind.Document => ()
+            case NodeKind.Heading => write("</h${frame.node.asHeading().getOrThrow().level}>\n", sink, cancellation,
+                budget)
+            case NodeKind.Paragraph =>
                 if (!frame.suppressParagraph) {
                     write("</p>\n", sink, cancellation, budget)
                 } else if (frame.newlineAfter) {
                     write("\n", sink, cancellation, budget)
                 }
-            case _: BlockQuote => write("</blockquote>\n", sink, cancellation, budget)
-            case list: List => match (list.listKind) {
+            case NodeKind.BlockQuote => write("</blockquote>\n", sink, cancellation, budget)
+            case NodeKind.List => match (frame.node.asList().getOrThrow().listKind) {
                 case ListKind.Bullet => write("</ul>\n", sink, cancellation, budget)
                 case ListKind.Ordered => write("</ol>\n", sink, cancellation, budget)
             }
-            case _: ListItem => write("</li>\n", sink, cancellation, budget)
-            case _: Table => write("</table>\n", sink, cancellation, budget)
-            case _: TableRow => write("</tr>\n", sink, cancellation, budget)
-            case _: TableCell =>
+            case NodeKind.ListItem => write("</li>\n", sink, cancellation, budget)
+            case NodeKind.Table => write("</table>\n", sink, cancellation, budget)
+            case NodeKind.TableRow => write("</tr>\n", sink, cancellation, budget)
+            case NodeKind.TableCell =>
                 let tag = if (frame.tableHeader) {
                     "th"
                 } else {
                     "td"
                 }
                 write("</${tag}>\n", sink, cancellation, budget)
-            case _: Emphasis => write("</em>", sink, cancellation, budget)
-            case _: Strong => write("</strong>", sink, cancellation, budget)
-            case _: Strikethrough => write("</del>", sink, cancellation, budget)
-            case _: Link => write("</a>", sink, cancellation, budget)
-            case custom: CustomBlock => renderCustomExit(custom.extensionId, custom.localKindId, sink, cancellation,
-                budget)
-            case custom: CustomInline => renderCustomExit(custom.extensionId, custom.localKindId, sink, cancellation,
-                budget)
+            case NodeKind.Emphasis => write("</em>", sink, cancellation, budget)
+            case NodeKind.Strong => write("</strong>", sink, cancellation, budget)
+            case NodeKind.Strikethrough => write("</del>", sink, cancellation, budget)
+            case NodeKind.Link => write("</a>", sink, cancellation, budget)
+            case NodeKind.CustomBlock => renderArenaCustomExit(frame.node, sink, cancellation, budget)
+            case NodeKind.CustomInline => renderArenaCustomExit(frame.node, sink, cancellation, budget)
             case _ => ()
         }
     }
 
-    private func pushContainer(frame: RenderFrame, stack: ArrayList<RenderFrame>): Unit {
+    private func pushArenaContainer(frame: ArenaRenderFrame, stack: ArrayList<ArenaRenderFrame>): Unit {
         stack.add(
-            RenderFrame(frame.node, true, tableHeader: frame.tableHeader, suppressParagraph: frame.suppressParagraph,
-                newlineAfter: frame.newlineAfter))
-        pushChildren(frame.node, stack, tableHeader: frame.tableHeader, suppressParagraph: frame.suppressParagraph)
+            ArenaRenderFrame(frame.node, true, tableHeader: frame.tableHeader,
+                suppressParagraph: frame.suppressParagraph, newlineAfter: frame.newlineAfter))
+        pushArenaChildren(frame.node, stack, tableHeader: frame.tableHeader, suppressParagraph: frame.suppressParagraph)
     }
 
-    private func pushChildren(
-        node: MarkdownNode,
-        stack: ArrayList<RenderFrame>,
-        tableHeader!: Bool = false,
-        suppressParagraph!: Bool = false
-    ): Unit {
+    private func pushArenaChildren(node: NodeRef, stack: ArrayList<ArenaRenderFrame>, tableHeader!: Bool = false,
+        suppressParagraph!: Bool = false): Unit {
         let children = node.children()
         var index = children.size - 1
         while (index >= 0) {
-            stack.add(RenderFrame(children[index], false, tableHeader: tableHeader, suppressParagraph: suppressParagraph))
+            stack.add(
+                ArenaRenderFrame(children[index], false, tableHeader: tableHeader, suppressParagraph: suppressParagraph))
             index--
         }
     }
 
-    private func writeRawHtml(
-        html: MarkdownNode,
-        block: Bool,
-        sink: TextSink,
-        cancellation: CancellationToken,
-        budget: OperationBudget
-    ): Unit {
-        let literal = match (html) {
-            case block: HtmlBlock => block.literal
-            case inline: HtmlInline => inline.literal
-            case _ => throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation,
-                "raw HTML renderer received a non-HTML node", phase: "render", span: html.span)
+    private func renderArenaCustomEnter(node: NodeRef, frame: ArenaRenderFrame, stack: ArrayList<ArenaRenderFrame>,
+        sink: TextSink, cancellation: CancellationToken, budget: OperationBudget): Unit {
+        let custom = match (node.kind) {
+            case NodeKind.CustomBlock => node.asCustomBlock().getOrThrow()
+            case NodeKind.CustomInline => node.asCustomInline().getOrThrow()
+            case _ => throw IllegalStateException("arena custom renderer received a core node")
         }
+        if (let Some(rule) <- findRendererRule(custom.extensionId, custom.localKindId)) {
+            let attributes = StringBuilder()
+            if (!rule.classToken.isEmpty()) {
+                attributes.append(" class=\"")
+                attributes.append(escapeAttribute(rule.classToken, safe: isSafePolicy()))
+                attributes.append("\"")
+            }
+            for (attribute in rule.attributes.toArray()) {
+                if (let Some(value) <- arenaStructuredAttributeValue(node, attribute.source)) {
+                    var allowed = true
+                    match (attribute.kind) {
+                        case RendererAttributeKind.Text => ()
+                        case RendererAttributeKind.LinkUri => allowed = isAllowedLink(value)
+                        case RendererAttributeKind.ImageUri => allowed = isAllowedImage(value)
+                    }
+                    if (allowed) {
+                        attributes.append(" ")
+                        attributes.append(attribute.name)
+                        attributes.append("=\"")
+                        let encoded = match (attribute.kind) {
+                            case RendererAttributeKind.Text => value
+                            case _ => encodeUri(value)
+                        }
+                        attributes.append(escapeAttribute(encoded, safe: isSafePolicy()))
+                        attributes.append("\"")
+                    }
+                }
+            }
+            write("<${rule.htmlTag}${attributes.toString()}>", sink, cancellation, budget)
+            if (rule.renderPayloadLiteral) {
+                writeFromNode(escapeText(arenaCustomLiteral(node)), node, sink, cancellation, budget)
+            }
+            pushArenaContainer(frame, stack)
+            return
+        }
+        let policy = match (findExtensionManifest(custom.extensionId)) {
+            case Some(manifest) => manifest.missingRendererPolicy
+            case None => MissingRendererPolicy.Error
+        }
+        match (policy) {
+            case MissingRendererPolicy.Error => throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
+                "missing renderer for ${custom.extensionId}/${custom.localKindId}", phase: "render", span: node.span)
+            case MissingRendererPolicy.RenderChildren => pushArenaChildren(node, stack)
+            case MissingRendererPolicy.RenderLiteral => writeFromNode(escapeText(arenaCustomLiteral(node)), node, sink,
+                cancellation, budget)
+            case MissingRendererPolicy.Drop => ()
+            case MissingRendererPolicy.CustomFallback => match (findExtensionFallback(custom.extensionId)) {
+                case Some(fallback) => writeFromNode(fallback.renderHtml(node).value, node, sink, cancellation, budget)
+                case None => throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
+                    "custom renderer fallback is not installed for ${custom.extensionId}", phase: "render",
+                    span: node.span)
+            }
+        }
+    }
+
+    private func renderArenaCustomExit(node: NodeRef, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        let custom = match (node.kind) {
+            case NodeKind.CustomBlock => node.asCustomBlock().getOrThrow()
+            case NodeKind.CustomInline => node.asCustomInline().getOrThrow()
+            case _ => throw IllegalStateException("arena custom renderer received a core node")
+        }
+        if (let Some(rule) <- findRendererRule(custom.extensionId, custom.localKindId)) {
+            write("</${rule.htmlTag}>", sink, cancellation, budget)
+        }
+    }
+
+    private func arenaCustomLiteral(node: NodeRef): String {
+        let payload = match (node.kind) {
+            case NodeKind.CustomBlock => node.asCustomBlock().getOrThrow().payload
+            case NodeKind.CustomInline => node.asCustomInline().getOrThrow().payload
+            case _ => return ""
+        }
+        match (payload) {
+            case syntax: SyntaxPayload => syntax.literal
+            case _ => arenaPlainText(node)
+        }
+    }
+
+    private func arenaStructuredAttributeValue(node: NodeRef, source: RendererAttributeSource): ?String {
+        match (source) {
+            case RendererAttributeSource.FixedValue(value) => Some(value)
+            case RendererAttributeSource.PayloadLiteral => Some(arenaCustomLiteral(node))
+            case RendererAttributeSource.PayloadParameter(name) =>
+                let payload = match (node.kind) {
+                    case NodeKind.CustomBlock => node.asCustomBlock().getOrThrow().payload
+                    case NodeKind.CustomInline => node.asCustomInline().getOrThrow().payload
+                    case _ => return None
+                }
+                match (payload) {
+                    case value: SyntaxPayload => match (value.parameter(name)) {
+                        case Some(parameter) => Some(syntaxParameterText(parameter))
+                        case None => None
+                    }
+                    case _ => None
+                }
+        }
+    }
+
+    private func writeArenaRawHtml(literal: String, block: Bool, node: NodeRef, sink: TextSink,
+        cancellation: CancellationToken, budget: OperationBudget): Unit {
         match (options.rawHtmlPolicy) {
             case RawHtmlPolicyKind.Escape => writeFromNode(
                 escapeText(literal) + if (block && !literal.endsWith("\n")) {
                     "\n"
                 } else {
                     ""
-                }, html, sink, cancellation, budget)
+                }, node, sink, cancellation, budget)
             case RawHtmlPolicyKind.Drop => ()
             case RawHtmlPolicyKind.PassThrough =>
                 let filtered = match (options.policy.kind) {
@@ -596,7 +693,7 @@ public class HtmlRenderer {
                     "\n"
                 } else {
                     ""
-                }, html, sink, cancellation, budget)
+                }, node, sink, cancellation, budget)
             case RawHtmlPolicyKind.Sanitize => match (sanitizer) {
                 case Some(port) =>
                     let sanitized = port.sanitize(literal)
@@ -604,12 +701,119 @@ public class HtmlRenderer {
                         "\n"
                     } else {
                         ""
-                    }, html, sink, cancellation, budget)
+                    }, node, sink, cancellation, budget)
                 case None => throw MarkdownException(MarkdownErrorCode.RenderFailure, "sanitizer adapter is required",
-                    phase: "render")
+                    phase: "render", span: node.span)
             }
             case RawHtmlPolicyKind.CustomHandler => throw MarkdownException(MarkdownErrorCode.RenderFailure,
-                "custom raw HTML handler is required", phase: "render")
+                "custom raw HTML handler is required", phase: "render", span: node.span)
+        }
+    }
+
+    private func renderArenaTable(table: NodeRef, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        let rows = table.children()
+        let inlineFrames = ArrayList<ArenaRenderFrame>()
+        write("<table>\n", sink, cancellation, budget)
+        if (rows.size > 0) {
+            write("<thead>\n", sink, cancellation, budget)
+            renderArenaTableRow(rows[0], true, inlineFrames, sink, cancellation, budget)
+            write("</thead>\n", sink, cancellation, budget)
+        }
+        if (rows.size > 1) {
+            write("<tbody>\n", sink, cancellation, budget)
+            for (index in 1..rows.size) {
+                renderArenaTableRow(rows[index], false, inlineFrames, sink, cancellation, budget)
+            }
+            write("</tbody>\n", sink, cancellation, budget)
+        }
+        write("</table>\n", sink, cancellation, budget)
+    }
+
+    private func renderArenaTableRow(row: NodeRef, header: Bool, inlineFrames: ArrayList<ArenaRenderFrame>,
+        sink: TextSink, cancellation: CancellationToken, budget: OperationBudget): Unit {
+        if (let NodeKind.TableRow <- row.kind) {
+            budget.consumeRenderedNode()
+            write("<tr>\n", sink, cancellation, budget)
+            let cells = row.children()
+            for (index in 0..cells.size) {
+                let cell = cells[index]
+                if (let NodeKind.TableCell <- cell.kind) {
+                    budget.consumeRenderedNode()
+                    write(tableCellOpenTag(header, cell.asTableCell().getOrThrow().alignment), sink, cancellation,
+                        budget)
+                    renderArenaInlineSequence(cell.children(), inlineFrames, sink, cancellation, budget)
+                    write(if (header) {
+                        "</th>\n"
+                    } else {
+                        "</td>\n"
+                    }, sink, cancellation, budget)
+                } else {
+                    throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation, "table row contains non-cell",
+                        phase: "render", span: cell.span)
+                }
+            }
+            write("</tr>\n", sink, cancellation, budget)
+        } else {
+            throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation, "table contains non-row",
+                phase: "render", span: row.span)
+        }
+    }
+
+    private func renderArenaInlineSequence(nodes: NodeChildren, frames: ArrayList<ArenaRenderFrame>, sink: TextSink,
+        cancellation: CancellationToken, budget: OperationBudget): Unit {
+        if (nodes.size == 1) {
+            let node = nodes[0]
+            if (let NodeKind.Text <- node.kind) {
+                budget.consumeRenderedNode()
+                writeFromNode(escapeText(node.asText().getOrThrow().value), node, sink, cancellation, budget)
+                return
+            }
+        }
+        var index = nodes.size - 1
+        while (index >= 0) {
+            frames.add(ArenaRenderFrame(nodes[index], false))
+            index--
+        }
+        while (!frames.isEmpty()) {
+            let frame = frames.remove(at: frames.size - 1)
+            if (frame.exiting) {
+                writeArenaExit(frame, sink, cancellation, budget)
+            } else {
+                budget.consumeRenderedNode()
+                writeArenaEnter(frame, frames, sink, cancellation, budget)
+            }
+        }
+    }
+
+    private func arenaPlainText(root: NodeRef): String {
+        let out = StringBuilder()
+        let stack = ArrayList<NodeRef>()
+        stack.add(root)
+        while (!stack.isEmpty()) {
+            let node = stack.remove(at: stack.size - 1)
+            match (node.kind) {
+                case NodeKind.Text => out.append(node.asText().getOrThrow().value)
+                case NodeKind.CodeSpan => out.append(node.asCodeSpan().getOrThrow().literal)
+                case NodeKind.SoftBreak => out.append("\n")
+                case NodeKind.HardBreak => out.append("\n")
+                case _ =>
+                    let children = node.children()
+                    var index = children.size - 1
+                    while (index >= 0) {
+                        stack.add(children[index])
+                        index--
+                    }
+            }
+        }
+        out.toString()
+    }
+
+    private func isArenaParagraphNode(node: NodeRef): Bool {
+        if (let NodeKind.Paragraph <- node.kind) {
+            true
+        } else {
+            false
         }
     }
 
@@ -621,7 +825,11 @@ public class HtmlRenderer {
     ): Unit {
         cancellation.throwIfCancelled(phase: "render")
         budget.consumeOutput(bytes: value.size)
-        match (sink.write(value)) {
+        let result = match (sink) {
+            case stringSink: StringTextSink => stringSink.write(value)
+            case _ => sink.write(value)
+        }
+        match (result) {
             case SinkWriteResult.Success => ()
             case SinkWriteResult.Failure(error) => throw SinkFailureException(error)
         }
@@ -630,7 +838,7 @@ public class HtmlRenderer {
 
     private func writeFromNode(
         value: String,
-        node: MarkdownNode,
+        node: NodeRef,
         sink: TextSink,
         cancellation: CancellationToken,
         budget: OperationBudget
@@ -728,176 +936,6 @@ public class HtmlRenderer {
             out.append("\"")
         }
         out.toString()
-    }
-
-    private func renderCustomEnter(
-        extensionId: String,
-        localKindId: String,
-        frame: RenderFrame,
-        stack: ArrayList<RenderFrame>,
-        sink: TextSink,
-        cancellation: CancellationToken,
-        budget: OperationBudget
-    ): Unit {
-        if (let Some(rule) <- findRendererRule(extensionId, localKindId)) {
-            let attributes = StringBuilder()
-            if (!rule.classToken.isEmpty()) {
-                attributes.append(" class=\"")
-                attributes.append(escapeAttribute(rule.classToken, safe: isSafePolicy()))
-                attributes.append("\"")
-            }
-            for (attribute in rule.attributes.toArray()) {
-                if (let Some(value) <- structuredAttributeValue(frame.node, attribute.source)) {
-                    var allowed = true
-                    match (attribute.kind) {
-                        case RendererAttributeKind.Text => ()
-                        case RendererAttributeKind.LinkUri => allowed = isAllowedLink(value)
-                        case RendererAttributeKind.ImageUri => allowed = isAllowedImage(value)
-                    }
-                    if (allowed) {
-                        attributes.append(" ");
-                        attributes.append(attribute.name);
-                        attributes.append("=\"")
-                        let encoded = match (attribute.kind) {
-                            case RendererAttributeKind.Text => value
-                            case _ => encodeUri(value)
-                        }
-                        attributes.append(escapeAttribute(encoded, safe: isSafePolicy()))
-                        attributes.append("\"")
-                    }
-                }
-            }
-            write("<${rule.htmlTag}${attributes.toString()}>", sink, cancellation, budget)
-            if (rule.renderPayloadLiteral) {
-                writeFromNode(escapeText(customLiteral(frame.node)), frame.node, sink, cancellation, budget)
-            }
-            pushContainer(frame, stack)
-        } else {
-            let policy = match (findExtensionManifest(extensionId)) {
-                case Some(manifest) => manifest.missingRendererPolicy
-                case None => MissingRendererPolicy.Error
-            }
-            match (policy) {
-                case MissingRendererPolicy.Error => throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
-                    "missing renderer for ${extensionId}/${localKindId}", phase: "render", span: frame.node.span)
-                case MissingRendererPolicy.RenderChildren => pushChildren(frame.node, stack)
-                case MissingRendererPolicy.RenderLiteral => writeFromNode(escapeText(customLiteral(frame.node)),
-                    frame.node, sink, cancellation, budget)
-                case MissingRendererPolicy.Drop => ()
-                case MissingRendererPolicy.CustomFallback => match (findExtensionFallback(extensionId)) {
-                    case Some(fallback) => writeFromNode(fallback.renderHtml(frame.node).value, frame.node, sink,
-                        cancellation, budget)
-                    case None => throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
-                        "custom renderer fallback is not installed for ${extensionId}", phase: "render",
-                        span: frame.node.span)
-                }
-            }
-        }
-    }
-
-    private func renderTable(
-        table: Table,
-        sink: TextSink,
-        cancellation: CancellationToken,
-        budget: OperationBudget
-    ): Unit {
-        let rows = table.children()
-        write("<table>\n", sink, cancellation, budget)
-        if (rows.size > 0) {
-            write("<thead>\n", sink, cancellation, budget)
-            renderTableRowDirect(rows[0], true, sink, cancellation, budget)
-            write("</thead>\n", sink, cancellation, budget)
-        }
-        if (rows.size > 1) {
-            write("<tbody>\n", sink, cancellation, budget)
-            for (index in 1..rows.size) {
-                renderTableRowDirect(rows[index], false, sink, cancellation, budget)
-            }
-            write("</tbody>\n", sink, cancellation, budget)
-        }
-        write("</table>\n", sink, cancellation, budget)
-    }
-
-    private func renderTableRowDirect(
-        node: MarkdownNode,
-        header: Bool,
-        sink: TextSink,
-        cancellation: CancellationToken,
-        budget: OperationBudget
-    ): Unit {
-        match (node) {
-            case row: TableRow =>
-                budget.consumeRenderedNode()
-                write("<tr>\n", sink, cancellation, budget)
-                let cells = row.children()
-                for (cellIndex in 0..cells.size) {
-                    let cellNode = cells[cellIndex]
-                    match (cellNode) {
-                        case cell: TableCell =>
-                            budget.consumeRenderedNode()
-                            let tag = if (header) {
-                                "th"
-                            } else {
-                                "td"
-                            }
-                            write("<${tag}${alignmentAttribute(cell.alignment)}>", sink, cancellation, budget)
-                            renderInlineSequence(cell.children(), sink, cancellation, budget)
-                            write("</${tag}>\n", sink, cancellation, budget)
-                        case _ => throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation,
-                            "table row contains non-cell", phase: "render", span: cellNode.span)
-                    }
-                }
-                write("</tr>\n", sink, cancellation, budget)
-            case _ => throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation, "table contains non-row",
-                phase: "render", span: node.span)
-        }
-    }
-
-    private func renderInlineSequence(
-        nodes: ImmutableArray<MarkdownNode>,
-        sink: TextSink,
-        cancellation: CancellationToken,
-        budget: OperationBudget
-    ): Unit {
-        if (nodes.size == 1) {
-            match (nodes[0]) {
-                case text: Text =>
-                    budget.consumeRenderedNode()
-                    writeFromNode(escapeText(text.value), text, sink, cancellation, budget)
-                    return
-                case _ => ()
-            }
-        }
-        let frames = ArrayList<RenderFrame>()
-        var index = nodes.size - 1
-        while (index >= 0) {
-            frames.add(RenderFrame(nodes[index], false));
-            index--
-        }
-        while (!frames.isEmpty()) {
-            let frame = frames.remove(at: frames.size - 1)
-            if (frame.exiting) {
-                writeHtmlExit(frame, sink, cancellation, budget)
-            } else {
-                budget.consumeRenderedNode();
-                writeHtmlEnter(frame, frames, sink, cancellation, budget)
-            }
-        }
-    }
-
-    private func renderCustomExit(
-        extensionId: String,
-        localKindId: String,
-        sink: TextSink,
-        cancellation: CancellationToken,
-        budget: OperationBudget
-    ): Unit {
-        if (let Some(rule) <- findRendererRule(extensionId, localKindId)) {
-            write("</${rule.htmlTag}>", sink, cancellation, budget)
-        } else {
-            throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
-                "missing renderer for ${extensionId}/${localKindId}", phase: "render")
-        }
     }
 
     private func findRendererRule(extensionId: String, localKindId: String): ?RendererRule {
@@ -1048,13 +1086,6 @@ public class BufferedAsyncHtmlOutputSession {
     }
 }
 
-private func isParagraphNode(node: MarkdownNode): Bool {
-    match (node) {
-        case _: Paragraph => true;
-        case _ => false
-    }
-}
-
 public class PlainTextOptions {
     public let includeLinkDestinations: Bool
     public let softBreak: String
@@ -1076,49 +1107,55 @@ public class PlainTextRenderer {
 
     public func render(document: Document): String {
         let out = StringBuilder()
-        let stack = ArrayList<RenderFrame>()
-        stack.add(RenderFrame(document, false))
+        let stack = ArrayList<ArenaRenderFrame>()
+        stack.add(ArenaRenderFrame(document.root(), false))
         while (!stack.isEmpty()) {
             let frame = stack.remove(at: stack.size - 1)
             if (frame.exiting) {
-                match (frame.node) {
-                    case _: Paragraph => out.append("\n\n")
-                    case _: Heading => out.append("\n\n")
-                    case _: ListItem => out.append("\n")
-                    case _: CodeBlock => out.append("\n\n")
-                    case _: TableCell => out.append("\t")
-                    case _: TableRow => out.append("\n")
-                    case link: Link =>
+                match (frame.node.kind) {
+                    case NodeKind.Paragraph => out.append("\n\n")
+                    case NodeKind.Heading => out.append("\n\n")
+                    case NodeKind.ListItem => out.append("\n")
+                    case NodeKind.CodeBlock => out.append("\n\n")
+                    case NodeKind.TableCell => out.append("\t")
+                    case NodeKind.TableRow => out.append("\n")
+                    case NodeKind.Link =>
                         if (options.includeLinkDestinations) {
                             out.append(" (");
-                            out.append(link.destination);
+                            out.append(frame.node.asLink().getOrThrow().destination);
                             out.append(")")
                         }
-                    case custom: CustomBlock => appendCustomTextSuffix(custom.extensionId, custom.localKindId, out)
-                    case custom: CustomInline => appendCustomTextSuffix(custom.extensionId, custom.localKindId, out)
+                    case NodeKind.CustomBlock =>
+                        let custom = frame.node.asCustomBlock().getOrThrow()
+                        appendCustomTextSuffix(custom.extensionId, custom.localKindId, out)
+                    case NodeKind.CustomInline =>
+                        let custom = frame.node.asCustomInline().getOrThrow()
+                        appendCustomTextSuffix(custom.extensionId, custom.localKindId, out)
                     case _ => ()
                 }
                 continue
             }
-            match (frame.node) {
-                case text: Text => out.append(text.value)
-                case _: SoftBreak => out.append(options.softBreak)
-                case _: HardBreak => out.append("\n")
-                case code: CodeSpan => out.append(code.literal)
-                case code: CodeBlock =>
-                    out.append(code.literal);
-                    stack.add(RenderFrame(code, true))
-                case html: HtmlBlock =>
-                    out.append(stripHtmlTags(html.literal));
-                    stack.add(RenderFrame(html, true))
-                case html: HtmlInline => out.append(stripHtmlTags(html.literal))
-                case image: Image => out.append(plainTextOf(image))
-                case _: ThematicBreak => out.append("\n")
-                case custom: CustomBlock =>
-                    appendCustomTextPrefix(custom.extensionId, custom.localKindId, custom, out)
+            match (frame.node.kind) {
+                case NodeKind.Text => out.append(frame.node.asText().getOrThrow().value)
+                case NodeKind.SoftBreak => out.append(options.softBreak)
+                case NodeKind.HardBreak => out.append("\n")
+                case NodeKind.CodeSpan => out.append(frame.node.asCodeSpan().getOrThrow().literal)
+                case NodeKind.CodeBlock =>
+                    out.append(frame.node.asCodeBlock().getOrThrow().literal)
+                    stack.add(ArenaRenderFrame(frame.node, true))
+                case NodeKind.HtmlBlock =>
+                    out.append(stripHtmlTags(frame.node.asHtmlBlock().getOrThrow().literal))
+                    stack.add(ArenaRenderFrame(frame.node, true))
+                case NodeKind.HtmlInline => out.append(stripHtmlTags(frame.node.asHtmlInline().getOrThrow().literal))
+                case NodeKind.Image => out.append(arenaPlainTextValue(frame.node))
+                case NodeKind.ThematicBreak => out.append("\n")
+                case NodeKind.CustomBlock =>
+                    let custom = frame.node.asCustomBlock().getOrThrow()
+                    appendCustomTextPrefix(custom.extensionId, custom.localKindId, frame.node, out)
                     pushPlainContainer(frame, stack)
-                case custom: CustomInline =>
-                    appendCustomTextPrefix(custom.extensionId, custom.localKindId, custom, out)
+                case NodeKind.CustomInline =>
+                    let custom = frame.node.asCustomInline().getOrThrow()
+                    appendCustomTextPrefix(custom.extensionId, custom.localKindId, frame.node, out)
                     pushPlainContainer(frame, stack)
                 case _ => pushPlainContainer(frame, stack)
             }
@@ -1126,23 +1163,23 @@ public class PlainTextRenderer {
         trimTrailingNewlines(out.toString())
     }
 
-    private func pushPlainContainer(frame: RenderFrame, stack: ArrayList<RenderFrame>): Unit {
-        stack.add(RenderFrame(frame.node, true))
+    private func pushPlainContainer(frame: ArenaRenderFrame, stack: ArrayList<ArenaRenderFrame>): Unit {
+        stack.add(ArenaRenderFrame(frame.node, true))
         let children = frame.node.children()
         var index = children.size - 1
         while (index >= 0) {
-            stack.add(RenderFrame(children[index], false));
+            stack.add(ArenaRenderFrame(children[index], false));
             index--
         }
     }
 
-    private func appendCustomTextPrefix(extensionId: String, localKindId: String, node: MarkdownNode, out: StringBuilder): Unit {
+    private func appendCustomTextPrefix(extensionId: String, localKindId: String, node: NodeRef, out: StringBuilder): Unit {
         for (index in 0..extensionRules.size) {
             let rule = extensionRules[index]
             if (rule.extensionId == extensionId && rule.localKindId == localKindId) {
                 out.append(rule.textPrefix);
                 if (rule.renderPayloadLiteral) {
-                    out.append(customLiteral(node))
+                    out.append(arenaCustomLiteralValue(node))
                 }
                 return
             }
@@ -1160,22 +1197,22 @@ public class PlainTextRenderer {
     }
 }
 
-private func plainTextOf(node: MarkdownNode): String {
+private func arenaPlainTextValue(root: NodeRef): String {
     let out = StringBuilder()
-    let stack = ArrayList<MarkdownNode>()
-    stack.add(node)
+    let stack = ArrayList<NodeRef>()
+    stack.add(root)
     while (!stack.isEmpty()) {
-        let current = stack.remove(at: stack.size - 1)
-        match (current) {
-            case text: Text => out.append(text.value)
-            case code: CodeSpan => out.append(code.literal)
-            case _: SoftBreak => out.append("\n")
-            case _: HardBreak => out.append("\n")
+        let node = stack.remove(at: stack.size - 1)
+        match (node.kind) {
+            case NodeKind.Text => out.append(node.asText().getOrThrow().value)
+            case NodeKind.CodeSpan => out.append(node.asCodeSpan().getOrThrow().literal)
+            case NodeKind.SoftBreak => out.append("\n")
+            case NodeKind.HardBreak => out.append("\n")
             case _ =>
-                let children = current.children()
+                let children = node.children()
                 var index = children.size - 1
                 while (index >= 0) {
-                    stack.add(children[index]);
+                    stack.add(children[index])
                     index--
                 }
         }
@@ -1183,37 +1220,15 @@ private func plainTextOf(node: MarkdownNode): String {
     out.toString()
 }
 
-private func customLiteral(node: MarkdownNode): String {
-    match (node) {
-        case custom: CustomBlock => match (custom.payload) {
-            case syntax: SyntaxPayload => syntax.literal
-            case _ => plainTextOf(custom)
-        }
-        case custom: CustomInline => match (custom.payload) {
-            case syntax: SyntaxPayload => syntax.literal
-            case _ => plainTextOf(custom)
-        }
-        case _ => ""
+private func arenaCustomLiteralValue(node: NodeRef): String {
+    let payload = match (node.kind) {
+        case NodeKind.CustomBlock => node.asCustomBlock().getOrThrow().payload
+        case NodeKind.CustomInline => node.asCustomInline().getOrThrow().payload
+        case _ => return ""
     }
-}
-
-private func structuredAttributeValue(node: MarkdownNode, source: RendererAttributeSource): ?String {
-    match (source) {
-        case RendererAttributeSource.FixedValue(value) => Some(value)
-        case RendererAttributeSource.PayloadLiteral => Some(customLiteral(node))
-        case RendererAttributeSource.PayloadParameter(name) =>
-            let payload: ?CustomPayload = match (node) {
-                case value: CustomBlock => Some(value.payload)
-                case value: CustomInline => Some(value.payload)
-                case _ => None
-            }
-            match (payload) {
-                case Some(value: SyntaxPayload) => match (value.parameter(name)) {
-                    case Some(parameter) => Some(syntaxParameterText(parameter))
-                    case None => None
-                }
-                case _ => None
-            }
+    match (payload) {
+        case syntax: SyntaxPayload => syntax.literal
+        case _ => arenaPlainTextValue(node)
     }
 }
 
@@ -1223,6 +1238,23 @@ private func syntaxParameterText(value: SyntaxParameterValue): String {
         case SyntaxParameterValue.IntegerValue(number) => "${number}"
         case SyntaxParameterValue.BooleanValue(boolean) => "${boolean}"
         case SyntaxParameterValue.IdentifierValue(identifier) => identifier
+    }
+}
+
+private func tableCellOpenTag(header: Bool, alignment: TableAlignment): String {
+    if (header) {
+        return match (alignment) {
+            case TableAlignment.Left => "<th align=\"left\">"
+            case TableAlignment.Center => "<th align=\"center\">"
+            case TableAlignment.Right => "<th align=\"right\">"
+            case TableAlignment.None => "<th>"
+        }
+    }
+    match (alignment) {
+        case TableAlignment.Left => "<td align=\"left\">"
+        case TableAlignment.Center => "<td align=\"center\">"
+        case TableAlignment.Right => "<td align=\"right\">"
+        case TableAlignment.None => "<td>"
     }
 }
 

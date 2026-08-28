@@ -87,25 +87,32 @@ public class MarkdownParseArtifact {
     public let dialectFingerprint: String
     public let engineFingerprint: String
     public let sourceDigest: String
-    public let document: Document
+    public let decodedTextDigest: String
+    public let utf8PolicyId: String
+    public let offsetMappingDigest: String
+    public let ast: Document
     public let references: ImmutableArray<ReferenceDefinition>
     public let diagnostics: ImmutableArray<Diagnostic>
 
     internal init(engine: MarkdownEngine, result: ParseResult) {
-        schemaVersion = "1"
-        libraryVersion = "0.8.0"
-        parserPlanVersion = "1"
+        schemaVersion = "2"
+        libraryVersion = "0.9.0"
+        parserPlanVersion = "2"
         profileId = engine.profile.id
         dialectFingerprint = engine.dialect.fingerprint
         engineFingerprint = computeEngineFingerprint(engine)
-        sourceDigest = Sha256.digestBytes(result.source.text().toArray())
-        document = result.document
-        references = result.document.references
+        let originalBytes = result.source.originalBytesForArtifact()
+        sourceDigest = Sha256.digestBytes(originalBytes)
+        decodedTextDigest = Sha256.digest(result.source.text())
+        utf8PolicyId = artifactUtf8PolicyId(result.source.decodePolicy())
+        offsetMappingDigest = identityOffsetMappingDigest(originalBytes.size)
+        ast = result.ast
+        references = result.ast.root().asDocument().getOrThrow().references
         diagnostics = result.diagnostics
     }
 
     public func debugJson(): String {
-        "{\"debug\":true,\"profile\":\"${profileId}\",\"nodes\":${AstQuery.descendants(document).size + 1}}"
+        "{\"debug\":true,\"profile\":\"${profileId}\",\"nodes\":${ast.nodeCount}}"
     }
 }
 
@@ -123,10 +130,25 @@ extend MarkdownEngine {
     }
 
     public func loadArtifact(artifact: MarkdownParseArtifact, source: String): ArtifactLoadResult {
-        if (artifact.schemaVersion != "1") {
+        loadArtifactIdentity(artifact, source.toArray(), source, "strict")
+    }
+
+    public func loadArtifact(artifact: MarkdownParseArtifact, source: Array<Byte>,
+        utf8Policy!: Utf8Policy = Utf8Policy.Strict): ArtifactLoadResult {
+        let decoded = try {
+            String.fromUtf8(source)
+        } catch (_: Exception) {
+            return ArtifactLoadResult.CacheMiss("source encoding")
+        }
+        loadArtifactIdentity(artifact, source, decoded, artifactUtf8PolicyId(utf8Policy))
+    }
+
+    private func loadArtifactIdentity(artifact: MarkdownParseArtifact, originalBytes: Array<Byte>, decoded: String,
+        utf8PolicyId: String): ArtifactLoadResult {
+        if (artifact.schemaVersion != "2") {
             return ArtifactLoadResult.CacheMiss("schema version")
         }
-        if (artifact.parserPlanVersion != "1") {
+        if (artifact.parserPlanVersion != "2") {
             return ArtifactLoadResult.CacheMiss("parser plan version")
         }
         if (artifact.profileId != profile.id) {
@@ -138,16 +160,39 @@ extend MarkdownEngine {
         if (artifact.engineFingerprint != computeEngineFingerprint(this)) {
             return ArtifactLoadResult.CacheMiss("engine fingerprint")
         }
-        if (artifact.sourceDigest != Sha256.digest(source)) {
+        if (artifact.utf8PolicyId != utf8PolicyId) {
+            return ArtifactLoadResult.CacheMiss("UTF-8 policy")
+        }
+        if (artifact.sourceDigest != Sha256.digestBytes(originalBytes)) {
             return ArtifactLoadResult.CacheMiss("source digest")
         }
+        if (artifact.decodedTextDigest != Sha256.digest(decoded)) {
+            return ArtifactLoadResult.CacheMiss("decoded text digest")
+        }
+        if (artifact.offsetMappingDigest != identityOffsetMappingDigest(originalBytes.size)) {
+            return ArtifactLoadResult.CacheMiss("offset mapping digest")
+        }
         try {
-            AstInvariantValidator().validate(artifact.document, limits: limits)
+            AstInvariantValidator().validate(artifact.ast, limits: limits)
         } catch (_: Exception) {
             return ArtifactLoadResult.CacheMiss("AST invariants")
         }
-        ArtifactLoadResult.Hit(artifact.document)
+        ArtifactLoadResult.Hit(artifact.ast)
     }
+}
+
+private func artifactUtf8PolicyId(policy: Utf8Policy): String {
+    match (policy) {
+        case Utf8Policy.Strict => "strict"
+        case Utf8Policy.ReplaceInvalid => "replace-invalid"
+    }
+}
+
+private func identityOffsetMappingDigest(byteLength: Int64): String {
+    let descriptor = CanonicalDescriptor()
+    descriptor.append("identity-offset-mapping")
+    descriptor.append(byteLength)
+    Sha256.digest(descriptor.toString())
 }
 
 private func computeEngineFingerprint(engine: MarkdownEngine): String {

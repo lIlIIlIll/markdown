@@ -18,7 +18,7 @@ class ObservabilityTest {
 
         let timed = engine.parseObserved("x", options: StatisticsOptions(timing: true))
         @Expect(timed.statistics.parseDurationNanos.isSome(), true)
-        let rendered = HtmlRenderer().renderObserved(timed.result.document, options: StatisticsOptions(timing: true))
+        let rendered = HtmlRenderer().renderObserved(timed.result.ast, options: StatisticsOptions(timing: true))
         @Expect(rendered.statistics.outputBytes, rendered.content.size)
         @Expect(rendered.statistics.renderedNodes > 0, true)
         @Expect(rendered.statistics.renderDurationNanos.isSome(), true)

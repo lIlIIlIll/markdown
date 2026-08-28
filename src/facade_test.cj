@@ -21,8 +21,9 @@ class FacadeTest {
         }
         let ownedText = longText.toString()
         let parsed = Markdown.parse(ownedText).document
-        match (parsed.children()[0].children()[0]) {
-            case text: Text => match (text.rawStorage) {
+        let parsedText = parsed.children()[0].children()[0]
+        match (parsedText.kind) {
+            case NodeKind.Text => match (parsedText.asText().getOrThrow().rawLiteralStorage()) {
                 case LiteralStorage.Slice(_) => @Expect(true)
                 case _ => @Expect(false)
             }
@@ -30,8 +31,9 @@ class FacadeTest {
         }
         let detached = parsed.detach()
         @Expect(PlainTextRenderer().render(detached), ownedText)
-        match (detached.children()[0].children()[0]) {
-            case text: Text => match (text.rawStorage) {
+        let detachedText = detached.children()[0].children()[0]
+        match (detachedText.kind) {
+            case NodeKind.Text => match (detachedText.asText().getOrThrow().rawLiteralStorage()) {
                 case LiteralStorage.Copy(_) => @Expect(true)
                 case _ => @Expect(false)
             }
@@ -39,13 +41,13 @@ class FacadeTest {
         }
         let detachedLiterals = Markdown.parse("```\nx\n```\n\n<div>x</div>").document.detach()
         for (event in detachedLiterals.walk()) {
-            if (let WalkEvent.Enter(node) <- event) {
-                match (node) {
-                    case code: CodeBlock => match (code.literalStorage) {
+            if (let NodeRefWalkEvent.Enter(node) <- event) {
+                match (node.kind) {
+                    case NodeKind.CodeBlock => match (node.asCodeBlock().getOrThrow().storedLiteral()) {
                         case LiteralStorage.Copy(_) => @Expect(true)
                         case _ => @Expect(false)
                     }
-                    case html: HtmlBlock => match (html.literalStorage) {
+                    case NodeKind.HtmlBlock => match (node.asHtmlBlock().getOrThrow().storedLiteral()) {
                         case LiteralStorage.Copy(_) => @Expect(true)
                         case _ => @Expect(false)
                     }

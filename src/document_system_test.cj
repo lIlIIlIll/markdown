@@ -51,8 +51,9 @@ class DocumentSystemTest {
         let engine = MarkdownEngine.builder().profile(MarkdownProfile.gfmModernV1()).build()
         let snapshot = engine.parseSnapshot("# H\n\n- [x] task\n\n| a |\n| - |\n| b |")
         let artifact = BinaryArtifactCodec.encode(snapshot)
+        @Expect(artifact.schemaVersion, "markdown-snapshot-binary-2")
         match (BinaryArtifactCodec.decode(engine, artifact)) {
-            case BinaryArtifactLoadResult.Hit(value) => @Expect(HtmlRenderer().render(value.result.document), HtmlRenderer().render(snapshot.result.document))
+            case BinaryArtifactLoadResult.Hit(value) => @Expect(HtmlRenderer().render(value.result.ast), HtmlRenderer().render(snapshot.result.ast))
             case _ => @Expect(false)
         }
         let bytes = artifact.bytes()
@@ -68,7 +69,7 @@ class DocumentSystemTest {
             case BinaryArtifactLoadResult.CacheMiss(reason) => @Expect(reason, "schema magic")
             case _ => @Expect(false)
         }
-        @Expect(engine.capabilities().serializationVersions[1], "markdown-snapshot-binary-1")
+        @Expect(engine.capabilities().serializationVersions[1], "markdown-snapshot-binary-2")
     }
 
     @TestCase

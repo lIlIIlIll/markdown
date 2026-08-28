@@ -2,6 +2,22 @@ package markdown
 
 import std.io.InputStream
 
+/** Packed line records plus the valid prefix length.
+ *
+ * The backing array may have spare capacity after `count`. Consumers must not
+ * inspect that tail. This lets trusted accelerators transfer their output
+ * buffer without copying it merely to trim unused capacity.
+ */
+public struct LineScanRecords {
+    public let records: Array<UInt64>
+    public let count: Int64
+
+    public init(records: Array<UInt64>, count: Int64) {
+        this.records = records
+        this.count = count
+    }
+}
+
 /**
  * Optional line-scanner acceleration boundary.
  *
@@ -11,7 +27,28 @@ import std.io.InputStream
  */
 public interface LineScannerAccelerator {
     func implementationId(): String
+    /** Packed record version. Version 1 stores end-with-newline above three
+     * low flag bits. Version 2 adds delimiter classification and uses four.
+     * Version 3 adds text-lowering classification and uses five. Version 4
+     * adds reference-opener classification and uses six. */
+    func recordFormatVersion(): Int64 {
+        1
+    }
     func scanLines(input: Array<Byte>, capacity: Int64): ?Array<UInt64>
+
+    /** Returns a packed-record buffer and its valid prefix length.
+     *
+     * Existing accelerators need only implement `scanLines`; the default
+     * adapter treats the complete returned array as valid. Implementations
+     * that allocate to `capacity` can override this method to avoid trimming
+     * the array before the parser consumes it.
+     */
+    func scanLineRecords(input: Array<Byte>, capacity: Int64): ?LineScanRecords {
+        match (scanLines(input, capacity)) {
+            case Some(records) => Some(LineScanRecords(records, records.size))
+            case None => None
+        }
+    }
 }
 
 /**
@@ -44,6 +81,14 @@ public class AcceleratedMarkdownEngine {
         budget!: OperationBudget = OperationBudget.safe()
     ): ParseResult {
         engine.parseOwnedWithAccelerator(input, cancellation, budget, Some(accelerator))
+    }
+
+    public func parse(
+        input: ReusableUtf8Input,
+        cancellation!: CancellationToken = CancellationToken.none(),
+        budget!: OperationBudget = OperationBudget.safe()
+    ): ParseResult {
+        engine.parseReusableWithAccelerator(input, cancellation, budget, Some(accelerator))
     }
 
     public func parse(

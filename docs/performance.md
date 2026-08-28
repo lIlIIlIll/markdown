@@ -12,6 +12,10 @@ Allocation strategy:
   requires already-valid UTF-8 and avoids both cloning and revalidating the
   transferred byte array; the normal Array API retains validation and its
   immutable defensive copy.
+- `ReusableUtf8Input` validates and defensively copies once, or accepts the
+  same explicit unsafe ownership transfer, then reuses immutable UTF-8 storage
+  across parses. Every parse still creates a complete AST, NodeId,
+  SourceSpan, SourceBuffer, and ParseResult.
 - Text literals of at least 256 bytes and exact LF fenced-code/raw-HTML
   literals use `SourceSlice`; decoded/normalized/small values use `Copy`.
 - Parser scratch collections are owned only by one `ParserSession` and become
@@ -37,16 +41,30 @@ Allocation strategy:
   Cangjie code.
 
 Input APIs are reported separately under `inputProfiles` in every newly
-generated raw benchmark. `commonmark-parse` remains a compatibility alias for
-`commonmark-parse-owned`; it must not be presented as the default String facade.
+generated raw benchmark. Canonical `commonmark-parse` uses one
+`ReusableUtf8Input`; `commonmark-parse-owned` separately measures the cost of
+cloning and transferring a fresh byte array for each parse. Neither profile is
+presented as the default String facade, and neither disables the public AST or
+source-position contract.
 The benchmark driver explicitly imports `markdown.native.NativeLineScanner`,
 injects it into every engine, and links the checked native archive. The root
 library defaults to the pure-Cangjie scanner and carries no foreign link
 dependency; benchmark metadata must therefore keep `nativeScanner` explicit.
-The String profile performs one process-preparation decode from benchmark stdin
-and no conversion inside each parse call. Array input performs defensive copy
-and decoding per parse, owned input clones in the driver to create a fresh
-ownership transfer, and stream input performs full buffering and decoding.
+The reusable profile performs one validation or unsafe ownership transfer at
+process preparation and no input conversion inside each parse call. The String
+profile performs one process-preparation decode from benchmark stdin and no
+conversion inside each parse call. Array input performs defensive copy and
+decoding per parse, owned input clones in the driver to create a fresh ownership
+transfer, and stream input performs full buffering and decoding.
+
+The driver also exposes `gfm-parse` as a diagnostic profile. It uses the same
+GFM profile, trusted limits, owned-byte input, and native scanner as `gfm-html`,
+but observes the completed AST without rendering it. Newly generated raw reports
+store alternating parse-only and parse-plus-HTML samples under
+`phaseProfiles.gfm` for five 1 MiB corpora. The reported renderer duration is an
+inference from the difference between two independent medians, not an internal
+timer. This profile locates parser-versus-renderer work; it does not replace the
+canonical GFM parse-plus-HTML comparison or any release gate.
 
 ## 2026-08-23 benchmark dependency transition
 
@@ -65,13 +83,17 @@ scaling slope, adjacent growth, pathological slope, and RSS gates passed, but
 both ratio gates failed. This is retained as a historical dependency-transition
 run, not as the current release value. The sole canonical release result is
 declared in `release-evidence.json` and rendered into README,
-`docs/reports/benchmark.md`, and the acceptance report. The current 2026-08-25 canonical
-run is bound to source commit `34113ea6f47a3bcd57b80ca9ee5c6063873dd5bb`,
-Cangjie SDK `1.1.0-alpha.20260803040049`, the source archive, benchmark harness,
-and all three drivers. It measured CommonMark `5.731996x` and GFM `5.013855x`;
+`docs/reports/benchmark.md`, and the acceptance report. The current 2026-08-28 R79 canonical
+run is bound to workspace commit anchor `2454b0626c2fb0fe590a59bc1f79a8d4e864c856`,
+Cangjie SDK `1.1.0-alpha.20260803040049`, source archive SHA-256
+`837ad48e1ce6db3e0d7487739c8fde8aa135275f60bc5dad90367f7371e988de`, benchmark harness,
+and driver SHA-256 `8b750a8172b473e55cba494545a787c7b5379b1693d89be3cacd22d8f275ea4c`.
+It measured CommonMark `3.827122x` and GFM `2.954111x`;
 all non-ratio gates passed, so `MD-PERF-002` remains blocked only by the two
-`2.5x` ratio limits. The evidence tree is still dirty until the reproducibility
-raw data and generated reports are committed.
+`2.5x` ratio limits. Raw SHA-256 is
+`394a769e9f408cb18daf4acf9b27c7b3897cca84122c6d238c2c94c01caef486`.
+The exact workspace archive and driver are bound, but the evidence tree remains
+explicitly dirty until the implementation and generated reports are committed.
 
 Reference provisioning reports `lockGenerationDeterminism: not claimed / not
 tested` and `sealedLockOfflineConsumptionReproducible: true`. Its official

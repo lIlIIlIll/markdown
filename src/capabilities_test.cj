@@ -34,7 +34,7 @@ class CapabilitiesTest {
         @Expect(capabilities.incrementalSupport, true)
         @Expect(capabilities.incrementalMode, "block-local-with-full-fallback")
         @Expect(capabilities.losslessSupport, true)
-        @Expect(capabilities.serializationVersions[0], "parse-artifact-1")
+        @Expect(capabilities.serializationVersions[0], "parse-artifact-2")
         @Expect(capabilities.multiDocumentSupport, true)
         @Expect(capabilities.htmlToMarkdownSupport, true)
         @Expect(capabilities.virtualTreeSupport, true)

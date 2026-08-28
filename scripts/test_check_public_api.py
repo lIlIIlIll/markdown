@@ -16,7 +16,7 @@ import unittest
 HERE = Path(__file__).resolve().parent
 CHECKER = HERE / "check_public_api.py"
 RELEASE_GATE = HERE / "release_gate.sh"
-HEADER = "# markdown public API snapshot v1"
+HEADER = "# markdown public API snapshot v0.9"
 
 
 class PublicApiCheckerCliTest(unittest.TestCase):
@@ -46,10 +46,10 @@ class PublicApiCheckerCliTest(unittest.TestCase):
     def update_snapshot(self) -> str:
         result = self.run_checker("--update")
         self.assertEqual(result.returncode, 0, result.stderr)
-        return (self.root / "api" / "public-api-v1.txt").read_text(encoding="utf-8")
+        return (self.root / "api" / "public-api-v0.9.txt").read_text(encoding="utf-8")
 
     def write_snapshot(self, content: str) -> None:
-        (self.root / "api" / "public-api-v1.txt").write_bytes(content.encode("utf-8"))
+        (self.root / "api" / "public-api-v0.9.txt").write_bytes(content.encode("utf-8"))
 
     def assert_snapshot_fails(self, content: str, message: str | None = None) -> subprocess.CompletedProcess[str]:
         self.write_snapshot(content)
@@ -79,7 +79,7 @@ class PublicApiCheckerCliTest(unittest.TestCase):
 
                 updated = self.run_checker("--update")
                 self.assertEqual(updated.returncode, 0, updated.stderr)
-                self.assertEqual((self.root / "api" / "public-api-v1.txt").read_text(encoding="utf-8"), raw)
+                self.assertEqual((self.root / "api" / "public-api-v0.9.txt").read_text(encoding="utf-8"), raw)
 
     def test_real_constructor_signature_and_file_differences_fail_with_raw_diff(self) -> None:
         declaration = 'public init<T>(value: Int64, name!: String = "x") where T <: Any {'
@@ -175,7 +175,28 @@ class PublicApiCheckerCliTest(unittest.TestCase):
         result = self.run_checker("--update")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("canonical collision", result.stderr)
-        self.assertFalse((self.root / "api" / "public-api-v1.txt").exists())
+        self.assertFalse((self.root / "api" / "public-api-v0.9.txt").exists())
+
+    def test_implicit_public_interface_members_are_snapshotted(self) -> None:
+        self.write_source(
+            "package sample\n"
+            "public interface ParserSpi {\n"
+            "    prop triggerBytes: Array<Byte>\n"
+            "    func parse(\n"
+            "        input: String,\n"
+            "        offset: Int64\n"
+            "    ): Bool\n"
+            "}\n"
+        )
+        raw = self.update_snapshot()
+        self.assertIn("sample.cj:interface-member prop triggerBytes: Array<Byte>\n", raw)
+        self.assertIn(
+            "sample.cj:interface-member func parse( input: String, offset: Int64 ): Bool\n",
+            raw,
+        )
+
+        changed = raw.replace("triggerBytes: Array<Byte>", "triggerBytes: Array<Rune>")
+        self.assert_snapshot_fails(changed, "public API differs")
 
     def test_main_collects_once(self) -> None:
         tree = ast.parse(CHECKER.read_text(encoding="utf-8"))

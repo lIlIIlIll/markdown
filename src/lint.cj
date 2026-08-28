@@ -58,17 +58,19 @@ public class MarkdownLinter {
         var previousHeading: Int64 = 0
         let usedReferenceDestinations = HashSet<String>()
         for (event in snapshot.result.document.walk()) {
-            if (let WalkEvent.Enter(node) <- event) {
-                match (node) {
-                    case heading: Heading =>
+            if (let NodeRefWalkEvent.Enter(node) <- event) {
+                match (node.kind) {
+                    case NodeKind.Heading =>
+                        let heading = node.asHeading().getOrThrow()
                         if (previousHeading > 0 && heading.level > previousHeading + 1) {
                             out.add(
                                 LintDiagnostic("MDL1001_HEADING_LEVEL_JUMP", LintCategory.DocumentStructure,
                                     DiagnosticSeverity.Warning, "heading level jumps by more than one",
-                                    requiredLintSpan(heading)))
+                                    requiredLintSpan(node)))
                         }
                         previousHeading = heading.level
-                    case link: Link =>
+                    case NodeKind.Link =>
+                        let link = node.asLink().getOrThrow()
                         match (link.syntaxKind) {
                             case LinkSyntaxKind.FullReference => usedReferenceDestinations.add(link.destination)
                             case LinkSyntaxKind.CollapsedReference => usedReferenceDestinations.add(link.destination)
@@ -78,32 +80,35 @@ public class MarkdownLinter {
                         if (link.destination.isEmpty()) {
                             out.add(
                                 LintDiagnostic("MDL2001_EMPTY_LINK", LintCategory.Accessibility,
-                                    DiagnosticSeverity.Warning, "link destination is empty", requiredLintSpan(link)))
+                                    DiagnosticSeverity.Warning, "link destination is empty", requiredLintSpan(node)))
                         } else if (dangerousLintUri(link.destination)) {
                             out.add(
                                 LintDiagnostic("MDL3001_UNSAFE_URI", LintCategory.Security, DiagnosticSeverity.Error,
-                                    "link URI uses a dangerous scheme", requiredLintSpan(link)))
+                                    "link URI uses a dangerous scheme", requiredLintSpan(node)))
                         }
-                    case image: Image =>
+                    case NodeKind.Image =>
+                        let image = node.asImage().getOrThrow()
                         match (image.syntaxKind) {
                             case LinkSyntaxKind.FullReference => usedReferenceDestinations.add(image.destination)
                             case LinkSyntaxKind.CollapsedReference => usedReferenceDestinations.add(image.destination)
                             case LinkSyntaxKind.ShortcutReference => usedReferenceDestinations.add(image.destination)
                             case _ => ()
                         }
-                        if (plainLintText(image).isEmpty()) {
+                        if (plainLintText(node).isEmpty()) {
                             out.add(
                                 LintDiagnostic("MDL2002_IMAGE_ALT_MISSING", LintCategory.Accessibility,
-                                    DiagnosticSeverity.Warning, "image alt text is empty", requiredLintSpan(image)))
+                                    DiagnosticSeverity.Warning, "image alt text is empty", requiredLintSpan(node)))
                         }
                         if (image.destination.isEmpty()) {
                             out.add(
                                 LintDiagnostic("MDL2003_IMAGE_DESTINATION_EMPTY", LintCategory.Accessibility,
-                                    DiagnosticSeverity.Warning, "image destination is empty", requiredLintSpan(image)))
+                                    DiagnosticSeverity.Warning, "image destination is empty", requiredLintSpan(node)))
                         }
-                    case html: HtmlBlock => out.add(rawHtmlLint(snapshot, html))
-                    case html: HtmlInline => out.add(rawHtmlLint(snapshot, html))
-                    case table: Table => for (row in table.children().toArray()) {
+                    case NodeKind.HtmlBlock => out.add(rawHtmlLint(snapshot, node))
+                    case NodeKind.HtmlInline => out.add(rawHtmlLint(snapshot, node))
+                    case NodeKind.Table =>
+                        let table = node.asTable().getOrThrow()
+                        for (row in node.children().toArray()) {
                         if (row.children().size != table.alignments.size) {
                             out.add(
                                 LintDiagnostic("MDL1004_TABLE_COLUMN_MISMATCH", LintCategory.Syntax,
@@ -111,19 +116,20 @@ public class MarkdownLinter {
                                     requiredLintSpan(row)))
                         }
                     }
-                    case text: Text =>
+                    case NodeKind.Text =>
+                        let text = node.asText().getOrThrow()
                         if (containsInvisible(text.value)) {
                             out.add(
                                 LintDiagnostic("MDL3002_INVISIBLE_UNICODE", LintCategory.Security,
                                     DiagnosticSeverity.Warning, "text contains bidi or zero-width controls",
-                                    requiredLintSpan(text)))
+                                    requiredLintSpan(node)))
                         }
                     case _ => ()
                 }
             }
         }
         let effective = HashSet<String>()
-        for (reference in snapshot.result.document.references.toArray()) {
+        for (reference in snapshot.result.document.root().asDocument().getOrThrow().references.toArray()) {
             if (!effective.add(reference.labelNormalized)) {
                 out.add(
                     LintDiagnostic("MDL1002_DUPLICATE_REFERENCE", LintCategory.Syntax, DiagnosticSeverity.Warning,
@@ -277,7 +283,7 @@ extend MarkdownEngine {
     }
 }
 
-private func rawHtmlLint(snapshot: DocumentSnapshot, node: MarkdownNode): LintDiagnostic {
+private func rawHtmlLint(snapshot: DocumentSnapshot, node: NodeRef): LintDiagnostic {
     let span = requiredLintSpan(node)
     let fix = Fix("Escape raw HTML", [SourceEdit(span, escapeLintHtml(snapshot.result.source.slice(span)))],
         FixApplicability.Always, snapshot.sourceDigest, snapshot.version)
@@ -294,7 +300,7 @@ private func lintManifest(manifests: ImmutableArray<ExtensionManifest>, extensio
     throw IllegalStateException("compiled dialect is missing extension manifest")
 }
 
-private func requiredLintSpan(node: MarkdownNode): SourceSpan {
+private func requiredLintSpan(node: NodeRef): SourceSpan {
     match (node.span) {
         case Some(span) => span;
         case None => SourceSpan(0, 0)
@@ -333,21 +339,26 @@ private func appendMarkerAndAmbiguityLint(snapshot: DocumentSnapshot, out: Array
         }
     }
     for (event in snapshot.result.document.walk()) {
-        if (let WalkEvent.Enter(text: Text) <- event) {
-            if (text.raw.contains("**") || text.raw.contains("__") || text.raw.contains("~~") || text.raw.contains("[")) {
+        if (let NodeRefWalkEvent.Enter(node) <- event) {
+            if (let NodeKind.Text <- node.kind) {
+                let text = node.asText().getOrThrow()
+                if (text.raw.contains("**") || text.raw.contains("__") || text.raw.contains("~~") || text.raw.contains("[")) {
                 out.add(
                     LintDiagnostic("MDL1005_AMBIGUOUS_OR_UNCLOSED_SYNTAX", LintCategory.Syntax, DiagnosticSeverity.Info,
-                        "text contains ambiguous or unclosed Markdown syntax", requiredLintSpan(text)))
+                        "text contains ambiguous or unclosed Markdown syntax", requiredLintSpan(node)))
+                }
             }
         }
     }
 }
 
-private func plainLintText(node: MarkdownNode): String {
+private func plainLintText(node: NodeRef): String {
     let out = StringBuilder()
     for (event in node.walk()) {
-        if (let WalkEvent.Enter(text: Text) <- event) {
-            out.append(text.value)
+        if (let NodeRefWalkEvent.Enter(value) <- event) {
+            if (let NodeKind.Text <- value.kind) {
+                out.append(value.asText().getOrThrow().value)
+            }
         }
     }
     out.toString()

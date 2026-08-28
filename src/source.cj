@@ -136,6 +136,38 @@ public class OwnedUtf8Input {
     }
 }
 
+/** An immutable UTF-8 input whose validation and backing storage can be
+ * reused across parses. Construction takes a defensive copy; the unsafe
+ * ownership-transfer factory avoids that copy when the caller can guarantee
+ * valid UTF-8 and relinquishes every mutable alias. */
+public class ReusableUtf8Input {
+    private let value: String
+    private let bytes: Array<Byte>
+
+    public init(bytes: Array<Byte>) {
+        let owned = bytes.clone()
+        value = String.fromUtf8(owned)
+        this.bytes = owned
+    }
+
+    private init(value: String, bytes: Array<Byte>) {
+        this.value = value
+        this.bytes = bytes
+    }
+
+    public static unsafe func take(bytes: Array<Byte>): ReusableUtf8Input {
+        ReusableUtf8Input(String.withRawData(bytes), bytes)
+    }
+
+    internal func byteLength(): Int64 {
+        bytes.size
+    }
+
+    internal func sourceBuffer(): SourceBuffer {
+        SourceBuffer(value, bytes, true)
+    }
+}
+
 public class SourceBuffer {
     private let value: String
     private let decodedBytes: Array<Byte>
@@ -143,6 +175,7 @@ public class SourceBuffer {
     private let decodedToOriginal: Array<Int64>
     private let mappingIsIdentity: Bool
     private let valueBackedIdentity: Bool
+    private let utf8Policy: Utf8Policy
 
     public init(value: String) {
         this.value = value
@@ -151,9 +184,11 @@ public class SourceBuffer {
         this.decodedToOriginal = []
         this.mappingIsIdentity = true
         this.valueBackedIdentity = true
+        this.utf8Policy = Utf8Policy.Strict
     }
 
-    internal init(value: String, originalBytes: Array<Byte>, decodedToOriginal: Array<Int64>) {
+    internal init(value: String, originalBytes: Array<Byte>, decodedToOriginal: Array<Int64>,
+        utf8Policy!: Utf8Policy = Utf8Policy.ReplaceInvalid) {
         let decoded = value.toArray()
         if (decodedToOriginal.size != decoded.size + 1) {
             throw IllegalArgumentException("decoded-to-original map has invalid size")
@@ -180,9 +215,10 @@ public class SourceBuffer {
         }
         this.mappingIsIdentity = identity
         this.valueBackedIdentity = false
+        this.utf8Policy = utf8Policy
     }
 
-    internal init(value: String, originalBytes: Array<Byte>) {
+    internal init(value: String, originalBytes: Array<Byte>, utf8Policy!: Utf8Policy = Utf8Policy.Strict) {
         let decoded = value.toArray()
         if (decoded.size != originalBytes.size) {
             throw IllegalArgumentException("identity source buffer requires equal decoded/original lengths")
@@ -193,6 +229,7 @@ public class SourceBuffer {
         this.decodedToOriginal = []
         this.mappingIsIdentity = true
         this.valueBackedIdentity = false
+        this.utf8Policy = utf8Policy
     }
 
     internal init(value: String, ownedBytes: Array<Byte>, takeOwnership: Bool) {
@@ -205,6 +242,7 @@ public class SourceBuffer {
         this.decodedToOriginal = []
         this.mappingIsIdentity = true
         this.valueBackedIdentity = false
+        this.utf8Policy = Utf8Policy.Strict
     }
 
     public func byteLength(): Int64 {
@@ -227,6 +265,21 @@ public class SourceBuffer {
         mappingIsIdentity
     }
 
+    internal func decodePolicy(): Utf8Policy {
+        utf8Policy
+    }
+
+    internal func originalBytesForArtifact(): Array<Byte> {
+        if (!mappingIsIdentity) {
+            throw IllegalStateException("artifact bytes require an identity source mapping")
+        }
+        if (valueBackedIdentity) {
+            value.toArray()
+        } else {
+            originalBytes.clone()
+        }
+    }
+
     public func slice(span: SourceSpan): String {
         ensureSpan(span)
         if (mappingIsIdentity) {
@@ -237,11 +290,15 @@ public class SourceBuffer {
         String.fromUtf8(decodedBytes.slice(start, end - start))
     }
 
-    public func text(node: MarkdownNode): String {
+    public func text(node: NodeRef): String {
         match (node.span) {
             case Some(span) => slice(span)
             case None => throw IllegalArgumentException("node has no source span")
         }
+    }
+
+    public func text(document: Document): String {
+        text(document.root())
     }
 
     public func sourceSlice(span: SourceSpan): SourceSlice {

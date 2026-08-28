@@ -193,7 +193,7 @@ public class SyntaxTree {
         out.toString()
     }
 
-    public func originatingTokens(node: MarkdownNode): Array<SyntaxToken> {
+    public func originatingTokens(node: NodeRef): Array<SyntaxToken> {
         match (node.span) {
             case Some(span) =>
                 let range = syntaxTokenRangeInSpan(tokenArena, span)
@@ -247,17 +247,17 @@ public class SyntaxToAstMap {
     public let syntaxTree: SyntaxTree
     public let document: Document
     private let syntaxNodesById: HashMap<Int64, SyntaxNode>
-    private let semanticNodesById: HashMap<Int64, MarkdownNode>
+    private let semanticNodesById: HashMap<Int64, NodeRef>
     private let semanticNodeIdsByToken: Array<Int64>
     public init(syntaxTree: SyntaxTree, document: Document) {
         this.syntaxTree = syntaxTree
         this.document = document
         syntaxNodesById = HashMap<Int64, SyntaxNode>()
-        semanticNodesById = HashMap<Int64, MarkdownNode>()
+        semanticNodesById = HashMap<Int64, NodeRef>()
         semanticNodeIdsByToken = Array<Int64>(syntaxTree.tokenArenaSize(), repeat: -1)
         let ownerLengths = Array<Int64>(syntaxTree.tokenArenaSize(), repeat: Int64.Max)
         for (event in document.walk()) {
-            if (let WalkEvent.Enter(node) <- event) {
+            if (let NodeRefWalkEvent.Enter(node) <- event) {
                 semanticNodesById.add(node.nodeId.value, node)
             }
         }
@@ -285,19 +285,19 @@ public class SyntaxToAstMap {
             }
         }
     }
-    public func originatingTokens(node: MarkdownNode): Array<SyntaxToken> {
+    public func originatingTokens(node: NodeRef): Array<SyntaxToken> {
         syntaxTree.originatingTokens(node)
     }
-    public func originatingSyntaxNode(node: MarkdownNode): ?SyntaxNode {
+    public func originatingSyntaxNode(node: NodeRef): ?SyntaxNode {
         syntaxNodesById.get(node.nodeId.value)
     }
-    public func semanticNode(node: SyntaxNode): ?MarkdownNode {
+    public func semanticNode(node: SyntaxNode): ?NodeRef {
         match (node.semanticNodeId) {
             case Some(id) => semanticNodesById.get(id.value)
             case None => None
         }
     }
-    public func semanticNode(token: SyntaxToken): ?MarkdownNode {
+    public func semanticNode(token: SyntaxToken): ?NodeRef {
         match (syntaxTree.tokenIndex(token)) {
             case Some(index) =>
                 let id = semanticNodeIdsByToken[index]
@@ -323,7 +323,7 @@ private struct SyntaxTokenRange {
 private func syntaxRootForDocument(document: Document, tokens: Array<SyntaxToken>): SyntaxNode {
     let built = HashMap<Int64, SyntaxNode>()
     for (event in document.walk()) {
-        if (let WalkEvent.Exit(node) <- event) {
+        if (let NodeRefWalkEvent.Exit(node) <- event) {
             let span = match (node.span) {
                 case Some(value) => value;
                 case None => SourceSpan(0, 0)
@@ -335,8 +335,8 @@ private func syntaxRootForDocument(document: Document, tokens: Array<SyntaxToken
                     children.add(value)
                 }
             }
-            let kind = match (node) {
-                case _: Document => SyntaxKind.Document
+            let kind = match (node.kind) {
+                case NodeKind.Document => SyntaxKind.Document
                 case _ => match (node.category) {
                     case NodeCategory.Block => SyntaxKind.BlockNode
                     case NodeCategory.Inline => SyntaxKind.InlineNode
@@ -347,7 +347,7 @@ private func syntaxRootForDocument(document: Document, tokens: Array<SyntaxToken
                     semanticNodeId: Some(node.nodeId)))
         }
     }
-    match (built.get(document.nodeId.value)) {
+    match (built.get(document.root().nodeId.value)) {
         case Some(value) => value
         case None => SyntaxNode(SyntaxKind.Document, SourceSpan(0, 0), tokens, 0, 0)
     }
@@ -500,7 +500,7 @@ public class DocumentSnapshot {
         let nextSnapshot = DocumentSnapshot(engine, version + 1, nextResult)
         let changedIds = ArrayList<NodeId>()
         for (event in nextResult.document.walk()) {
-            if (let WalkEvent.Enter(node) <- event) {
+            if (let NodeRefWalkEvent.Enter(node) <- event) {
                 changedIds.add(node.nodeId)
             }
         }
@@ -520,66 +520,62 @@ public class DocumentSnapshot {
 
     private func tryIncrementalEdit(edit: SourceEdit): ?ReparseResult {
         if (edit.range.endByte > result.source.byteLength() || edit.range.length() != edit.replacement.size ||
-            result.diagnostics.size > 0 || result.document.references.size > 0 || engine.dialect.manifests.size > 0 ||
-            !incrementalPlainText(edit.replacement)) {
+            !result.source.hasIdentityMapping() || !incrementalPlainText(edit.replacement) ||
+            !result.document.references.isEmpty() || !engine.dialect.blockRules.isEmpty() ||
+            !engine.dialect.inlineRules.isEmpty() || !engine.dialect.parserSpis.isEmpty() ||
+            !engine.dialect.documentProcessors.isEmpty()) {
             return None
         }
-        let replacedText = result.source.slice(edit.range)
-        if (!incrementalPlainText(replacedText)) {
-            return None
-        }
-        let children = result.document.children()
-        var targetIndex: Int64 = -1
-        var targetSpan: ?SourceSpan = None
-        for (index in 0..children.size) {
-            match (children[index]) {
-                case _: Paragraph => ()
-                case _: Heading => ()
-                case _ => continue
-            }
-            if (let Some(span) <- children[index].span) {
-                if (span.startByte <= edit.range.startByte && edit.range.endByte <= span.endByte) {
-                    targetIndex = index
-                    targetSpan = Some(span)
-                    break
+        var target: ?NodeRef = None
+        for (event in result.document.walk()) {
+            if (let NodeRefWalkEvent.Enter(node) <- event) {
+                if (let NodeKind.Text <- node.kind) {
+                    if (let Some(span) <- node.span) {
+                        if (span.containsSpan(edit.range)) {
+                            let text = node.asText().getOrThrow()
+                            if (text.raw == text.value && incrementalPlainText(text.raw)) {
+                                target = Some(node)
+                            }
+                        }
+                    }
                 }
             }
         }
-        if (targetIndex < 0) {
-            return None
-        }
-        let span = match (targetSpan) {
-            case Some(value) => value;
+        let textNode = match (target) {
+            case Some(value) => value
             case None => return None
         }
-        let originalBlock = result.source.slice(span)
-        let relativeStart = edit.range.startByte - span.startByte
-        let relativeEnd = edit.range.endByte - span.startByte
-        let changedBlockText = originalBlock[..relativeStart] + edit.replacement + originalBlock[relativeEnd..]
-        let fragment = engine.parse(changedBlockText)
-        if (fragment.document.children().size != 1 ||
-            !incrementalSameKind(fragment.document.children()[0], children[targetIndex])) {
+        let ancestors = AstQuery.ancestors(result.document, textNode.nodeId)
+        if (ancestors.size != 2) {
             return None
         }
-        let rebased = rebaseIncrementalSubtree(fragment.document.children()[0], maximumNodeId(result.document),
-            span.startByte)
-        let nextChildren = children.toArray()
-        nextChildren[targetIndex] = rebased
-        let sourceText = result.source.text()
-        let nextText = sourceText[..edit.range.startByte] + edit.replacement + sourceText[edit.range.endByte..]
-        let nextSource = SourceBuffer(nextText)
-        let document = Document(result.document.nodeId, nextChildren, SourceSpan(0, nextSource.byteLength()),
-            result.document.profile, result.document.dialectFingerprint, references: [])
-        AstInvariantValidator().validate(document, limits: engine.limits)
-        let nextResult = ParseResult(document, nextSource, fragment.diagnostics.toArray())
-        let nextSnapshot = DocumentSnapshot(engine, version + 1, nextResult)
-        let changedIds = ArrayList<NodeId>()
-        for (event in rebased.walk()) {
-            if (let WalkEvent.Enter(node) <- event) {
-                changedIds.add(node.nodeId)
-            }
+        match (ancestors[1].kind) {
+            case NodeKind.Paragraph => ()
+            case NodeKind.Heading => ()
+            case _ => return None
         }
-        Some(ReparseResult(nextSnapshot, edit.range, ChangedNodeSet(changedIds.toArray()), true))
+        let span = textNode.span.getOrThrow()
+        let text = textNode.asText().getOrThrow()
+        let localStart = edit.range.startByte - span.startByte
+        let localEnd = edit.range.endByte - span.startByte
+        let replacement = text.raw[0..localStart] + edit.replacement + text.raw[localEnd..]
+        let nextDocument = TreeRewriter.rewrite(result.document, {
+            node => if (node.nodeId == textNode.nodeId) {
+                RewriteAction.ReplaceText(replacement, replacement)
+            } else {
+                RewriteAction.Keep
+            }
+        })
+        let sourceText = result.source.text()
+        let nextText = sourceText[0..edit.range.startByte] + edit.replacement + sourceText[edit.range.endByte..]
+        let nextResult = ParseResult(nextDocument, SourceBuffer(nextText), result.diagnostics.toArray())
+        let nextSnapshot = DocumentSnapshot(engine, version + 1, nextResult)
+        let changed = ArrayList<NodeId>()
+        changed.add(textNode.nodeId)
+        for (ancestor in ancestors) {
+            changed.add(ancestor.nodeId)
+        }
+        Some(ReparseResult(nextSnapshot, edit.range, ChangedNodeSet(changed.toArray()), true))
     }
 
     public func applyUtf16Edit(start: Utf16Position, end: Utf16Position, replacement: String): ReparseResult {
@@ -642,11 +638,13 @@ private func rangeHasUnsupportedCustom(snapshot: DocumentSnapshot, range: Source
             if (spansOverlap(span, range)) {
                 var extensionId = ""
                 var localKindId = ""
-                match (node) {
-                    case value: CustomBlock =>
+                match (node.kind) {
+                    case NodeKind.CustomBlock =>
+                        let value = node.asCustomBlock().getOrThrow()
                         extensionId = value.extensionId
                         localKindId = value.localKindId
-                    case value: CustomInline =>
+                    case NodeKind.CustomInline =>
+                        let value = node.asCustomInline().getOrThrow()
                         extensionId = value.extensionId
                         localKindId = value.localKindId
                     case _ => ()
@@ -684,86 +682,11 @@ private func incrementalPlainText(value: String): Bool {
     true
 }
 
-private func incrementalSameKind(left: MarkdownNode, right: MarkdownNode): Bool {
-    match (left) {
-        case _: Paragraph => match (right) {
-            case _: Paragraph => true;
-            case _ => false
-        }
-        case _: Heading => match (right) {
-            case _: Heading => true;
-            case _ => false
-        }
-        case _ => false
-    }
-}
-
-private func maximumNodeId(document: Document): Int64 {
-    var maximum: Int64 = 0
-    for (event in document.walk()) {
-        if (let WalkEvent.Enter(node) <- event) {
-            if (node.nodeId.value > maximum) {
-                maximum = node.nodeId.value
-            }
-        }
-    }
-    maximum
-}
-
-private func rebaseIncrementalSubtree(root: MarkdownNode, idOffset: Int64, spanOffset: Int64): MarkdownNode {
-    let built = HashMap<Int64, MarkdownNode>()
-    for (event in root.walk()) {
-        if (let WalkEvent.Exit(node) <- event) {
-            let children = ArrayList<MarkdownNode>()
-            for (child in node.children().toArray()) {
-                match (built.get(child.nodeId.value)) {
-                    case Some(value) => children.add(value)
-                    case None => throw IllegalStateException("incremental child was not rebased")
-                }
-            }
-            built.add(node.nodeId.value, cloneIncrementalNode(node, children.toArray(), idOffset, spanOffset))
-        }
-    }
-    match (built.get(root.nodeId.value)) {
-        case Some(value) => value
-        case None => throw IllegalStateException("incremental root was not rebased")
-    }
-}
-
-private func cloneIncrementalNode(node: MarkdownNode, children: Array<MarkdownNode>, idOffset: Int64, spanOffset: Int64): MarkdownNode {
-    let id = NodeId(node.nodeId.value + idOffset)
-    let span = shiftedIncrementalSpan(node, spanOffset)
-    match (node) {
-        case value: Paragraph => Paragraph(id, children, span)
-        case value: Heading => Heading(id, value.level, children, span)
-        case value: Text => Text(id, value.raw, value.value, span, normalized: value.normalized)
-        case _: SoftBreak => SoftBreak(id, span)
-        case value: HardBreak => HardBreak(id, value.syntaxKind, span)
-        case value: CodeSpan => CodeSpan(id, value.literal, value.delimiterRaw, span)
-        case _: Emphasis => Emphasis(id, children, span)
-        case _: Strong => Strong(id, children, span)
-        case _: Strikethrough => Strikethrough(id, children, span)
-        case value: Link => Link(id, value.destinationRaw, value.destination, value.titleRaw, value.title,
-            value.syntaxKind, children, span)
-        case value: Image => Image(id, value.destinationRaw, value.destination, value.titleRaw, value.title,
-            value.syntaxKind, children, span)
-        case value: HtmlInline => HtmlInline(id, value.literal, span)
-        case _ => throw IllegalStateException("incremental edit encountered unsupported block shape")
-    }
-}
-
-private func shiftedIncrementalSpan(node: MarkdownNode, offset: Int64): SourceSpan {
-    match (node.span) {
-        case Some(span) => SourceSpan(span.startByte + offset, span.endByte + offset)
-        case None => throw IllegalStateException("incremental parsed node has no SourceSpan")
-    }
-}
-
 private func buildStableNodeIds(result: ParseResult): HashMap<Int64, StableNodeId> {
     let values = HashMap<Int64, StableNodeId>()
     var ordinal: Int64 = 0
     for (event in result.document.walk()) {
-        if (let WalkEvent.Enter(node) <- event) {
+        if (let NodeRefWalkEvent.Enter(node) <- event) {
             let source = match (node.span) {
                 case Some(span) => result.source.slice(span)
                 case None => ""
@@ -775,33 +698,32 @@ private func buildStableNodeIds(result: ParseResult): HashMap<Int64, StableNodeI
     values
 }
 
-private func stableNodeKind(node: MarkdownNode): String {
-    match (node) {
-        case _: Document => "document"
-        case _: BlockQuote => "block-quote"
-        case _: List => "list"
-        case _: ListItem => "list-item"
-        case _: Paragraph => "paragraph"
-        case _: Heading => "heading"
-        case _: ThematicBreak => "thematic-break"
-        case _: CodeBlock => "code-block"
-        case _: HtmlBlock => "html-block"
-        case _: Table => "table"
-        case _: TableRow => "table-row"
-        case _: TableCell => "table-cell"
-        case _: CustomBlock => "custom-block"
-        case _: Text => "text"
-        case _: SoftBreak => "soft-break"
-        case _: HardBreak => "hard-break"
-        case _: CodeSpan => "code-span"
-        case _: Emphasis => "emphasis"
-        case _: Strong => "strong"
-        case _: Strikethrough => "strikethrough"
-        case _: Link => "link"
-        case _: Image => "image"
-        case _: HtmlInline => "html-inline"
-        case _: CustomInline => "custom-inline"
-        case _ => "unknown"
+private func stableNodeKind(node: NodeRef): String {
+    match (node.kind) {
+        case NodeKind.Document => "document"
+        case NodeKind.BlockQuote => "block-quote"
+        case NodeKind.List => "list"
+        case NodeKind.ListItem => "list-item"
+        case NodeKind.Paragraph => "paragraph"
+        case NodeKind.Heading => "heading"
+        case NodeKind.ThematicBreak => "thematic-break"
+        case NodeKind.CodeBlock => "code-block"
+        case NodeKind.HtmlBlock => "html-block"
+        case NodeKind.Table => "table"
+        case NodeKind.TableRow => "table-row"
+        case NodeKind.TableCell => "table-cell"
+        case NodeKind.CustomBlock => "custom-block"
+        case NodeKind.Text => "text"
+        case NodeKind.SoftBreak => "soft-break"
+        case NodeKind.HardBreak => "hard-break"
+        case NodeKind.CodeSpan => "code-span"
+        case NodeKind.Emphasis => "emphasis"
+        case NodeKind.Strong => "strong"
+        case NodeKind.Strikethrough => "strikethrough"
+        case NodeKind.Link => "link"
+        case NodeKind.Image => "image"
+        case NodeKind.HtmlInline => "html-inline"
+        case NodeKind.CustomInline => "custom-inline"
     }
 }
 

@@ -15,6 +15,58 @@ private class InvalidScannerAccelerator <: LineScannerAccelerator {
     }
 }
 
+private class LegacyV1ScannerAccelerator <: LineScannerAccelerator {
+    public func implementationId(): String {
+        "legacy-v1-test-scanner"
+    }
+
+    public func scanLines(bytes: Array<Byte>, _: Int64): ?Array<UInt64> {
+        Some([(UInt64(bytes.size) << 3) | 0x4u64])
+    }
+}
+
+private class LegacyV2ScannerAccelerator <: LineScannerAccelerator {
+    public func implementationId(): String {
+        "legacy-v2-test-scanner"
+    }
+
+    public func recordFormatVersion(): Int64 {
+        2
+    }
+
+    public func scanLines(bytes: Array<Byte>, _: Int64): ?Array<UInt64> {
+        Some([(UInt64(bytes.size) << 4) | 0x4u64])
+    }
+}
+
+private class UnsupportedScannerAccelerator <: LineScannerAccelerator {
+    public func implementationId(): String {
+        "unsupported-test-scanner"
+    }
+
+    public func recordFormatVersion(): Int64 {
+        99
+    }
+
+    public func scanLines(_: Array<Byte>, _: Int64): ?Array<UInt64> {
+        Some([])
+    }
+}
+
+private class InvalidScannerCountAccelerator <: LineScannerAccelerator {
+    public func implementationId(): String {
+        "invalid-count-test-scanner"
+    }
+
+    public func scanLines(_: Array<Byte>, _: Int64): ?Array<UInt64> {
+        Some([])
+    }
+
+    public func scanLineRecords(bytes: Array<Byte>, _: Int64): ?LineScanRecords {
+        Some(LineScanRecords([(UInt64(bytes.size) << 3) | 0x4u64], 2))
+    }
+}
+
 class ArrayInputStream <: InputStream {
     private let bytes: Array<Byte>
     private var offset: Int64 = 0
@@ -64,13 +116,16 @@ class InputBehaviorTest {
         @Expect(result.diagnostics[0].span, SourceSpan(2, 3))
         @Expect(result.diagnostics[0].fixes.size, 1)
         @Expect(result.diagnostics[0].fixes[0].replacement, "\u{FFFD}")
-        match (result.document.children()[0]) {
-            case heading: Heading =>
-                @Expect(heading.span, Some(SourceSpan(0, 4)))
-                match (heading.children()[0]) {
-                    case text: Text =>
+        let headingNode = result.document.children()[0]
+        match (headingNode.kind) {
+            case NodeKind.Heading =>
+                @Expect(headingNode.span, Some(SourceSpan(0, 4)))
+                let textNode = headingNode.children()[0]
+                match (textNode.kind) {
+                    case NodeKind.Text =>
+                        let text = textNode.asText().getOrThrow()
                         @Expect(text.value, "\u{FFFD}x")
-                        @Expect(text.span, Some(SourceSpan(2, 4)))
+                        @Expect(textNode.span, Some(SourceSpan(2, 4)))
                         @Expect(result.source.slice(SourceSpan(2, 4)), "\u{FFFD}x")
                     case _ => @Expect(false)
                 }
@@ -82,11 +137,13 @@ class InputBehaviorTest {
     func bomDoesNotBecomeMarkdownTextButOffsetsRemainOriginal(): Unit {
         let bytes: Array<Byte> = [0xEF, 0xBB, 0xBF, b'#', b' ', b'x']
         let result = MarkdownEngine.builder().build().parse(bytes)
-        match (result.document.children()[0]) {
-            case heading: Heading =>
-                @Expect(heading.span, Some(SourceSpan(3, 6)))
-                match (heading.children()[0]) {
-                    case text: Text => @Expect(text.span, Some(SourceSpan(5, 6)))
+        let headingNode = result.document.children()[0]
+        match (headingNode.kind) {
+            case NodeKind.Heading =>
+                @Expect(headingNode.span, Some(SourceSpan(3, 6)))
+                let textNode = headingNode.children()[0]
+                match (textNode.kind) {
+                    case NodeKind.Text => @Expect(textNode.span, Some(SourceSpan(5, 6)))
                     case _ => @Expect(false)
                 }
             case _ => @Expect(false)
@@ -110,8 +167,9 @@ class InputBehaviorTest {
     func streamInputUsesSameParserAndPreservesReadFailuresAsTypedCause(): Unit {
         let input = ArrayInputStream("# stream".toArray())
         let result = MarkdownEngine.builder().build().parse(input)
-        match (result.document.children()[0]) {
-            case heading: Heading => @Expect(heading.level, 1)
+        let headingNode = result.document.children()[0]
+        match (headingNode.kind) {
+            case NodeKind.Heading => @Expect(headingNode.asHeading().getOrThrow().level, 1)
             case _ => @Expect(false)
         }
         try {
@@ -155,6 +213,35 @@ class InputBehaviorTest {
     }
 
     @TestCase
+    func reusableUtf8InputValidatesOnceAndSupportsRepeatedParsing(): Unit {
+        let original = "# reusable 😀".toArray()
+        let input = ReusableUtf8Input(original)
+        original[2] = b'X'
+        let engine = MarkdownEngine.builder().build()
+        let first = engine.parse(input)
+        let second = engine.parse(input)
+        @Expect(PlainTextRenderer().render(first.document), "reusable 😀")
+        @Expect(PlainTextRenderer().render(second.document), "reusable 😀")
+        @Expect(first.source.byteLength(), second.source.byteLength())
+
+        try {
+            ReusableUtf8Input([0xff])
+            @Expect(false)
+        } catch (_: IllegalArgumentException) {
+            @Expect(true)
+        }
+
+        let tiny = ParseLimits(3, 3, 8, 16, 4, 4, 4, 4, 8, 4, 4)
+        try {
+            MarkdownEngine.builder().limits(tiny).build().parse(input)
+            @Expect(false)
+        } catch (error: LimitExceededException) {
+            @Expect(error.limitKind, "input_bytes")
+            @Expect(error.observedValue, 15)
+        }
+    }
+
+    @TestCase
     func nativeScannerCanBeDisabledWithoutChangingPublicParseSemantics(): Unit {
         let input = "# title\r\n\r\nText *em* 😀".toArray()
         let nativeEngine = MarkdownEngine.builder().nativeScannerEnabled(true).build()
@@ -164,6 +251,16 @@ class InputBehaviorTest {
         let cangjieHtml = renderer.render(cangjieEngine.parse(input).document)
         @Expect(cangjieHtml, nativeHtml)
         @Expect(cangjieEngine.capabilities().nativeScannerEnabled, false)
+
+        // Average line width below the packed-record estimate must safely
+        // fall back to the Cangjie scanner without changing semantics.
+        let dense = StringBuilder()
+        for (_ in 0..1024) {
+            dense.append("x\n")
+        }
+        let denseBytes = dense.toString().toArray()
+        @Expect(renderer.render(nativeEngine.parse(denseBytes).document),
+            renderer.render(cangjieEngine.parse(denseBytes).document))
     }
 
     @TestCase
@@ -189,6 +286,37 @@ class InputBehaviorTest {
             @Expect(false)
         } catch (error: IllegalStateException) {
             @Expect(error.message.contains("invalid packed record"), true)
+        }
+
+        let invalidCount = MarkdownEngine.builder().build().acceleratedBy(InvalidScannerCountAccelerator())
+        try {
+            invalidCount.parse("x".toArray())
+            @Expect(false)
+        } catch (error: IllegalStateException) {
+            @Expect(error.message.contains("invalid record count"), true)
+        }
+    }
+
+    @TestCase
+    func preservesLegacyScannerSemanticsAndRejectsUnknownFormats(): Unit {
+        let legacy = MarkdownEngine.builder().build().acceleratedBy(LegacyV1ScannerAccelerator())
+        let document = legacy.parse("*legacy*".toArray()).document
+        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>legacy</em></p>\n")
+
+        // Version 2 has no text-lowering bit. It must therefore retain the
+        // conservative coalescing path for escape/entity/code markers.
+        let legacyV2 = MarkdownEngine.builder().build().acceleratedBy(LegacyV2ScannerAccelerator())
+        let entity = legacyV2.parse("a&amp;b".toArray())
+        @Expect(entity.document.children()[0].children().size, 1)
+        @Expect(entity.document.children()[0].children()[0].asText().getOrThrow().value, "a&b")
+        @Expect(entity.document.storedNodeCount, entity.document.nodeCount)
+
+        let unsupported = MarkdownEngine.builder().build().acceleratedBy(UnsupportedScannerAccelerator())
+        try {
+            unsupported.parse("x".toArray())
+            @Expect(false)
+        } catch (error: IllegalStateException) {
+            @Expect(error.message.contains("unsupported record format"), true)
         }
     }
 

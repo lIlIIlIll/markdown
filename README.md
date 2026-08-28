@@ -67,7 +67,7 @@ path = os.environ["MARKDOWN_PATH"]
 Path("cjpm.toml").write_text(f'''[package]
   cjc-version = "1.1.0"
   name = "markdown_demo"
-  version = "0.8.0"
+  version = "0.9.0"
   output-type = "executable"
   compile-option = "-O2"
   link-option = ""
@@ -232,6 +232,8 @@ flowchart TD
 
 默认所有入口都走纯仓颉 scanner。需要原生加速时，显式执行 `scripts/build_native_scanner.py --enable`、在消费端为目标平台配置 archive/linker，并从 `markdown.native` 注入 `NativeLineScanner()`；未导入该子包时不存在 foreign 符号或原生链接依赖。Linux/macOS/MinGW 使用 `CC`/`AR`，MSVC 使用 `cl`/`lib`，交叉编译通过 `--target` 传入 target triple。完整命令和输入 profile 见[输入与资源](docs/input-and-resources.md)。
 
+需要反复解析同一份 UTF-8 数据时，可使用 `ReusableUtf8Input`：安全构造只在首次验证并防御性复制，显式 `unsafe take` 则转移已验证数组的所有权。后续每次解析复用不可变输入缓冲区，但仍创建完整 AST、`NodeId`、`SourceSpan`、`SourceBuffer` 和 `ParseResult`；canonical benchmark 没有切换为轻量 parser。String、Array、Owned、Reusable 和 Stream 五种输入成本分别报告。
+
 公开表面按用途提供精选子包：`markdown.core`、`markdown.render`、`markdown.extensions`、`markdown.editor`、`markdown.artifact`、`markdown.document` 和 `markdown.testkit`。根 `markdown.*` 保留为兼容门面；新代码应优先导入所需子包，避免无意绑定编辑器、artifact 或 testkit API。
 
 ## 性能对比
@@ -266,18 +268,18 @@ flowchart TD
 <!-- release-evidence:start -->
 | Release evidence | Value |
 | --- | --- |
-| Version / status | `0.8.0` / `draft` |
-| Source commit | `34113ea6f47a3bcd57b80ca9ee5c6063873dd5bb` |
-| CommonMark / cmark | `5.73x` / limit `2.5x` |
-| GFM HTML / cmark-gfm | `5.01x` / limit `2.5x` |
-| Benchmark identity | `current`; commit `34113ea6f47a3bcd57b80ca9ee5c6063873dd5bb`; SDK `1.1.0-alpha.20260803040049` |
+| Version / status | `0.9.0` / `draft` |
+| Source commit | `2454b0626c2fb0fe590a59bc1f79a8d4e864c856` |
+| CommonMark / cmark | `2.92x` / limit `2.5x` |
+| GFM HTML / cmark-gfm | `3.08x` / limit `2.5x` |
+| Benchmark identity | `current`; commit `2454b0626c2fb0fe590a59bc1f79a8d4e864c856`; SDK `1.1.0-alpha.20260803040049` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
-The benchmark and source identities are commit-bound and the evidence tree is clean. The release remains fail-closed until its status is ready and
+The source identity or evidence tree is not yet release-bound. The release remains fail-closed until its status is ready and
 every mandatory gate passes.
 <!-- release-evidence:end -->
 
-历史测量仅保留在[性能说明](docs/performance.md)中，不再作为“当前值”。发布报告、README 和验收报告中的 canonical 数字都来自同一个 `release-evidence.json`。当前 source commit、SDK、语料和 raw digest 已全部绑定，证据工作树标记为 clean；仍需两个性能 ratio gate 通过且 release 状态转为 ready，证据才能成为 release-ready。
+历史测量仅保留在[性能说明](docs/performance.md)中，不再作为“当前值”。发布报告、README 和验收报告中的 canonical 数字都来自同一个 `release-evidence.json`。当前 benchmark 已绑定 source commit anchor、精确源码归档、SDK、语料和 raw digest，但仓库工作树仍标记为 dirty；仍需提交后刷新源码身份、通过两个性能 ratio gate 并将 release 状态转为 ready，证据才能成为 release-ready。
 
 ## 功能对比
 

@@ -54,8 +54,12 @@ class ArtifactSourceMapTest {
         let engine = MarkdownEngine.builder().build()
         let result = engine.parse("text")
         let artifact = engine.createArtifact(result)
+        @Expect(artifact.schemaVersion, "2")
+        @Expect(artifact.parserPlanVersion, "2")
+        @Expect(artifact.utf8PolicyId, "strict")
+        @Expect(artifact.sourceDigest, artifact.decodedTextDigest)
         match (engine.loadArtifact(artifact, "text")) {
-            case ArtifactLoadResult.Hit(document) => @Expect(PlainTextRenderer().render(document), "text")
+            case ArtifactLoadResult.Hit(document) => @Expect(HtmlRenderer().render(document), "<p>text</p>\n")
             case _ => @Expect(false)
         }
         match (engine.loadArtifact(artifact, "changed")) {
@@ -63,6 +67,18 @@ class ArtifactSourceMapTest {
             case _ => @Expect(false)
         }
         @Expect(artifact.debugJson().contains("\"debug\":true"), true)
+
+        let replaceIdentity = engine.parse([b't', b'e', b'x', b't'], utf8Policy: Utf8Policy.ReplaceInvalid)
+        let replaceArtifact = engine.createArtifact(replaceIdentity)
+        @Expect(replaceArtifact.utf8PolicyId, "replace-invalid")
+        match (engine.loadArtifact(replaceArtifact, [b't', b'e', b'x', b't'], utf8Policy: Utf8Policy.ReplaceInvalid)) {
+            case ArtifactLoadResult.Hit(_) => @Expect(true)
+            case _ => @Expect(false)
+        }
+        match (engine.loadArtifact(replaceArtifact, "text")) {
+            case ArtifactLoadResult.CacheMiss(reason) => @Expect(reason, "UTF-8 policy")
+            case _ => @Expect(false)
+        }
 
         let replaced = engine.parse([0xFF], utf8Policy: Utf8Policy.ReplaceInvalid)
         try {

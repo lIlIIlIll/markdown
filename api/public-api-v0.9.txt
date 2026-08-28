@@ -1,0 +1,1270 @@
+# markdown public API snapshot v0.9
+arena.cj:public class Document {
+arena.cj:public func asCodeBlock(): ?CodeBlockNodeView {
+arena.cj:public func asCodeSpan(): ?CodeSpanNodeView {
+arena.cj:public func asCustomBlock(): ?CustomNodeView {
+arena.cj:public func asCustomInline(): ?CustomNodeView {
+arena.cj:public func asDocument(): ?DocumentNodeView {
+arena.cj:public func asHardBreak(): ?HardBreakNodeView {
+arena.cj:public func asHeading(): ?HeadingNodeView {
+arena.cj:public func asHtmlBlock(): ?HtmlBlockNodeView {
+arena.cj:public func asHtmlInline(): ?HtmlInlineNodeView {
+arena.cj:public func asImage(): ?ImageNodeView {
+arena.cj:public func asLink(): ?LinkNodeView {
+arena.cj:public func asList(): ?ListNodeView {
+arena.cj:public func asListItem(): ?ListItemNodeView {
+arena.cj:public func asTable(): ?TableNodeView {
+arena.cj:public func asTableCell(): ?TableCellNodeView {
+arena.cj:public func asTableRow(): ?TableRowNodeView {
+arena.cj:public func asText(): ?TextNodeView {
+arena.cj:public func asThematicBreak(): ?ThematicBreakNodeView {
+arena.cj:public func children(): NodeChildren {
+arena.cj:public func children(node: NodeRef): NodeChildren {
+arena.cj:public func isEmpty(): Bool {
+arena.cj:public func nodeAt(index: Int64): NodeRef {
+arena.cj:public func root(): NodeRef {
+arena.cj:public func toArray(): Array<NodeRef> {
+arena.cj:public let alignment: TableAlignment
+arena.cj:public let alignments: ImmutableArray<TableAlignment>
+arena.cj:public let attributesRaw: String
+arena.cj:public let blockType: Int64
+arena.cj:public let childCount: Int64
+arena.cj:public let closingFenceSpan: ?SourceSpan
+arena.cj:public let codeKind: CodeBlockKind
+arena.cj:public let delimiter: ListDelimiter
+arena.cj:public let delimiterRaw: String
+arena.cj:public let destination: String
+arena.cj:public let destinationRaw: String
+arena.cj:public let dialectFingerprint: String
+arena.cj:public let extensionId: String
+arena.cj:public let extensionSemanticVersion: String
+arena.cj:public let fenceCharacter: ?Byte
+arena.cj:public let fenceLength: Int64
+arena.cj:public let firstChild: Int64
+arena.cj:public let header: Bool
+arena.cj:public let infoRaw: String
+arena.cj:public let kind: NodeKind
+arena.cj:public let language: String
+arena.cj:public let level: Int64
+arena.cj:public let listKind: ListKind
+arena.cj:public let literal: String
+arena.cj:public let localKindId: String
+arena.cj:public let marker: Byte
+arena.cj:public let markerSpan: ?SourceSpan
+arena.cj:public let node: NodeRef
+arena.cj:public let nodeCount: Int64
+arena.cj:public let normalized: ?String
+arena.cj:public let openingFenceSpan: ?SourceSpan
+arena.cj:public let payload: CustomPayload
+arena.cj:public let payloadIndex: Int64
+arena.cj:public let profile: MarkdownProfile
+arena.cj:public let references: ImmutableArray<ReferenceDefinition>
+arena.cj:public let size: Int64
+arena.cj:public let start: Int64
+arena.cj:public let syntaxKind: HardBreakKind
+arena.cj:public let syntaxKind: LinkSyntaxKind
+arena.cj:public let taskState: TaskState
+arena.cj:public let tight: Bool
+arena.cj:public let title: String
+arena.cj:public let titleRaw: String
+arena.cj:public operator func ==(other: NodeRef): Bool {
+arena.cj:public operator func [](index: Int64): NodeRef {
+arena.cj:public prop category: NodeCategory {
+arena.cj:public prop dialectFingerprint: String {
+arena.cj:public prop kind: NodeKind {
+arena.cj:public prop literal: String {
+arena.cj:public prop nodeId: NodeId {
+arena.cj:public prop origin: NodeOrigin {
+arena.cj:public prop originKind: NodeOriginKind {
+arena.cj:public prop originMetadataIndex: Int64 {
+arena.cj:public prop profile: MarkdownProfile {
+arena.cj:public prop raw: String {
+arena.cj:public prop references: ImmutableArray<ReferenceDefinition> {
+arena.cj:public prop span: ?SourceSpan {
+arena.cj:public prop value: String {
+arena.cj:public struct ArenaNodeRecord {
+arena.cj:public struct CodeBlockNodeView {
+arena.cj:public struct CodeSpanNodeView {
+arena.cj:public struct CustomNodeView {
+arena.cj:public struct DocumentNodeView {
+arena.cj:public struct HardBreakNodeView {
+arena.cj:public struct HeadingNodeView {
+arena.cj:public struct HtmlBlockNodeView {
+arena.cj:public struct HtmlInlineNodeView {
+arena.cj:public struct ImageNodeView {
+arena.cj:public struct LinkNodeView {
+arena.cj:public struct ListItemNodeView {
+arena.cj:public struct ListNodeView {
+arena.cj:public struct NodeChildren {
+arena.cj:public struct NodeRef <: Equatable<NodeRef> {
+arena.cj:public struct TableCellNodeView {
+arena.cj:public struct TableNodeView {
+arena.cj:public struct TableRowNodeView {
+arena.cj:public struct TextNodeView {
+arena.cj:public struct ThematicBreakNodeView {
+artifact.cj:enum-variant | CacheMiss(String)
+artifact.cj:enum-variant | Hit(Document)
+artifact.cj:public class MarkdownParseArtifact {
+artifact.cj:public class RenderedOutput {
+artifact.cj:public class RenderedSourceMapEntry {
+artifact.cj:public enum ArtifactLoadResult {
+artifact.cj:public func createArtifact(result: ParseResult): MarkdownParseArtifact {
+artifact.cj:public func debugJson(): String {
+artifact.cj:public func loadArtifact(artifact: MarkdownParseArtifact, source: Array<Byte>, utf8Policy!: Utf8Policy = Utf8Policy.Strict): ArtifactLoadResult {
+artifact.cj:public func loadArtifact(artifact: MarkdownParseArtifact, source: String): ArtifactLoadResult {
+artifact.cj:public func nodeIdAt(outputByte: Int64): ?NodeId {
+artifact.cj:public func outputRanges(nodeId: NodeId): Array<SourceSpan> {
+artifact.cj:public func renderWithSourceMap(document: Document): RenderedOutput {
+artifact.cj:public func sourceSpanAt(outputByte: Int64): ?SourceSpan {
+artifact.cj:public init(content: String, sourceMap: Array<RenderedSourceMapEntry>) {
+artifact.cj:public init(outputRange: SourceSpan, sourceSpan: ?SourceSpan, nodeId: ?NodeId, generated: Bool) {
+artifact.cj:public let ast: Document
+artifact.cj:public let content: String
+artifact.cj:public let decodedTextDigest: String
+artifact.cj:public let diagnostics: ImmutableArray<Diagnostic>
+artifact.cj:public let dialectFingerprint: String
+artifact.cj:public let engineFingerprint: String
+artifact.cj:public let generated: Bool
+artifact.cj:public let libraryVersion: String
+artifact.cj:public let nodeId: ?NodeId
+artifact.cj:public let offsetMappingDigest: String
+artifact.cj:public let outputRange: SourceSpan
+artifact.cj:public let parserPlanVersion: String
+artifact.cj:public let profileId: String
+artifact.cj:public let references: ImmutableArray<ReferenceDefinition>
+artifact.cj:public let schemaVersion: String
+artifact.cj:public let sourceDigest: String
+artifact.cj:public let sourceMap: ImmutableArray<RenderedSourceMapEntry>
+artifact.cj:public let sourceSpan: ?SourceSpan
+artifact.cj:public let utf8PolicyId: String
+artifact/artifact.cj:public import markdown.{ArtifactLoadResult, BinaryArtifactCodec, BinaryArtifactLoadResult, BinarySnapshotArtifact, MarkdownParseArtifact}
+ast.cj:enum-variant | Autolink
+ast.cj:enum-variant | Backslash
+ast.cj:enum-variant | Block
+ast.cj:enum-variant | BlockQuote
+ast.cj:enum-variant | Bullet
+ast.cj:enum-variant | Center
+ast.cj:enum-variant | Checked
+ast.cj:enum-variant | CodeBlock
+ast.cj:enum-variant | CodeSpan
+ast.cj:enum-variant | CollapsedReference
+ast.cj:enum-variant | CustomBlock
+ast.cj:enum-variant | CustomInline
+ast.cj:enum-variant | Deserialized
+ast.cj:enum-variant | Document
+ast.cj:enum-variant | Emphasis
+ast.cj:enum-variant | ExtendedAutolink
+ast.cj:enum-variant | ExtensionGenerated
+ast.cj:enum-variant | Fenced
+ast.cj:enum-variant | FullReference
+ast.cj:enum-variant | HardBreak
+ast.cj:enum-variant | Heading
+ast.cj:enum-variant | HtmlBlock
+ast.cj:enum-variant | HtmlInline
+ast.cj:enum-variant | Image
+ast.cj:enum-variant | Indented
+ast.cj:enum-variant | Inline
+ast.cj:enum-variant | Left
+ast.cj:enum-variant | Link
+ast.cj:enum-variant | List
+ast.cj:enum-variant | ListItem
+ast.cj:enum-variant | None
+ast.cj:enum-variant | NotTask
+ast.cj:enum-variant | Ordered
+ast.cj:enum-variant | Paragraph
+ast.cj:enum-variant | Parenthesis
+ast.cj:enum-variant | Parsed
+ast.cj:enum-variant | Period
+ast.cj:enum-variant | Right
+ast.cj:enum-variant | ShortcutReference
+ast.cj:enum-variant | SoftBreak
+ast.cj:enum-variant | Spaces
+ast.cj:enum-variant | Strikethrough
+ast.cj:enum-variant | Strong
+ast.cj:enum-variant | Synthetic
+ast.cj:enum-variant | Table
+ast.cj:enum-variant | TableCell
+ast.cj:enum-variant | TableRow
+ast.cj:enum-variant | Text
+ast.cj:enum-variant | ThematicBreak
+ast.cj:enum-variant | Transformed
+ast.cj:enum-variant | Unchecked
+ast.cj:interface-member func payloadTypeId(): String
+ast.cj:public class AstInvariantValidator {
+ast.cj:public class ImmutableArray<T> {
+ast.cj:public class ReferenceDefinition {
+ast.cj:public enum CodeBlockKind {
+ast.cj:public enum HardBreakKind {
+ast.cj:public enum LinkSyntaxKind {
+ast.cj:public enum ListDelimiter {
+ast.cj:public enum ListKind {
+ast.cj:public enum NodeCategory {
+ast.cj:public enum NodeKind {
+ast.cj:public enum NodeOriginKind {
+ast.cj:public enum TableAlignment {
+ast.cj:public enum TaskState {
+ast.cj:public func isEmpty(): Bool {
+ast.cj:public func toArray(): Array<T> {
+ast.cj:public func validate(document: Document, limits!: ParseLimits = ParseLimits.safe()): Unit {
+ast.cj:public init( kind: NodeOriginKind, sourceNodeIds!: Array<NodeId> = [], sourceSpan!: ?SourceSpan = None, transformId!: ?String = None, extensionId!: ?String = None ) {
+ast.cj:public init() {}
+ast.cj:public init(labelRaw: String, labelNormalized: String, destinationRaw: String, destination: String, titleRaw: String, title: String, sourceSpan: SourceSpan, isEffective!: Bool = true, shadowedBy!: ?SourceSpan = None) {
+ast.cj:public init(value: Int64) {
+ast.cj:public init(values: Array<T>) {
+ast.cj:public interface CustomPayload {
+ast.cj:public let destination: String
+ast.cj:public let destinationRaw: String
+ast.cj:public let extensionId: ?String
+ast.cj:public let isEffective: Bool
+ast.cj:public let kind: NodeOriginKind
+ast.cj:public let labelNormalized: String
+ast.cj:public let labelRaw: String
+ast.cj:public let shadowedBy: ?SourceSpan
+ast.cj:public let sourceNodeIds: ImmutableArray<NodeId>
+ast.cj:public let sourceSpan: ?SourceSpan
+ast.cj:public let sourceSpan: SourceSpan
+ast.cj:public let title: String
+ast.cj:public let titleRaw: String
+ast.cj:public let transformId: ?String
+ast.cj:public let value: Int64
+ast.cj:public operator func ==(other: NodeId): Bool {
+ast.cj:public operator func [](index: Int64): T {
+ast.cj:public prop size: Int64 {
+ast.cj:public static func parsed(span: SourceSpan): NodeOrigin {
+ast.cj:public struct NodeId <: Equatable<NodeId> {
+ast.cj:public struct NodeOrigin {
+binary_artifact.cj:enum-variant | CacheMiss(String)
+binary_artifact.cj:enum-variant | Hit(DocumentSnapshot)
+binary_artifact.cj:public class BinaryArtifactCodec {
+binary_artifact.cj:public class BinarySnapshotArtifact {
+binary_artifact.cj:public enum BinaryArtifactLoadResult {
+binary_artifact.cj:public func bytes(): Array<Byte> {
+binary_artifact.cj:public init(data: Array<Byte>) {
+binary_artifact.cj:public let schemaVersion: String
+binary_artifact.cj:public static func decode(engine: MarkdownEngine, artifact: BinarySnapshotArtifact): BinaryArtifactLoadResult {
+binary_artifact.cj:public static func encode(snapshot: DocumentSnapshot): BinarySnapshotArtifact {
+capabilities.cj:public class EngineCapabilities {
+capabilities.cj:public class ExecutionModelCapabilities {
+capabilities.cj:public class ExtensionCapabilityReport {
+capabilities.cj:public func capabilities(): EngineCapabilities {
+capabilities.cj:public func executionModels(): ExecutionModelCapabilities {
+capabilities.cj:public func extension(extensionId: String): ?ExtensionCapabilityReport {
+capabilities.cj:public let asyncHtml: String
+capabilities.cj:public let builtInPluginOsSandbox: Bool
+capabilities.cj:public let capabilities: ExtensionCapabilities
+capabilities.cj:public let chunkInput: String
+capabilities.cj:public let dslSchemaVersions: ImmutableArray<String>
+capabilities.cj:public let extensionCapabilities: ImmutableArray<ExtensionCapabilityReport>
+capabilities.cj:public let extensionId: String
+capabilities.cj:public let htmlToMarkdownSupport: Bool
+capabilities.cj:public let implementationVersion: String
+capabilities.cj:public let incrementalMode: String
+capabilities.cj:public let incrementalSupport: Bool
+capabilities.cj:public let losslessSupport: Bool
+capabilities.cj:public let multiDocumentSupport: Bool
+capabilities.cj:public let nativeScannerAvailable: Bool
+capabilities.cj:public let nativeScannerEnabled: Bool
+capabilities.cj:public let nativeScannerImplementation: String
+capabilities.cj:public let nativeScannerUsedForStringInput: Bool
+capabilities.cj:public let partialParse: String
+capabilities.cj:public let pluginIsolationPortVersion: String
+capabilities.cj:public let positionEncodings: ImmutableArray<String>
+capabilities.cj:public let requiredSpiVersion: String
+capabilities.cj:public let semanticVersion: String
+capabilities.cj:public let serializationVersions: ImmutableArray<String>
+capabilities.cj:public let shareable: Bool
+capabilities.cj:public let spiVersions: ImmutableArray<String>
+capabilities.cj:public let streamInput: String
+capabilities.cj:public let supportedExtensions: ImmutableArray<String>
+capabilities.cj:public let supportedProfiles: ImmutableArray<String>
+capabilities.cj:public let supportedRenderers: ImmutableArray<String>
+capabilities.cj:public let supportedSyntaxKinds: ImmutableArray<String>
+capabilities.cj:public let virtualTreeSupport: Bool
+core/core.cj:public import markdown.{AcceleratedMarkdownEngine, AstInvariantValidator, CancellationSource, CancellationToken, CodeBlockKind, CodeBlockNodeView, CodeSpanNodeView, Diagnostic, DiagnosticSeverity, Document, DocumentNodeView, EngineCapabilities, ExecutionModelCapabilities, HardBreakKind, HardBreakNodeView, HeadingNodeView, HtmlExecutionMode, HtmlExecutionPath, HtmlExecutionResult, HtmlBlockNodeView, HtmlInlineNodeView, ImageNodeView, ImmutableArray, InputReadFailureException, LimitExceededException, LineScanRecords, LineScannerAccelerator, LinkNodeView, LinkSyntaxKind, ListDelimiter, ListItemNodeView, ListKind, ListNodeView, Markdown, MarkdownEngine, MarkdownEngineBuilder, MarkdownErrorCode, MarkdownException, MarkdownProfile, NodeCategory, NodeId, NodeKind, NodeOrigin, NodeOriginKind, NodeRef, OperationBudget, OwnedUtf8Input, ParseLimits, ParseResult, ProfileKind, ReferenceDefinition, ReusableUtf8Input, SourceBuffer, SourcePosition, SourcePositionMap, SourceSlice, SourceSpan, TableAlignment, TaskState, TextNodeView, Utf16Position, Utf8Policy, VisualPosition}
+diagnostic.cj:enum-variant | BudgetExceeded
+diagnostic.cj:enum-variant | Cancelled
+diagnostic.cj:enum-variant | Error
+diagnostic.cj:enum-variant | ExtensionConflict
+diagnostic.cj:enum-variant | ExtensionFailure
+diagnostic.cj:enum-variant | Info
+diagnostic.cj:enum-variant | InputReadFailure
+diagnostic.cj:enum-variant | InternalInvariantViolation
+diagnostic.cj:enum-variant | InvalidArtifact
+diagnostic.cj:enum-variant | InvalidEncoding
+diagnostic.cj:enum-variant | LimitExceeded
+diagnostic.cj:enum-variant | RenderFailure
+diagnostic.cj:enum-variant | SinkFailure
+diagnostic.cj:enum-variant | UnsupportedNode
+diagnostic.cj:enum-variant | Warning
+diagnostic.cj:public class Diagnostic {
+diagnostic.cj:public class DiagnosticFix {
+diagnostic.cj:public class ExtensionFailureException <: MarkdownException {
+diagnostic.cj:public class InputReadFailureException <: MarkdownException {
+diagnostic.cj:public class LimitExceededException <: MarkdownException {
+diagnostic.cj:public enum DiagnosticSeverity {
+diagnostic.cj:public enum MarkdownErrorCode {
+diagnostic.cj:public init( code: String, severity: DiagnosticSeverity, message: String, span: SourceSpan, relatedSpans!: Array<SourceSpan> = [], extensionId!: ?String = None, ruleId!: ?String = None, fixes!: Array<DiagnosticFix> = [] ) {
+diagnostic.cj:public init( limitKind: String, configuredLimit: Int64, observedValue: Int64, phase: String, span!: ?SourceSpan = None, extensionId!: ?String = None ) {
+diagnostic.cj:public init(cause: Exception) {
+diagnostic.cj:public init(code: MarkdownErrorCode, message: String, phase!: String = "", span!: ?SourceSpan = None) {
+diagnostic.cj:public init(extensionId: String, semanticVersion: String, implementationVersion: String, phase: String, cause: Exception, ruleId!: ?String = None, span!: ?SourceSpan = None) {
+diagnostic.cj:public init(title: String, span: SourceSpan, replacement: String) {
+diagnostic.cj:public let cause: Exception
+diagnostic.cj:public let code: MarkdownErrorCode
+diagnostic.cj:public let code: String
+diagnostic.cj:public let configuredLimit: Int64
+diagnostic.cj:public let extensionId: ?String
+diagnostic.cj:public let extensionId: String
+diagnostic.cj:public let fixes: ImmutableArray<DiagnosticFix>
+diagnostic.cj:public let implementationVersion: String
+diagnostic.cj:public let limitKind: String
+diagnostic.cj:public let message: String
+diagnostic.cj:public let observedValue: Int64
+diagnostic.cj:public let phase: String
+diagnostic.cj:public let relatedSpans: Array<SourceSpan>
+diagnostic.cj:public let replacement: String
+diagnostic.cj:public let ruleId: ?String
+diagnostic.cj:public let semanticVersion: String
+diagnostic.cj:public let severity: DiagnosticSeverity
+diagnostic.cj:public let span: ?SourceSpan
+diagnostic.cj:public let span: SourceSpan
+diagnostic.cj:public let title: String
+diagnostic.cj:public open class MarkdownException <: Exception {
+document/document.cj:public import markdown.{CrossDocumentReference, DocumentGraph, DocumentGraphEdge, DocumentInput, DocumentSnapshot, ReparseResult}
+document_system.cj:enum-variant | PreserveUnknownHtml
+document_system.cj:enum-variant | RejectDangerous
+document_system.cj:enum-variant | Semantic
+document_system.cj:enum-variant | Trusted
+document_system.cj:public class CrossDocumentReference {
+document_system.cj:public class DocumentGraph {
+document_system.cj:public class DocumentGraphEdge {
+document_system.cj:public class DocumentInput {
+document_system.cj:public class HtmlToMarkdownConverter {
+document_system.cj:public class HtmlToMarkdownOptions {
+document_system.cj:public class VirtualSyntaxTree {
+document_system.cj:public class VirtualTreePage {
+document_system.cj:public enum HtmlFidelityPolicy {
+document_system.cj:public enum HtmlInputPolicy {
+document_system.cj:public func convert(html: String): String {
+document_system.cj:public func page(index: Int64, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): VirtualTreePage {
+document_system.cj:public func resolveReference(label: String): ?CrossDocumentReference {
+document_system.cj:public func snapshot(id: String): ?DocumentSnapshot {
+document_system.cj:public init(documentId: String, definition: ReferenceDefinition) {
+document_system.cj:public init(id: String, source: String) {
+document_system.cj:public init(index: Int64, sourceRange: SourceSpan, tokens: Array<SyntaxToken>, nodeIds: Array<NodeId>) {
+document_system.cj:public init(inputPolicy!: HtmlInputPolicy = HtmlInputPolicy.RejectDangerous, fidelityPolicy!: HtmlFidelityPolicy = HtmlFidelityPolicy.Semantic) {
+document_system.cj:public init(options!: HtmlToMarkdownOptions = HtmlToMarkdownOptions()) {
+document_system.cj:public init(snapshot: DocumentSnapshot, pageBytes!: Int64 = 65536) {
+document_system.cj:public init(sourceDocumentId: String, destination: String, nodeId: NodeId) {
+document_system.cj:public let definition: ReferenceDefinition
+document_system.cj:public let destination: String
+document_system.cj:public let documentId: String
+document_system.cj:public let documentIds: ImmutableArray<String>
+document_system.cj:public let edges: ImmutableArray<DocumentGraphEdge>
+document_system.cj:public let fidelityPolicy: HtmlFidelityPolicy
+document_system.cj:public let id: String
+document_system.cj:public let index: Int64
+document_system.cj:public let inputPolicy: HtmlInputPolicy
+document_system.cj:public let nodeId: NodeId
+document_system.cj:public let nodeIds: ImmutableArray<NodeId>
+document_system.cj:public let options: HtmlToMarkdownOptions
+document_system.cj:public let pageBytes: Int64
+document_system.cj:public let pageCount: Int64
+document_system.cj:public let snapshot: DocumentSnapshot
+document_system.cj:public let source: String
+document_system.cj:public let sourceDocumentId: String
+document_system.cj:public let sourceRange: SourceSpan
+document_system.cj:public let tokens: ImmutableArray<SyntaxToken>
+document_system.cj:public static func build(engine: MarkdownEngine, inputs: Array<DocumentInput>): DocumentGraph {
+editor.cj:enum-variant | BlockNode
+editor.cj:enum-variant | BlockQuoteMarker
+editor.cj:enum-variant | Delimiter
+editor.cj:enum-variant | Document
+editor.cj:enum-variant | Entity
+editor.cj:enum-variant | Error
+editor.cj:enum-variant | ExtensionToken
+editor.cj:enum-variant | Fence
+editor.cj:enum-variant | HeadingMarker
+editor.cj:enum-variant | Html
+editor.cj:enum-variant | InfoString
+editor.cj:enum-variant | InlineNode
+editor.cj:enum-variant | Invalid
+editor.cj:enum-variant | LinkDestination
+editor.cj:enum-variant | LinkLabel
+editor.cj:enum-variant | ListMarker
+editor.cj:enum-variant | Newline
+editor.cj:enum-variant | PreserveSource
+editor.cj:enum-variant | Text
+editor.cj:enum-variant | Trivia
+editor.cj:enum-variant | Whitespace
+editor.cj:public class ChangedNodeSet {
+editor.cj:public class DocumentSnapshot {
+editor.cj:public class PreservingFormatter {
+editor.cj:public class ReparseResult {
+editor.cj:public class SourceEdit {
+editor.cj:public class SyntaxNode {
+editor.cj:public class SyntaxToAstMap {
+editor.cj:public class SyntaxToken {
+editor.cj:public class SyntaxTree {
+editor.cj:public class Trivia {
+editor.cj:public enum RangeFormatFallback {
+editor.cj:public enum SyntaxKind {
+editor.cj:public func applyEdits(edits: Array<SourceEdit>): ReparseResult {
+editor.cj:public func applyUtf16Edit(start: Utf16Position, end: Utf16Position, replacement: String): ReparseResult {
+editor.cj:public func losslessText(): String {
+editor.cj:public func originatingSyntaxNode(node: NodeRef): ?SyntaxNode {
+editor.cj:public func originatingTokens(node: NodeRef): Array<SyntaxToken> {
+editor.cj:public func parseSnapshot(source: String): DocumentSnapshot {
+editor.cj:public func semanticNode(node: SyntaxNode): ?NodeRef {
+editor.cj:public func semanticNode(token: SyntaxToken): ?NodeRef {
+editor.cj:public func stableNodeId(nodeId: NodeId): ?StableNodeId {
+editor.cj:public func tokenAt(byteOffset: Int64): ?SyntaxToken {
+editor.cj:public init(kind: SyntaxKind, raw: String, span: SourceSpan) {
+editor.cj:public init(kind: SyntaxKind, span: SourceSpan, tokens: Array<SyntaxToken>, children!: Array<SyntaxNode> = [], leadingTrivia!: Array<Trivia> = [], trailingTrivia!: Array<Trivia> = [], semanticNodeId!: ?NodeId = None) {
+editor.cj:public init(nodeIds: Array<NodeId>) {
+editor.cj:public init(range: SourceSpan, replacement: String) {
+editor.cj:public init(raw: String, span: SourceSpan) {
+editor.cj:public init(snapshot: DocumentSnapshot, changedRange: SourceSpan, changedNodes: ChangedNodeSet, wasIncremental: Bool) {
+editor.cj:public init(syntaxTree: SyntaxTree, document: Document) {
+editor.cj:public init(value: String) {
+editor.cj:public let changedNodes: ChangedNodeSet
+editor.cj:public let changedRange: SourceSpan
+editor.cj:public let children: ImmutableArray<SyntaxNode>
+editor.cj:public let diagnosticsChangedRange: SourceSpan
+editor.cj:public let document: Document
+editor.cj:public let engine: MarkdownEngine
+editor.cj:public let kind: SyntaxKind
+editor.cj:public let leadingTrivia: ImmutableArray<Trivia>
+editor.cj:public let nodeIds: ImmutableArray<NodeId>
+editor.cj:public let range: SourceSpan
+editor.cj:public let raw: String
+editor.cj:public let replacement: String
+editor.cj:public let result: ParseResult
+editor.cj:public let root: SyntaxNode
+editor.cj:public let semanticNodeId: ?NodeId
+editor.cj:public let snapshot: DocumentSnapshot
+editor.cj:public let source: SourceBuffer
+editor.cj:public let sourceDigest: String
+editor.cj:public let sourceMapChangedRange: SourceSpan
+editor.cj:public let span: SourceSpan
+editor.cj:public let syntaxMap: SyntaxToAstMap
+editor.cj:public let syntaxTree: SyntaxTree
+editor.cj:public let tokens: ImmutableArray<SyntaxToken>
+editor.cj:public let trailingTrivia: ImmutableArray<Trivia>
+editor.cj:public let value: String
+editor.cj:public let version: Int64
+editor.cj:public let wasIncremental: Bool
+editor.cj:public operator func ==(other: StableNodeId): Bool {
+editor.cj:public static func applyEdits(snapshot: DocumentSnapshot, edits: Array<SourceEdit>): ReparseResult {
+editor.cj:public static func formatChangedRanges(reparse: ReparseResult, fallback!: RangeFormatFallback = RangeFormatFallback.PreserveSource): Array<SourceEdit> {
+editor.cj:public static func formatNode(snapshot: DocumentSnapshot, nodeId: NodeId, fallback!: RangeFormatFallback = RangeFormatFallback.PreserveSource): Array<SourceEdit> {
+editor.cj:public static func formatRange(snapshot: DocumentSnapshot, range: SourceSpan, fallback!: RangeFormatFallback = RangeFormatFallback.PreserveSource): Array<SourceEdit> {
+editor.cj:public static func parse(source: SourceBuffer, document!: ?Document = None): SyntaxTree {
+editor.cj:public struct StableNodeId <: Equatable<StableNodeId> {
+editor/editor.cj:public import markdown.{AnnotationChannel, AnnotationKey, AnnotationStore, AstQuery, ChangedNodeSet, DiagnosticFix, DisplayWidthPolicy, ExplainResult, Fix, FixApplicability, LintCategory, LintDiagnostic, MarkdownFormatOptions, MarkdownLinter, NodeRefWalker, PreservingFormatter, RangeFormatFallback, ReparseResult, RewriteAction, SourceEdit, StableNodeId, SyntaxKind, SyntaxNode, SyntaxToAstMap, SyntaxToken, SyntaxTree, TransformPass, TransformPipeline, TransformPurity, TreeRewriter, Trivia, VirtualSyntaxTree, VirtualTreePage, NodeRefWalkEvent}
+execution.cj:enum-variant | FullAst
+execution.cj:enum-variant | Fused
+execution.cj:enum-variant | PreferFused
+execution.cj:enum-variant | RequireFused
+execution.cj:public class HtmlExecutionResult {
+execution.cj:public enum HtmlExecutionMode {
+execution.cj:public enum HtmlExecutionPath {
+execution.cj:public func renderHtml(source: String, mode!: HtmlExecutionMode = HtmlExecutionMode.FullAst, options!: HtmlOptions = HtmlOptions.safe(), cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): HtmlExecutionResult {
+execution.cj:public init(html: String, path: HtmlExecutionPath) {
+execution.cj:public let html: String
+execution.cj:public let path: HtmlExecutionPath
+extension.cj:enum-variant | Any
+extension.cj:enum-variant | AstTransform
+extension.cj:enum-variant | Block
+extension.cj:enum-variant | BooleanValue
+extension.cj:enum-variant | BooleanValue(Bool)
+extension.cj:enum-variant | CommonMark
+extension.cj:enum-variant | CommonMarkBackslash
+extension.cj:enum-variant | Container
+extension.cj:enum-variant | CustomFallback
+extension.cj:enum-variant | DocumentPostprocess
+extension.cj:enum-variant | Drop
+extension.cj:enum-variant | Error
+extension.cj:enum-variant | FixedValue(String)
+extension.cj:enum-variant | IdentifierValue
+extension.cj:enum-variant | IdentifierValue(String)
+extension.cj:enum-variant | ImageUri
+extension.cj:enum-variant | Inline
+extension.cj:enum-variant | IntegerValue
+extension.cj:enum-variant | IntegerValue(Int64)
+extension.cj:enum-variant | Line
+extension.cj:enum-variant | LinkUri
+extension.cj:enum-variant | Literal
+extension.cj:enum-variant | LiteralBackslash
+extension.cj:enum-variant | Markdown
+extension.cj:enum-variant | Matched(InlineParserSpiNode, Int64)
+extension.cj:enum-variant | Metadata
+extension.cj:enum-variant | MetadataSuffix
+extension.cj:enum-variant | NoMatch
+extension.cj:enum-variant | None
+extension.cj:enum-variant | PairedContainer
+extension.cj:enum-variant | PairedDelimiter
+extension.cj:enum-variant | PayloadLiteral
+extension.cj:enum-variant | PayloadParameter(String)
+extension.cj:enum-variant | RenderChildren
+extension.cj:enum-variant | RenderLiteral
+extension.cj:enum-variant | SingleLine
+extension.cj:enum-variant | SingleToken
+extension.cj:enum-variant | StringValue
+extension.cj:enum-variant | StringValue(String)
+extension.cj:enum-variant | Text
+extension.cj:enum-variant | WordBoundary
+extension.cj:interface-member func emit(value: BlockSyntaxMatch): CustomPayload
+extension.cj:interface-member func emit(value: InlineSyntaxMatch): CustomPayload
+extension.cj:interface-member func lint(snapshot: DocumentSnapshot): Array<LintDiagnostic>
+extension.cj:interface-member func process(document: Document, budget: OperationBudget, cancellation: CancellationToken): Document
+extension.cj:interface-member func tryParse(context: InlineParserSpiContext): InlineParserSpiResult
+extension.cj:interface-member prop deterministic: Bool
+extension.cj:interface-member prop extensionId: String
+extension.cj:interface-member prop maximumLookahead: Int64
+extension.cj:interface-member prop phase: ExtensionProcessingPhase
+extension.cj:interface-member prop priority: Int64
+extension.cj:interface-member prop processorId: String
+extension.cj:interface-member prop ruleId: String
+extension.cj:interface-member prop triggerBytes: Array<Byte>
+extension.cj:interface-member prop version: String
+extension.cj:public class BlockSyntax {
+extension.cj:public class BlockSyntaxBuilder {
+extension.cj:public class BlockSyntaxMatch {
+extension.cj:public class BlockSyntaxRule {
+extension.cj:public class CompiledMarkdownDialect {
+extension.cj:public class DialectCompiler {
+extension.cj:public class DialectParserOptions {
+extension.cj:public class ExtensionCapabilities {
+extension.cj:public class ExtensionDependency {
+extension.cj:public class ExtensionManifest {
+extension.cj:public class InlineParserSpiContext {
+extension.cj:public class InlineParserSpiNode {
+extension.cj:public class InlineParserSpiText {
+extension.cj:public class InlineSyntax {
+extension.cj:public class InlineSyntaxBuilder {
+extension.cj:public class InlineSyntaxMatch {
+extension.cj:public class InlineSyntaxRule {
+extension.cj:public class MarkdownDialect {
+extension.cj:public class MarkdownDialectBuilder {
+extension.cj:public class RendererAttributeSpec {
+extension.cj:public class RendererRule {
+extension.cj:public class SyntaxChildSummary {
+extension.cj:public class SyntaxParameterSpec {
+extension.cj:public class SyntaxPayload <: CustomPayload {
+extension.cj:public class SyntaxResourceCost {
+extension.cj:public enum BlockContentMode {
+extension.cj:public enum BlockSyntaxKind {
+extension.cj:public enum ExtensionProcessingPhase {
+extension.cj:public enum InlineEscapePolicy {
+extension.cj:public enum InlineFlankingRule {
+extension.cj:public enum InlineParserSpiResult {
+extension.cj:public enum InlineSyntaxKind {
+extension.cj:public enum MarkdownBlockLowering {
+extension.cj:public enum MissingRendererPolicy {
+extension.cj:public enum RendererAttributeKind {
+extension.cj:public enum RendererAttributeSource {
+extension.cj:public enum SyntaxBacktrackingPolicy {
+extension.cj:public enum SyntaxParameterType {
+extension.cj:public enum SyntaxParameterValue {
+extension.cj:public enum SyntaxPhase {
+extension.cj:public func base(profile: MarkdownProfile): MarkdownDialectBuilder {
+extension.cj:public func block(rule: BlockSyntaxBuilder): MarkdownDialectBuilder {
+extension.cj:public func build(): MarkdownDialect {
+extension.cj:public func closer(exact: String): BlockSyntaxBuilder {
+extension.cj:public func conflictGroup(value: String): BlockSyntaxBuilder {
+extension.cj:public func conflictGroup(value: String): InlineSyntaxBuilder {
+extension.cj:public func content(mode: BlockContentMode): BlockSyntaxBuilder {
+extension.cj:public func content(parseChildren: Bool): InlineSyntaxBuilder {
+extension.cj:public func delimiter(opener: String, closer!: String = ""): InlineSyntaxBuilder {
+extension.cj:public func disable(extensionId: String): MarkdownDialectBuilder {
+extension.cj:public func documentProcessor(processor: ExtensionDocumentProcessor): MarkdownDialectBuilder {
+extension.cj:public func documentStartOnly(enabled!: Bool = true): BlockSyntaxBuilder {
+extension.cj:public func emit(emitter: BlockPayloadEmitter): BlockSyntaxBuilder {
+extension.cj:public func emit(emitter: InlinePayloadEmitter): InlineSyntaxBuilder {
+extension.cj:public func emitContent(enabled: Bool): InlineSyntaxBuilder {
+extension.cj:public func enable(manifest: ExtensionManifest): MarkdownDialectBuilder {
+extension.cj:public func escaping(policy: InlineEscapePolicy): InlineSyntaxBuilder {
+extension.cj:public func flanking(rule: InlineFlankingRule): InlineSyntaxBuilder {
+extension.cj:public func inline(rule: InlineSyntaxBuilder): MarkdownDialectBuilder {
+extension.cj:public func kindFromFirstWord(enabled: Bool): BlockSyntaxBuilder {
+extension.cj:public func limits(limits: ParseLimits): MarkdownDialectBuilder {
+extension.cj:public func linePrefix(prefix: String): BlockSyntaxBuilder {
+extension.cj:public func lint(provider: ExtensionLintProvider): MarkdownDialectBuilder {
+extension.cj:public func maximumBlockBytes(value: Int64): BlockSyntaxBuilder {
+extension.cj:public func maximumCaptureLength(value: Int64): BlockSyntaxBuilder {
+extension.cj:public func maximumDelimiterLength(value: Int64): InlineSyntaxBuilder {
+extension.cj:public func maximumLookahead(value: Int64): InlineSyntaxBuilder {
+extension.cj:public func metadataSuffix(opener: String, closer: String): InlineSyntaxBuilder {
+extension.cj:public func nesting(allow: Bool): BlockSyntaxBuilder {
+extension.cj:public func nesting(allow: Bool): InlineSyntaxBuilder {
+extension.cj:public func opener(prefix: String): BlockSyntaxBuilder {
+extension.cj:public func parameter(name: String): ?SyntaxParameterValue {
+extension.cj:public func parameter(name: String, parameterType: SyntaxParameterType, required!: Bool = false): BlockSyntaxBuilder {
+extension.cj:public func parserOptions(options: DialectParserOptions): MarkdownDialectBuilder {
+extension.cj:public func parserSpi(spi: InlineParserSpi): MarkdownDialectBuilder {
+extension.cj:public func payloadTypeId(): String {
+extension.cj:public func priority(value: Int64): BlockSyntaxBuilder {
+extension.cj:public func priority(value: Int64): InlineSyntaxBuilder {
+extension.cj:public func renderer(rule: RendererRule): MarkdownDialectBuilder {
+extension.cj:public func resourceCost(cost: SyntaxResourceCost): BlockSyntaxBuilder {
+extension.cj:public func resourceCost(cost: SyntaxResourceCost): InlineSyntaxBuilder {
+extension.cj:public func sourceSpan(localStart: Int64, localEnd: Int64): SourceSpan {
+extension.cj:public func token(value: String): InlineSyntaxBuilder {
+extension.cj:public init( extensionId: String, localKindId: String, htmlTag: String, classToken!: String = "", markdownOpener!: String = "", markdownCloser!: String = "", textPrefix!: String = "", textSuffix!: String = "", attributes!: Array<RendererAttributeSpec> = [], renderPayloadLiteral!: Bool = false, markdownBlockLowering!: MarkdownBlockLowering = MarkdownBlockLowering.Container ) {
+extension.cj:public init( extensionId: String, semanticVersion: String, implementationVersion: String, requiredSpiVersion!: String = "1", supportedProfiles!: Array<String> = ["commonmark-0.31.2", "gfm-modern-v1"], dependencies!: Array<String> = [], dependencyConstraints!: Array<ExtensionDependency> = [], conflicts!: Array<String> = [], capabilities!: ExtensionCapabilities = ExtensionCapabilities(), ruleBudget!: Int64 = 100000, trustLevel!: String = "host-code", missingRendererPolicy!: MissingRendererPolicy = MissingRendererPolicy.Error, shareable!: Bool = true ) {
+extension.cj:public init( parse!: Bool = true, specHtml!: Bool = false, safeHtml!: Bool = false, plainText!: Bool = false, markdown!: Bool = false, cst!: Bool = false, format!: Bool = false, serialize!: Bool = false, incremental!: Bool = false, lint!: Bool = false, postprocess!: Bool = false, transform!: Bool = false ) {
+extension.cj:public init(baseCost!: Int64 = 1, perByteCost!: Int64 = 1) {
+extension.cj:public init(emitUnclosedExtensionDiagnostics!: Bool = true, extensionsEnabled!: Bool = true) {
+extension.cj:public init(extensionId: String, extensionSemanticVersion: String, localKindId: String, payload: CustomPayload, span: SourceSpan, children!: Array<InlineParserSpiText> = []) {
+extension.cj:public init(extensionId: String, minimumSemanticVersion: String) {
+extension.cj:public init(extensionId: String, ruleId: String, literal: String, span: SourceSpan, children: Array<SyntaxChildSummary>) {
+extension.cj:public init(extensionId: String, ruleId: String, name: String, parametersRaw: String, literal: String, span: SourceSpan, children: Array<SyntaxChildSummary>, typedValues: HashMap<String, SyntaxParameterValue>) {
+extension.cj:public init(kind: NodeKind, span: ?SourceSpan, semanticText: String) {
+extension.cj:public init(name: String, kind: RendererAttributeKind, source: RendererAttributeSource) {
+extension.cj:public init(name: String, parameterType: SyntaxParameterType, required!: Bool = false) {
+extension.cj:public init(name: String, parameters: String, literal: String, typedValues!: HashMap<String, SyntaxParameterValue> = HashMap<String, SyntaxParameterValue>()) {
+extension.cj:public init(raw: String, value: String, span: SourceSpan) {
+extension.cj:public interface BlockPayloadEmitter {
+extension.cj:public interface ExtensionDocumentProcessor {
+extension.cj:public interface ExtensionLintProvider {
+extension.cj:public interface InlineParserSpi {
+extension.cj:public interface InlinePayloadEmitter {
+extension.cj:public let allowNesting: Bool
+extension.cj:public let attributes: ImmutableArray<RendererAttributeSpec>
+extension.cj:public let backtrackingPolicy: SyntaxBacktrackingPolicy
+extension.cj:public let baseCost: Int64
+extension.cj:public let baseProfile: MarkdownProfile
+extension.cj:public let blockRules: ImmutableArray<BlockSyntaxRule>
+extension.cj:public let budget: OperationBudget
+extension.cj:public let cancellation: CancellationToken
+extension.cj:public let capabilities: ExtensionCapabilities
+extension.cj:public let children: ImmutableArray<InlineParserSpiText>
+extension.cj:public let children: ImmutableArray<SyntaxChildSummary>
+extension.cj:public let classToken: String
+extension.cj:public let closer: String
+extension.cj:public let conflictGroup: String
+extension.cj:public let conflicts: ImmutableArray<String>
+extension.cj:public let contentMode: BlockContentMode
+extension.cj:public let cst: Bool
+extension.cj:public let declaredLimits: ParseLimits
+extension.cj:public let dependencies: ImmutableArray<String>
+extension.cj:public let dependencyConstraints: ImmutableArray<ExtensionDependency>
+extension.cj:public let documentProcessors: ImmutableArray<ExtensionDocumentProcessor>
+extension.cj:public let documentStartOnly: Bool
+extension.cj:public let emitContent: Bool
+extension.cj:public let emitUnclosedExtensionDiagnostics: Bool
+extension.cj:public let emitter: ?BlockPayloadEmitter
+extension.cj:public let emitter: ?InlinePayloadEmitter
+extension.cj:public let escapePolicy: InlineEscapePolicy
+extension.cj:public let extensionId: String
+extension.cj:public let extensionSemanticVersion: String
+extension.cj:public let extensionsEnabled: Bool
+extension.cj:public let fingerprint: String
+extension.cj:public let flankingRule: InlineFlankingRule
+extension.cj:public let format: Bool
+extension.cj:public let htmlTag: String
+extension.cj:public let id: String
+extension.cj:public let implementationVersion: String
+extension.cj:public let incremental: Bool
+extension.cj:public let inlineRules: ImmutableArray<InlineSyntaxRule>
+extension.cj:public let input: String
+extension.cj:public let kind: NodeKind
+extension.cj:public let kind: RendererAttributeKind
+extension.cj:public let kindFromFirstWord: Bool
+extension.cj:public let limits: ParseLimits
+extension.cj:public let lint: Bool
+extension.cj:public let lintProviders: ImmutableArray<ExtensionLintProvider>
+extension.cj:public let literal: String
+extension.cj:public let localKindId: String
+extension.cj:public let manifests: ImmutableArray<ExtensionManifest>
+extension.cj:public let markdown: Bool
+extension.cj:public let markdownBlockLowering: MarkdownBlockLowering
+extension.cj:public let markdownCloser: String
+extension.cj:public let markdownOpener: String
+extension.cj:public let maximumBlockBytes: Int64
+extension.cj:public let maximumCaptureLength: Int64
+extension.cj:public let maximumDelimiterLength: Int64
+extension.cj:public let maximumLookahead: Int64
+extension.cj:public let minimumSemanticVersion: String
+extension.cj:public let missingRendererPolicy: MissingRendererPolicy
+extension.cj:public let name: String
+extension.cj:public let opener: String
+extension.cj:public let openerPrefix: String
+extension.cj:public let parameterType: SyntaxParameterType
+extension.cj:public let parameters: ImmutableArray<SyntaxParameterSpec>
+extension.cj:public let parameters: String
+extension.cj:public let parametersRaw: String
+extension.cj:public let parse: Bool
+extension.cj:public let parseChildren: Bool
+extension.cj:public let parserOptions: DialectParserOptions
+extension.cj:public let parserSpis: ImmutableArray<InlineParserSpi>
+extension.cj:public let payload: CustomPayload
+extension.cj:public let perByteCost: Int64
+extension.cj:public let phase: SyntaxPhase
+extension.cj:public let plainText: Bool
+extension.cj:public let postprocess: Bool
+extension.cj:public let priority: Int64
+extension.cj:public let raw: String
+extension.cj:public let renderPayloadLiteral: Bool
+extension.cj:public let rendererRules: ImmutableArray<RendererRule>
+extension.cj:public let required: Bool
+extension.cj:public let requiredSpiVersion: String
+extension.cj:public let resourceCost: SyntaxResourceCost
+extension.cj:public let ruleBudget: Int64
+extension.cj:public let ruleId: String
+extension.cj:public let safeHtml: Bool
+extension.cj:public let semanticText: String
+extension.cj:public let semanticVersion: String
+extension.cj:public let serialize: Bool
+extension.cj:public let shareable: Bool
+extension.cj:public let source: RendererAttributeSource
+extension.cj:public let span: ?SourceSpan
+extension.cj:public let span: SourceSpan
+extension.cj:public let specHtml: Bool
+extension.cj:public let startOffset: Int64
+extension.cj:public let supportedProfiles: ImmutableArray<String>
+extension.cj:public let syntaxKind: BlockSyntaxKind
+extension.cj:public let syntaxKind: InlineSyntaxKind
+extension.cj:public let textPrefix: String
+extension.cj:public let textSuffix: String
+extension.cj:public let tieBreak: String
+extension.cj:public let transform: Bool
+extension.cj:public let trustLevel: String
+extension.cj:public let value: String
+extension.cj:public let version: String
+extension.cj:public static func builtin(profile: MarkdownProfile): CompiledMarkdownDialect {
+extension.cj:public static func compile(dialect: MarkdownDialect): CompiledMarkdownDialect {
+extension.cj:public static func define(extensionId: String, ruleId: String): BlockSyntaxBuilder {
+extension.cj:public static func define(extensionId: String, ruleId: String): InlineSyntaxBuilder {
+extension.cj:public static func define(id: String, version: String): MarkdownDialectBuilder {
+extensions/extensions.cj:public import markdown.{BlockContentMode, BlockPayloadEmitter, BlockSyntax, BlockSyntaxBuilder, BlockSyntaxKind, BlockSyntaxMatch, BlockSyntaxRule, CompiledDialectExplanation, CompiledMarkdownDialect, DialectCompiler, DialectParserOptions, ExtensionCapabilities, ExtensionCapabilityReport, ExtensionDependency, ExtensionDocumentProcessor, ExtensionFailureException, ExtensionLintProvider, ExtensionManifest, ExtensionProcessingPhase, ExternalDialectDescriptor, InlineFlankingRule, InlineParserSpi, InlineParserSpiContext, InlineParserSpiResult, InlinePayloadEmitter, InlineSyntax, InlineSyntaxBuilder, InlineSyntaxKind, InlineSyntaxMatch, InlineSyntaxRule, MarkdownBlockLowering, MarkdownDialect, MarkdownDialectBuilder, OfficialExtensionDescriptor, OfficialExtensions, RendererAttributeKind, RendererAttributeSource, RendererAttributeSpec, RendererRule, SyntaxBacktrackingPolicy, SyntaxParameterSpec, SyntaxParameterType, SyntaxParameterValue, SyntaxPayload, SyntaxPhase, SyntaxResourceCost}
+external_descriptor.cj:public class ExternalDialectDescriptor {
+external_descriptor.cj:public func compile(): CompiledMarkdownDialect {
+external_descriptor.cj:public func toDialect(): MarkdownDialect {
+external_descriptor.cj:public let baseProfileId: String
+external_descriptor.cj:public let blockRules: ImmutableArray<String>
+external_descriptor.cj:public let id: String
+external_descriptor.cj:public let inlineRules: ImmutableArray<String>
+external_descriptor.cj:public let rendererRules: ImmutableArray<String>
+external_descriptor.cj:public let schemaVersion: String
+external_descriptor.cj:public let version: String
+external_descriptor.cj:public static func fromJson(source: String): ExternalDialectDescriptor {
+external_descriptor.cj:public static func fromYaml(source: String): ExternalDialectDescriptor {
+facade.cj:public class Markdown {
+facade.cj:public func detach(): Document {
+facade.cj:public static func format(source: String, profile!: MarkdownProfile = MarkdownProfile.commonMark0312()): String {
+facade.cj:public static func parse(source: String, profile!: MarkdownProfile = MarkdownProfile.commonMark0312()): ParseResult {
+facade.cj:public static func toSafeHtml(source: String, profile!: MarkdownProfile = MarkdownProfile.commonMark0312()): String {
+facade.cj:public static func toSpecHtml(source: String, profile!: MarkdownProfile = MarkdownProfile.commonMark0312()): String {
+facade.cj:public static func toText(source: String, profile!: MarkdownProfile = MarkdownProfile.commonMark0312()): String {
+fingerprint.cj:public static func digest(value: String): String {
+fingerprint.cj:public static func digestBytes(input: Array<Byte>): String {
+formatter.cj:public class CanonicalMarkdownRenderer {
+formatter.cj:public class MarkdownFormatOptions {
+formatter.cj:public func render(document: Document): String {
+formatter.cj:public init( newline!: String = "\n", bulletMarker!: String = "-", orderedDelimiter!: String = ".", headingMarker!: String = "#", emphasisMarker!: String = "*", strongMarker!: String = "**", fenceMarker!: String = "`", minimumFenceLength!: Int64 = 3, tablePadding!: Bool = true, finalNewline!: Bool = true, maximumLineWidth!: Int64 = 100, reflowParagraphs!: Bool = false ) {
+formatter.cj:public init(options!: MarkdownFormatOptions = MarkdownFormatOptions(), extensionRules!: Array<RendererRule> = []) {
+formatter.cj:public let bulletMarker: String
+formatter.cj:public let emphasisMarker: String
+formatter.cj:public let fenceMarker: String
+formatter.cj:public let finalNewline: Bool
+formatter.cj:public let headingMarker: String
+formatter.cj:public let maximumLineWidth: Int64
+formatter.cj:public let minimumFenceLength: Int64
+formatter.cj:public let newline: String
+formatter.cj:public let options: MarkdownFormatOptions
+formatter.cj:public let orderedDelimiter: String
+formatter.cj:public let reflowParagraphs: Bool
+formatter.cj:public let strongMarker: String
+formatter.cj:public let tablePadding: Bool
+isolation.cj:interface-member func invoke(request: IsolatedPluginRequest, policy: PluginIsolationPolicy, cancellation: CancellationToken): IsolatedPluginResponse
+isolation.cj:public class IsolatedPluginRequest {
+isolation.cj:public class IsolatedPluginResponse {
+isolation.cj:public class IsolatedPluginRunner {
+isolation.cj:public class PluginIsolationCapabilities {
+isolation.cj:public class PluginIsolationPolicy {
+isolation.cj:public func capabilities(): PluginIsolationCapabilities {
+isolation.cj:public func invoke(request: IsolatedPluginRequest, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): IsolatedPluginResponse {
+isolation.cj:public init() {}
+isolation.cj:public init(allowFileRead!: Bool = false, allowFileWrite!: Bool = false, allowNetwork!: Bool = false, allowChildProcesses!: Bool = false, maximumInputBytes!: Int64 = 1024 * 1024, maximumOutputBytes!: Int64 = 4 * 1024 * 1024, protocolVersion!: String = "markdown-isolation-ipc-1") {
+isolation.cj:public init(extensionId: String, implementationVersion: String, operation: String, payload: String, protocolVersion!: String = "markdown-isolation-ipc-1") {
+isolation.cj:public init(extensionId: String, implementationVersion: String, output: String, diagnostics!: Array<Diagnostic> = [], protocolVersion!: String = "markdown-isolation-ipc-1") {
+isolation.cj:public init(transport: PluginIsolationTransport, policy!: PluginIsolationPolicy = PluginIsolationPolicy()) {
+isolation.cj:public interface PluginIsolationTransport {
+isolation.cj:public let allowChildProcesses: Bool
+isolation.cj:public let allowFileRead: Bool
+isolation.cj:public let allowFileWrite: Bool
+isolation.cj:public let allowNetwork: Bool
+isolation.cj:public let builtInOsSandbox: Bool = false
+isolation.cj:public let diagnostics: ImmutableArray<Diagnostic>
+isolation.cj:public let extensionId: String
+isolation.cj:public let failClosed: Bool = true
+isolation.cj:public let implementationVersion: String
+isolation.cj:public let maximumInputBytes: Int64
+isolation.cj:public let maximumOutputBytes: Int64
+isolation.cj:public let operation: String
+isolation.cj:public let output: String
+isolation.cj:public let payload: String
+isolation.cj:public let policy: PluginIsolationPolicy
+isolation.cj:public let processBoundaryRequired: Bool = true
+isolation.cj:public let protocolVersion: String
+isolation.cj:public let protocolVersion: String = "markdown-isolation-ipc-1"
+limits.cj:public class CancellationSource {
+limits.cj:public class CancellationToken {
+limits.cj:public class OperationBudget {
+limits.cj:public class ParseLimits {
+limits.cj:public func cancel(): Unit {
+limits.cj:public func consumeDelimiter(steps!: Int64 = 1): Unit {
+limits.cj:public func consumeExtensionCallback(count!: Int64 = 1): Unit {
+limits.cj:public func consumeOutput(bytes!: Int64 = 1): Unit {
+limits.cj:public func consumeRenderedNode(count!: Int64 = 1): Unit {
+limits.cj:public func consumeScan(steps!: Int64 = 1): Unit {
+limits.cj:public func consumeTransform(steps!: Int64 = 1): Unit {
+limits.cj:public func isCancelled(): Bool {
+limits.cj:public func throwIfCancelled(phase!: String = ""): Unit {
+limits.cj:public func usedDelimiterSteps(): Int64 {
+limits.cj:public func usedExtensionCallbacks(): Int64 {
+limits.cj:public func usedOutputBytes(): Int64 {
+limits.cj:public func usedRenderedNodes(): Int64 {
+limits.cj:public func usedScanSteps(): Int64 {
+limits.cj:public func usedTransformSteps(): Int64 {
+limits.cj:public init( maximumInputBytes: Int64, maximumLineBytes: Int64, maximumNestingDepth: Int64, maximumAstNodes: Int64, maximumReferences: Int64, maximumTableColumns: Int64, maximumUrlBytes: Int64, maximumLiteralBytes: Int64, maximumOutputBytes: Int64, maximumExtensionCaptureBytes: Int64, maximumExtensionLookaheadBytes: Int64 ) {
+limits.cj:public init( maximumScanSteps: Int64, maximumDelimiterSteps: Int64, maximumExtensionCallbacks: Int64, maximumTransformSteps: Int64, maximumRenderedNodes: Int64, maximumOutputBytes: Int64 ) {
+limits.cj:public init() {
+limits.cj:public let maximumAstNodes: Int64
+limits.cj:public let maximumExtensionCaptureBytes: Int64
+limits.cj:public let maximumExtensionLookaheadBytes: Int64
+limits.cj:public let maximumInputBytes: Int64
+limits.cj:public let maximumLineBytes: Int64
+limits.cj:public let maximumLiteralBytes: Int64
+limits.cj:public let maximumNestingDepth: Int64
+limits.cj:public let maximumOutputBytes: Int64
+limits.cj:public let maximumReferences: Int64
+limits.cj:public let maximumTableColumns: Int64
+limits.cj:public let maximumUrlBytes: Int64
+limits.cj:public let token: CancellationToken
+limits.cj:public static func none(): CancellationToken {
+limits.cj:public static func safe(): OperationBudget {
+limits.cj:public static func safe(): ParseLimits {
+limits.cj:public static func trusted(): ParseLimits {
+lint.cj:enum-variant | Accessibility
+lint.cj:enum-variant | Always
+lint.cj:enum-variant | DocumentStructure
+lint.cj:enum-variant | Extension
+lint.cj:enum-variant | ManualReview
+lint.cj:enum-variant | MaybeIncorrect
+lint.cj:enum-variant | Security
+lint.cj:enum-variant | Style
+lint.cj:enum-variant | Syntax
+lint.cj:public class CompiledDialectExplanation {
+lint.cj:public class ExplainResult {
+lint.cj:public class Fix {
+lint.cj:public class LintDiagnostic {
+lint.cj:public class MarkdownLinter {
+lint.cj:public enum FixApplicability {
+lint.cj:public enum LintCategory {
+lint.cj:public func explain(source: String, byteOffset: Int64): ExplainResult {
+lint.cj:public func explainDialect(): CompiledDialectExplanation {
+lint.cj:public func lint(snapshot: DocumentSnapshot): Array<LintDiagnostic> {
+lint.cj:public init(candidates: Array<String>, selected: String, rejected: Array<String>, priority: Int64, tieBreak: String, lookahead: Int64, containerState: String, extensionId: String, profileClause: String, fingerprint: String) {
+lint.cj:public init(code: String, category: LintCategory, severity: DiagnosticSeverity, message: String, span: SourceSpan, fixes!: Array<Fix> = []) {
+lint.cj:public init(engine: MarkdownEngine) {
+lint.cj:public init(title: String, edits: Array<SourceEdit>, applicability: FixApplicability, sourceDigest: String, snapshotVersion: Int64) {
+lint.cj:public let applicability: FixApplicability
+lint.cj:public let blockRuleOrder: ImmutableArray<String>
+lint.cj:public let candidateRules: ImmutableArray<String>
+lint.cj:public let category: LintCategory
+lint.cj:public let code: String
+lint.cj:public let containerState: String
+lint.cj:public let edits: ImmutableArray<SourceEdit>
+lint.cj:public let extensionId: String
+lint.cj:public let fingerprint: String
+lint.cj:public let fixes: ImmutableArray<Fix>
+lint.cj:public let inlineRuleOrder: ImmutableArray<String>
+lint.cj:public let lookahead: Int64
+lint.cj:public let maximumInputBytes: Int64
+lint.cj:public let maximumNestingDepth: Int64
+lint.cj:public let message: String
+lint.cj:public let parserSpiOrder: ImmutableArray<String>
+lint.cj:public let priority: Int64
+lint.cj:public let profileClause: String
+lint.cj:public let profileId: String
+lint.cj:public let rejectedRules: ImmutableArray<String>
+lint.cj:public let rendererCoverage: ImmutableArray<String>
+lint.cj:public let selectedRule: String
+lint.cj:public let severity: DiagnosticSeverity
+lint.cj:public let snapshotVersion: Int64
+lint.cj:public let sourceDigest: String
+lint.cj:public let span: SourceSpan
+lint.cj:public let tieBreak: String
+lint.cj:public let title: String
+lint.cj:public static func applyFix(snapshot: DocumentSnapshot, fix: Fix): ReparseResult {
+lint.cj:public static func lint(snapshot: DocumentSnapshot): Array<LintDiagnostic> {
+native/accelerator.cj:public class NativeLineScanner <: LineScannerAccelerator {
+native/accelerator.cj:public func implementationId(): String {
+native/accelerator.cj:public func recordFormatVersion(): Int64 {
+native/accelerator.cj:public func scanLineRecords(input: Array<Byte>, capacity: Int64): ?LineScanRecords {
+native/accelerator.cj:public func scanLines(input: Array<Byte>, capacity: Int64): ?Array<UInt64> {
+native/accelerator.cj:public init() {}
+observability.cj:public class ObservedParseResult {
+observability.cj:public class ObservedRenderedOutput {
+observability.cj:public class ParseStatistics {
+observability.cj:public class RenderStatistics {
+observability.cj:public class StatisticsOptions {
+observability.cj:public func parseObserved(value: String, options!: StatisticsOptions = StatisticsOptions()): ObservedParseResult {
+observability.cj:public func renderObserved(document: Document, options!: StatisticsOptions = StatisticsOptions()): ObservedRenderedOutput {
+observability.cj:public init(content: String, statistics: RenderStatistics) {
+observability.cj:public init(renderedNodes: Int64, outputBytes: Int64, duration: ?Int64, rendererFingerprint: String) {
+observability.cj:public init(result: ParseResult, budget: OperationBudget, duration: ?Int64) {
+observability.cj:public init(result: ParseResult, statistics: ParseStatistics) {
+observability.cj:public init(timing!: Bool = false) {
+observability.cj:public let content: String
+observability.cj:public let diagnosticCount: Int64
+observability.cj:public let dialectFingerprint: String
+observability.cj:public let extensionCallbackCount: Int64
+observability.cj:public let inputBytes: Int64
+observability.cj:public let lineCount: Int64
+observability.cj:public let maxDepth: Int64
+observability.cj:public let nodeCount: Int64
+observability.cj:public let outputBytes: Int64
+observability.cj:public let parseDurationNanos: ?Int64
+observability.cj:public let profileId: String
+observability.cj:public let referenceCount: Int64
+observability.cj:public let renderDurationNanos: ?Int64
+observability.cj:public let renderedNodes: Int64
+observability.cj:public let rendererFingerprint: String
+observability.cj:public let result: ParseResult
+observability.cj:public let scanSteps: Int64
+observability.cj:public let statistics: ParseStatistics
+observability.cj:public let statistics: RenderStatistics
+observability.cj:public let timing: Bool
+official_extensions.cj:public class OfficialExtensionDescriptor {
+official_extensions.cj:public class OfficialExtensions {
+official_extensions.cj:public func isDefaultFor(profileId: String): Bool {
+official_extensions.cj:public func process(document: Document, budget: OperationBudget, cancellation: CancellationToken): Document {
+official_extensions.cj:public init(extensionId: String, targetVersion: String, defaultEnabled: Bool, defaultProfiles!: Array<String> = []) {
+official_extensions.cj:public let defaultEnabled: Bool
+official_extensions.cj:public let defaultProfiles: ImmutableArray<String>
+official_extensions.cj:public let extensionId: String
+official_extensions.cj:public let targetVersion: String
+official_extensions.cj:public prop deterministic: Bool {
+official_extensions.cj:public prop extensionId: String {
+official_extensions.cj:public prop phase: ExtensionProcessingPhase {
+official_extensions.cj:public prop priority: Int64 {
+official_extensions.cj:public prop processorId: String {
+official_extensions.cj:public prop version: String {
+official_extensions.cj:public static func catalog(): Array<OfficialExtensionDescriptor> {
+official_extensions.cj:public static func definitionLists(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
+official_extensions.cj:public static func footnotes(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
+official_extensions.cj:public static func frontMatter(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
+official_extensions.cj:public static func headingIds(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
+official_extensions.cj:public static func math(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
+official_extensions.cj:public static func p1Dialect(profile!: MarkdownProfile = MarkdownProfile.commonMark0312()): MarkdownDialect {
+official_extensions.cj:public static func smartPunctuation(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
+parser.cj:enum-variant | ReplaceInvalid
+parser.cj:enum-variant | Strict
+parser.cj:public class BufferedInputSession {
+parser.cj:public class ChunkedParseSession {
+parser.cj:public class MarkdownEngine {
+parser.cj:public class MarkdownEngineBuilder {
+parser.cj:public class ParseResult {
+parser.cj:public enum Utf8Policy {
+parser.cj:public func build(): MarkdownEngine {
+parser.cj:public func dialect(dialect: MarkdownDialect): MarkdownEngineBuilder {
+parser.cj:public func feed(chunk: Array<Byte>): Unit {
+parser.cj:public func feed(chunk: String): Unit {
+parser.cj:public func finish(): ParseResult {
+parser.cj:public func limits(limits: ParseLimits): MarkdownEngineBuilder {
+parser.cj:public func nativeScannerEnabled(enabled: Bool): MarkdownEngineBuilder {
+parser.cj:public func newBufferedInputSession( utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): BufferedInputSession {
+parser.cj:public func newSession( utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ChunkedParseSession {
+parser.cj:public func parse( bytes: Array<Byte>, utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
+parser.cj:public func parse( input: InputStream, utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
+parser.cj:public func parse( input: OwnedUtf8Input, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
+parser.cj:public func parse( input: ReusableUtf8Input, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
+parser.cj:public func parse( value: String, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
+parser.cj:public func parsePartial( value: String, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
+parser.cj:public func profile(profile: MarkdownProfile): MarkdownEngineBuilder {
+parser.cj:public func tryParse( value: String, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
+parser.cj:public init() {}
+parser.cj:public init(document: Document, source: SourceBuffer, diagnostics: Array<Diagnostic>, isComplete!: Bool = true, stoppedAt!: ?SourceSpan = None, unfinishedPhase!: String = "", errors!: Array<MarkdownException> = []) {
+parser.cj:public let diagnostics: ImmutableArray<Diagnostic>
+parser.cj:public let dialect: CompiledMarkdownDialect
+parser.cj:public let document: Document
+parser.cj:public let errors: ImmutableArray<MarkdownException>
+parser.cj:public let isComplete: Bool
+parser.cj:public let limits: ParseLimits
+parser.cj:public let profile: MarkdownProfile
+parser.cj:public let source: SourceBuffer
+parser.cj:public let stoppedAt: ?SourceSpan
+parser.cj:public let unfinishedPhase: String
+parser.cj:public prop ast: Document {
+parser.cj:public static func builder(): MarkdownEngineBuilder {
+profile.cj:enum-variant | CommonMark0312
+profile.cj:enum-variant | Custom
+profile.cj:enum-variant | Gfm029
+profile.cj:enum-variant | GfmCompatible
+profile.cj:enum-variant | GfmModernV1
+profile.cj:enum-variant | Safe
+profile.cj:enum-variant | SpecCompatible
+profile.cj:public class HtmlPolicy {
+profile.cj:public class MarkdownProfile {
+profile.cj:public enum HtmlPolicyKind {
+profile.cj:public enum ProfileKind {
+profile.cj:public func sameIdentity(other: MarkdownProfile): Bool {
+profile.cj:public let id: String
+profile.cj:public let kind: HtmlPolicyKind
+profile.cj:public let kind: ProfileKind
+profile.cj:public let rawHtmlPassThrough: Bool
+profile.cj:public let standardVersion: String
+profile.cj:public static func commonMark(): MarkdownProfile {
+profile.cj:public static func commonMark0312(): MarkdownProfile {
+profile.cj:public static func custom(id: String, version: String): MarkdownProfile {
+profile.cj:public static func gfm(): MarkdownProfile {
+profile.cj:public static func gfm029(): MarkdownProfile {
+profile.cj:public static func gfmCompatible(): HtmlPolicy {
+profile.cj:public static func gfmModernV1(): MarkdownProfile {
+profile.cj:public static func safe(): HtmlPolicy {
+profile.cj:public static func specCompatible(): HtmlPolicy {
+render/render.cj:public import markdown.{AsyncHtmlRenderSession, AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, BufferedAsyncHtmlOutputSession, CanonicalMarkdownRenderer, ExtensionRendererFallback, HtmlFidelityPolicy, HtmlInputPolicy, HtmlOptions, HtmlPolicy, HtmlPolicyKind, HtmlRenderer, HtmlSanitizerPort, HtmlToMarkdownConverter, HtmlToMarkdownOptions, ImageUriPolicy, InlineEscapePolicy, LinkUriPolicy, MissingRendererPolicy, PlainTextOptions, PlainTextRenderer, RawHtmlPolicyKind, RenderStatistics, RenderedOutput, RenderedSourceMapEntry, SinkError, SinkFailureException, SinkWriteResult, StringTextSink, TextSink, TrustedHtml}
+renderer.cj:enum-variant | Complete
+renderer.cj:enum-variant | Continue
+renderer.cj:enum-variant | CustomHandler
+renderer.cj:enum-variant | Drop
+renderer.cj:enum-variant | Escape
+renderer.cj:enum-variant | Failed(SinkError)
+renderer.cj:enum-variant | Failure(SinkError)
+renderer.cj:enum-variant | PassThrough
+renderer.cj:enum-variant | Pause
+renderer.cj:enum-variant | Paused
+renderer.cj:enum-variant | Sanitize
+renderer.cj:enum-variant | Success
+renderer.cj:interface-member func renderHtml(node: NodeRef): TrustedHtml
+renderer.cj:interface-member func sanitize(html: String): String
+renderer.cj:interface-member func write(slice: String): AsyncSinkWriteResult
+renderer.cj:interface-member func write(slice: String): SinkWriteResult
+renderer.cj:interface-member prop extensionId: String
+renderer.cj:public class AsyncHtmlRenderSession {
+renderer.cj:public class BufferedAsyncHtmlOutputSession {
+renderer.cj:public class HtmlOptions {
+renderer.cj:public class HtmlRenderer {
+renderer.cj:public class ImageUriPolicy {
+renderer.cj:public class LinkUriPolicy {
+renderer.cj:public class PlainTextOptions {
+renderer.cj:public class PlainTextRenderer {
+renderer.cj:public class SinkError <: Exception {
+renderer.cj:public class SinkFailureException <: MarkdownException {
+renderer.cj:public class StringTextSink <: TextSink {
+renderer.cj:public class TrustedHtml {
+renderer.cj:public enum AsyncRenderState {
+renderer.cj:public enum AsyncSinkWriteResult {
+renderer.cj:public enum RawHtmlPolicyKind {
+renderer.cj:public enum SinkWriteResult {
+renderer.cj:public func bytesWritten(): Int64 {
+renderer.cj:public func content(): String {
+renderer.cj:public func fingerprint(): String {
+renderer.cj:public func htmlRenderer(options!: HtmlOptions = HtmlOptions.safe(), sanitizer!: ?HtmlSanitizerPort = None, fallbacks!: Array<ExtensionRendererFallback> = []): HtmlRenderer {
+renderer.cj:public func render( ast: Document, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): String {
+renderer.cj:public func render(document: Document): String {
+renderer.cj:public func renderTo( ast: Document, sink: TextSink, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): Unit {
+renderer.cj:public func resume(sink: AsyncTextSink, cancellation!: CancellationToken = CancellationToken.none()): AsyncRenderState {
+renderer.cj:public func write(slice: String): SinkWriteResult {
+renderer.cj:public init( allowRelative: Bool, allowRemoteImages: Bool, allowDataImages: Bool, allowedDataMimeTypes!: Array<String> = [] ) {
+renderer.cj:public init( policy: HtmlPolicy, rawHtmlPolicy: RawHtmlPolicyKind, linkUriPolicy: LinkUriPolicy, imageUriPolicy: ImageUriPolicy, externalLinkRel!: String = "", externalLinkTarget!: String = "" ) {
+renderer.cj:public init() {
+renderer.cj:public init(allowRelative: Bool, allowHttp: Bool, allowHttps: Bool, allowMailto: Bool) {
+renderer.cj:public init(cause: SinkError) {
+renderer.cj:public init(includeLinkDestinations!: Bool = false, softBreak!: String = "\n") {
+renderer.cj:public init(message: String) {
+renderer.cj:public init(options!: HtmlOptions = HtmlOptions.safe(), extensionRules!: Array<RendererRule> = [], sanitizer!: ?HtmlSanitizerPort = None, extensionManifests!: Array<ExtensionManifest> = [], extensionFallbacks!: Array<ExtensionRendererFallback> = []) {
+renderer.cj:public init(options!: PlainTextOptions = PlainTextOptions(), extensionRules!: Array<RendererRule> = []) {
+renderer.cj:public init(renderer: HtmlRenderer, document: Document, chunkBytes!: Int64 = 4096, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()) {
+renderer.cj:public interface AsyncTextSink {
+renderer.cj:public interface ExtensionRendererFallback {
+renderer.cj:public interface HtmlSanitizerPort {
+renderer.cj:public interface TextSink {
+renderer.cj:public let allowDataImages: Bool
+renderer.cj:public let allowHttp: Bool
+renderer.cj:public let allowHttps: Bool
+renderer.cj:public let allowMailto: Bool
+renderer.cj:public let allowRelative: Bool
+renderer.cj:public let allowRemoteImages: Bool
+renderer.cj:public let allowedDataMimeTypes: ImmutableArray<String>
+renderer.cj:public let cause: SinkError
+renderer.cj:public let externalLinkRel: String
+renderer.cj:public let externalLinkTarget: String
+renderer.cj:public let imageUriPolicy: ImageUriPolicy
+renderer.cj:public let includeLinkDestinations: Bool
+renderer.cj:public let linkUriPolicy: LinkUriPolicy
+renderer.cj:public let options: HtmlOptions
+renderer.cj:public let options: PlainTextOptions
+renderer.cj:public let policy: HtmlPolicy
+renderer.cj:public let rawHtmlPolicy: RawHtmlPolicyKind
+renderer.cj:public let softBreak: String
+renderer.cj:public let value: String
+renderer.cj:public static func gfmCompatible(): HtmlOptions {
+renderer.cj:public static func safe(): HtmlOptions {
+renderer.cj:public static func safe(): ImageUriPolicy {
+renderer.cj:public static func safe(): LinkUriPolicy {
+renderer.cj:public static func specCompatible(): HtmlOptions {
+rewrite.cj:enum-variant | DetachLiteral
+rewrite.cj:enum-variant | InsertAfter(Array<NodeRef>)
+rewrite.cj:enum-variant | InsertBefore(Array<NodeRef>)
+rewrite.cj:enum-variant | Keep
+rewrite.cj:enum-variant | MapText(String)
+rewrite.cj:enum-variant | Remove
+rewrite.cj:enum-variant | Replace(NodeRef)
+rewrite.cj:enum-variant | ReplaceChildren(Array<NodeRef>)
+rewrite.cj:enum-variant | ReplaceText(String, String)
+rewrite.cj:public class TreeRewriter {
+rewrite.cj:public enum RewriteAction {
+rewrite.cj:public static func rewrite( document: Document, transform: (NodeRef) -> RewriteAction, budget!: OperationBudget = OperationBudget.safe(), cancellation!: CancellationToken = CancellationToken.none() ): Document {
+scanner_accelerator.cj:interface-member func implementationId(): String
+scanner_accelerator.cj:interface-member func recordFormatVersion(): Int64 {
+scanner_accelerator.cj:interface-member func scanLineRecords(input: Array<Byte>, capacity: Int64): ?LineScanRecords {
+scanner_accelerator.cj:interface-member func scanLines(input: Array<Byte>, capacity: Int64): ?Array<UInt64>
+scanner_accelerator.cj:public class AcceleratedMarkdownEngine {
+scanner_accelerator.cj:public func acceleratedBy(accelerator: LineScannerAccelerator): AcceleratedMarkdownEngine {
+scanner_accelerator.cj:public func capabilities(): EngineCapabilities {
+scanner_accelerator.cj:public func executionModels(): ExecutionModelCapabilities {
+scanner_accelerator.cj:public func parse( bytes: Array<Byte>, utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
+scanner_accelerator.cj:public func parse( input: InputStream, utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
+scanner_accelerator.cj:public func parse( input: OwnedUtf8Input, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
+scanner_accelerator.cj:public func parse( input: ReusableUtf8Input, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
+scanner_accelerator.cj:public init(records: Array<UInt64>, count: Int64) {
+scanner_accelerator.cj:public interface LineScannerAccelerator {
+scanner_accelerator.cj:public let count: Int64
+scanner_accelerator.cj:public let records: Array<UInt64>
+scanner_accelerator.cj:public struct LineScanRecords {
+services.cj:enum-variant | HostEffect
+services.cj:enum-variant | Pure
+services.cj:enum-variant | ReadsAnnotations
+services.cj:interface-member func apply(document: Document): Document
+services.cj:interface-member prop id: String
+services.cj:interface-member prop priority: Int64
+services.cj:interface-member prop produces: Array<String>
+services.cj:interface-member prop purity: TransformPurity
+services.cj:interface-member prop requires: Array<String>
+services.cj:interface-member prop version: String
+services.cj:public class AnnotationChannel<T> {
+services.cj:public class AnnotationKey<T> {
+services.cj:public class AnnotationStore {
+services.cj:public class TransformPipeline {
+services.cj:public enum TransformPurity {
+services.cj:public func channel<T>(key: AnnotationKey<T>): AnnotationChannel<T> {
+services.cj:public func close(): Unit {
+services.cj:public func get(nodeId: NodeId): ?T {
+services.cj:public func isClosed(): Bool {
+services.cj:public func orderedPassIds(): Array<String> {
+services.cj:public func put(nodeId: NodeId, value: T): Unit {
+services.cj:public func remove(nodeId: NodeId): ?T {
+services.cj:public func run( document: Document, budget!: OperationBudget = OperationBudget.safe(), cancellation!: CancellationToken = CancellationToken.none() ): Document {
+services.cj:public init() {}
+services.cj:public init(id: String, version!: String = "1", includeInFingerprint!: Bool = false) {
+services.cj:public interface TransformPass {
+services.cj:public let id: String
+services.cj:public let includeInFingerprint: Bool
+services.cj:public let key: AnnotationKey<T>
+services.cj:public let version: String
+services.cj:public prop size: Int64 {
+services.cj:public prop threadSafe: Bool {
+services.cj:public static func compile(passes: Array<TransformPass>): TransformPipeline {
+source.cj:enum-variant | Copy(String)
+source.cj:enum-variant | Slice(SourceSlice)
+source.cj:enum-variant | UnicodeScalar
+source.cj:enum-variant | UnicodeScalarWithTabStops
+source.cj:enum-variant | Utf16CodeUnit
+source.cj:enum-variant | Utf8Byte
+source.cj:enum-variant | Visual
+source.cj:public class OwnedUtf8Input {
+source.cj:public class ReusableUtf8Input {
+source.cj:public class SourceBuffer {
+source.cj:public class SourcePositionMap {
+source.cj:public class SourceSlice {
+source.cj:public enum DisplayWidthPolicy {
+source.cj:public enum LiteralStorage {
+source.cj:public enum PositionEncoding {
+source.cj:public func byteLength(): Int64 {
+source.cj:public func byteOffset(position: Utf16Position): Int64 {
+source.cj:public func contains(offset: SourceOffset): Bool {
+source.cj:public func containsSpan(other: SourceSpan): Bool {
+source.cj:public func detach(): LiteralStorage {
+source.cj:public func detach(): String {
+source.cj:public func isEmpty(): Bool {
+source.cj:public func length(): Int64 {
+source.cj:public func line(lineNumber: Int64): String {
+source.cj:public func lineCount(): Int64 {
+source.cj:public func position(byteOffset: Int64): SourcePosition {
+source.cj:public func slice(span: SourceSpan): String {
+source.cj:public func sourcePosition(byteOffset: Int64): SourcePosition {
+source.cj:public func sourceSlice(span: SourceSpan): SourceSlice {
+source.cj:public func text(): String {
+source.cj:public func text(document: Document): String {
+source.cj:public func text(node: NodeRef): String {
+source.cj:public func utf16Position(byteOffset: Int64): Utf16Position {
+source.cj:public func visualPosition(byteOffset: Int64): VisualPosition {
+source.cj:public func visualPosition(byteOffset: Int64, tabStop!: Int64 = 4): VisualPosition {
+source.cj:public init(byteOffset: Int64) {
+source.cj:public init(bytes: Array<Byte>) {
+source.cj:public init(line: Int64, byteColumn: Int64) {
+source.cj:public init(line: Int64, character: Int64) {
+source.cj:public init(line: Int64, visualColumn: Int64) {
+source.cj:public init(source: SourceBuffer, span: SourceSpan) {
+source.cj:public init(source: SourceBuffer, tabStop!: Int64 = 4) {
+source.cj:public init(source: SourceBuffer, tabStop: Int64, displayWidthPolicy: DisplayWidthPolicy) {
+source.cj:public init(startByte: Int64, endByte: Int64) {
+source.cj:public init(value: String) {
+source.cj:public let byteColumn: Int64
+source.cj:public let byteOffset: Int64
+source.cj:public let character: Int64
+source.cj:public let displayWidthPolicy: DisplayWidthPolicy
+source.cj:public let endByte: Int64
+source.cj:public let line: Int64
+source.cj:public let source: SourceBuffer
+source.cj:public let span: SourceSpan
+source.cj:public let startByte: Int64
+source.cj:public let tabStop: Int64
+source.cj:public let visualColumn: Int64
+source.cj:public operator func ==(other: SourceOffset): Bool {
+source.cj:public operator func ==(other: SourcePosition): Bool {
+source.cj:public operator func ==(other: SourceSpan): Bool {
+source.cj:public operator func ==(other: Utf16Position): Bool {
+source.cj:public operator func ==(other: VisualPosition): Bool {
+source.cj:public struct SourceOffset <: Equatable<SourceOffset> {
+source.cj:public struct SourcePosition <: Equatable<SourcePosition> {
+source.cj:public struct SourceSpan <: Equatable<SourceSpan> {
+source.cj:public struct Utf16Position <: Equatable<Utf16Position> {
+source.cj:public struct VisualPosition <: Equatable<VisualPosition> {
+testkit.cj:public class ExtensionTckReport {
+testkit.cj:public class MarkdownExtensionTestKit {
+testkit.cj:public func isSuccess(): Bool {
+testkit.cj:public init(checks: Int64, passed: Int64, failedChecks!: Array<String> = []) {
+testkit.cj:public let checks: Int64
+testkit.cj:public let failedChecks: ImmutableArray<String>
+testkit.cj:public let passed: Int64
+testkit.cj:public static func verify(engine: MarkdownEngine, sample: String): ExtensionTckReport {
+testkit/testkit.cj:public import markdown.{ExtensionTckReport, MarkdownExtensionTestKit}
+traversal.cj:enum-variant | Enter(NodeRef)
+traversal.cj:enum-variant | Exit(NodeRef)
+traversal.cj:public class AstQuery {
+traversal.cj:public class NodeRefWalker <: Iterator<NodeRefWalkEvent> {
+traversal.cj:public enum NodeRefWalkEvent {
+traversal.cj:public func next(): ?NodeRefWalkEvent {
+traversal.cj:public func traverse(document: Document): Unit {
+traversal.cj:public func traverse(root: NodeRef): Unit {
+traversal.cj:public func walk(): NodeRefWalker {
+traversal.cj:public init() {}
+traversal.cj:public init(root: NodeRef) {
+traversal.cj:public open class MarkdownVisitor {
+traversal.cj:public static func ancestors(document: Document, id: NodeId): Array<NodeRef> {
+traversal.cj:public static func byKind(document: Document, kind: NodeKind): Array<NodeRef> {
+traversal.cj:public static func byNodeId(document: Document, id: NodeId): ?NodeRef {
+traversal.cj:public static func codeBlocks(document: Document): Array<CodeBlockNodeView> {
+traversal.cj:public static func containing(document: Document, span: SourceSpan): Array<NodeRef> {
+traversal.cj:public static func customNodes(document: Document): Array<NodeRef> {
+traversal.cj:public static func descendants(document: Document): Array<NodeRef> {
+traversal.cj:public static func descendants(node: NodeRef): Array<NodeRef> {
+traversal.cj:public static func headings(document: Document): Array<HeadingNodeView> {
+traversal.cj:public static func images(document: Document): Array<ImageNodeView> {
+traversal.cj:public static func links(document: Document): Array<LinkNodeView> {

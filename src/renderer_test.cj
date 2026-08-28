@@ -43,13 +43,27 @@ class TrustedFallback <: ExtensionRendererFallback {
             "fallback"
         }
     }
-    public func renderHtml(_: MarkdownNode): TrustedHtml {
+    public func renderHtml(_: NodeRef): TrustedHtml {
         unsafe { TrustedHtml.fromString("<span>trusted fallback</span>") }
     }
 }
 
 @Test
 class RendererBehaviorTest {
+    @TestCase
+    func arenaRendererIsDeterministicForCoreAndGfmTrees(): Unit {
+        let commonSource = "# H\n\n> quoted *em* and **strong**\n\n1. one\n2. `two`\n\n---\n\n" +
+            "[link](https://example.com \"t\") ![alt *text*](img.png)  \nnext\n\n<div>x</div>\n"
+        let common = MarkdownEngine.builder().build().parse(commonSource)
+        let safe = HtmlRenderer()
+        @Expect(safe.render(common.ast), safe.render(common.document))
+
+        let gfmSource = "| a | b |\n| :- | -: |\n| ~~x~~ | y |\n\n- [x] done\n"
+        let gfm = MarkdownEngine.builder().profile(MarkdownProfile.gfmModernV1()).build().parse(gfmSource)
+        let compatible = HtmlRenderer(options: HtmlOptions.gfmCompatible())
+        @Expect(compatible.render(gfm.ast), compatible.render(gfm.document))
+    }
+
     @TestCase
     func safeHtmlEscapesTextRawHtmlAndDangerousUris(): Unit {
         let source = "<script>alert(1)</script>\n\n[x](JaVa\tScRiPt:alert(1)) & <b>"

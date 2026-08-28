@@ -6,7 +6,7 @@ public class BinarySnapshotArtifact {
     public let schemaVersion: String
     private let data: Array<Byte>
     public init(data: Array<Byte>) {
-        this.schemaVersion = "markdown-snapshot-binary-1"
+        this.schemaVersion = "markdown-snapshot-binary-2"
         this.data = data.clone()
     }
     public func bytes(): Array<Byte> {
@@ -26,12 +26,17 @@ public class BinaryArtifactCodec {
                 "binary artifacts require an identity-preserving UTF-8 source mapping", phase: "artifact_encode")
         }
         let out = ArrayList<Byte>()
-        out.add(all: "MCJ1".toArray())
-        binaryWriteString(out, snapshot.result.document.profile.id)
-        binaryWriteString(out, snapshot.result.document.dialectFingerprint)
+        let originalBytes = snapshot.result.source.originalBytesForArtifact()
+        out.add(all: "MCJ2".toArray())
+        let root = snapshot.result.ast.root().asDocument().getOrThrow()
+        binaryWriteString(out, root.profile.id)
+        binaryWriteString(out, root.dialectFingerprint)
         binaryWriteString(out, binaryEngineFingerprint(snapshot.engine))
-        binaryWriteString(out, snapshot.sourceDigest)
-        binaryWriteString(out, binaryAstDigest(snapshot.result.document))
+        binaryWriteString(out, binaryUtf8PolicyId(snapshot.result.source.decodePolicy()))
+        binaryWriteString(out, Sha256.digestBytes(originalBytes))
+        binaryWriteString(out, Sha256.digest(snapshot.result.source.text()))
+        binaryWriteString(out, binaryIdentityOffsetMappingDigest(originalBytes.size))
+        binaryWriteString(out, binaryAstDigest(snapshot.result.ast))
         binaryWriteString(out, Sha256.digest(snapshot.syntaxTree.losslessText()))
         binaryWriteString(out, snapshot.result.source.text())
         BinarySnapshotArtifact(out.toArray())
@@ -44,13 +49,16 @@ public class BinaryArtifactCodec {
         }
         try {
             let reader = BinaryArtifactReader(data)
-            if (reader.readFixed(4) != "MCJ1") {
+            if (reader.readFixed(4) != "MCJ2") {
                 return BinaryArtifactLoadResult.CacheMiss("schema magic")
             }
             let profile = reader.readString()
             let dialect = reader.readString()
             let engineFingerprint = reader.readString()
-            let sourceDigest = reader.readString()
+            let utf8PolicyId = reader.readString()
+            let originalBytesDigest = reader.readString()
+            let decodedTextDigest = reader.readString()
+            let offsetMappingDigest = reader.readString()
             let astDigest = reader.readString()
             let cstDigest = reader.readString()
             let source = reader.readString()
@@ -66,11 +74,21 @@ public class BinaryArtifactCodec {
             if (engineFingerprint != binaryEngineFingerprint(engine)) {
                 return BinaryArtifactLoadResult.CacheMiss("engine fingerprint")
             }
-            if (sourceDigest != Sha256.digest(source)) {
-                return BinaryArtifactLoadResult.CacheMiss("source digest")
+            if (utf8PolicyId != "strict" && utf8PolicyId != "replace-invalid") {
+                return BinaryArtifactLoadResult.CacheMiss("UTF-8 policy")
+            }
+            let sourceBytes = source.toArray()
+            if (originalBytesDigest != Sha256.digestBytes(sourceBytes)) {
+                return BinaryArtifactLoadResult.CacheMiss("original bytes digest")
+            }
+            if (decodedTextDigest != Sha256.digest(source)) {
+                return BinaryArtifactLoadResult.CacheMiss("decoded text digest")
+            }
+            if (offsetMappingDigest != binaryIdentityOffsetMappingDigest(sourceBytes.size)) {
+                return BinaryArtifactLoadResult.CacheMiss("offset mapping digest")
             }
             let snapshot = engine.parseSnapshot(source)
-            if (astDigest != binaryAstDigest(snapshot.result.document)) {
+            if (astDigest != binaryAstDigest(snapshot.result.ast)) {
                 return BinaryArtifactLoadResult.CacheMiss("AST digest")
             }
             if (cstDigest != Sha256.digest(snapshot.syntaxTree.losslessText())) {
@@ -81,6 +99,20 @@ public class BinaryArtifactCodec {
             BinaryArtifactLoadResult.CacheMiss("malformed artifact")
         }
     }
+}
+
+private func binaryUtf8PolicyId(policy: Utf8Policy): String {
+    match (policy) {
+        case Utf8Policy.Strict => "strict"
+        case Utf8Policy.ReplaceInvalid => "replace-invalid"
+    }
+}
+
+private func binaryIdentityOffsetMappingDigest(byteLength: Int64): String {
+    let descriptor = CanonicalDescriptor()
+    descriptor.append("identity-offset-mapping")
+    descriptor.append(byteLength)
+    Sha256.digest(descriptor.toString())
 }
 
 internal class BinaryArtifactReader {
@@ -155,7 +187,7 @@ private func binaryAstDigest(document: Document): String {
     let out = CanonicalDescriptor()
     for (event in document.walk()) {
         match (event) {
-            case WalkEvent.Enter(node) =>
+            case NodeRefWalkEvent.Enter(node) =>
                 out.append("+");
                 out.append(binaryNodeKind(node));
                 out.append(":");
@@ -167,7 +199,7 @@ private func binaryAstDigest(document: Document): String {
                     out.append(span.endByte)
                 }
                 appendBinarySemantic(out, node)
-            case WalkEvent.Exit(node) =>
+            case NodeRefWalkEvent.Exit(node) =>
                 out.append("-");
                 out.append(binaryNodeKind(node));
                 out.append(";")
@@ -176,54 +208,66 @@ private func binaryAstDigest(document: Document): String {
     Sha256.digest(out.toString())
 }
 
-private func appendBinarySemantic(out: CanonicalDescriptor, node: MarkdownNode): Unit {
-    match (node) {
-        case value: Text =>
+private func appendBinarySemantic(out: CanonicalDescriptor, node: NodeRef): Unit {
+    match (node.kind) {
+        case NodeKind.Text =>
+            let value = node.asText().getOrThrow()
             out.append("=");
             out.append(value.raw);
             out.append("=>");
             out.append(value.value)
-        case value: Heading =>
+        case NodeKind.Heading =>
+            let value = node.asHeading().getOrThrow()
             out.append("=");
             out.append(value.level)
-        case value: CodeBlock =>
+        case NodeKind.CodeBlock =>
+            let value = node.asCodeBlock().getOrThrow()
             out.append("=");
             out.append(value.literal);
             out.append(":");
             out.append(value.infoRaw)
-        case value: CodeSpan =>
+        case NodeKind.CodeSpan =>
+            let value = node.asCodeSpan().getOrThrow()
             out.append("=");
             out.append(value.literal)
-        case value: HtmlBlock =>
+        case NodeKind.HtmlBlock =>
+            let value = node.asHtmlBlock().getOrThrow()
             out.append("=");
             out.append(value.literal)
-        case value: HtmlInline =>
+        case NodeKind.HtmlInline =>
+            let value = node.asHtmlInline().getOrThrow()
             out.append("=");
             out.append(value.literal)
-        case value: Link =>
+        case NodeKind.Link =>
+            let value = node.asLink().getOrThrow()
             out.append("=");
             out.append(value.destination);
             out.append(":");
             out.append(value.title)
-        case value: Image =>
+        case NodeKind.Image =>
+            let value = node.asImage().getOrThrow()
             out.append("=");
             out.append(value.destination);
             out.append(":");
             out.append(value.title)
-        case value: List =>
+        case NodeKind.List =>
+            let value = node.asList().getOrThrow()
             out.append("=");
             out.append(value.start);
             out.append(":");
             out.append(value.tight)
-        case value: ListItem =>
+        case NodeKind.ListItem =>
+            let value = node.asListItem().getOrThrow()
             out.append("=");
             out.append(binaryTaskState(value.taskState))
-        case value: CustomBlock =>
+        case NodeKind.CustomBlock =>
+            let value = node.asCustomBlock().getOrThrow()
             out.append("=");
             out.append(value.extensionId);
             out.append(":");
             out.append(value.localKindId)
-        case value: CustomInline =>
+        case NodeKind.CustomInline =>
+            let value = node.asCustomInline().getOrThrow()
             out.append("=");
             out.append(value.extensionId);
             out.append(":");
@@ -232,33 +276,32 @@ private func appendBinarySemantic(out: CanonicalDescriptor, node: MarkdownNode):
     }
 }
 
-private func binaryNodeKind(node: MarkdownNode): String {
-    match (node) {
-        case _: Document => "document";
-        case _: BlockQuote => "quote";
-        case _: List => "list"
-        case _: ListItem => "item";
-        case _: Paragraph => "paragraph";
-        case _: Heading => "heading"
-        case _: ThematicBreak => "break";
-        case _: CodeBlock => "code-block";
-        case _: HtmlBlock => "html-block"
-        case _: Table => "table";
-        case _: TableRow => "row";
-        case _: TableCell => "cell"
-        case _: CustomBlock => "custom-block";
-        case _: Text => "text";
-        case _: SoftBreak => "soft"
-        case _: HardBreak => "hard";
-        case _: CodeSpan => "code";
-        case _: Emphasis => "em"
-        case _: Strong => "strong";
-        case _: Strikethrough => "strike";
-        case _: Link => "link"
-        case _: Image => "image";
-        case _: HtmlInline => "html-inline";
-        case _: CustomInline => "custom-inline"
-        case _ => "unknown"
+private func binaryNodeKind(node: NodeRef): String {
+    match (node.kind) {
+        case NodeKind.Document => "document";
+        case NodeKind.BlockQuote => "quote";
+        case NodeKind.List => "list"
+        case NodeKind.ListItem => "item";
+        case NodeKind.Paragraph => "paragraph";
+        case NodeKind.Heading => "heading"
+        case NodeKind.ThematicBreak => "break";
+        case NodeKind.CodeBlock => "code-block";
+        case NodeKind.HtmlBlock => "html-block"
+        case NodeKind.Table => "table";
+        case NodeKind.TableRow => "row";
+        case NodeKind.TableCell => "cell"
+        case NodeKind.CustomBlock => "custom-block";
+        case NodeKind.Text => "text";
+        case NodeKind.SoftBreak => "soft"
+        case NodeKind.HardBreak => "hard";
+        case NodeKind.CodeSpan => "code";
+        case NodeKind.Emphasis => "em"
+        case NodeKind.Strong => "strong";
+        case NodeKind.Strikethrough => "strike";
+        case NodeKind.Link => "link"
+        case NodeKind.Image => "image";
+        case NodeKind.HtmlInline => "html-inline";
+        case NodeKind.CustomInline => "custom-inline"
     }
 }
 

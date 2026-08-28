@@ -10,7 +10,10 @@
 - AST: typed block/inline nodes, `NodeId`, `NodeOrigin`, custom nodes.
 - Extension: dialect/syntax/renderer builders, manifests, compiled dialect and fingerprint.
 - Output: `HtmlRenderer`, `PlainTextRenderer`, `CanonicalMarkdownRenderer`, `TextSink`, source maps.
-- Tools: Walker, Visitor, Query, TreeRewriter, TransformPipeline, AnnotationStore, Event API.
+- Tools: Walker, Visitor, Query, TreeRewriter, TransformPipeline and AnnotationStore.
+
+The low-allocation source Event API is scheduled for 1.1. Version 0.9 does not
+expose an AST-walk adapter as a streaming API.
 - Editor: lint/fix/explain, snapshots, preserving edits, artifacts.
 - Convenience: `Markdown.parse`, `toSafeHtml`, `toSpecHtml`, `toText`, `format`.
 

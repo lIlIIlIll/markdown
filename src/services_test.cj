@@ -37,8 +37,8 @@ class UppercasePass <: TransformPass {
     }
     public func apply(document: Document): Document {
         TreeRewriter.rewrite(document, {
-            node => match (node) {
-                case text: Text => RewriteAction.MapText(text.value.toUpper())
+            node => match (node.kind) {
+                case NodeKind.Text => RewriteAction.MapText(node.asText().getOrThrow().value.toUpper())
                 case _ => RewriteAction.Keep
             }
         })
@@ -83,25 +83,6 @@ class DependentPass <: TransformPass {
 
 @Test
 class ServicesTest {
-    @TestCase
-    func resolvedAndRawEventsHaveExplicitlyDifferentSemantics(): Unit {
-        let document = MarkdownEngine.builder().build().parse("# H").document
-        var resolvedText: Int64 = 0
-        for (event in document.events()) {
-            if (let MarkdownEvent.TextValue(_) <- event) {
-                resolvedText++
-            }
-        }
-        var rawText: Int64 = 0
-        for (event in document.events(mode: EventMode.RawBlock)) {
-            if (let MarkdownEvent.TextValue(_) <- event) {
-                rawText++
-            }
-        }
-        @Expect(resolvedText, 1)
-        @Expect(rawText, 0)
-    }
-
     @TestCase
     func annotationChannelsAreTypedAndLifecycleBound(): Unit {
         let store = AnnotationStore()

@@ -2,20 +2,48 @@
 
 ## Final Status
 
-**INCOMPLETE** — 125 项需求中 122 项为 `pass`，仍有 3 项 blocked；私密安全报告渠道已启用并验证，性能 GA 数值仍实测失败。
+**INCOMPLETE** — 125 项需求中 121 项为 `pass`，仍有 1 项 pending、0 项 implemented_unverified 和 3 项 blocked；真正的 Resolved/RawBlock source event 按冻结决策留到 1.1，当前 1.0 GA 仍被性能门槛及其发布依赖阻塞。
 
 <!-- release-evidence:start -->
 ## Generated Release Evidence
 
-- Version/status: `0.8.0` / `draft`.
-- Source identity: `34113ea6f47a3bcd57b80ca9ee5c6063873dd5bb`; tree state `clean`.
-- Tests: `1423/1423` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `5.73x`, GFM `5.01x`, status `current`.
-- Raw digest: `4398eefa73195165220628a8629a9dea1163535e7bcdc6e78d14794ace3e3747`.
+- Version/status: `0.9.0` / `draft`.
+- Source identity: `2454b0626c2fb0fe590a59bc1f79a8d4e864c856`; tree state `dirty`.
+- Tests: `1447/1447` passed, `0` skipped, `0` failed.
+- Benchmark: CommonMark `2.92x`, GFM `3.08x`, status `current`.
+- Raw digest: `200a2f8f9d891eedc98e825fd2b4ebae5725accc2be30418d67da449946c2f25`.
 
-The benchmark identity is bound and the evidence tree is clean, but both mandatory performance ratios fail and the release
+The benchmark source identity or evidence tree is not release-bound, but both mandatory performance ratios fail and the release
 status is not ready. It cannot change the overall `INCOMPLETE` verdict.
 <!-- release-evidence:end -->
+
+## 2026-08-27 Parser Phase Evidence
+
+R17 eliminated redundant link-target string validation after the target scanner had
+already observed whether decoding was necessary. R20 added a versioned native line
+record delimiter bit and an isolated delimiter-free inline materializer; legacy v1
+accelerators remain conservative and unsupported formats fail closed. Fixed Server
+CPU 24 bidirectional R20/R17 measurements preserved checksums. Forward ratios were
+`0.970483` CommonMark parse, `0.996234` CommonMark HTML, `0.951194` GFM parse and
+`0.985218` GFM HTML; reverse-normalized ratios were `0.966195`, `0.985243`,
+`0.980318` and `0.996376`. The retained target improvements are about 9% on CJK and
+many-reference parse workloads.
+
+Local validation passed `1444/1444` tests, `9/9` API-checker tests, the 1277-declaration
+v0.9 public API snapshot, and 1000 coverage-guided native scanner runs with ASan and
+UBSan clean. The full format gate still reports only the pre-existing/shared
+`src/ast_test.cj` formatting drift. This phase evidence intentionally does not replace
+the canonical release benchmark; `MD-PERF-002`, `MD-REL-001` and `MD-QUAL-001` remain
+blocked until the full current-source release ratios satisfy the PRD threshold.
+
+R21 subsequently made delimiter-free text coalescing conditional on an actual
+Text-producing escape/entity/backtick lowering. Bidirectional R21/R20 aggregate
+ratios were `0.954436`/`0.948190` CommonMark parse, `0.977939`/`0.983093`
+CommonMark HTML, `0.975448`/`0.959328` GFM parse and `0.986151`/`0.984167`
+GFM HTML; full tests passed `1445/1445`. R22's attempted single-line paragraph
+child-array transfer was rejected after it provided less than 1.1% parse gain,
+did not improve CommonMark HTML, and produced a reverse ordinary HTML regression.
+The parser was restored byte-for-byte to retained R21.
 
 2026-08-23 dependency transition：H `db4392e2` commits the paired seven-sample
 protocol and owned-input driver. Pre-H raw `48dbad...` and
@@ -34,9 +62,9 @@ seal/path/binary identity check.
 
 | 状态 | 数量 |
 | --- | ---: |
-| `pass` | 122 |
+| `pass` | 121 |
 | `implemented_unverified` | 0 |
-| `pending` | 0 |
+| `pending` | 1 |
 | `blocked` | 3 |
 
 ## Itemized Verdict
@@ -46,7 +74,7 @@ seal/path/binary identity check.
 | `MD-GOV-001` | PRD §1, §4, §54.1-7 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-GOV-002` | PRD §6.1, §11.4, §48.3, §54.3-6 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-GOV-003` | PRD §6.2, §24.1, §54.7, §54.30-31 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
-| `MD-GOV-004` | PRD §6.3, §10.1-2, §54.8-10 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
+| `MD-GOV-004` | PRD §6.3, §10.1-2, §54.8-10 | `pass` | 0.9 arena/value-view main path and explicit fused execution are implemented; the misleading AST-walk Event adapter was removed and the real source Event API is tracked separately for 1.1. |
 | `MD-GOV-005` | PRD §8, §29, §53.4-6, §54.14-16, §54.27, §54.33, §54.36 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-USE-001` | PRD §9.1-6 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-ARCH-001` | PRD §10.1-2, §55 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
@@ -90,8 +118,8 @@ seal/path/binary identity check.
 | `MD-PAR-010` | PRD §6.5, §18 PAR-010, §43 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-VAL-001` | PRD §19.1-3, §51.4, §54.23 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-VAL-002` | PRD §19.4 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
-| `MD-AST-001` | PRD §20.1, §42.4, §54.25 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
-| `MD-AST-002` | PRD §20.2-3 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
+| `MD-AST-001` | PRD §20.1, §42.4, §54.25 | `pass` | Document-owned chunked arena, NodeRef, typed value views, compact origin metadata and consumer migration are implemented and full-suite verified. |
+| `MD-AST-002` | PRD §20.2-3 | `pass` | The 0.9 arena/value-view representation is the sole runtime AST; parser, renderer, transforms, editor, artifact and traversal no longer depend on the 0.8 object tree. |
 | `MD-AST-003` | PRD §20.4, §36.4, §51.4, §54.24 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-AST-004` | PRD §20.5 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-AST-005` | PRD §20.6, §48.4, §51.4 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
@@ -114,7 +142,7 @@ seal/path/binary identity check.
 | `MD-FMT-002` | PRD §26.2, §26.4, §44.4, §51.5 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-FMT-003` | PRD §26.5, §54.39 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-FMT-004` | PRD §26.6 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
-| `MD-EVT-001` | PRD §27, §54.10 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
+| `MD-EVT-001` | PRD §27, §54.10 | `pending` | Existing events are produced by walking a completed AST and hold Document/MarkdownNode values; true RawBlock chunk events, two-pass Resolved source events and fused HTML execution are not implemented. |
 | `MD-EXT-001` | PRD §28.1-2, §54.34 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-EXT-002` | PRD §28.3-4, §37, §54.34 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-EXT-003` | PRD §28.5, §53.5, §54.33 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
@@ -159,13 +187,13 @@ seal/path/binary identity check.
 | `MD-TST-004` | PRD §44.5-6, §51.6-7 | `pass` | 2026-08-25: arbitrary-byte fuzz found and guards two UTF-8 boundary crashes; full 1419-test suite passed |
 | `MD-TST-005` | PRD §44.7-9, §51.7 | `pass` | 2026-08-18: API snapshot, pathological corpus, and official extension TCK passed |
 | `MD-PERF-001` | PRD §45.1-3 | `pass` | 2026-08-18: 12-corpus -O2 reference-host matrix recorded raw samples, per-corpus digests, pinned CPU, SDK, reference commits, geometric means, and custom-extension cost |
-| `MD-PERF-002` | PRD §45.4, §51.7, §52 | `blocked` | 2026-08-25 trusted-owned commit 34113ea6 on Server CPU 24: CommonMark 5.732x and GFM 5.014x versus 2.5x limits. Scaling slope 0.840, adjacent 1.977, pathological slope 1.096 and extra RSS 59964 KiB pass; only both ratio gates fail. |
+| `MD-PERF-002` | PRD §45.4, §51.7, §52 | `blocked` | 2026-08-28 R115 canonical on Server CPU 24: CommonMark 2.916x and GFM 3.079x versus 2.5x limits. Ordinary 4.848x/2.767x, scaling slope 0.855, adjacent 2.221, pathological slope 0.683, pathological adjacent 2.869 and extra RSS 49192 KiB pass; only both ratio gates fail. |
 | `MD-PERF-003` | PRD §45.5 | `pass` | 2026-08-18: owned byte input, SourceSlice literals, explicit parser frames, bounded output, ordinary/pathological scaling, and RSS tests passed |
 | `MD-OBS-001` | PRD §46 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DOC-001` | PRD §47, §49, §51.7 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DOC-002` | PRD §47, §49, §51.7 | `pass` | 2026-08-18: examples/quickstart built and ran using only the public package API |
-| `MD-COMP-001` | PRD §48.1-2 | `pass` | 2026-08-18: public API snapshot verified; 1155 declarations |
-| `MD-COMP-002` | PRD §48.3-6 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
+| `MD-COMP-001` | PRD §48.1-2 | `pass` | The 0.9 API snapshot verifies 1269 declarations; migration and compatibility docs record the arena/value-view reset, scanner valid-prefix adapter and Event 1.1 boundary. |
+| `MD-COMP-002` | PRD §48.3-6 | `pass` | SPI v2, artifact v2 and the final 0.9 AST surface are snapshotted and tested; the removed AST-walk Event facade is explicitly excluded from the stable contract. |
 | `MD-REL-001` | PRD §49, §50 M6, §51 | `blocked` | The package, CLI, documentation, reports, example, bundle, and private reporting channel exist, but mandatory MD-PERF-002 prevents a 1.0 GA declaration. |
 | `MD-QUAL-001` | PRD §51.7, §52 | `blocked` | Correctness, package, and private security reporting gates pass, but the mandatory performance success metric does not. |
 
@@ -515,15 +543,561 @@ baseline/baseline A/A ratios were `0.997942` and `1.002247`. Format, package
 check, 8/8 API checker tests, 3/3 input-profile tests, 3/3 release-evidence
 tests and the socket-enabled `1423/1423` full suite passed.
 
-The fresh remote canonical release run is bound to that product commit, source
-archive SHA-256
-`64f463fe6ee332f0a6361755eb6988f7bc8acced6f953d88844bd17f0a9e069a`,
+The historical 2026-08-26 remote release run was bound to workspace commit anchor
+`2454b0626c2fb0fe590a59bc1f79a8d4e864c856`, exact source archive SHA-256
+`621d01282d0dedbf736d874a18841658297f8e45142bc11f9a30855afff92a00`,
 the frozen corpora, SDK, harness and all three drivers. Raw SHA-256
-`4398eefa73195165220628a8629a9dea1163535e7bcdc6e78d14794ace3e3747`
-measured CommonMark `5.731996x` and GFM `5.013855x`. Ordinary ratios, scaling,
+`76f6e5e873ac1526d1f54ed350483cda46d3d3c9e534529a39326b9f068391db`
+measured CommonMark `5.768261x` and GFM `4.265438x`. Ordinary ratios, scaling,
 pathological scaling and RSS pass; only the two mandatory `2.5x` ratio gates
-fail. SourceMap overhead was `7.39%`; CST/snapshot overhead was `1054.81%`.
+fail. The evidence tree is explicitly dirty; the archive and driver hashes are
+the exact tested identity until these changes are committed.
 
-The authoritative ledger therefore remains 122/125 pass. `MD-PERF-002`,
-`MD-REL-001` and `MD-QUAL-001` remain blocked, so the final status remains
-**INCOMPLETE**. No gate, assertion or benchmark profile was weakened.
+At this historical checkpoint the ledger was 116/125 pass, with 4 pending, 2
+implemented_unverified and 3 blocked. The current summary at the top of this report supersedes it.
+No gate, assertion or benchmark profile was weakened.
+
+## 2026-08-27 Reusable Input and Canonical Acceptance
+
+`ReusableUtf8Input` validates and defensively copies once, or accepts an
+explicit unsafe ownership transfer, then exposes immutable storage to repeated
+full-AST parses. Canonical CommonMark/GFM modes now reuse that buffer while
+still creating the complete arena AST, NodeId, SourceSpan, SourceBuffer and
+ParseResult every iteration. String, byte array, owned bytes, reusable bytes
+and stream inputs remain separately reported.
+
+The fixed Server bidirectional promotion guard preserved checksums. Forward
+R24/R21 ratios were `0.949117`, `0.998415`, `0.984257` and `0.994762` for
+CommonMark parse/HTML and GFM parse/HTML; reverse-normalized ratios were
+`0.943764`, `0.989614`, `0.982903` and `0.986682`. R21/R21 A/A quantified the
+remaining drift. Full local tests passed `1446/1446`, API checker tests passed
+`9/9`, input-profile contracts passed `4/4`, and the public API snapshot
+verified `1281` declarations.
+
+The R24 canonical raw at that checkpoint was SHA-256
+`257d20140685382cdf3d1b95a67db3d54aa02c0c514e88bf7a5c71714ac2b502`.
+It binds the exact source archive, corrected harness, candidate driver, SDK and
+both frozen reference drivers. CommonMark is `4.859602x` and GFM is
+`4.329331x`; ordinary, normal/pathological scaling, adjacent growth and RSS
+all pass. The two mandatory `2.5x` ratios fail, so `MD-PERF-002`,
+`MD-REL-001` and `MD-QUAL-001` remain blocked and the final status remains
+**INCOMPLETE**. It has now been superseded by the R29 canonical result below.
+
+## 2026-08-27 Post-R24 Candidate Audit
+
+Perf on the reusable-input canonical driver attributed `24.51%` of ordinary
+samples to the native line scan, `22.06%` to GC phase transition and `4.17%`
+to the full-input reference precheck. Three isolated candidates were evaluated
+with the same fixed Server CPU and exact R24 baseline:
+
+- R25 runtime AVX2 scanning regressed ordinary GFM parse by `24.6%` and target
+  profiles by as much as `17.6%`.
+- R26 compact native record allocation had no aggregate parse win and regressed
+  CJK/readme profiles by `5-7%`.
+- R27 bracket classification improved long-line CommonMark parse, but repeated
+  readme CommonMark parse regressions of `8.0-8.5%` and large-code GFM HTML
+  regressions of `6.0-9.0%` in opposite initial ordering.
+
+All three candidates were exactly reverted to the R24 source bytes. Their raw
+hashes are recorded in `progress.md` and `requirements.yaml`; none replaces the
+sole canonical raw or changes a requirement status. The final status remains
+**INCOMPLETE**.
+
+R28 retains a narrower optimization that uses the already-produced line
+classification only to prove the absence of `[` before running the old
+full-input reference precheck. It preserves the old path whenever that proof
+is unavailable. Full tests passed `1446/1446`; two fixed-CPU ordinary runs
+reduced instructions by `11.3-13.2%` and cycles by `10.3-11.3%`, with identical
+checksums. Bidirectional 11-corpus guards found no stable regression above
+`10%`; a reverse-only deep-list HTML outlier was not reproduced by the focused
+24-round repeat and was within the observed baseline/baseline drift. Raw hashes
+are recorded in the ledger. R28 remains phase evidence only: it does not replace
+the canonical full release report, and the final status remains **INCOMPLETE**.
+
+## 2026-08-27 R29 Direct Line Storage and Canonical Acceptance
+
+R29 fills the exact-size `Array<LineRecord>` returned by the native scan
+directly, eliminating `ArrayList` growth and the final `toArray()` copy. Its
+forward/reverse seven-corpus guard measured CommonMark parse
+`0.917786/0.923710`, CommonMark HTML `0.990531/0.984202`, GFM parse
+`0.953607/0.969530`, and GFM HTML `0.975985/0.975257`; no stable single-corpus
+regression exceeded `10%`. Full tests passed `1446/1446`.
+
+The then-canonical R29 raw was SHA-256
+`985b4256e4b16ed009417f80e589cbb485298c7295c5581d2fe1483bb0287ca6`.
+It binds archive `303a2ea5...1212`, harness `41b06872...8c86`, driver
+`6c15b592...d5b`, the fixed SDK, frozen corpora and both reference drivers.
+CommonMark was `3.959023x` and GFM was `3.534119x`; ordinary, scaling,
+pathological scaling, adjacent growth and RSS all pass. CommonMark therefore
+meets the interim `4.0x` target, but both mandatory `2.5x` ratios still fail.
+`MD-PERF-002`, `MD-REL-001` and `MD-QUAL-001` remain blocked, and the final
+status remains **INCOMPLETE**.
+
+R30 tested a narrower-range SSE2 special-byte prefilter. Native build contracts
+passed `4/4` and `5000` coverage-guided ASan+UBSan runs were clean, but the
+bidirectional fixed-CPU guard showed GFM parse regressions of
+`1.008164/1.020540`, with reverse ordinary at `1.050196`. The candidate was
+rejected and the scanner was exactly restored to the R29 source bytes; the R29
+canonical report remains authoritative.
+
+A same-binary reusable-input diagnostic also showed the pure Cangjie scanner
+at `1.206221x` the native path across seven CommonMark corpora, so the String
+input profile is not used as a scanner-only comparison. R31 then tested
+line-count block-buffer reservation, but its initial guard was only `0.989871`
+for CommonMark parse and regressed GFM parse to `1.013699`, including deep-list
+at `1.056944`. It failed the stop/go benefit threshold, was rejected, and the
+parser was exactly restored to the R29 bytes.
+
+R32 then removed the intermediate paragraph child array through an internal
+list-consuming arena overload. Despite reducing a nominal copy, its first
+guard regressed CommonMark parse to `1.021885`, pathological CommonMark parse
+to `1.088450`, GFM parse to `1.007309`, and GFM HTML to `1.010970`. The
+candidate was rejected; arena, parser and factory sources were verified
+byte-identical to R29 after rollback.
+
+R33 replaced the scanner's nine SSE2 comparisons with a whole-function SSSE3
+nibble lookup selected once per parse. Build contracts and `5000` sanitizer
+fuzz runs passed, but CommonMark parse, long-line and ordinary GFM regressed;
+it was rejected. R34/R34b then delayed delimiter byte-array materialization.
+Correctness passed, and pathological GFM improved, but long-line CommonMark
+HTML regressed in both orderings and reverse CommonMark HTML regressed `6.03%`
+overall. R35's trusted-arena count-write removal was neutral overall and
+regressed deep-list/official guards. All three candidates were rejected and
+the four product hot-path files were verified byte-identical to R29. The
+canonical R29 report remains the sole acceptance evidence.
+
+A fresh CJK profile then showed GC `18.86%`, delimiter-free inline parsing
+`8.87%`, allocation/memset `8.05%`, arena append `4.22%`, and native scanner
+only `2.58%` (`7030` samples, `0` lost). R36 isolated Unicode byte-run advance
+inside that fast path, but it did not improve CJK/emoji and regressed ordinary
+GFM parse `11.70%`. It was rejected and the parser was restored exactly.
+
+## 2026-08-27 R37-R39 Allocation, Table and Scanner Audit
+
+R37's leaf `containsLink` fast return passed parser `9/9`, but reverse GFM parse
+regressed `4.16%` overall, including CJK `6.48%` and ordinary `9.58%`. R38 then
+reused table-start ranges and passed parser `9/9` plus the GFM corpus `671/671`;
+its target large-table parse gain was only `0.96%`, while official-spec GFM
+parse regressed `12.75%`. Both candidates were rejected and restored exactly.
+
+Fresh R29 profiling captured `3746` large-table GFM samples and `3545`
+ordinary CommonMark samples, with zero lost. Large-table remained dominated by
+GC (`19.25%`), `tableRow` (`9.66%`), allocation (`7.04%`) and arena append
+(`6.24%`). Ordinary attributed `30.07%` to the native scanner, `22.85%` to
+allocation/memset and `14.45%` to GC. This led to R39b's runtime-gated SSE4.2
+equal-any scanner. It passed `4/4` build contracts, an actual C11 `-O3 -Werror`
+build, `5000` coverage-guided ASan+UBSan runs and the full `1446/1446` suite.
+Two 5000-iteration counter pairs reduced ordinary CommonMark instructions by
+`39.8-41.6%` and cycles by `11.3-14.2%`, with identical checksum.
+
+The complete release benchmark nevertheless rejected R39b: raw SHA-256
+`727a748afe9b8d62a8817e6490d82d2f4764837a4d2511a4d718aa48c1db7bb0`
+measured CommonMark `4.557093x` and GFM `3.410048x`. GFM improved slightly, but
+CommonMark regressed from canonical R29 `3.959023x`, and both mandatory `2.5x`
+gates still failed. The scanner was restored exactly to R29 and the repository
+canonical raw was not overwritten. `MD-PERF-002`, `MD-REL-001` and
+`MD-QUAL-001` remain blocked; the final status remains **INCOMPLETE**.
+
+## 2026-08-27 Arena AST and Compatibility Closure
+
+The v0.9 arena migration was re-audited end to end. The current runtime has one
+semantic AST representation: `Document` owns fixed node/child chunks and
+`NodeRef`/typed value views provide immutable access. Parser and all maintained
+AST consumers use that representation; the repository contains no 0.8
+`MarkdownNode` object tree or legacy decoder.
+
+`python3 scripts/test_check_public_api.py` passed `9/9`, and
+`python3 scripts/check_public_api.py` verified `1281` declarations. The external
+quickstart rebuilt and its release executable ran successfully against the
+curated public packages. Combined with the restored `1446/1446` full suite,
+these results make `MD-AST-001`, `MD-AST-002`, `MD-COMP-001` and `MD-COMP-002`
+`pass`.
+
+The ledger is now `120/125 pass`, `2 pending`, `0 implemented_unverified` and
+`3 blocked`. `MD-GOV-004` and `MD-EVT-001` remain pending because the current
+event adapter still walks a complete AST; the final status remains
+**INCOMPLETE**.
+
+## 2026-08-27 Event Scope Correction
+
+A-037 resolves the conflict between the Event behavior in PRD §27 and the
+frozen delivery decision in §54.10: the genuine source Event API is a 1.1
+requirement. The 0.9 AST-walk array adapter and all of its public exports were
+removed rather than misrepresented as streaming or low allocation. The explicit
+fused HTML path remains capability-preserving and does not replace the full-AST
+canonical benchmark.
+
+The intentional v0.9 API snapshot now verifies at `1263` declarations; API
+checker tests passed `9/9` and `cjpm check` passed. `MD-GOV-004` is therefore
+`pass`, while `MD-EVT-001` remains pending for a true Resolved/RawBlock source
+implementation in 1.1. The ledger is `121/125 pass`, `1 pending`, `0
+implemented_unverified` and `3 blocked`; final status remains **INCOMPLETE**.
+
+## 2026-08-27 R40-R42 Performance Continuation
+
+R40's sparse orphan exclusion design passed the complete `1444/1444` suite only
+after adding a general reachability fallback, but that final safe version had no
+stable aggregate benefit and regressed ordinary CommonMark HTML by
+`14.75%`/`18.72%`. R41's delayed delimiter-free Text lowering also failed
+promotion: official-spec GFM parse regressed `7.85%`/`13.77%`. Both candidates
+were restored byte-identically to R29; their raw reports remain rejection
+evidence and do not replace canonical data.
+
+R42 targets a measured table hotspot instead. The existing table-row scan now
+also classifies inline-special, delimiter and possible autolink bytes, allowing
+plain cells to skip redundant String searches while candidate cells preserve
+the full GFM autolink path. Large-table GFM parse improved by `11.75%`/`13.55%`
+and GFM HTML by `6.54%`/`5.86%` in bidirectional 1 MiB paired guards. A separate
+100-iteration counter run reduced instructions `13.3%`, branches `14.0%`, cycles
+`12.8%` and wall time `12.8%`. Raw SHA-256 values are
+`7d25486f17909f87a856b2f7f98ff9c4cfba97ce96123f9f918bed96495104e8`
+and `434e0dd5d6ff705b57678432497ee8c56181eeeb17fd70011d995e9a627eaae2`.
+
+`cjpm check`, the parser-focused `9/9`, and the complete `1444/1444` suite pass.
+The complete identity-bound R42 rerun used source archive SHA-256
+`594940702b94a46b5b66466f14d24df021ae176ede15748bffafed95273595a0`, driver
+SHA-256 `6b725e7e3b7d3c8d98d6d12c7a5d1528b6f91256675319c1ed08706a58657d28`
+and the frozen harness, SDK and reference drivers. Under A-038, the latest
+complete repeat is authoritative rather than the numerically best run. Raw
+SHA-256 `d636de0310088c5f1c15dac5dbf9de3ef0fca52f94086aca62272125d118fa00`
+measured CommonMark `4.444100x`, GFM `3.569983x`, scaling slope `0.803683`,
+maximum adjacent growth `2.089015`, pathological slope `1.022853`, pathological
+maximum adjacent growth `2.280959`, and extra RSS `48436 KiB`. All non-ratio
+gates pass; the three performance-dependent requirements remain blocked and
+final status is **INCOMPLETE**.
+
+## 2026-08-27 R43 Reference Normalization Reuse
+
+R43 removes one duplicate label-normalization allocation per valid reference
+definition by returning the value already computed during definition parsing to
+the collection/index step. `cjpm check`, ParserBehaviorTest `9/9`, and the full
+socket-enabled suite `1444/1444` passed. Fixed Server 1 MiB forward/reverse
+guards preserved all checksums and measured many-references CommonMark parse at
+`0.967232/0.950648` candidate/baseline; six-corpus GFM parse remained
+`0.996150/1.001368`. Raw SHA-256 values are
+`552d64c3683963352cf265a0d7e1761530ace6288d40246b145eec9ef4431a16` and
+`51cdf8be1504b5e297f4d863fca0f92b4c02f9394c46ba4a8430a8c680cf2092`.
+The low-risk candidate is retained. At this checkpoint the complete R42 raw
+remained canonical; the later R45 full run below supersedes it.
+
+R44 then tested a one-entry session-local reference lookup cache. Although an
+isolated stop/go appeared to improve many-references CommonMark parse, the full
+six-corpus forward/reverse guard measured the target at `1.003499/1.005330` and
+shifted apparent gains to unrelated HTML work. It was rejected and the parser
+was restored byte-identical to R43. Full-guard raw SHA-256 values are
+`a3d775fd35d255d3d9aaff6acec10795d2f04c1689eee8ba34be0eba1d9ce0e0` and
+`ec53dca7e2a7e011fad8e03ffeed33b9f01af1f3cf7db7904d08fa0c662f0ceb`.
+
+R45 compacts `InlinePiece`'s zero-or-one-node payload from an `Array<Int64>`
+to one integer sentinel. Full tests pass `1444/1444`; pathological-delimiter
+CommonMark parse improved `0.821443/0.794472` in forward/reverse guards, and
+100-iteration counters reduced instructions `22.2%`, branches `21.1%` and
+cycles `23.1%`. The six-corpus guard found no stable per-corpus regression over
+`10%`. Target raw SHA-256 values are
+`564e50085ba4dc30e7782f08fd67295874d675e9cd3b47f90448d2ce16161754` and
+`636220571323387f4f188297f63e20682b0c6968cf9017e4f1632b2c65c287c7`;
+cross-profile hashes are `edbc79f04030365132a64f6ee881f14a46f683f7e115788d40fa9cbc6bf33409`
+and `d5cfba496b9825dc057f64928da0711f400a36e88a79ff4290164d6ec7435c07`.
+R45 is retained. Its full identity-bound canonical run used minimal source
+archive SHA-256 `a2f90a62b1fdcf91bc7aac996b1de3c872539c7b2855ef9cd5c7291564295b93`,
+fresh driver SHA-256 `9c84d30737f2c220407459ae8aaccc9e9da32ce9cd1094a159da301b0a4f86fe`
+and raw SHA-256 `72f9897cf38f703d83e73b039481985d02872bdf3e691c3dd18c1f747127530d`.
+Per A-038 it is now the sole canonical result: CommonMark `4.296935x`, GFM
+`3.838531x`, scaling slope `0.855694`, maximum adjacent `2.009294`, pathological
+slope `0.862328`, pathological maximum adjacent `1.890727`, and extra RSS
+`50488 KiB`. All non-ratio gates pass; the performance and dependent release
+requirements remain blocked.
+
+R49-R52 then remove avoidable inline temporaries without changing the complete
+AST contract. Text lowering is delayed until the final piece sequence, GFM
+autolink expansion only visits candidate Text values, and scanner record v3
+marks whether escape/entity/code lowering is possible. Scanner-proven
+delimiter-free lines without those markers build nodes directly; legacy v1/v2
+accelerators stay on the conservative path. Parser `9/9`, CommonMark `652/652`,
+GFM `671/671`, native ASan+UBSan fuzz `1000`, and full tests `1444/1444` pass.
+The final canonical archive/driver/raw SHA-256 values are
+`d2d9d9548e11be867279e7efe830907866aa851c1248af74ab65b97b83395dab`,
+`88822e124489c3c828bbd9769bfa17076df4ed98d13cb64dd1493e3ba5bab766`,
+and `52a2b063af9d738e69ca2980bf20fb90a3b587f32a13508ec5efecbe3a1fc691`.
+At that checkpoint, A-038 made R52 the sole canonical result: CommonMark
+`4.229764x`, GFM `3.225310x`; every non-ratio performance gate passed, while
+both `2.5x` ratios failed. R55 below supersedes this historical checkpoint.
+
+R53/R53a URI encoding and code-layout candidates were rejected after ordinary
+GFM HTML regressed in both isolated directions. R54 native SSE comparison reuse
+was likewise rejected after mixed four-profile guards and a larger emitted
+function. Their raw SHA-256 values are recorded in `progress.md` and the
+corresponding sources were restored byte-identically.
+
+R55 directly consumes parser-owned paragraph, list, table, and table-row child
+lists in the chunked arena, removing the intermediate array while preserving
+the unified node-limit check and public defensive-copy path. Check, focused
+parser, CommonMark, GFM, and full `1444/1444` tests pass. Forward/reverse
+eight-corpus guards improve CommonMark parse to `0.952010/0.965033` and GFM
+parse to `0.984632/0.973244`, with no stable same-corpus regression over `10%`.
+Per A-038 R55 supersedes R52 as the sole canonical result. Archive, driver, and
+raw SHA-256 values are
+`b2c5f7b779b9c13b6e9a27b4588755d885ec704b150b376a2d3fd6116d0e5f35`,
+`079c6b3473232519a81963607ad9f7b3bc283d282661ed96fb79f7d525028db0`,
+and `4806319a20fadd02559559e741ee81fed240582b87b7e018144473a30d456e23`.
+CommonMark is `4.198183x`, GFM `3.176074x`, and every non-ratio performance
+gate passes. Both `2.5x` ratios still fail, so the final status remains
+**INCOMPLETE**.
+
+R57 removes the delimiter arena's separate active bitmap and reuses a reserved
+negative integer link value for inactive records. Full tests pass `1444/1444`.
+Pathological CommonMark/GFM parse improved to `0.941392/0.952226` and
+`0.885504/0.892718` in forward/reverse target runs; perf stat independently
+measured instructions `0.896826` and branches `0.871495`. Eight-corpus,
+four-profile guards found no same-corpus regression over `10%` in both
+directions. A separate 24-round large-table GFM parse repeat measured
+`0.966326/0.980403`, so the sequential counter anomaly did not reproduce as an
+end-to-end regression.
+
+Per A-038 R57 supersedes R55 as the sole canonical result. Archive, driver, and
+raw SHA-256 values are
+`b29ff1457ca1ceca20ea14b1330ce42c8d82b5bd4b10cf433238c16cab113b38`,
+`d5a242c3e2402cfc31405c15506b240b39e3a9b6d4172005cbd55f97f9012313`,
+and `c8c1f9a3bc4ac89616020f6fb1e9bfb9bcb46a58dbe22c513114e33b7c0a0873`.
+CommonMark is `3.832106x`, GFM `3.235215x`, and all non-ratio gates pass.
+Both `2.5x` ratios still fail, so the final status remains **INCOMPLETE**.
+
+R59 directly materializes scanner-proven plain table-cell Text from source spans,
+and R60 sends a single Text cell through the existing escaped node writer without
+allocating a generic inline render frame. Both retain complex-inline, extension,
+source-map, budget and cancellation behavior. R59 passed parser `9/9`, GFM corpus
+`671/671` and full `1444/1444`; R60 passed renderer `11/11` and full `1444/1444`.
+Their bidirectional guards found no stable same-corpus regression above `10%`.
+
+Per A-038 R60 now supersedes R57 as the sole canonical result. Archive, driver,
+and raw SHA-256 values are
+`b79cd108f8a1afa5b4818c9ab0626d8284beed97895db50c9e71184085b7d69d`,
+`81c82f3d690cfeb9e01b03e9c5b35884ad19436c8d05c7cbab23ee78b742dcb5`,
+and `30f3a7000ad0b57e11857cee33a9f72c9681b704d16ba2981ba08aaaba53f613`.
+CommonMark is `4.030330x`, GFM `3.270682x`; scaling, pathological scaling,
+ordinary and RSS gates pass. Both `2.5x` ratios still fail, so the final status
+remains **INCOMPLETE**.
+
+R61's ASCII-only delimiter flanking candidate passed all `1444` tests but was
+rejected after the bidirectional guard regressed both parse aggregates and a
+24-round repeat confirmed official-spec GFM parse at combined `1.072661`.
+Although pathological GFM parse improved to combined `0.916092`, the candidate
+was restored exactly to the R60 parser bytes and does not alter canonical data.
+
+R62's lazy final-closing-bracket scan also passed all `1444` tests. Its initial
+official-spec CommonMark gain did not reproduce: the eight-corpus combined
+CommonMark parse ratio was `0.998351`, while GFM parse/HTML were `1.010088` and
+`1.005630`; the 24-round repeat put official-spec at `0.990401` and CJK at
+`1.030063`. R62 was rejected and the parser was again restored byte-identically
+to R60. Neither rejected candidate changes the canonical evidence or status.
+
+R63 reused the scanner `ArrayList<InlinePiece>` directly during delimiter
+resolution. It passed all `1444` tests and improved pathological CommonMark
+parse to combined `0.917806`, but official-spec GFM parse regressed in both
+orders to combined `1.091799`. The candidate was rejected and the parser was
+restored byte-identically to R60; canonical evidence remains unchanged.
+
+R64 pre-reserved the maximum additional wrapper capacity before the same direct
+mutation. Parser `9/9` passed, but official-spec GFM regressed further to
+combined `1.127157`, while the pathological CommonMark gain disappeared. This
+rules out dynamic list growth as the sole cause. R64 was rejected and restored;
+canonical evidence remains unchanged.
+
+R65 retains the fixed delimiter arena and accumulates delimiter bytes during the
+existing scan, removing the resolver's second full piece traversal. Check,
+Parser `9/9` and full `1444/1444` pass. The eight-corpus combined geomeans were
+`0.993696` CommonMark parse, `0.999986` CommonMark HTML, `0.993595` GFM parse
+and `1.002597` GFM HTML, with no stable same-corpus regression above `10%`.
+
+Per A-038, R65 supersedes R60 as the sole canonical result. Archive, driver and
+raw SHA-256 values are
+`d05f78e676a374cd579459078bdf517fc5e15dac4879860ddd086eef9a30cc04`,
+`a1048827aea26427625a7870a386d7b2e87c5b09ef44983741d21c1372d7440a`,
+and `442842c801231d738b423aaf8e00b61cba6359c22a1d1a6ae5f1c48f72ed6d41`.
+CommonMark is `3.873240x`, GFM `3.230493x`; all non-ratio gates pass. Both
+`2.5x` ratios still fail, so final status remains **INCOMPLETE**.
+
+R66 then sized the two delimiter opener arrays by actual marker-run counts. It
+passed `cjpm check` and Parser `9/9`, and improved pathological CommonMark/GFM
+parse to combined `0.940734/0.968965`. Official-spec GFM nevertheless regressed
+in both orders to combined `1.119772`, above the stable `10%` single-corpus
+guard. R66 was rejected and the parser restored byte-identically to R65; it
+does not replace the canonical raw report or change the final status.
+
+R67 and R68 tried to isolate the same capacity reduction inside the resolver.
+R67 used marker bytes directly and R68 used `min(pieceCount, markerBytes)`, so
+R68 could never allocate more than R65. Both passed check and Parser `9/9`, but
+official-spec GFM still regressed to combined `1.120056` and `1.140556`.
+Neither pathological profile improved under R68. Both candidates were rejected
+and R65 restored exactly; opener-capacity tuning is no longer treated as a
+viable performance axis.
+
+R69 removed the common single-line reference-definition builder and repeated
+string materialization. It passed check and CommonMark `652/652`, and improved
+many-references CommonMark parse to combined `0.961278`. Official-spec GFM
+again regressed in both orders to combined `1.126636`, so the candidate was
+rejected and R65 restored exactly. The recurrence across unrelated source
+changes requires binary layout/GC attribution before further micro-optimization.
+
+The R65/R69 symbol comparison showed only the changed reference function became
+smaller; later `materializePieceLinks` and `ParserSession.parse` shifted by
+`0xa0`. A 1000-iteration DWARF perf pair captured `13020/13223` samples with
+zero lost and only `+1.61%` event-count difference; GC share changed from
+`17.98%` to `18.29%`. R70 then proved moving the unchanged member in source
+does not alter release symbol order or addresses. It was rejected without a
+wall-time guard and R65 restored exactly.
+
+R71 moved the unchanged reference parser across a type boundary and passed
+Parser `9/9`, CommonMark `652/652`, and a six-profile guard without a stable
+`>10%` regression. Reapplying the fast path as R72 still shifted later hot
+functions and regressed official GFM by combined `1.133615`, so it was rejected.
+R73 showed that separate `.cj` files are still emitted as one package layout
+unit. R74 halved delimiter index-buffer width, but a 48-round repeat confirmed
+official-GFM regression `1.125367/1.111131` (combined `1.118226`), so it too was
+rejected.
+
+R75 then added paragraph checkpoints so a cross-line delimiter reparse could
+discard provisional per-line nodes. The generic rollback copied the retained
+arena prefix and produced a severe official-corpus regression, so it was
+rejected. Retained R76 implements trusted same-chunk tail truncation while
+keeping the existing cross-chunk fallback. Arena `12/12`, Parser `9/9`,
+CommonMark `652/652`, GFM `671/671`, and full `1445/1445` passed. Its full
+four-profile guard improved GFM parse to combined `0.941748`, kept the other
+profile geomeans within `1.3%`, and had no stable same-corpus regression above
+`10%`. R77's scanner-flag replacement was rejected after a checksum mismatch
+proved it changed CommonMark HTML semantics; the parser was restored exactly to
+R76.
+
+R76 profiling on official-spec 256 KiB, 1000 parse iterations captured
+`11458/12945` CommonMark/GFM samples with zero lost. GC phase accounted for
+`19.79%/19.95%`; `memset`, `parseInline`, scanner, block parser and reference
+work remained the next attributable costs. R78 explored fixed parser-owned
+node/child tails, but was abandoned before timing because release codegen could
+not be cleanly qualified under concurrent resource pressure; the arena was
+restored exactly and no performance claim is made.
+
+Retained R79 avoids provisional per-line AST construction when a continued
+paragraph beginning with `*`, `_`, or backtick is guaranteed to use the existing
+combined-inline path. Remote full tests pass `1445/1445`. Its target guard has
+checksum parity, and the bidirectional eight-corpus guard measured CommonMark
+parse `0.924020`, CommonMark HTML `0.943399`, GFM parse `0.959517`, and GFM HTML
+`0.956656`, with no stable same-corpus regression above `10%`. Target/full raw
+SHA-256 values are
+`d11db969be616e047e5c04bc2c6d9a42e93a98c52384b27410ff19ee2fae6c33` and
+`a532e70e07f0e2c2d435f4037b652f9d28ec5d0fe0bb9ba982d4133ef52ecfe2`.
+The identity-bound full release benchmark is complete. Per A-038, R96 now
+supersedes R81. Its conservative single-fenced-document range path preserves the
+complete AST contract, passes local and remote `1446/1446`, and improves the
+1 MiB large-code target to `0.556121` of R81 without a stable cross-profile
+regression.
+
+R96 is the sole canonical release result. Archive, driver, and raw
+SHA-256 values are
+`4dc6173426eacc58b338d4c4e56f067dfcd8a2ee44c84a2fcb657ac2cdc188d3`,
+`65955eb767949dac25ca98cb5505ad4b4ffdb348a2d99b24ccbb2e2ee71ba137`,
+and `60eb13f017215daa942729f0f3f374e1de7e65c25eb2ef154d7a5f2e14ac5d8b`.
+CommonMark is `3.309682x`, GFM `2.988521x`; every non-ratio performance gate
+passes. The two `2.5x` ratios remain blocked, so final status is **INCOMPLETE**.
+
+R98-R101 did not change this acceptance projection. A plain-paragraph document
+candidate improved selected CommonMark corpora, but its first effective form
+bypassed third-party scanner record validation and failed the same two cases in
+both local and remote full suites. The corrected form restored those contracts
+but introduced a stable `>10%` large-code regression. The candidate was rejected
+and product bytes restored exactly to R96; no candidate raw replaced the
+canonical release evidence.
+
+R102 subsequently retained the scanner trust boundary and specialized only the
+post-selection CommonMark paragraph materializer for pipe-prefixed documents
+that are proven free of inline-special and hard-break bytes. It preserves the
+complete arena AST and all limit/source contracts. Local and remote suites pass
+`1447/1447`; the 24-round target guard improved large-table CommonMark parse to
+`0.647552` of R96 with A/A `0.998878`, while the 48-round large-code and twelve-
+profile broad guards had no stable regression above `10%`.
+
+At that checkpoint, A-038 made R102 the sole canonical release result. Archive, driver and raw
+SHA-256 values are
+`3fea7d9ef88c888c1d22ef4cc4c0d89ff31a750812d90940149703aee41f1c5a`,
+`d82e26e4ea4935bfa33695eb22da77c10ca568c204bf36c66d9fc8f69cc9bb7d`,
+and `f84bbcc09cd2fadfafbad427c6ed5690026f02515b7e68d4acf790cc0d203d56`.
+CommonMark is `3.282625x`, GFM `2.992156x`; all non-ratio gates pass, but both
+`2.5x` ratios remain blocked. Final status remains **INCOMPLETE**.
+
+R103-R112 do not change the R102 acceptance projection. Arena-capacity candidates
+produced stable dense-AST or GFM regressions; the fence-only R106 repeat was
+`1.104012` large-code GFM HTML against A/A `1.000891`, and the profile-gated
+R107 still measured `1.091578`. A subsequent optional C terminal-fence scan
+duplicated the full-input work and regressed CommonMark by `28.6%`; replacing
+its scalar loop with `memchr` still regressed by `21.0%`. Every candidate and
+the temporary accelerator API were removed, and all touched files were verified
+byte-identical to R102. R110's Array-backed single-pass helper was also rejected
+after a stable `10.2%` GFM HTML regression. R111's scalar-to-newline scanner
+experiment passed local sanitizer fuzz/check/build and improved ordinary
+CommonMark by `1.9%`, but regressed large-code CommonMark by `13.2%`; its raw
+SHA-256 is `cffe28c456a3213e7190be0b380d46d4d9adcf72ad0f6f959d646d885451ab15`.
+The scanner was restored exactly to R102. The canonical raw, counts and
+`INCOMPLETE` verdict remained unchanged. R112's unconditional AVX2 classifier
+was then rejected after a stable `22.1%` large-table CommonMark regression.
+
+R113 retains AVX2 only for non-pipe-prefixed input. Sanitizer fuzz, focused
+native-on/off behavior and remote `1447/1447` tests pass; target and broad guards
+have no stable single-corpus regression above `10%`. Its complete identity-bound
+Server run now supersedes R102 with CommonMark `3.176050x`, GFM `2.975849x`,
+ordinary `4.789793x/1.938199x`, scaling slope `0.850345`, pathological slope
+`0.617786` and extra RSS `48900 KiB`. Raw SHA-256 is
+`aba81c2325dd579776e3f5c9403aa10190d20316b8ca6a823da406ad9aeeb82a`.
+Both `2.5x` ratios still fail, so the final verdict remains **INCOMPLETE**.
+
+R114 adds a conservative per-line reference-opener classification to packed
+scanner records and skips impossible reference-definition lines. ASan+UBSan
+scanner fuzz passed `1000` runs, focused Input/Parser tests passed `12/12` and
+`11/11`, and the remote full suite passed `1447/1447`. Target and broad paired
+guards had no stable regression above `10%`; their raw SHA-256 values are
+`5173c4ea881fcd86328c5ccc6a1805516398f5d7880f518be7f99b9df113036f` and
+`6eb756be5c4da28080470b7046ed0051072963cd0c0cd3a122316f7ab04c98c5`.
+
+Per A-038, the complete identity-bound R114 Server run supersedes R113 even
+though unchanged cmark/cmark-gfm medians moved substantially relative to the
+direct product A/B. Raw SHA-256 is
+`0b63fdec8d2812c8207769057f4b447452c559d8252fa18460f756059efd9836`;
+CommonMark is `3.295073x`, GFM `3.183832x`, and ordinary is
+`6.645361x/2.481399x`. Scaling, pathological scaling and RSS pass, but both
+`2.5x` ratios and ordinary CommonMark `5x` fail. The final verdict remains
+**INCOMPLETE**.
+
+R115 removes the native scanner's packed-record prefix copy without changing
+the complete AST execution model. The legacy accelerator method remains
+adapted, invalid prefix counts fail closed, focused Input behavior passes
+`12/12`, the public API snapshot verifies `1269` declarations, and the remote
+full suite passes `1447/1447`. Target and broad guard raw SHA-256 values are
+`c3998e8e648fd679da5fc8cbc5822e2853d01ec801b2a67b65f6bffa8625ecb1` and
+`38547f3a09de4ad58ec7ab905474b3dab17136e99e02c2e56415e0e955a9abf9`.
+
+Per A-038, the complete identity-bound R115 Server run supersedes R114.
+Archive, driver and raw SHA-256 values are
+`e0219aa1567e0ec2d7001cb3c0fe4eb9bb303e3a5431c4c317a8b19afc36bb99`,
+`4d19daed81a7671080b2abec445d7356e2f1f388e52e934934b22fb3e7e4b42e`, and
+`200a2f8f9d891eedc98e825fd2b4ebae5725accc2be30418d67da449946c2f25`.
+CommonMark is `2.915703x`, GFM `3.078800x`, and ordinary is
+`4.847819x/2.767217x`. Scaling, pathological scaling, ordinary and RSS gates
+pass, but both `2.5x` ratios fail. The final verdict remains **INCOMPLETE**.
+
+R116-R119 then tested the remaining line/string allocation hypothesis without
+changing the full-AST benchmark contract. The shared-source `LineText`
+candidate passed full tests `1447/1447` but regressed official-spec CommonMark
+by more than `50%` in both directions. An isolated allocation-free HTML matcher
+passed focused validation, yet its twelve-profile broad guard regressed
+CommonMark parse/HTML and GFM HTML geomeans to `1.015504/1.029341/1.006955`.
+Broad raw SHA-256 is
+`0df5ffdd413cc6d2be4736776b2d763c4c9a16019cefa5dcdb617dd61767439f`.
+All product candidates were rejected and restored byte-identically to R115;
+only a dense-newline scanner fallback equivalence regression was retained.
+Canonical performance evidence and the **INCOMPLETE** verdict therefore remain
+R115-bound.
+
+R120 additionally isolated HTML block-tag classification without a temporary
+array. Its official and ordinary GFM ratios reversed sign between forward and
+reverse corpus order, so it was rejected as non-attributable. Raw SHA-256 values
+are `79022665fa692cf31a081ff8ce2f5f7cbbe2175fe6a0752c46d97624e9fdfe37` and
+`eccaa4ca3bc8f2a8cfffd7de085412a3eb2a31a69277571fc8bbc7a835c3e332`.
+The parser remains byte-identical to R115 and the verdict is unchanged.

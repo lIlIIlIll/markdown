@@ -20,7 +20,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     uint64_t previous_end = 0;
     for (int64_t index = 0; index < count; ++index) {
         const uint64_t packed = records[index];
-        const uint64_t end = packed >> 3;
+        const uint64_t end = packed >> 6;
         const uint64_t newline_width = packed & 3u;
         if (end < previous_end || end > size || newline_width > 2u ||
             (newline_width != 0u && newline_width != 1u && newline_width != 2u)) {
@@ -28,7 +28,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         }
         previous_end = end;
     }
-    if ((records[count - 1] >> 3) != size) {
+    if ((records[count - 1] >> 6) != size) {
         abort();
     }
     free(records);

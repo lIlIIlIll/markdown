@@ -41,8 +41,9 @@ class OfficialExtensionsTest {
         @Expect(countOfficial(custom, "heading-id"), 1)
         @Expect(countOfficial(custom, "math-block"), 1)
         for (node in custom) {
-            match (node) {
-                case value: CustomBlock =>
+            match (node.kind) {
+                case NodeKind.CustomBlock =>
+                    let value = node.asCustomBlock().getOrThrow()
                     if (value.localKindId == "math-block") {
                         match (value.payload) {
                             case syntax: SyntaxPayload => @Expect(syntax.literal, "a + b")
@@ -82,15 +83,17 @@ private func findOfficial(values: Array<OfficialExtensionDescriptor>, id: String
     throw IllegalArgumentException("missing official extension descriptor")
 }
 
-private func countOfficial(nodes: Array<MarkdownNode>, kind: String): Int64 {
+private func countOfficial(nodes: Array<NodeRef>, kind: String): Int64 {
     var count: Int64 = 0
     for (node in nodes) {
-        match (node) {
-            case value: CustomBlock =>
+        match (node.kind) {
+            case NodeKind.CustomBlock =>
+                let value = node.asCustomBlock().getOrThrow()
                 if (value.localKindId == kind) {
                     count++
                 }
-            case value: CustomInline =>
+            case NodeKind.CustomInline =>
+                let value = node.asCustomInline().getOrThrow()
                 if (value.localKindId == kind) {
                     count++
                 }

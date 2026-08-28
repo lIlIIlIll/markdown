@@ -14,6 +14,11 @@ class HashTagSpi <: InlineParserSpi {
             "hashtag"
         }
     }
+    public prop triggerBytes: Array<Byte> {
+        get() {
+            [b'#']
+        }
+    }
     public prop maximumLookahead: Int64 {
         get() {
             64
@@ -45,24 +50,22 @@ class HashTagSpi <: InlineParserSpi {
         let span = context.sourceSpan(start, end)
         let bodySpan = context.sourceSpan(start + 1, end)
         let body = context.input[start + 1..end]
-        let origin = NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: Some(span),
-            extensionId: Some(extensionId))
         InlineParserSpiResult.Matched(
-            CustomInline(context.nextNodeId(), extensionId, "1", ruleId, SyntaxPayload(ruleId, "", body),
-                [Text(context.nextNodeId(), body, body, bodySpan)], Some(span), origin), end)
+            InlineParserSpiNode(extensionId, "1", ruleId, SyntaxPayload(ruleId, "", body), span,
+                children: [InlineParserSpiText(body, body, bodySpan)]), end)
     }
 }
 
-private func countCustomKind(nodes: Array<MarkdownNode>, localKindId: String): Int64 {
+private func countCustomKind(nodes: Array<NodeRef>, localKindId: String): Int64 {
     var count: Int64 = 0
     for (node in nodes) {
-        match (node) {
-            case value: CustomInline =>
-                if (value.localKindId == localKindId) {
+        match (node.kind) {
+            case NodeKind.CustomInline =>
+                if (node.asCustomInline().getOrThrow().localKindId == localKindId) {
                     count++
                 }
-            case value: CustomBlock =>
-                if (value.localKindId == localKindId) {
+            case NodeKind.CustomBlock =>
+                if (node.asCustomBlock().getOrThrow().localKindId == localKindId) {
                     count++
                 }
             case _ => ()
@@ -80,6 +83,11 @@ class FailingInlineSpi <: InlineParserSpi {
     public prop ruleId: String {
         get() {
             "failure"
+        }
+    }
+    public prop triggerBytes: Array<Byte> {
+        get() {
+            [b'!']
         }
     }
     public prop maximumLookahead: Int64 {
@@ -101,6 +109,82 @@ class FailingInlineSpi <: InlineParserSpi {
         if (context.input[context.startOffset] == b'!') {
             throw IllegalStateException("callback failed")
         }
+        InlineParserSpiResult.NoMatch
+    }
+}
+
+class CountingInlineSpi <: InlineParserSpi {
+    public var calls: Int64 = 0
+    public prop extensionId: String {
+        get() {
+            "count"
+        }
+    }
+    public prop ruleId: String {
+        get() {
+            "count"
+        }
+    }
+    public prop triggerBytes: Array<Byte> {
+        get() {
+            [b'#']
+        }
+    }
+    public prop maximumLookahead: Int64 {
+        get() {
+            1
+        }
+    }
+    public prop priority: Int64 {
+        get() {
+            1
+        }
+    }
+    public prop deterministic: Bool {
+        get() {
+            true
+        }
+    }
+    public func tryParse(context: InlineParserSpiContext): InlineParserSpiResult {
+        let _ = context
+        calls++
+        InlineParserSpiResult.NoMatch
+    }
+}
+
+class EmptyTriggerInlineSpi <: InlineParserSpi {
+    public prop extensionId: String {
+        get() {
+            "empty"
+        }
+    }
+    public prop ruleId: String {
+        get() {
+            "empty"
+        }
+    }
+    public prop triggerBytes: Array<Byte> {
+        get() {
+            []
+        }
+    }
+    public prop maximumLookahead: Int64 {
+        get() {
+            1
+        }
+    }
+    public prop priority: Int64 {
+        get() {
+            1
+        }
+    }
+    public prop deterministic: Bool {
+        get() {
+            true
+        }
+    }
+    public func tryParse(context: InlineParserSpiContext): InlineParserSpiResult {
+        let _ = context
         InlineParserSpiResult.NoMatch
     }
 }
@@ -168,8 +252,8 @@ class PrefixProcessor <: ExtensionDocumentProcessor {
     }
     public func process(document: Document, budget: OperationBudget, cancellation: CancellationToken): Document {
         TreeRewriter.rewrite(document, {
-            node => match (node) {
-                case value: Text => RewriteAction.MapText(prefix + value.value)
+            node => match (node.kind) {
+                case NodeKind.Text => RewriteAction.MapText(prefix + node.asText().getOrThrow().value)
                 case _ => RewriteAction.Keep
             }
         }, budget: budget, cancellation: cancellation)
@@ -245,8 +329,10 @@ class ExtensionDslTest {
         let engine = MarkdownEngine.builder().dialect(dialect).build()
         let result = engine.parse(":::note title=Careful\nA **bold** body.\n:::\n\nUse ==this==.")
         @Expect(result.document.children().size, 2)
-        match (result.document.children()[0]) {
-            case custom: CustomBlock =>
+        let customNode = result.document.children()[0]
+        match (customNode.kind) {
+            case NodeKind.CustomBlock =>
+                let custom = customNode.asCustomBlock().getOrThrow()
                 @Expect(custom.localKindId, "note")
                 match (custom.payload) {
                     case payload: SyntaxPayload =>
@@ -258,7 +344,7 @@ class ExtensionDslTest {
                         }
                     case _ => @Expect(false)
                 }
-                @Expect(custom.children().size, 1)
+                @Expect(customNode.children().size, 1)
             case _ => @Expect(false)
         }
         let html = HtmlRenderer(extensionRules: engine.dialect.rendererRules.toArray()).render(result.document)
@@ -284,9 +370,12 @@ class ExtensionDslTest {
             .build()
         let engine = MarkdownEngine.builder().dialect(dialect).build()
         let unknown = engine.parse("%%%unknown")
-        match (unknown.document.children()[0]) {
-            case paragraph: Paragraph => match (paragraph.children()[0]) {
-                case text: Text => @Expect(text.value, "%%%unknown")
+        let paragraph = unknown.document.children()[0]
+        match (paragraph.kind) {
+            case NodeKind.Paragraph =>
+                let text = paragraph.children()[0]
+                match (text.kind) {
+                case NodeKind.Text => @Expect(text.asText().getOrThrow().value, "%%%unknown")
                 case _ => @Expect(false)
             }
             case _ => @Expect(false)
@@ -314,8 +403,9 @@ class ExtensionDslTest {
             .build()
         let engine = MarkdownEngine.builder().dialect(dialect).build()
         let valid = engine.parse(":::box title=\"hello world\" count=3 enabled=true kind=note\nbody\n:::")
-        match (valid.document.children()[0]) {
-            case custom: CustomBlock => match (custom.payload) {
+        let validCustom = valid.document.children()[0]
+        match (validCustom.kind) {
+            case NodeKind.CustomBlock => match (validCustom.asCustomBlock().getOrThrow().payload) {
                 case payload: SyntaxPayload =>
                     match (payload.parameter("title")) {
                         case Some(SyntaxParameterValue.StringValue(value)) => @Expect(value, "hello world")
@@ -359,6 +449,13 @@ class ExtensionDslTest {
             .inline(InlineSyntax.define("a", "one").delimiter("==").maximumLookahead(0))
             .build()
         expectCompileFailure(unbounded)
+
+        let emptyTrigger = MarkdownDialect
+            .define("empty", "1")
+            .enable(ExtensionManifest("empty", "1.0.0", "1"))
+            .parserSpi(EmptyTriggerInlineSpi())
+            .build()
+        expectCompileFailure(emptyTrigger)
 
         let needsRenderer = ExtensionManifest("rendered", "1.0.0", "1",
             capabilities: ExtensionCapabilities(safeHtml: true))
@@ -546,7 +643,8 @@ class ExtensionDslTest {
         }
         @Expect(sawMetadataPhase, true)
         for (node in custom) {
-            if (let value: CustomInline <- node) {
+            if (let NodeKind.CustomInline <- node.kind) {
+                let value = node.asCustomInline().getOrThrow()
                 if (value.localKindId == "literal") {
                     match (value.payload) {
                         case named: NamedPayload => @Expect(named.value, "inline:literal")
@@ -559,8 +657,9 @@ class ExtensionDslTest {
         let blocks = engine.parse(":::outer\n:::inner\nbody\n:::\n:::")
         @Expect(countCustomKind(AstQuery.customNodes(blocks.document), "outer"), 1)
         @Expect(countCustomKind(AstQuery.customNodes(blocks.document), "inner"), 1)
-        match (blocks.document.children()[0]) {
-            case outer: CustomBlock => match (outer.payload) {
+        let outer = blocks.document.children()[0]
+        match (outer.kind) {
+            case NodeKind.CustomBlock => match (outer.asCustomBlock().getOrThrow().payload) {
                 case named: NamedPayload => @Expect(named.value.contains("block:outer:"), true)
                 case _ => @Expect(false)
             }
@@ -674,10 +773,12 @@ class ExtensionDslTest {
         let engine = MarkdownEngine.builder().dialect(dialect).build()
         let parsed = engine.parse("Use #topic now")
         @Expect(AstQuery.customNodes(parsed.document).size, 1)
-        match (AstQuery.customNodes(parsed.document)[0]) {
-            case custom: CustomInline =>
+        let customNode = AstQuery.customNodes(parsed.document)[0]
+        match (customNode.kind) {
+            case NodeKind.CustomInline =>
+                let custom = customNode.asCustomInline().getOrThrow()
                 @Expect(custom.localKindId, "hashtag")
-                @Expect(custom.span, Some(SourceSpan(4, 10)))
+                @Expect(customNode.span, Some(SourceSpan(4, 10)))
             case _ => @Expect(false)
         }
 
@@ -712,6 +813,21 @@ class ExtensionDslTest {
         // A failed parse owns its state; a later parse on the same immutable
         // engine starts from a clean session.
         @Expect(HtmlRenderer().render(failing.parse("ok").document), "<p>ok</p>\n")
+
+        let counter = CountingInlineSpi()
+        let dispatch = MarkdownEngine
+            .builder()
+            .dialect(
+                MarkdownDialect
+                    .define("count", "1")
+                    .enable(ExtensionManifest("count", "1.0.0", "1"))
+                    .parserSpi(counter)
+                    .build())
+            .build()
+        dispatch.parse("ordinary text")
+        @Expect(counter.calls, 0)
+        dispatch.parse("x #")
+        @Expect(counter.calls, 1)
     }
 
     private func expectCompileFailure(dialect: MarkdownDialect): Unit {

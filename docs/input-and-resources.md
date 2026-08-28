@@ -1,6 +1,11 @@
 # Input, cancellation, and budgets
 
-`MarkdownEngine` accepts String, UTF-8 bytes, `InputStream`, and buffered sessions. `BufferedInputSession` is the explicit name for the execution model: it retains every chunk and produces semantics only at `finish()`. `ChunkedParseSession` remains as the compatibility API with the same contract. Neither API is an incremental parser and neither lowers peak input memory.
+`MarkdownEngine` accepts String, reusable or single-use UTF-8 bytes,
+`InputStream`, and buffered sessions. `BufferedInputSession` is the explicit
+name for the execution model: it retains every chunk and produces semantics
+only at `finish()`. `ChunkedParseSession` remains as the compatibility API with
+the same contract. Neither API is an incremental parser and neither lowers peak
+input memory.
 
 ## Input execution profiles
 
@@ -8,6 +13,7 @@
 | --- | --- | --- |
 | `parse(String)` | none | no; scans the immutable String in Cangjie |
 | `parse(Array<Byte>)` | defensive copy and UTF-8 decode | only with an explicitly injected accelerator |
+| `parse(ReusableUtf8Input)` | validates and defensively copies once, or unsafely takes one already-valid uniquely owned array; repeated parses reuse immutable storage but still construct a complete AST and result | only with an explicitly injected accelerator |
 | `parse(OwnedUtf8Input)` | unsafe caller guarantees valid UTF-8 and transfers unique ownership; benchmark clones once per iteration to create a fresh transferable value, while parsing does not copy or revalidate it | only with an explicitly injected accelerator |
 | `parse(InputStream)` | fully buffers then decodes before parsing | only after buffering and only with an explicitly injected accelerator |
 

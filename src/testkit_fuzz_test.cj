@@ -39,6 +39,7 @@ class ExtensionTckAndFuzzTest {
             let source = value.toString()
             let parsed = engine.parse(source)
             AstInvariantValidator().validate(parsed.document)
+            AstInvariantValidator().validate(parsed.ast)
             let bytes = engine.parse(source.toArray())
             let session = engine.newSession()
             var offset: Int64 = 0
@@ -196,13 +197,13 @@ class ExtensionTckAndFuzzTest {
         let quoted = engine.parse(quoteInput.toString()).document
         var quoteDepth: Int64 = 0
         var quoteNode = quoted.children()[0]
-        while (let blockQuote: BlockQuote <- quoteNode) {
+        while (let NodeKind.BlockQuote <- quoteNode.kind) {
             quoteDepth++
-            quoteNode = blockQuote.children()[0]
+            quoteNode = quoteNode.children()[0]
         }
         @Expect(quoteDepth, 2000)
-        match (quoteNode) {
-            case _: Paragraph => @Expect(true)
+        match (quoteNode.kind) {
+            case NodeKind.Paragraph => @Expect(true)
             case _ => @Expect(false)
         }
 
@@ -214,14 +215,14 @@ class ExtensionTckAndFuzzTest {
         let listed = engine.parse(listInput.toString()).document
         var listDepth: Int64 = 0
         var listNode = listed.children()[0]
-        while (let list: List <- listNode) {
+        while (let NodeKind.List <- listNode.kind) {
             listDepth++
-            let item = list.children()[0]
+            let item = listNode.children()[0]
             listNode = item.children()[0]
         }
         @Expect(listDepth, 2000)
-        match (listNode) {
-            case _: Paragraph => @Expect(true)
+        match (listNode.kind) {
+            case NodeKind.Paragraph => @Expect(true)
             case _ => @Expect(false)
         }
 
@@ -243,13 +244,13 @@ class ExtensionTckAndFuzzTest {
         let extended = MarkdownEngine.builder().dialect(dialect).build().parse(extensionInput.toString()).document
         var extensionDepth: Int64 = 0
         var extensionNode = extended.children()[0]
-        while (let custom: CustomBlock <- extensionNode) {
+        while (let NodeKind.CustomBlock <- extensionNode.kind) {
             extensionDepth++
-            extensionNode = custom.children()[0]
+            extensionNode = extensionNode.children()[0]
         }
         @Expect(extensionDepth, 1000)
-        match (extensionNode) {
-            case _: Paragraph => @Expect(true)
+        match (extensionNode.kind) {
+            case NodeKind.Paragraph => @Expect(true)
             case _ => @Expect(false)
         }
     }

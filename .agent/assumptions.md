@@ -305,6 +305,46 @@
 - 理由：当前 SDK 明确将 `String.withRawData(Array<UInt8>)` 定义为零复制、unchecked 构造；该前提与 unsafe `OwnedUtf8Input` 的类型语义一致。两轮跨 profile A/B 和反向顺序复测 checksum 全部一致，最终无诊断 driver 候选 CommonMark/GFM geomean 为 `0.921434`/`0.964209`；baseline A/A 为 `0.997942`/`1.002247`。
 - 影响 requirements：`MD-IN-002` 的 notes 应引用本假设；普通安全输入的非法 UTF-8 行为不得改变，benchmark 必须继续披露每轮为 fresh ownership transfer 所做的 driver clone。
 
+## A-035：微优化 A/B 的分辨率与 canonical 协议边界
+
+- 状态：`resolved`
+- 决策日期：2026-08-26
+- 涉及：`MD-PERF-001`、`MD-PERF-002`
+- 歧义：canonical release harness 的 256 KiB、3 iterations 和 RSS 轮询同时承担发布比率与内存证据；直接复用它评价约 1% 的源码微优化时，同一二进制 A/A 也可能显示数个百分点的虚假收益或回退。
+- 决定：canonical release profile、语料、RSS 采样和门槛保持冻结；候选 promotion guard 另用固定 CPU、1 MiB、每进程 10 iterations、无 RSS 轮询、正反序交替 A/B，并先执行 baseline/baseline A/A。候选收益必须超过 A/A 漂移，且任一代表语料不得稳定回退超过 10%；通过后仍须回到完整 canonical harness 验收。
+- 理由：本轮 256 KiB A/A 的 GFM 几何均值可偏到 `0.980017`，1 MiB 仍受 RSS 轮询影响；移除轮询并提高进程内工作量后，五语料 A/A 收敛到 CommonMark `1.003990`、GFM `1.007755`。这只校准候选筛选分辨率，不删除 canonical 所需的峰值 RSS 证据。
+- 影响 requirements：不得用 candidate guard 替代 `MD-PERF-002` 的 canonical raw；短样本中小于 A/A 漂移的收益一律视为未证明。
+
+## A-036：0.9 GA 前破坏性执行模型重置
+
+- 状态：`resolved`
+- 日期：2026-08-26
+- 涉及：`MD-GOV-004`、`MD-AST-001-002`、`MD-SYN-005`、`MD-EVT-001`、`MD-COMP-001-002`
+- 歧义：原 PRD 仍以未来 1.x 稳定表面描述 object-tree AST、SPI 和 AST-walk events，但当前性能方案要求 arena/value views、SPI trigger dispatch、真正 source events 与 fused HTML；同时用户明确允许破坏性变更。
+- 决定：版本提升为 `0.9.0` breaking pre-GA。删除 0.8 object-tree AST 的运行时契约，不维护旧 AST adapter；`Document` 成为 arena snapshot owner，节点以 `NodeRef`/typed value view 访问，Parsed origin 从 span 派生。Inline SPI v2 强制非空 trigger bytes。RawBlock/Resolved event 与 fused HTML 是独立执行模型，不能替代 full-AST canonical benchmark。
+- 理由：在 1.0 前一次性收敛对象布局和执行语义，避免为兼容层永久承担分配与双实现成本；所有变化仍需 migration、API snapshot、consumer fixture 和 full validation 后才可标记 pass。
+- 影响 requirements：上述需求在 arena/event/fused 全链路完成前降为 pending 或 implemented_unverified，不能沿用 0.8 的 pass 证据。
+
+## A-037：Event API 的功能规范与发布时点
+
+- 状态：`resolved`
+- 决策日期：2026-08-27
+- 涉及：`MD-GOV-004`、`MD-EVT-001`、`MD-COMP-001-002`
+- 歧义：PRD §27 规定了最终 Event API 的 Resolved/RawBlock 行为，但冻结产品决策 §54.10 明确 Event API 在 1.1；此前 A-036 和 0.9 changelog 又把 source event 纳入 0.9 reset，三处发布时点不一致。
+- 决定：以编号更晚且明确标为“已冻结产品决策”的 §54.10 为发布时点来源。0.9 删除从完整 `Document` AST walk 生成事件数组的兼容适配器，不以它冒充低分配 source event；§27 的完整 Resolved/RawBlock API 保留为 1.1 pending。显式 FullAst/PreferFused/RequireFused HTML 选择仍属于 0.9，且不能替代 full-AST canonical benchmark。
+- 理由：这同时满足 §27 禁止 AST walk 伪装流式解析、§54.10 的版本边界，以及用户冻结的“Event/Fused 独立研究线不能替代完整 AST 主线”。用户已允许 0.9 破坏性变更，因此不保留误导性 runtime adapter。
+- 影响 requirements：`MD-GOV-004` 可在适配器删除、fused fail-closed 和 API snapshot 验证后验收；`MD-EVT-001` target 改为 1.1 并保持 pending，直到真正两种 source execution mode 完成。
+
+## A-038：重复 canonical run 的选择与参考实现漂移
+
+- 状态：`resolved`
+- 决策日期：2026-08-27
+- 涉及：`MD-PERF-001`、`MD-PERF-002`
+- 歧义：完全相同的 R42 源码、benchmark driver、SDK、CPU 和语料连续运行两次完整 release harness 时，产品绝对中位数基本稳定，但 cmark/cmark-gfm 的短进程参考频率产生明显漂移，导致总 ratio 在两轮间变化；选择数值较好的轮次会形成 cherry-pick。
+- 决定：使用最新完成的整轮结果作为唯一 canonical，不选择数值最优的一轮。候选归因继续使用固定 CPU 的 A/A、正反序 paired A/B、产品绝对耗时和硬件计数器；这些只解释收益来源，不能覆盖完整 canonical raw。保留两轮结果作为噪声证据，不放宽 `2.5x` 门槛。
+- 理由：R42 两轮完整结果分别为 CommonMark `4.279733x`/`4.444100x`、GFM `3.741081x`/`3.569983x`；large-table GFM 产品中位数稳定在约 `0.1643s`，相对 R29 的 `0.1768s` 确认目标收益，而多项 reference 中位数变化解释了 aggregate ratio 的反向波动。固定选择规则比事后挑选最佳结果更可复核。
+- 影响 requirements：`MD-PERF-002` 始终引用最新完整、身份绑定的 canonical run。R45 raw `72f9897c...530d` 已按此规则替换 R42，而不是保留数值更好的旧 GFM 结果；R29 与全部 R42 结果均标为历史证据。
+
 ```text
 ### A-XXX：标题
 

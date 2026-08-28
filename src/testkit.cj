@@ -56,7 +56,8 @@ public class MarkdownExtensionTestKit {
         let repeatedRenderer = HtmlRenderer(extensionRules: engine.dialect.rendererRules.toArray())
         let firstHtml = repeatedRenderer.render(all.document)
         let repeatedHtml = repeatedRenderer.render(repeated.document)
-        if (all.document.dialectFingerprint == repeated.document.dialectFingerprint && firstHtml == repeatedHtml) {
+        if (all.document.root().asDocument().getOrThrow().dialectFingerprint ==
+            repeated.document.root().asDocument().getOrThrow().dialectFingerprint && firstHtml == repeatedHtml) {
             passed++
         } else {
             failures.add("determinism")
@@ -82,7 +83,7 @@ public class MarkdownExtensionTestKit {
         let customNodes = AstQuery.customNodes(all.document)
         var spanNodes: Int64 = 0
         for (event in all.document.walk()) {
-            if (let WalkEvent.Enter(node) <- event) {
+            if (let NodeRefWalkEvent.Enter(node) <- event) {
                 spanNodes++
                 if (node.span.isNone()) {
                     spansValid = false

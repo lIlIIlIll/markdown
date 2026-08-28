@@ -27,6 +27,9 @@ CPU = os.environ.get("MARKDOWN_BENCH_CPU", "2")
 MATRIX_BYTES = 256 * 1024
 MATRIX_ITERATIONS = 3
 PATHOLOGICAL_SIZES = (64, 128, 256, 512)
+GFM_PHASE_BYTES = 1024 * 1024
+GFM_PHASE_ITERATIONS = 1
+GFM_PHASE_CORPORA = ("official-spec", "large-table", "many-references", "pathological-delimiters", "ordinary")
 
 
 def run_sample(command: list[str], data: bytes) -> dict[str, float | int | str]:
@@ -141,6 +144,35 @@ def comparison_matrix(mode: str, reference: Path, corpora: dict[str, bytes]) -> 
     return report, geometric_mean(ratios)
 
 
+def gfm_phase_profiles(corpora: dict[str, bytes]) -> dict[str, object]:
+    report: dict[str, object] = {}
+    for name in GFM_PHASE_CORPORA:
+        data = sized(corpora[name], GFM_PHASE_BYTES)
+        parse_values, html_values = paired_samples(
+            [str(DRIVER), "gfm-parse", str(GFM_PHASE_ITERATIONS)],
+            [str(DRIVER), "gfm-html", str(GFM_PHASE_ITERATIONS)], data)
+        parse_median = median_seconds(parse_values)
+        html_median = median_seconds(html_values)
+        report[name] = {
+            "bytes": len(data),
+            "sha256": hashlib.sha256(data).hexdigest(),
+            "gfmParse": parse_values,
+            "gfmParseHtml": html_values,
+            "medianParseSeconds": parse_median,
+            "medianParseHtmlSeconds": html_median,
+            "medianParseToParseHtmlRatio": parse_median / html_median,
+            "inferredMedianRenderSeconds": html_median - parse_median,
+        }
+    return {
+        "diagnosticOnly": True,
+        "iterationsPerProcess": GFM_PHASE_ITERATIONS,
+        "samples": 7,
+        "ordering": "per-corpus alternating pair with reversed order on odd samples",
+        "interpretation": "render time is inferred by subtracting independent parse-only and parse-plus-HTML medians",
+        "corpora": report,
+    }
+
+
 def slope(points: list[tuple[int, float]]) -> float:
     xs = [math.log(float(size)) for size, _ in points]
     ys = [math.log(duration) for _, duration in points]
@@ -168,11 +200,13 @@ def main() -> int:
     corpora = benchmark_corpora()
     common_matrix, common_ratio = comparison_matrix("commonmark-parse", CMARK, corpora)
     gfm_matrix, gfm_ratio = comparison_matrix("gfm-html", CMARK_GFM, corpora)
+    gfm_phases = gfm_phase_profiles(corpora)
     ordinary_common_ratio = float(common_matrix["ordinary"]["medianRatio"])
     ordinary_gfm_ratio = float(gfm_matrix["ordinary"]["medianRatio"])
     extension_samples = samples([str(DRIVER), "extension-html", str(MATRIX_ITERATIONS)], corpora["custom-extension"])
     common_one_mib = samples([str(DRIVER), "commonmark-parse", "1"], one_mib_common)
     input_profile_samples = {
+        "reusableBytes": samples([str(DRIVER), "commonmark-parse", "1"], one_mib_common),
         "string": samples([str(DRIVER), "commonmark-parse-string", "1"], one_mib_common),
         "bytes": samples([str(DRIVER), "commonmark-parse-bytes", "1"], one_mib_common),
         "ownedBytes": samples([str(DRIVER), "commonmark-parse-owned", "1"], one_mib_common),
@@ -245,10 +279,15 @@ def main() -> int:
             "statistic": "geometric mean of per-corpus median ratios"},
         "commonmark": {"corpora": common_matrix, "geometricMeanRatio": common_ratio},
         "gfm": {"corpora": gfm_matrix, "geometricMeanRatio": gfm_ratio},
+        "phaseProfiles": {"gfm": gfm_phases},
         "optionalFeatures": {"commonmarkParse": common_one_mib, "commonmarkHtml": common_html, "sourceMap": source_map,
             "cst": cst, "customExtensionHtml": extension_samples, "sourceMapTimeOverhead": source_map_overhead,
             "cstTimeOverhead": cst_overhead},
         "inputProfiles": {
+            "reusableBytes": {"driverMode": "commonmark-parse",
+                "perParseConversionOrCopy": "none after one validation or unsafe ownership transfer",
+                "processPreparation": "stdin bytes become one immutable reusable UTF-8 input",
+                "nativeScanner": True, "samples": input_profile_samples["reusableBytes"]},
         "string": {"driverMode": "commonmark-parse-string", "perParseConversionOrCopy": "none",
                 "processPreparation": "stdin bytes are decoded once before repeated parse calls",
                 "nativeScanner": False, "samples": input_profile_samples["string"]},

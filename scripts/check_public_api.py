@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate or verify the deterministic markdown 1.x public API snapshot."""
+"""Generate or verify the deterministic markdown 0.9 pre-GA public API snapshot."""
 
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SNAPSHOT = ROOT / "api" / "public-api-v1.txt"
-HEADER = "# markdown public API snapshot v1"
+SNAPSHOT = ROOT / "api" / "public-api-v0.9.txt"
+HEADER = "# markdown public API snapshot v0.9"
 RECORD_PREFIX = re.compile(r"^[^\\:\s]+\.cj:")
 PUBLIC_INIT_PREFIX = re.compile(r"^(?:public init|public unsafe init)(?![A-Za-z0-9_])")
 
@@ -25,9 +25,11 @@ def normalized_declarations() -> list[str]:
         relative = path.relative_to(ROOT / "src").as_posix()
         lines = path.read_text(encoding="utf-8").splitlines()
         collecting = False
+        collecting_interface_member = False
         current: list[str] = []
         parens = 0
         public_enum = False
+        public_interface = False
         braces = 0
         for raw in lines:
             stripped = raw.strip()
@@ -37,10 +39,12 @@ def normalized_declarations() -> list[str]:
                     parens += stripped.count("{") - stripped.count("}")
                 else:
                     parens += stripped.count("(") - stripped.count(")")
-                if parens <= 0 and (current[0].startswith("public import ") or "{" in stripped or
-                    stripped.endswith(";")):
-                    declarations.append(f"{relative}:" + " ".join(current))
+                if parens <= 0 and (collecting_interface_member or current[0].startswith("public import ") or
+                    "{" in stripped or stripped.endswith(";")):
+                    prefix = "interface-member " if collecting_interface_member else ""
+                    declarations.append(f"{relative}:{prefix}" + " ".join(current))
                     collecting = False
+                    collecting_interface_member = False
                     current = []
                 continue
             if stripped.startswith("public import "):
@@ -62,6 +66,22 @@ def normalized_declarations() -> list[str]:
                 if re.match(r"^public\s+enum\b", stripped):
                     public_enum = True
                     braces = stripped.count("{") - stripped.count("}")
+                if re.match(r"^public\s+interface\b", stripped):
+                    public_interface = True
+                    braces = stripped.count("{") - stripped.count("}")
+                continue
+            if public_interface:
+                if re.match(r"^(?:prop|mut prop|func|static func|operator func|init|type)\b", stripped):
+                    current = [stripped]
+                    parens = stripped.count("(") - stripped.count(")")
+                    if parens > 0:
+                        collecting = True
+                        collecting_interface_member = True
+                    else:
+                        declarations.append(f"{relative}:interface-member {stripped}")
+                braces += stripped.count("{") - stripped.count("}")
+                if braces <= 0:
+                    public_interface = False
                 continue
             if public_enum:
                 braces += stripped.count("{") - stripped.count("}")
@@ -150,7 +170,7 @@ def _snapshot_content(declarations: list[str]) -> str:
 
 
 def _print_raw_diff(expected: list[str], current: list[str]) -> None:
-    for line in difflib.unified_diff(expected, current, fromfile="api/public-api-v1.txt", tofile="current API",
+    for line in difflib.unified_diff(expected, current, fromfile="api/public-api-v0.9.txt", tofile="current API",
         lineterm=""):
         print(line, file=sys.stderr)
 
@@ -181,7 +201,7 @@ def main() -> int:
         print(error, file=sys.stderr)
         return 1
     if expected_keys != current_keys:
-        print("public API differs from api/public-api-v1.txt", file=sys.stderr)
+        print("public API differs from api/public-api-v0.9.txt", file=sys.stderr)
         _print_raw_diff(expected_records, current_records)
         return 1
     print(f"public API snapshot verified: {len(declarations)} declarations")

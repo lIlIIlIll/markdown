@@ -11,10 +11,28 @@ static void scan(const uint8_t *data, int64_t size) {
         abort();
     }
     const int64_t count = MD_Markdown_ScanLines(data, size, records, capacity);
-    if (count <= 0 || count > capacity || (records[count - 1] >> 3) != (uint64_t)size) {
+    if (count <= 0 || count > capacity || (records[count - 1] >> 6) != (uint64_t)size) {
         abort();
     }
     free(records);
+}
+
+static void verify_classification(void) {
+    static const uint8_t input[] = "a*b\n[x]\na&amp;b\n`code`\nplain";
+    uint64_t records[5] = {0, 0, 0, 0, 0};
+    const int64_t count = MD_Markdown_ScanLines(
+        input, (int64_t)sizeof(input) - 1, records, 5);
+    if (count != 5 ||
+        (records[0] & 0x4u) == 0u || (records[0] & 0x8u) == 0u || (records[0] & 0x10u) != 0u ||
+        (records[0] & 0x20u) != 0u || (records[1] & 0x4u) == 0u || (records[1] & 0x8u) != 0u ||
+        (records[1] & 0x10u) != 0u || (records[1] & 0x20u) == 0u ||
+        (records[2] & 0x4u) == 0u || (records[2] & 0x8u) != 0u || (records[2] & 0x10u) == 0u ||
+        (records[2] & 0x20u) != 0u || (records[3] & 0x4u) == 0u || (records[3] & 0x8u) != 0u ||
+        (records[3] & 0x10u) == 0u || (records[3] & 0x20u) != 0u ||
+        (records[4] & 0x4u) != 0u || (records[4] & 0x8u) != 0u || (records[4] & 0x10u) != 0u ||
+        (records[4] & 0x20u) != 0u) {
+        abort();
+    }
 }
 
 int main(void) {
@@ -26,6 +44,7 @@ int main(void) {
     scan(dense_newlines, (int64_t)sizeof(dense_newlines) - 1);
     scan(bom, (int64_t)sizeof(bom));
     scan(arbitrary, (int64_t)sizeof(arbitrary));
+    verify_classification();
     if (MD_Markdown_ScanLines(NULL, 1, NULL, 0) != -1 ||
         MD_Markdown_ScanLines(empty, -1, NULL, 0) != -1 ||
         MD_Markdown_ScanLines(empty, 0, NULL, 0) != -2) {

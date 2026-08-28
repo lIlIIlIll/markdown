@@ -54,9 +54,10 @@ internal class SmartPunctuationProcessor <: ExtensionDocumentProcessor {
     }
     public func process(document: Document, budget: OperationBudget, cancellation: CancellationToken): Document {
         TreeRewriter.rewrite(document, {
-            node => match (node) {
-                case text: Text => RewriteAction.MapText(
-                    text.value.replace("...", "…").replace("---", "—").replace("--", "–"))
+            node => match (node.kind) {
+                case NodeKind.Text =>
+                    let text = node.asText().getOrThrow()
+                    RewriteAction.MapText(text.value.replace("...", "…").replace("---", "—").replace("--", "–"))
                 case _ => RewriteAction.Keep
             }
         }, budget: budget, cancellation: cancellation)
