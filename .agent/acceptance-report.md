@@ -200,6 +200,10 @@ seal/path/binary identity check.
 
 ## Validation Evidence
 
+The first R139/R140 and current verifier rows are authoritative. Later dated
+rows are retained as historical slice or rejection evidence and do not replace
+the current result.
+
 | Command | Exit | Result |
 | --- | ---: | --- |
 | Server CPU 24 `MARKDOWN_BENCH_* python3 benchmarks/measure.py` on clean commit `856a6c7` | 0 | R139 CommonMark 2.380950x, GFM 2.454213x; every timing, scaling and RSS gate true; raw SHA-256 530d206f...337d0c |
@@ -237,6 +241,26 @@ seal/path/binary identity check.
 | `cjpm test` (2026-08-25 shared CST arena full rerun) | 0 | 1416 passed, 0 skipped/error/failed; arena ranges, defensive copy and query indexes passed |
 | `cjpm bench --filter MarkdownReleaseBenchmarks --no-color` (after CST arena change) | 0 | 3/3 benchmark smoke cases passed; not canonical performance evidence |
 | `cjpm test` (2026-08-25 SemVer final rerun) | 0 | 1417 passed, 0 skipped/error/failed; prerelease/build/invalid/overflow cases passed |
+
+## Final Bidirectional Audit
+
+- PRD → requirements: the complete 3754-line PRD was reread. All 52 normative
+  sections are covered; sections 2, 3 and 5 are descriptive summary/background/
+  vision. All 33 explicit `IN`/`PAR`/`AST`/`SEC` IDs are mapped.
+- requirements → implementation/tests: 125 stable IDs are unique and all are
+  `pass`; every required field and acceptance list is non-empty. The ledger has
+  488 concrete implementation/test path references, all of which exist, and no
+  generic `src/*_test.cj` placeholder remains.
+- current execution evidence: all 125 items reference the same R140 full release
+  gate. R139 is the sole canonical performance result and the generated reports
+  verify its commit, archive, SDK, harness, drivers and raw digest.
+- assumptions: 39 assumption IDs are unique, all are resolved/adopted or
+  explicitly non-normative, and every assumption is referenced from the notes of
+  its affected ledger items. The verified private vulnerability channel is no
+  longer recorded as blocked.
+- placeholder audit: product and CLI sources contain no `TODO`, `FIXME`,
+  `unimplemented`, `not implemented`, `panic(` placeholder, and tests contain no
+  `@Skip` or `@Ignore` marker.
 
 
 ## Release Decision

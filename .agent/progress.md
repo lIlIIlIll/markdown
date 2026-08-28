@@ -1,8 +1,22 @@
 # markdown 当前进度
 
-更新时间：2026-08-28
-当前阶段：0.9 breaking 执行模型重置已经完成并通过 API/full-suite 验证；parser、renderer、formatter、lint、rewrite、editor、artifact 和 traversal 均直接消费 canonical arena AST。误导性的 AST-walk Event facade 已删除，真正的 Resolved/RawBlock source event 按冻结决策留到 1.1。当前继续优化完整 AST parser，canonical benchmark 仍未达 GA。
-整体结论：**INCOMPLETE**。需求账本当前为 121 pass、1 pending、0 implemented_unverified、3 blocked。
+更新时间：2026-08-29
+当前阶段：0.9 breaking 执行模型、完整 arena AST parser、source-driven Resolved/RawBlock event、发布证据和验收链路均已闭环。R139 clean-commit canonical benchmark 与 R140 fresh-archive release gate 已通过。
+整体结论：**COMPLETE**。需求账本当前为 125 pass、0 pending、0 implemented_unverified、0 blocked。
+
+## 2026-08-29 Final R139/R140 completion evidence
+
+- R139 是当前唯一 canonical benchmark。它绑定 clean product commit `856a6c7164fe97450b5ab7ff34926445b48dcc35`、source archive `bdc7964d65a631f12d527b18352e49ae3a50563589427a0e304dc8b8a569605f`、harness `b07a40056119b13e6bf1206233afe1855489d6af12aab10b08367d3a36316254`、markdown driver `363ece9a4eed545a8f85b97de5052da6f4d9037175bb40da4e677912d03334d5` 和 raw report `530d206f2558766c56eb02e33b646f7ef36b58a06b5187f52999223f32337d0c`。
+- 固定 Server CPU 24 的完整结果为 CommonMark `2.380950x`、GFM `2.454213x`；ordinary `3.631640x/2.026894x`，scaling slope/adjacent `0.364821/2.498950`，pathological slope/adjacent `0.632235/2.437232`，10 MiB extra RSS `30764 KiB`。所有 frozen timing、scaling 和 RSS gate 均为 true。
+- `readme-api` corpus 只将自动生成的 release-evidence block 规范化为一个固定 marker；缺失或重复 marker fail closed。该修复消除了报告写回导致的递归 corpus 漂移，同时保留 README/API workload 的其余全部内容。
+- R140 从最小 tracked-source fresh archive 在 Server 上执行 `CC=/usr/bin/clang AR=/usr/bin/ar scripts/release_gate.sh`，exit `0`，最终输出 `release gate: pass`。门禁包含 format、API snapshot 1311、check/build、native ASan+UBSan coverage-guided fuzz 10000、full tests `1455/1455`、CLI、quickstart、differential `25/24/1/0`、benchmark smoke `3/3`、bundle 与 release-ready verifier。
+- 发布物 `target/markdown-0.9.0.cjp` 为 `467103` bytes，SHA-256 `2a9a743ebf440813594662fb92071ac6da1b5c9d14b663ad4e0fbce9421a5ade`。0.9.0 仍按 A-036 定位为允许破坏性变更的 pre-GA preview；COMPLETE 表示 PRD 与当前 0.9 发布门禁全部满足，不把 ABI 偷换成 1.0 冻结承诺。
+- `.agent/requirements.yaml` 是唯一账本：125/125 均为 `pass`；恢复点无剩余工作。
+- 最终双向审计：3754 行 PRD 的 52 个规范章节和 33 个显式编号要求全部映射；125 个稳定 ID 唯一，488 个具体实现/测试路径引用全部存在，泛化测试通配符为 0，125 项均关联 R140 当前运行证据。
+- 假设审计：39 个 assumption ID 唯一且全部被对应 requirement notes 引用；私密漏洞报告渠道已按真实 GitHub API 证据从外部阻塞改为 resolved。
+- 占位审计：产品/CLI 源码无 TODO、FIXME、unimplemented、not implemented 或 panic 占位；测试无 `@Skip`/`@Ignore`。
+
+下方 R0-R138 和早期治理切片全部是按时间保留的历史恢复记录；其中“当前”、`blocked` 或 `INCOMPLETE` 只描述当时状态，不覆盖本节与需求账本。
 
 ## 2026-08-28 R103-R119 arena/fence/scanner/string candidate audit
 

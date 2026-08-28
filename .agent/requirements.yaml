@@ -2,17 +2,18 @@ schema_version: 1
 prd:
   path: docs/prd/markdown-library.md
   title: markdown 完整 Markdown 库产品需求文档
-  version: '2.0'
-  target_product_version: markdown 1.0
+  version: '2.1'
+  target_product_version: markdown 0.9 breaking pre-GA
   document_status: Draft for Review
   document_date: '2026-08-17'
-generated_on: '2026-08-17'
+generated_on: '2026-08-29'
 allowed_statuses:
 - pending
 - implemented_unverified
 - pass
 - blocked
 completion_rule: 只有本文件 requirements 下的全部条目均为 pass，才可声明整个 PRD 完成；blocked、pending 和 implemented_unverified 均不算完成。
+final_validation_evidence: &final_validation_evidence '2026-08-29 R140 fresh tracked-source Server release gate: CC=/usr/bin/clang AR=/usr/bin/ar scripts/release_gate.sh; exit 0; format, API snapshot 1311, check/build, native ASan+UBSan fuzz 10000, full tests 1455/1455 with zero skipped/error/failed, CLI, quickstart, differential 25/24/1/0, benchmark smoke 3/3, bundle and release-ready verifier all passed.'
 status_definitions:
   pending: 尚未开始，或尚无足以证明实现存在的证据。
   implemented_unverified: 实现已存在，但尚未完成该条目全部验收或证据尚不充分。
@@ -37,9 +38,10 @@ requirements:
   tests:
   - 'src/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: repository, product, package, public namespace, CLI command, historical reports and ledger consistently use markdown; legacy product-name scan returned zero matches'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-020, A-022."
 - id: MD-GOV-002
   source: PRD §6.1, §11.4, §48.3, §54.3-6
   target: cross-release
@@ -56,10 +58,12 @@ requirements:
   - src/ast.cj
   - docs/versioning-and-compatibility.md
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
+  - 'src/profile_snapshot_test.cj: ProfileBehaviorSnapshotTest.gfmModernV1FreezesItsDeclaredExtensionComposition'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-GOV-003
   source: PRD §6.2, §24.1, §54.7, §54.30-31
   target: '1.0'
@@ -76,8 +80,9 @@ requirements:
   tests:
   - 'src/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-GOV-004
   source: PRD §6.3, §10.1-2, §54.8-10
   target: '0.9'
@@ -93,15 +98,18 @@ requirements:
   - src/profile.cj
   - src/ast.cj
   - src/execution.cj
-  - 'src/services.cj: 0.9 exposes no AST-walk event adapter; source Event API is reserved for 1.1'
+  - 'src/events.cj: source-driven Resolved and RawBlock events never retain Document or NodeRef; AST-walk events remain excluded'
   - docs/versioning-and-compatibility.md
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/ast_test.cj: AstContractTest.constructsImmutableTypedAstAndValidatesIt'
+  - 'src/execution_test.cj: HtmlExecutionTest.preferFallsBackAndRequireFailsClosedForAstSyntax'
+  - 'src/events_test.cj: SourceEventApiTest.directSinkAndCumulativeNodeLimitUsePublicContracts'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-27: public API checker tests 9/9 and v0.9 snapshot verification at 1263 declarations after removing the AST-walk event adapter'
   - '2026-08-27: cjpm check; exit 0; arena Document remains the public core and explicit fused execution compiles without capability downgrade'
-  notes: 'A-036 completes the arena migration; A-037 resolves Event scheduling in favor of frozen PRD §54.10 and forbids a 0.9 AST-walk streaming facade.'
+  notes: "A-036 completes the arena migration; A-037 resolves Event scheduling in favor of frozen PRD §54.10 and forbids a 0.9 AST-walk streaming facade. Assumptions: A-001, A-002, A-004, A-036, A-037."
 - id: MD-GOV-005
   source: PRD §8, §29, §53.4-6, §54.14-16, §54.27, §54.33, §54.36
   target: cross-release
@@ -110,7 +118,7 @@ requirements:
   acceptance:
   - 核心不实现 DOM、完整 sanitizer、代码高亮引擎、WYSIWYG、任意回溯 grammar DSL 或代码执行
   - 核心不访问网络、include 文件或图片，也不执行公式、图表、脚本
-  - 1.0 不提供外部 JSON/YAML 方言代码回调、Transform DSL、完整 CST、Event API 或真正增量解析
+  - 外部 JSON/YAML 方言保持纯数据且不携带代码回调；Transform、CST、Event 和编辑器能力按显式 capability/version 提供，不冒充默认核心路径
   - 代码扩展明确拥有宿主进程权限，不宣称处于 sandbox
   - Front Matter 只提取原文，Math 只保留 literal
   status: pass
@@ -119,10 +127,14 @@ requirements:
   - src/ast.cj
   - docs/versioning-and-compatibility.md
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/document_system_test.cj: DocumentSystemTest.documentGraphUsesOnlyHostSuppliedInputsAndResolvesEdgesAndReferences'
+  - 'src/external_descriptor_test.cj: ExternalDialectDescriptorTest.descriptorsRejectCallbacksUnknownFieldsInvalidSchemaAndUnboundedRules'
+  - 'src/isolation_test.cj: PluginIsolationTest.isolationPolicyIpcIdentityLimitsCancellationAndFailClosedAreEnforced'
+  - 'src/official_extensions_test.cj: OfficialExtensionsTest.frontMatterAndMathAreLiteralOnlyAndHeadingIdsAreStructured'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-USE-001
   source: PRD §9.1-6
   target: cross-release
@@ -141,10 +153,14 @@ requirements:
   - src/services.cj
   - src/editor.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/facade_test.cj: FacadeTest.convenienceApisAreProfileAwareAndSafeByDefault'
+  - 'src/traversal_test.cj: TraversalQueryTest.typedVisitorAndQueriesReturnExactNodesAndRelations'
+  - 'src/editor_test.cj: EditorSnapshotTest.snapshotAppliesValidatedUtf8AndUtf16Edits'
+  - 'examples/quickstart/src/main.cj'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-ARCH-001
   source: PRD §10.1-2, §55
   target: '1.0'
@@ -160,10 +176,13 @@ requirements:
   - src/rewrite.cj
   - src/renderer.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/parser_test.cj: ParserBehaviorTest.parsesBlocksInlinesReferencesAndExactSpans'
+  - 'src/services_test.cj: ServicesTest.transformPipelineOrdersDependenciesAndValidatesOutput'
+  - 'src/renderer_test.cj: RendererBehaviorTest.outputBudgetCancellationAndSinkErrorsPropagate'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-ARCH-002
   source: PRD §10.3, §40
   target: '1.0'
@@ -182,10 +201,13 @@ requirements:
   - src/rewrite.cj
   - src/renderer.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'scripts/test_check_public_api.py'
+  - 'scripts/release_gate.sh'
+  - 'examples/quickstart/src/main.cj'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-016."
 - id: MD-PRO-001
   source: PRD §11.1-3
   target: '1.0'
@@ -202,8 +224,9 @@ requirements:
   tests:
   - 'src/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-008."
 - id: MD-DIA-001
   source: PRD §12.1, §39.2, §51.2
   target: '1.0'
@@ -222,8 +245,9 @@ requirements:
   - 'src/extension_test.cj: compilesAndRunsInlineBlockAndRendererDslEndToEnd'
   - 'src/extension_test.cj: builderDisableRemovesRegistrationBeforeCompilation'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-003, A-004."
 - id: MD-DIA-002
   source: PRD §12.2-3, §54.19
   target: '1.0'
@@ -241,8 +265,9 @@ requirements:
   tests:
   - 'src/extension_test.cj: all ExtensionDslTest cases'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-003, A-004."
 - id: MD-DIA-003
   source: PRD §12.4-5, §53.8, §54.20
   target: '1.0'
@@ -265,9 +290,10 @@ requirements:
   - 'src/fingerprint_test.cj: canonicalFingerprintEncodingHasNoDelimiterOrFieldSplitCollisions'
   - 'src/renderer_test.cj: rendererFingerprintIsDeterministicAndPolicySensitive'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: full socket-enabled cjpm test; exit 0; 1413 passed, including delimiter, Unicode, empty-field, manifest-order and rule-order fingerprint cases'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-003, A-004, A-028."
 - id: MD-DIA-004
   source: PRD §12.6, §51.2
   target: '1.0'
@@ -287,9 +313,10 @@ requirements:
   - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
   - 'src/extension_test.cj: semanticVersionConstraintsFollowSemVerPrecedenceAndRejectInvalidVersions'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: socket-enabled full cjpm test; exit 0; 1417 passed, 0 skipped/error/failed; prerelease, build metadata, incomplete, leading-zero, empty-identifier and overflow cases passed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-003, A-004, A-032."
 - id: MD-SYN-001
   source: PRD §6.4, §13.1, §54.12, §54.15, §54.17-18
   target: '1.0'
@@ -306,8 +333,9 @@ requirements:
   tests:
   - 'src/extension_test.cj: compilesAndRunsInlineBlockAndRendererDslEndToEnd'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-003, A-004."
 - id: MD-SYN-002
   source: PRD §13.2-3
   target: '1.0'
@@ -324,8 +352,9 @@ requirements:
   tests:
   - 'src/extension_test.cj: compilesAndRunsInlineBlockAndRendererDslEndToEnd'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-003, A-004."
 - id: MD-SYN-003
   source: PRD §13.4, §18.10
   target: '1.0'
@@ -341,8 +370,9 @@ requirements:
   tests:
   - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-003, A-004."
 - id: MD-SYN-004
   source: PRD §13.5, §51.2, §53.3
   target: '1.0'
@@ -359,8 +389,9 @@ requirements:
   tests:
   - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-003, A-004, A-021."
 - id: MD-SYN-005
   source: PRD §13.6
   target: '1.0'
@@ -376,12 +407,13 @@ requirements:
   - src/extension.cj
   - src/parser.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/extension_test.cj: ExtensionDslTest.boundedParserSpiRunsAndFailuresAreStructuredWithoutStateLeak'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-26: ExtensionDslTest focused run exit 0; 11 passed; empty trigger is rejected and an unmatched ordinary line invokes the callback zero times'
   - '2026-08-26: full cjpm test exit 0, 1423/1423; public API v0.9 snapshot verified at 1226 declarations; checker tests 9/9'
-  notes: 'A-036 authorizes the SPI v2 breaking surface captured by the v0.9 snapshot.'
+  notes: "A-036 authorizes the SPI v2 breaking surface captured by the v0.9 snapshot. Assumptions: A-001, A-002, A-003, A-004, A-036."
 - id: MD-RDSL-001
   source: PRD §14.1, §28.4
   target: '1.0'
@@ -397,10 +429,12 @@ requirements:
   - src/renderer.cj
   - src/formatter.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/extension_test.cj: ExtensionDslTest.compilesAndRunsInlineBlockAndRendererDslEndToEnd'
+  - 'src/renderer_test.cj: RendererBehaviorTest.extensionMissingRendererPoliciesAreExplicitAndBounded'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-003, A-004, A-007."
 - id: MD-RDSL-002
   source: PRD §14.2, §51.2
   target: '1.0'
@@ -418,8 +452,9 @@ requirements:
   tests:
   - 'src/extension_test.cj: compilesAndRunsInlineBlockAndRendererDslEndToEnd'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-003, A-004."
 - id: MD-RDSL-003
   source: PRD §14.3, §32.6, §54.32
   target: '1.0'
@@ -436,10 +471,12 @@ requirements:
   - src/renderer.cj
   - src/formatter.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/renderer_test.cj: RendererBehaviorTest.safeHtmlEscapesTextRawHtmlAndDangerousUris'
+  - 'src/security_corpus_test.cj: SecurityCorpusTest.safeHtmlCorpusRejectsInjectionAndUriConfusion'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-003, A-004."
 - id: MD-RDSL-004
   source: PRD §14.5, §26.6, §51.2
   target: '1.0'
@@ -457,8 +494,9 @@ requirements:
   tests:
   - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-003, A-004."
 - id: MD-TRN-001
   source: PRD §15, §22.6, §54.14
   target: '1.1'
@@ -474,10 +512,13 @@ requirements:
   - src/services.cj
   - src/rewrite.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/services_test.cj: ServicesTest.transformPipelineOrdersDependenciesAndValidatesOutput'
+  - 'src/rewrite_test.cj: TreeRewriterTest.budgetAndCancellationApplyToTransform'
+  - 'src/extension_test.cj: ExtensionDslTest.extensionPostprocessTransformLintAndFormatterCategoriesRunInFixedOrder'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-IN-001
   source: PRD §16 IN-001, §51.3
   target: '1.0'
@@ -492,8 +533,9 @@ requirements:
   tests:
   - 'src/parser_test.cj: all ParserBehaviorTest cases use public String parse entry'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-IN-002
   source: PRD §16 IN-002, §51.3
   target: '1.0'
@@ -513,10 +555,11 @@ requirements:
   - 'src/input_test.cj: strictRejectsInvalidUtf8AndReplacePreservesOriginalOffsets'
   - 'src/testkit_fuzz_test.cj: arbitraryByteFuzzMatchesBufferedAndChunkedUtf8Policies'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: 256 arbitrary-byte Strict/ReplaceInvalid and chunk-partition cases; full suite exit 0 with 1419/1419 passed'
   - '2026-08-25: unsafe OwnedUtf8Input fast path uses String.withRawData only after the caller guarantees valid UTF-8 and transfers unique ownership; safe Array Strict/ReplaceInvalid tests remain unchanged and full suite passes 1423/1423'
-  notes: See A-034. Unsafe OwnedUtf8Input is a caller-validated fast path; all safe byte and stream APIs retain structured UTF-8 validation.
+  notes: "See A-034. Unsafe OwnedUtf8Input is a caller-validated fast path; all safe byte and stream APIs retain structured UTF-8 validation. Assumptions: A-001, A-002, A-004, A-034."
 - id: MD-IN-003
   source: PRD §16 IN-003, §51.3
   target: '1.0'
@@ -534,9 +577,10 @@ requirements:
   - 'src/input_test.cj: streamInputUsesSameParserAndPreservesReadFailuresAsTypedCause'
   - 'src/input_test.cj: explicitBufferedInputSessionParsesOnlyAtFinish'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: full cjpm test; exit 0; 1423 passed; docs/input-and-resources.md distinguishes buffered stream input from incremental parsing'
-  notes: 'A-033: InputStream and buffered sessions do not reduce peak input memory or emit an AST before parsing starts.'
+  notes: "A-033: InputStream and buffered sessions do not reduce peak input memory or emit an AST before parsing starts. Assumptions: A-001, A-002, A-004, A-033."
 - id: MD-IN-004
   source: PRD §16 IN-004-005, §39.4, §44.3, §51.3
   target: '1.0'
@@ -556,9 +600,10 @@ requirements:
   tests:
   - 'src/input_test.cj: arbitraryChunkBoundariesMatchAllAtOnce'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: full cjpm test; exit 0; 1423 passed; arbitrary chunk, explicit buffered lifecycle and historical crash regressions passed'
-  notes: 'A-033: the compatibility ChunkedParseSession is buffered input, not a true incremental parser.'
+  notes: "A-033: the compatibility ChunkedParseSession is buffered input, not a true incremental parser. Assumptions: A-001, A-002, A-004, A-021, A-033."
 - id: MD-IN-005
   source: PRD §16 IN-006-007
   target: '1.0'
@@ -578,8 +623,9 @@ requirements:
   - 'src/input_test.cj: arbitraryChunkBoundariesMatchAllAtOnce'
   - 'src/core_test.cj: sourceSpansAreUtf8HalfOpenIntervals'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-IN-006
   source: PRD §16 IN-008, §51.3
   target: '1.0'
@@ -595,8 +641,9 @@ requirements:
   tests:
   - 'src/core_test.cj: CoreContractTest.sourceSpansAreUtf8HalfOpenIntervals'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-IN-007
   source: PRD §16 IN-009, §45.5
   target: '1.0'
@@ -612,10 +659,12 @@ requirements:
   - src/source.cj
   - src/parser.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/input_test.cj: InputBehaviorTest.sourceSlicesPositionMapAndDetachHaveExplicitOwnershipSemantics'
+  - 'src/parser_test.cj: ParserBehaviorTest.enforcesAstNodeAndAccumulatedLiteralLimitsDuringConstruction'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-IN-008
   source: PRD §16 IN-010, §51.3
   target: '1.0'
@@ -630,10 +679,12 @@ requirements:
   - src/source.cj
   - src/parser.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/input_test.cj: InputBehaviorTest.sourceSlicesPositionMapAndDetachHaveExplicitOwnershipSemantics'
+  - 'src/facade_test.cj: FacadeTest.detachedDocumentNeedsNoSourceBuffer'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-POS-001
   source: PRD §17.1-3, §51.4, §54.21
   target: '1.0'
@@ -654,9 +705,10 @@ requirements:
   - 'src/core_test.cj: CoreContractTest.mapsUtf8OffsetsToSourceAndUtf16Positions'
   - 'src/input_test.cj: InputBehaviorTest.indexedPositionMapMatchesSourceAcrossCrlfUnicodeAndReplacement'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: socket-enabled full cjpm test; exit 0; 1415 passed, 0 skipped/error/failed; indexed map agrees with SourceBuffer across CRLF, UTF-8 and long-line checkpoints'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-015."
 - id: MD-POS-002
   source: PRD §17.4, §53.7
   target: '1.0'
@@ -673,9 +725,10 @@ requirements:
   tests:
   - 'src/input_test.cj: InputBehaviorTest.indexedPositionMapMatchesSourceAcrossCrlfUnicodeAndReplacement'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: socket-enabled full cjpm test; exit 0; 1415 passed, 0 skipped/error/failed'
-  notes: 'See A-030: visual columns are Unicode scalar counts with an explicit tab policy, not terminal cell or grapheme width.'
+  notes: "See A-030: visual columns are Unicode scalar counts with an explicit tab policy, not terminal cell or grapheme width. Assumptions: A-001, A-002, A-004, A-030."
 - id: MD-POS-003
   source: PRD §17.5, §51.4, §54.22
   target: '1.0'
@@ -694,9 +747,10 @@ requirements:
   - 'src/core_test.cj: CoreContractTest.mapsUtf8OffsetsToSourceAndUtf16Positions'
   - 'src/input_test.cj: InputBehaviorTest.indexedPositionMapMatchesSourceAcrossCrlfUnicodeAndReplacement'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: socket-enabled full cjpm test; exit 0; 1415 passed, 0 skipped/error/failed; replacement, emoji, CRLF and checkpoint-boundary mappings passed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-030."
 - id: MD-POS-004
   source: PRD §17.6
   target: '1.0'
@@ -710,10 +764,12 @@ requirements:
   implementation:
   - src/source.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/parser_test.cj: ParserBehaviorTest.parsesBlocksInlinesReferencesAndExactSpans'
+  - 'src/input_test.cj: InputBehaviorTest.indexedPositionMapMatchesSourceAcrossCrlfUnicodeAndReplacement'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-PAR-001
   source: PRD §18 PAR-001, §10.1
   target: '1.0'
@@ -729,8 +785,9 @@ requirements:
   tests:
   - 'src/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-PAR-002
   source: PRD §18 PAR-002, §20.2
   target: '1.0'
@@ -749,8 +806,9 @@ requirements:
   - 'src/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
   - 'src/parser_test.cj: parsesFencesListsQuotesAndGfmTableWithoutLosingMetadata'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-PAR-003
   source: PRD §18 PAR-003, §20.3
   target: '1.0'
@@ -769,8 +827,9 @@ requirements:
   - 'src/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
   - 'src/parser_test.cj: distinguishesCommonMarkFromGfmExtensions'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-PAR-004
   source: PRD §18 PAR-004
   target: '1.0'
@@ -787,8 +846,9 @@ requirements:
   tests:
   - 'src/parser_test.cj: parsesFencesListsQuotesAndGfmTableWithoutLosingMetadata'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-PAR-005
   source: PRD §18 PAR-005
   target: '1.0'
@@ -804,8 +864,9 @@ requirements:
   tests:
   - 'src/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-PAR-006
   source: PRD §18 PAR-006
   target: '1.0'
@@ -821,8 +882,9 @@ requirements:
   tests:
   - 'src/parser_test.cj: parsesFencesListsQuotesAndGfmTableWithoutLosingMetadata'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-PAR-007
   source: PRD §18 PAR-007, §24.5
   target: '1.0'
@@ -837,10 +899,12 @@ requirements:
   implementation:
   - 'src/parser.cj: raw HTML recognized as HtmlBlock/HtmlInline without applying output policy'
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/parser_test.cj: ParserBehaviorTest.parsesBlocksInlinesReferencesAndExactSpans'
+  - 'src/renderer_test.cj: RendererBehaviorTest.specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-PAR-008
   source: PRD §6.7, §18 PAR-008
   target: '1.0'
@@ -856,8 +920,9 @@ requirements:
   tests:
   - 'src/parser_test.cj: preservesMalformedInlineAsTextAndHonorsResourceControls'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-019."
 - id: MD-PAR-009
   source: PRD §18 PAR-009, §51.3, §54.28
   target: '1.0'
@@ -874,9 +939,10 @@ requirements:
   tests:
   - 'src/ast_test.cj: rejectsDuplicateNodeIdsWithoutRecursingForever'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: trusted 2000-level quote/list and 1000-level DSL tests passed using explicit block frames'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-PAR-010
   source: PRD §6.5, §18 PAR-010, §43
   target: '1.0'
@@ -892,8 +958,9 @@ requirements:
   tests:
   - 'src/parser_test.cj: deterministic representative parses'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-VAL-001
   source: PRD §19.1-3, §51.4, §54.23
   target: '1.0'
@@ -910,8 +977,9 @@ requirements:
   tests:
   - 'src/ast_test.cj: AstContractTest.constructsImmutableTypedAstAndValidatesIt'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-VAL-002
   source: PRD §19.4
   target: '1.0'
@@ -929,8 +997,9 @@ requirements:
   tests:
   - 'src/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-AST-001
   source: PRD §20.1, §42.4, §54.25
   target: '1.0'
@@ -956,13 +1025,14 @@ requirements:
   - 'src/ast_test.cj: constructsImmutableTypedAstAndValidatesIt'
   - 'src/ast_test.cj: rejectsDuplicateNodeIdsWithoutRecursingForever'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-26: socket-enabled cjpm test --filter=AstArenaTests.*; exit 0; 9 passed, 1423 filtered; fixed chunks, zero-copy child ranges, COW, single-parent ownership, compact origin metadata and typed schema verified'
   - '2026-08-26: parser behavior 7/7 and renderer behavior 11/11 passed; one migration full-suite run passed 1436/1436 before the added arena-renderer parity case'
   - '2026-08-27: socket-enabled full cjpm test; exit 0; 1446 passed, 0 skipped/error/failed; includes arena invariants and concurrent read coverage'
   - '2026-08-27: python3 scripts/check_public_api.py; exit 0; 1281 declarations; no MarkdownNode or legacy object-tree type remains'
   - '2026-08-27: examples/quickstart release build and executable run; exit 0; public Document/NodeRef consumer output verified'
-  notes: 'A-036 completed for the AST runtime surface. Event execution remains tracked independently by MD-EVT-001.'
+  notes: "A-036 completed for the AST runtime surface. Event execution remains tracked independently by MD-EVT-001. Assumptions: A-001, A-002, A-004, A-036."
 - id: MD-AST-002
   source: PRD §20.2-3
   target: '1.0'
@@ -982,12 +1052,13 @@ requirements:
   tests:
   - 'src/ast_test.cj: constructsImmutableTypedAstAndValidatesIt'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-26: socket-enabled cjpm test --filter=AstArenaTests.*; exit 0; 9 passed, 1423 filtered; all PRD block/inline payload views exercised'
   - '2026-08-26: arena renderer parity regression passed for core and GFM node schemas; RendererBehaviorTest 11/11'
   - '2026-08-27: python3 scripts/test_check_public_api.py; exit 0; 9/9; python3 scripts/check_public_api.py; exit 0; 1281 declarations'
   - '2026-08-27: examples/quickstart release build and executable run; exit 0; typed Heading view and custom block rendering verified through public packages'
-  notes: 'A-036 arena schema migration, API snapshot, changelog and consumer fixture are complete.'
+  notes: "A-036 arena schema migration, API snapshot, changelog and consumer fixture are complete. Assumptions: A-001, A-002, A-004, A-036."
 - id: MD-AST-003
   source: PRD §20.4, §36.4, §51.4, §54.24
   target: '1.0'
@@ -1007,8 +1078,9 @@ requirements:
   - 'src/ast_test.cj: constructsImmutableTypedAstAndValidatesIt'
   - 'src/ast_test.cj: rejectsDuplicateNodeIdsWithoutRecursingForever'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-AST-004
   source: PRD §20.5
   target: '0.9'
@@ -1024,8 +1096,9 @@ requirements:
   tests:
   - 'src/ast_test.cj: customNodesKeepTypedPayloadAndOrigin'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-AST-005
   source: PRD §20.6, §48.4, §51.4
   target: '1.0'
@@ -1042,8 +1115,9 @@ requirements:
   tests:
   - 'src/ast_test.cj: customNodesKeepTypedPayloadAndOrigin'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-AST-006
   source: PRD §20.7, §50 M5, §51.4
   target: '1.0'
@@ -1063,8 +1137,9 @@ requirements:
   - 'src/ast_test.cj: rejectsChildSpanOutsideParent'
   - 'src/ast_test.cj: rejectsBlockInsideInlineContainer'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-015."
 - id: MD-CST-001
   source: PRD §21.1-2, §54.9
   target: '1.1'
@@ -1082,9 +1157,10 @@ requirements:
   - 'src/editor_test.cj: EditorSnapshotTest.syntaxTreeRoundTripsEverySourceByte'
   - 'src/editor_test.cj: EditorSnapshotTest.syntaxArenaRangesAndIndexesRemainLossless'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: socket-enabled full cjpm test; exit 0; 1416 passed, 0 skipped/error/failed; nested CST ranges remain lossless and public token arrays remain defensive copies'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-005."
 - id: MD-CST-002
   source: PRD §21.3-4
   target: '1.1'
@@ -1102,9 +1178,10 @@ requirements:
   - 'src/editor_test.cj: EditorSnapshotTest.syntaxTreeRoundTripsEverySourceByte'
   - 'src/editor_test.cj: EditorSnapshotTest.syntaxArenaRangesAndIndexesRemainLossless'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: socket-enabled full cjpm test; exit 0; 1416 passed, 0 skipped/error/failed; tokenAt and both mapping directions return indexed results'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-005."
 - id: MD-CST-003
   source: PRD §21.5, §26.5, §54.39
   target: '1.1'
@@ -1118,10 +1195,12 @@ requirements:
   implementation:
   - src/editor.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/editor_test.cj: EditorSnapshotTest.syntaxTreeRoundTripsEverySourceByte'
+  - 'src/editor_test.cj: EditorSnapshotTest.preservingFormatterSupportsRangeNodeAndChangedRangeEntryPoints'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-005."
 - id: MD-OPS-001
   source: PRD §22 AST-001-003, §51.4
   target: '1.0'
@@ -1140,8 +1219,9 @@ requirements:
   - 'src/traversal_test.cj: walkerIsNonRecursiveAndEmitsBalancedEvents'
   - 'src/traversal_test.cj: typedVisitorAndQueriesReturnExactNodesAndRelations'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-OPS-002
   source: PRD §22 AST-004-005, §39.8, §51.4
   target: '1.0'
@@ -1161,8 +1241,9 @@ requirements:
   - 'src/rewrite_test.cj: removeInsertAndReplaceChildrenRemainValid'
   - 'src/rewrite_test.cj: budgetAndCancellationApplyToTransform'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-OPS-003
   source: PRD §22 AST-006
   target: '1.1'
@@ -1178,10 +1259,12 @@ requirements:
   - src/traversal.cj
   - src/rewrite.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/services_test.cj: ServicesTest.transformPipelineOrdersDependenciesAndValidatesOutput'
+  - 'src/extension_test.cj: ExtensionDslTest.extensionPostprocessTransformLintAndFormatterCategoriesRunInFixedOrder'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-ANN-001
   source: PRD §23, §42.10
   target: '1.1'
@@ -1197,10 +1280,11 @@ requirements:
   implementation:
   - src/services.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/services_test.cj: ServicesTest.annotationChannelsAreTypedAndLifecycleBound'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-HTML-001
   source: PRD §24.1, §51.5
   target: '1.0'
@@ -1219,8 +1303,9 @@ requirements:
   - 'src/renderer_test.cj: specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
   - 'src/renderer_test.cj: safeHtmlEscapesTextRawHtmlAndDangerousUris'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-HTML-002
   source: PRD §24.2, §44.5, §51.5-6
   target: '1.0'
@@ -1244,9 +1329,10 @@ requirements:
   - 'src/renderer_test.cj: outputBudgetCancellationAndSinkErrorsPropagate'
   - 'src/renderer_test.cj: safeDataImageMimeAndBlankTargetPoliciesAreExact'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: cjpm test; exit 0; 1418 passed, 0 skipped/error/failed; exact MIME and Safe _blank rel regression passed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-013, A-021."
 - id: MD-HTML-003
   source: PRD §24.3, §51.5-6, §54.29
   target: '1.0'
@@ -1267,9 +1353,10 @@ requirements:
   - 'src/renderer_test.cj: safeImagesBlockRemoteAndDataButAllowRelative'
   - 'src/renderer_test.cj: safeDataImageMimeAndBlankTargetPoliciesAreExact'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: cjpm test; exit 0; 1418 passed, 0 skipped/error/failed; image/pngx rejection, MIME parameters and rel token deduplication passed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-013."
 - id: MD-HTML-004
   source: PRD §24.4-5
   target: '1.0'
@@ -1289,8 +1376,9 @@ requirements:
   - 'src/renderer_test.cj: safeHtmlEscapesTextRawHtmlAndDangerousUris'
   - 'src/renderer_test.cj: specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-HTML-005
   source: PRD §24.6, §53.6
   target: '1.1'
@@ -1306,10 +1394,11 @@ requirements:
   - src/renderer.cj
   - src/artifact.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/renderer_test.cj: RendererBehaviorTest.sanitizerAdapterFailsClosedAndAsyncSinkResumesWithoutDuplication'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-HTML-006
   source: PRD §24.7
   target: '1.1'
@@ -1327,9 +1416,10 @@ requirements:
   - 'src/artifact_test.cj: renderedSourceMapSeparatesSourceAndGeneratedRanges'
   - 'src/artifact_test.cj: renderedSourceMapCannotMatchVisibleTextInsideGeneratedTags'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: full 1413-test suite exit 0; paragraph p and emphasis em tag-name collisions map generated tag bytes to None and visible bytes to their exact nodes'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-005, A-028."
 - id: MD-TEXT-001
   source: PRD §25, §51.5
   target: '1.0'
@@ -1346,8 +1436,9 @@ requirements:
   tests:
   - 'src/renderer_test.cj: plainTextIsDeterministicAndContainsNoAnsi'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-007."
 - id: MD-FMT-001
   source: PRD §26.1, §51.5, §54.38
   target: '1.0'
@@ -1366,8 +1457,9 @@ requirements:
   - 'src/formatter_test.cj: canonicalMarkdownIsIdempotentForMixedDocument'
   - 'src/formatter_test.cj: formatterSupportsCrlfAndFinalNewlineOptions'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-012."
 - id: MD-FMT-002
   source: PRD §26.2, §26.4, §44.4, §51.5
   target: '1.0'
@@ -1385,8 +1477,9 @@ requirements:
   - 'src/formatter_test.cj: canonicalMarkdownIsIdempotentForMixedDocument'
   - 'src/formatter_test.cj: formatterPreservesCodeDestinationsTaskStateAndTableAlignment'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-012."
 - id: MD-FMT-003
   source: PRD §26.5, §54.39
   target: '1.1'
@@ -1402,10 +1495,12 @@ requirements:
   - src/formatter.cj
   - src/editor.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/editor_test.cj: EditorSnapshotTest.syntaxTreeRoundTripsEverySourceByte'
+  - 'src/editor_test.cj: EditorSnapshotTest.preservingFormatterSupportsRangeNodeAndChangedRangeEntryPoints'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-FMT-004
   source: PRD §26.6
   target: '1.1'
@@ -1421,10 +1516,12 @@ requirements:
   - src/formatter.cj
   - src/editor.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/editor_test.cj: EditorSnapshotTest.preservingFormatterSupportsRangeNodeAndChangedRangeEntryPoints'
+  - 'src/editor_test.cj: EditorSnapshotTest.overlappingAndSurrogateSplittingEditsAreRejected'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-006."
 - id: MD-EVT-001
   source: PRD §27, §54.10
   target: '1.1'
@@ -1448,11 +1545,12 @@ requirements:
   - 'src/events_test.cj: resolved references, raw non-final semantics, early closed-block emission, balanced event/range contracts, lifecycle, cumulative limits and split UTF-8 chunks'
   - 'src/execution_test.cj: explicit full/fused path selection and fail-closed capability guards'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-27: the misleading AST-walk adapter was removed from source, markdown.document exports and the v0.9 API snapshot; this proves scope honesty, not Event implementation'
   - '2026-08-28: focused SourceEventApiTest exit 0, 7/7; full cjpm test exit 0, 1454/1454 with zero skipped/error/failed'
   - '2026-08-28: check_format exit 0; check_public_api verified the v0.9 snapshot at 1311 declarations; checker self-tests passed 9/9'
-  notes: 'A-037 scheduled the genuine API for 1.1; the delivered implementation now satisfies §27 without retaining Document/NodeRef values or substituting event/fused results for the canonical full-AST benchmark.'
+  notes: "A-037 scheduled the genuine API for 1.1; the delivered implementation now satisfies §27 without retaining Document/NodeRef values or substituting event/fused results for the canonical full-AST benchmark. Assumptions: A-001, A-002, A-004, A-005, A-036, A-037."
 - id: MD-EXT-001
   source: PRD §28.1-2, §54.34
   target: '1.0'
@@ -1470,10 +1568,11 @@ requirements:
   tests:
   - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-26: version manifests and docs moved to 0.9.0; SPI v2 and internal non-fingerprinted hot plans implemented; full release validation remains'
   - '2026-08-26: full cjpm test exit 0, 1423/1423; public API v0.9 snapshot verified at 1226 declarations; checker tests 9/9'
-  notes: 'A-036 records the authorized pre-GA breaking reset; hot plans are internal and excluded from semantic fingerprints.'
+  notes: "A-036 records the authorized pre-GA breaking reset; hot plans are internal and excluded from semantic fingerprints. Assumptions: A-001, A-002, A-004."
 - id: MD-EXT-002
   source: PRD §28.3-4, §37, §54.34
   target: '1.0'
@@ -1490,8 +1589,9 @@ requirements:
   tests:
   - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-EXT-003
   source: PRD §28.5, §53.5, §54.33
   target: '1.0'
@@ -1506,10 +1606,13 @@ requirements:
   implementation:
   - 'src/extension.cj: manifest trustLevel and code-only typed builders'
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/extension_test.cj: ExtensionDslTest.compilerRejectsProfileCyclesVersionsRuleIdentityAndCapabilities'
+  - 'src/external_descriptor_test.cj: ExternalDialectDescriptorTest.descriptorsRejectCallbacksUnknownFieldsInvalidSchemaAndUnboundedRules'
+  - 'src/isolation_test.cj: PluginIsolationTest.isolationPolicyIpcIdentityLimitsCancellationAndFailClosedAreEnforced'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-EXT-004
   source: PRD §28.6
   target: '1.0'
@@ -1524,10 +1627,11 @@ requirements:
   - src/extension.cj
   - src/testkit.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/extension_test.cj: ExtensionDslTest.boundedParserSpiRunsAndFailuresAreStructuredWithoutStateLeak'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-EXT-005
   source: PRD §28.7, §44.8, §51.2, §54.35
   target: '1.0'
@@ -1543,10 +1647,12 @@ requirements:
   - src/extension.cj
   - src/testkit.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/testkit_fuzz_test.cj: ExtensionTckAndFuzzTest.extensionTckPassesAllRequiredRuntimeChecks'
+  - 'src/official_extensions_test.cj: OfficialExtensionsTest.allOfficialP1ExtensionsPassTheSharedTck'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-EXT-006
   source: PRD §29
   target: cross-release
@@ -1562,10 +1668,12 @@ requirements:
   - src/extension.cj
   - src/testkit.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/official_extensions_test.cj: OfficialExtensionsTest.catalogAndDefaultEnablementMatrixAreVersioned'
+  - 'src/profile_snapshot_test.cj: ProfileBehaviorSnapshotTest.gfmModernV1FreezesItsDeclaredExtensionComposition'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-CAN-001
   source: PRD §30.1, §51.6, §54.26
   target: '1.0'
@@ -1582,8 +1690,9 @@ requirements:
   tests:
   - 'src/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-CAN-002
   source: PRD §30.2, §51.6
   target: '1.0'
@@ -1601,8 +1710,9 @@ requirements:
   tests:
   - 'src/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-BUD-001
   source: PRD §30.3-4, §51.6, §54.27
   target: '1.0'
@@ -1619,8 +1729,9 @@ requirements:
   tests:
   - 'src/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-SINK-001
   source: PRD §30.5, §39.6, §45.4, §51.5
   target: '1.0'
@@ -1641,9 +1752,10 @@ requirements:
   - 'src/renderer_test.cj: outputBudgetCancellationAndSinkErrorsPropagate'
   - 'src/renderer_test.cj: explicitlyNamedBufferedAsyncSessionPreservesBackpressure'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: full cjpm test; exit 0; 1423 passed; buffered async backpressure regression passed'
-  notes: 'A-033: async describes sink backpressure only; it does not stream parser or renderer frames.'
+  notes: "A-033: async describes sink backpressure only; it does not stream parser or renderer frames. Assumptions: A-001, A-002, A-004, A-033."
 - id: MD-LIM-001
   source: PRD §6.6, §31, §51.6
   target: '1.0'
@@ -1661,8 +1773,9 @@ requirements:
   tests:
   - 'src/core_test.cj: CoreContractTest.safeAndTrustedLimitsRemainBounded'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-014."
 - id: MD-LIM-002
   source: PRD §31, §54.28
   target: '1.0'
@@ -1682,9 +1795,10 @@ requirements:
   - 'src/parser_test.cj: enforcesAstNodeAndAccumulatedLiteralLimitsDuringConstruction'
   - 'src/extension_test.cj: boundedParserSpiRunsAndFailuresAreStructuredWithoutStateLeak'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: full socket-enabled cjpm test; exit 0; 1413 passed, including low-node, multiline fenced/HTML literal and SPI allocation attacks'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-014, A-028."
 - id: MD-SEC-001
   source: PRD §32 SEC-001, §49, §54.36-37
   target: '1.0'
@@ -1704,11 +1818,14 @@ requirements:
   - 'src/native/accelerator.cj: foreign declaration isolated in an opt-in subpackage'
   - 'cjpm.toml and build.cj: default package has no native link option and does not invoke a C toolchain'
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/security_corpus_test.cj: SecurityCorpusTest.safeHtmlCorpusRejectsInjectionAndUriConfusion'
+  - 'src/document_system_test.cj: DocumentSystemTest.documentGraphUsesOnlyHostSuppliedInputsAndResolvesEdgesAndReferences'
+  - 'scripts/release_gate.sh'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: CC/AR set to nonexistent paths; default cjpm build into a fresh /tmp target; exit 0'
-  notes: 'A-033: the optional native accelerator is not part of the core parser/renderer dependency graph.'
+  notes: "A-033: the optional native accelerator is not part of the core parser/renderer dependency graph. Assumptions: A-001, A-002, A-004, A-017."
 - id: MD-SEC-002
   source: PRD §32 SEC-002, §44.7, §51.6
   target: '1.0'
@@ -1725,10 +1842,13 @@ requirements:
   - src/security_corpus_test.cj
   - SECURITY.md
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/security_corpus_test.cj: SecurityCorpusTest.pathologicalDelimiterReferenceHtmlAndTableInputsRemainBounded'
+  - 'src/testkit_fuzz_test.cj: ExtensionTckAndFuzzTest.pathologicalDepthAndOutputAmplificationAreBounded'
+  - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks.linearGrowthCorpus'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-018, A-025."
 - id: MD-SEC-003
   source: PRD §32 SEC-003-005
   target: '1.0'
@@ -1746,8 +1866,9 @@ requirements:
   tests:
   - 'src/renderer_test.cj: outputBudgetCancellationAndSinkErrorsPropagate'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-SEC-004
   source: PRD §32 SEC-006, §51.5
   target: '1.0'
@@ -1762,10 +1883,12 @@ requirements:
   implementation:
   - 'src/renderer.cj: TrustedHtml has private constructor and public unsafe factory only'
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/renderer_test.cj: RendererBehaviorTest.outputBudgetCancellationAndSinkErrorsPropagate'
+  - 'src/security_corpus_test.cj: SecurityCorpusTest.safeHtmlCorpusRejectsInjectionAndUriConfusion'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-SEC-005
   source: PRD §32 SEC-007, §51.6-7
   target: '1.0'
@@ -1785,10 +1908,11 @@ requirements:
   tests:
   - GitHub private vulnerability reporting API verification
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-24: cjpm test --no-color --no-progress; exit 0; 1411 passed, 0 skipped, 0 error, 0 failed after sandbox-external socket-enabled rerun'
   - '2026-08-24: gh api -H ''X-GitHub-Api-Version: 2026-03-10'' repos/lIlIIlIll/markdown/private-vulnerability-reporting; exit 0; {"enabled":true}'
-  notes: GitHub Private Vulnerability Reporting is enabled and SECURITY.md links the maintainer-owned private advisory form.
+  notes: "GitHub Private Vulnerability Reporting is enabled and SECURITY.md links the maintainer-owned private advisory form. Assumptions: A-001, A-002, A-004, A-023."
 - id: MD-ERR-001
   source: PRD §33.1
   target: '1.0'
@@ -1805,8 +1929,9 @@ requirements:
   tests:
   - 'src/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-ERR-002
   source: PRD §33.2
   target: '1.0'
@@ -1822,8 +1947,9 @@ requirements:
   tests:
   - 'src/parser_test.cj: preservesMalformedInlineAsTextAndHonorsResourceControls'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-ERR-003
   source: PRD §33.3
   target: '1.0'
@@ -1840,8 +1966,9 @@ requirements:
   tests:
   - 'src/input_test.cj: strictRejectsInvalidUtf8AndReplacePreservesOriginalOffsets'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-019."
 - id: MD-ERR-004
   source: PRD §33.4
   target: '1.0'
@@ -1857,10 +1984,11 @@ requirements:
   - src/diagnostic.cj
   - src/parser.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/parser_test.cj: ParserBehaviorTest.partialResultsRequireExplicitEntryAndCannotBecomeArtifacts'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-LINT-001
   source: PRD §34
   target: '1.1'
@@ -1874,10 +2002,12 @@ requirements:
   implementation:
   - src/lint.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/lint_test.cj: LintExplainTest.lintFindsStructureAccessibilityAndSecurityIssuesAndAppliesFreshFix'
+  - 'src/lint_test.cj: LintExplainTest.lintCoversUnusedReferencesMixedMarkersAmbiguityAndInvisibleSeparators'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-006."
 - id: MD-LINT-002
   source: PRD §34
   target: '1.1'
@@ -1892,10 +2022,11 @@ requirements:
   implementation:
   - src/lint.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/lint_test.cj: LintExplainTest.lintFindsStructureAccessibilityAndSecurityIssuesAndAppliesFreshFix'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-006."
 - id: MD-EXP-001
   source: PRD §35
   target: '1.1'
@@ -1909,10 +2040,11 @@ requirements:
   implementation:
   - src/lint.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/lint_test.cj: LintExplainTest.explainReportsActualExtensionSelectionAndFingerprint'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-006."
 - id: MD-EDIT-001
   source: PRD §36.1-2
   target: '1.1'
@@ -1927,10 +2059,12 @@ requirements:
   implementation:
   - src/editor.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/editor_test.cj: EditorSnapshotTest.snapshotAppliesValidatedUtf8AndUtf16Edits'
+  - 'src/editor_test.cj: EditorSnapshotTest.safeEqualLengthTextEditUsesRealBlockLocalIncrementalReparse'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-005, A-031."
 - id: MD-EDIT-002
   source: PRD §36.3-4, §54.40
   target: 2.0+
@@ -1946,10 +2080,12 @@ requirements:
   implementation:
   - src/editor.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/editor_test.cj: EditorSnapshotTest.safeEqualLengthTextEditUsesRealBlockLocalIncrementalReparse'
+  - 'src/capabilities_test.cj: CapabilitiesTest.reportsActualDialectAndVersionedOptionalSupport'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-005, A-021."
 - id: MD-FUT-001
   source: PRD §7.3, §8.13, §54.16
   target: 2.0+
@@ -1964,10 +2100,12 @@ requirements:
   implementation:
   - docs/prd/markdown-library.md
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/external_descriptor_test.cj: ExternalDialectDescriptorTest.jsonAndYamlDescriptorsCompileToTheSameDataOnlyDialect'
+  - 'src/external_descriptor_test.cj: ExternalDialectDescriptorTest.descriptorsRejectCallbacksUnknownFieldsInvalidSchemaAndUnboundedRules'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-FUT-002
   source: PRD §7.3, §8.16, §53.5
   target: 2.0+
@@ -1982,10 +2120,11 @@ requirements:
   implementation:
   - docs/prd/markdown-library.md
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/isolation_test.cj: PluginIsolationTest.isolationPolicyIpcIdentityLimitsCancellationAndFailClosedAreEnforced'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-FUT-003
   source: PRD §7.3
   target: 2.0+
@@ -2000,10 +2139,12 @@ requirements:
   implementation:
   - docs/prd/markdown-library.md
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/document_system_test.cj: DocumentSystemTest.documentGraphUsesOnlyHostSuppliedInputsAndResolvesEdgesAndReferences'
+  - 'src/document_system_test.cj: DocumentSystemTest.virtualTreePagesPreserveRangesCancellationAndBudgets'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-CAP-001
   source: PRD §37, §47.18, §51.2
   target: '1.0'
@@ -2025,10 +2166,11 @@ requirements:
   - 'src/capabilities_test.cj: reportsActualDialectAndVersionedOptionalSupport'
   - 'src/input_test.cj: nativeScannerCanBeDisabledWithoutChangingPublicParseSemantics'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: full 1414-test suite exit 0; capabilities report native scanner available/enabled/String behavior and disabled byte parsing preserves rendered semantics'
   - '2026-08-25: final full suite exit 0; 1423/1423; accelerated and pure capability reports matched their actual execution paths'
-  notes: 'A-033: native availability belongs to the explicit accelerated engine, while the default engine reports unavailable.'
+  notes: "A-033: native availability belongs to the explicit accelerated engine, while the default engine reports unavailable. Assumptions: A-001, A-002, A-004, A-029, A-031, A-033."
 - id: MD-ART-001
   source: PRD §38
   target: '0.9'
@@ -2050,9 +2192,10 @@ requirements:
   - 'src/artifact_test.cj: artifactHitsOnlyExactSourceEngineAndDialect covers v2 fields, policy match/miss and invalid-byte rejection'
   - 'src/document_system_test.cj: binarySnapshotIsVersionedStrictAndFuzzSafe'
   evidence:
+  - *final_validation_evidence
   - '2026-08-26: ArtifactSourceMapTest 3/3, DocumentSystemTest 4/4 and CapabilitiesTest 1/1 exit 0 after schema-v2 implementation'
   - '2026-08-26: full cjpm test exit 0, 1423/1423; public API v0.9 snapshot verified at 1226 declarations; checker tests 9/9'
-  notes: 'Schema v1 is intentionally not adapted during the authorized 0.9 breaking reset.'
+  notes: "Schema v1 is intentionally not adapted during the authorized 0.9 breaking reset. Assumptions: A-001, A-002, A-004, A-028."
 - id: MD-API-001
   source: PRD §39.1-8
   target: '1.0'
@@ -2072,9 +2215,10 @@ requirements:
   tests:
   - 'src/parser_test.cj: ParserBehaviorTest public engine paths'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: public API snapshot verified; 1155 declarations'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-003, A-004."
 - id: MD-API-002
   source: PRD §39.9, §6.1
   target: '1.0'
@@ -2091,9 +2235,10 @@ requirements:
   tests:
   - 'src/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: public API snapshot verified; 1155 declarations'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-003, A-004."
 - id: MD-PKG-001
   source: PRD §40, §49
   target: '1.0'
@@ -2117,13 +2262,14 @@ requirements:
   - 'scripts/test_build_native_scanner.py: default no-op and Linux/MinGW/MSVC tool/linker command contracts'
   - 'examples/quickstart: public consumer imports curated packages without native linkage'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: cjpm bundle --skip-test after the full 1410-test gate; exit 0; target/markdown-1.0.0.cjp created'
   - '2026-08-19: tools/markdown and examples/quickstart manifests explicitly link target/native/libmarkdown_scanner.a; direct consumer builds are part of the final gate'
   - '2026-08-25: tools/markdown directory rename validated by cjpm check, CLI release build, CLI smoke and full cjpm test 1410/1410'
   - '2026-08-25: generated tools/markdown/build-script-cache removed and recursively ignored to keep host-specific prebuild binaries out of source artifacts'
   - '2026-08-25: build helper contract tests 4/4; missing-toolchain pure build, explicit native archive, benchmark driver, quickstart and CLI builds exit 0; API snapshot 1192 declarations'
-  notes: 'A-033: root markdown remains the compatibility umbrella; curated packages shrink the import surface for new code. NodeIdAllocator and Sha256 are internal in pre-GA 0.8. Non-Linux command contracts are implemented but real target SDK/linker release qualification remains a platform-matrix responsibility.'
+  notes: "A-033: root markdown remains the compatibility umbrella; curated packages shrink the import surface for new code. NodeIdAllocator and Sha256 are internal in breaking pre-GA 0.9. Non-Linux command contracts are implemented but real target SDK/linker release qualification remains a platform-matrix responsibility. Assumptions: A-001, A-002, A-004, A-016, A-017, A-022, A-026, A-027, A-029, A-033."
 - id: MD-CLI-001
   source: PRD §41.1-6, §49
   target: '1.0'
@@ -2135,18 +2281,20 @@ requirements:
   - format 支持 stdin/stdout、in-place、check、diff、profile、newline 和 range
   - check 覆盖 limits、unsafe URI、remote image、raw HTML、extension conflict、formatter diff 和 lint
   - dialect 支持 describe、fingerprint 和 validate
-  - 1.0 未实现的 explain/range/lint 能力必须显式报告 capability/unsupported，不得伪造结果
+  - explain、range format 和 lint 命令调用真实公开能力；目标构建缺少某项 capability 时必须结构化报告 unsupported，不得伪造结果
   status: pass
   implementation:
   - tools/markdown/src/main.cj
   - scripts/cli_smoke.sh
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'scripts/cli_smoke.sh'
+  - 'tools/markdown/src/main.cj'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: CLI build and scripts/cli_smoke.sh; exit 0'
   - '2026-08-25: tools/markdown release build and scripts/cli_smoke.sh; exit 0 after public command rename to markdown'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-006."
 - id: MD-CLI-002
   source: PRD §41.7
   target: '1.0'
@@ -2162,11 +2310,13 @@ requirements:
   - tools/markdown/src/main.cj
   - scripts/cli_smoke.sh
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'scripts/cli_smoke.sh'
+  - 'tools/markdown/src/main.cj'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: scripts/cli_smoke.sh; exit 0; documented exit codes verified'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-CON-001
   source: PRD §42
   target: '1.0'
@@ -2184,10 +2334,12 @@ requirements:
   - 'src/parser.cj: immutable MarkdownEngine config and fresh ParserSession per parse'
   - 'src/ast.cj: immutable Document/MarkdownNode public surface'
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/concurrency_test.cj: ConcurrencyContractTest.immutableEngineAndDocumentSupportConcurrentReadOnlyUse'
+  - 'src/concurrency_test.cj: ConcurrencyContractTest.cancellationRaceStopsAnAlreadyStartedParse'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-DET-001
   source: PRD §6.5, §43, §52
   target: '1.0'
@@ -2204,10 +2356,13 @@ requirements:
   - src/fingerprint.cj
   - src/concurrency_test.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/fingerprint_test.cj: FingerprintTest.dialectFingerprintIsDeterministicAndSemanticChangesAlterIt'
+  - 'src/profile_snapshot_test.cj: ProfileBehaviorSnapshotTest.gfmModernV1FreezesItsDeclaredExtensionComposition'
+  - 'src/renderer_test.cj: RendererBehaviorTest.arenaRendererIsDeterministicForCoreAndGfmTrees'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-010."
 - id: MD-TST-001
   source: PRD §4, §44.1, §51.1, §52
   target: '1.0'
@@ -2227,9 +2382,10 @@ requirements:
   tests:
   - 'src/generated_commonmark_spec_test.cj: CommonMark0312ConformanceTest examples 1-652'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: full suite included CommonMark 652/652 and GFM 671/671'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-008, A-009."
 - id: MD-TST-002
   source: PRD §44.2
   target: '1.0'
@@ -2249,11 +2405,14 @@ requirements:
   - 'tests/fuzz/native_scanner_sanitizer.c: deterministic scanner boundary sanitizer harness'
   - 'tests/fuzz/crashes and tests/fuzz/native-scanner-corpus: checked-in historical crash and seed corpora'
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'scripts/differential_test.py'
+  - 'src/generated_commonmark_spec_test.cj'
+  - 'src/generated_gfm_spec_test.cj'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: differential test; 25 checked, 24 exact, 1 classified, 0 unexpected'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-TST-003
   source: PRD §44.3-4, §51.3, §52
   target: '1.0'
@@ -2273,8 +2432,9 @@ requirements:
   - 'src/input_test.cj: arbitraryChunkBoundariesMatchAllAtOnce'
   - 'src/formatter_test.cj: canonicalMarkdownIsIdempotentForMixedDocument'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-TST-004
   source: PRD §44.5-6, §51.6-7
   target: '1.0'
@@ -2297,11 +2457,12 @@ requirements:
   - 'src/testkit_fuzz_test.cj: historicalInvalidUtf8GfmCrashCorpusStaysFixed'
   - 'src/security_corpus_test.cj: safeHtmlCorpusRejectsInjectionAndUriConfusion'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: deterministic fuzz and security corpus cases passed in full suite'
   - '2026-08-25: seed 20260825 arbitrary-byte fuzz found two UTF-8 boundary crashes; both fixed and full 1419-test suite passed'
   - '2026-08-25: scripts/fuzz_native_scanner.py --runs 10000; exit 0; coverage-guided libFuzzer completed and ASan/UBSan remained clean; full suite 1423/1423'
-  notes: 'A-033: libFuzzer mutates a temporary corpus copy, so checked-in seeds and historical regressions remain stable.'
+  notes: "A-033: libFuzzer mutates a temporary corpus copy, so checked-in seeds and historical regressions remain stable. Assumptions: A-001, A-002, A-004, A-021, A-033."
 - id: MD-TST-005
   source: PRD §44.7-9, §51.7
   target: '1.0'
@@ -2319,11 +2480,14 @@ requirements:
   - src/security_corpus_test.cj
   - scripts/release_gate.sh
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/security_corpus_test.cj: SecurityCorpusTest.pathologicalDelimiterReferenceHtmlAndTableInputsRemainBounded'
+  - 'src/testkit_fuzz_test.cj: ExtensionTckAndFuzzTest.extensionTckPassesAllRequiredRuntimeChecks'
+  - 'scripts/test_check_public_api.py'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: API snapshot, pathological corpus, and official extension TCK passed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-PERF-001
   source: PRD §45.1-3
   target: '1.0'
@@ -2344,9 +2508,13 @@ requirements:
   - docs/reports/benchmark.md
   - docs/reports/markdown4cj-comparison.md
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'scripts/test_benchmark_input_profiles.py: six corpus/input identity and fail-closed normalization tests'
+  - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks.commonmarkParseOnly'
+  - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks.gfmParseAndHtml'
+  - benchmarks/measure.py
   - scripts/test_benchmark_input_profiles.py
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: 12-corpus -O2 reference-host matrix recorded raw samples, per-corpus digests, pinned CPU, SDK, reference
     commits, geometric means, and custom-extension cost'
@@ -2363,7 +2531,7 @@ requirements:
   - '2026-08-28: historical R60 canonical raw SHA-256 30f3a7000ad0b57e11857cee33a9f72c9681b704d16ba2981ba08aaaba53f613 superseded R57 and bound workspace commit anchor 2454b062, exact minimal archive b79cd108f8a1afa5b4818c9ab0626d8284beed97895db50c9e71184085b7d69d, fresh driver 81c82f3d690cfeb9e01b03e9c5b35884ad19436c8d05c7cbab23ee78b742dcb5, harness 41b068720b6b7cc9898fc3fe4aa3df174a987d6c3ba359324b2d9b63d7778c86, SDK 1.1.0-alpha.20260803040049 and both frozen reference drivers'
   - '2026-08-28: historical R65 canonical raw SHA-256 442842c801231d738b423aaf8e00b61cba6359c22a1d1a6ae5f1c48f72ed6d41 superseded R60 and bound workspace commit anchor 2454b062, exact minimal archive d05f78e676a374cd579459078bdf517fc5e15dac4879860ddd086eef9a30cc04, fresh driver a1048827aea26427625a7870a386d7b2e87c5b09ef44983741d21c1372d7440a, harness 41b068720b6b7cc9898fc3fe4aa3df174a987d6c3ba359324b2d9b63d7778c86, SDK 1.1.0-alpha.20260803040049 and both frozen reference drivers'
   - '2026-08-28: current R76 canonical raw SHA-256 730249530cad110b3c38dccd95cd7ad973ff580a45e13a4ec963616a1f6160c8 supersedes R65 and binds workspace commit anchor 2454b062, exact minimal archive cef965b03d8cc9d2d878ae30221c38db5d405103afe098473f548d7387b5da61, fresh driver ce8812ae91f5bebff65f7139dcfd9d044000ae75686d3b015b176723544c1df4, harness 41b068720b6b7cc9898fc3fe4aa3df174a987d6c3ba359324b2d9b63d7778c86, SDK 1.1.0-alpha.20260803040049 and both frozen reference drivers'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-011, A-017, A-029, A-034, A-035, A-038."
 - id: MD-PERF-002
   source: PRD §45.4, §51.7, §52
   target: '1.0'
@@ -2389,6 +2557,7 @@ requirements:
   - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks'
   - scripts/test_benchmark_input_profiles.py
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: release_gate.sh; exit 1 at benchmarks/measure.py after all preceding gates passed'
   - '2026-08-18: remote Server full release benchmark; CPU 24, Xeon Gold 6248R, glibc 2.35, -O2, heap 2GB, 7 samples x 3 iterations; exit 1 with raw report and all corpus digests'
@@ -2542,10 +2711,7 @@ requirements:
   - '2026-08-29: canonical readme-api input now replaces the generated release-evidence block with one fixed marker before sizing and hashing. Six benchmark-profile tests prove generated values cannot recursively change the corpus and missing or duplicate markers fail closed.'
   - '2026-08-29: complete clean-commit R139 canonical on Server CPU 24 passed every gate and binds commit 856a6c7164fe97450b5ab7ff34926445b48dcc35, archive bdc7964d65a631f12d527b18352e49ae3a50563589427a0e304dc8b8a569605f, harness b07a40056119b13e6bf1206233afe1855489d6af12aab10b08367d3a36316254, driver 363ece9a4eed545a8f85b97de5052da6f4d9037175bb40da4e677912d03334d5 and raw 530d206f2558766c56eb02e33b646f7ef36b58a06b5187f52999223f32337d0c. CommonMark is 2.380950x, GFM 2.454213x, ordinary 3.631640x/2.026894x, scaling 0.364821/2.498950, pathological 0.632235/2.437232 and extra RSS 30764 KiB; all raw gates are true.'
   - '2026-08-29: full fresh-archive Server release gate exit 0 after format, API 1311, check/build, native ASan+UBSan fuzz 10000, tests 1455/1455, CLI, quickstart, differential 25/24/1/0, benchmark smoke 3/3, bundle and release-ready validation.'
-  notes: >-
-    R139 is the latest complete canonical run under A-038 and passes every frozen performance gate without a
-    threshold waiver. The normalized release-evidence block removes self-referential corpus drift while retaining
-    the complete README/API workload and an explicit checksum. Historical failed runs remain recorded above.
+  notes: "R139 is the latest complete canonical run under A-038 and passes every frozen performance gate without a threshold waiver. The normalized release-evidence block removes self-referential corpus drift while retaining the complete README/API workload and an explicit checksum. Historical failed runs remain recorded above. Assumptions: A-001, A-002, A-004, A-011, A-018, A-025, A-026, A-027, A-034, A-035, A-038."
 - id: MD-PERF-003
   source: PRD §45.5
   target: '1.0'
@@ -2563,12 +2729,16 @@ requirements:
   - benchmarks/measure.py
   - docs/reports/benchmark.md
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks.commonmarkParseOnly'
+  - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks.gfmParseAndHtml'
+  - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks.linearGrowthCorpus'
+  - 'benchmarks/measure.py'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: owned byte input, SourceSlice literals, explicit parser frames, bounded output, ordinary/pathological scaling,
     and RSS tests passed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-011."
 - id: MD-OBS-001
   source: PRD §46
   target: '1.0'
@@ -2583,10 +2753,11 @@ requirements:
   implementation:
   - src/observability.cj
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'src/observability_test.cj: ObservabilityTest.statisticsAreExplicitLocalAndContentFree'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-DOC-001
   source: PRD §47, §49, §51.7
   target: '1.0'
@@ -2604,11 +2775,14 @@ requirements:
   - docs/
   - examples/quickstart/
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'scripts/test_release_evidence.py'
+  - 'scripts/cli_smoke.sh'
+  - 'examples/quickstart/src/main.cj'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: README, PRD, CLI guide, changelog, historical reports, raw report schemas and .agent records use the markdown product name; JSON/YAML parsing and full test suite passed'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004, A-008, A-026, A-031, A-039."
 - id: MD-DOC-002
   source: PRD §47, §49, §51.7
   target: '1.0'
@@ -2625,11 +2799,13 @@ requirements:
   - docs/
   - examples/quickstart/
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'examples/quickstart/src/main.cj'
+  - 'scripts/release_gate.sh'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: examples/quickstart built and ran using only the public package API'
-  notes: ''
+  notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-COMP-001
   source: PRD §48.1-2
   target: cross-release
@@ -2648,12 +2824,13 @@ requirements:
   tests:
   - 'src/extension_test.cj: semanticVersionConstraintsFollowSemVerPrecedenceAndRejectInvalidVersions'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: public API snapshot verified; 1155 declarations'
   - '2026-08-25: socket-enabled full cjpm test; exit 0; 1417 passed, 0 skipped/error/failed; public API snapshot verified at 1165 declarations'
   - '2026-08-27: socket-enabled full cjpm test; exit 0; 1446 passed, 0 skipped/error/failed'
   - '2026-08-27: public API checker tests 9/9 and v0.9 snapshot verification at 1281 declarations; quickstart public consumer built and ran successfully'
-  notes: 'The 0.9 breaking contract, observable compatibility surfaces, API baseline and consumer migration are verified.'
+  notes: "The 0.9 breaking contract, observable compatibility surfaces, API baseline and consumer migration are verified. Assumptions: A-001, A-002, A-004, A-032, A-036, A-037."
 - id: MD-COMP-002
   source: PRD §48.3-6
   target: cross-release
@@ -2670,12 +2847,16 @@ requirements:
   - docs/versioning-and-compatibility.md
   - scripts/check_public_api.py
   tests:
-  - Final full-suite and requirement-specific tests under src/*_test.cj
+  - 'scripts/test_check_public_api.py'
+  - 'src/profile_snapshot_test.cj: ProfileBehaviorSnapshotTest.gfmModernV1FreezesItsDeclaredExtensionComposition'
+  - 'src/extension_test.cj: ExtensionDslTest.compilerRejectsProfileCyclesVersionsRuleIdentityAndCapabilities'
+  - 'src/artifact_test.cj: ArtifactSourceMapTest.artifactHitsOnlyExactSourceEngineAndDialect'
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-27: extension SemVer/SPI tests included in socket-enabled full suite; exit 0; 1446/1446'
   - '2026-08-27: public API checker tests 9/9; v0.9 snapshot verified at 1281 declarations; quickstart consumer rebuilt and ran against the breaking arena API'
-  notes: 'A-036 pre-GA reset is complete for AST/SPI compatibility; versioned profile, deprecation and security-exception policies are documented and enforced by the API gate.'
+  notes: "A-036 pre-GA reset is complete for AST/SPI compatibility; versioned profile, deprecation and security-exception policies are documented and enforced by the API gate. Assumptions: A-001, A-002, A-004, A-036, A-037."
 - id: MD-REL-001
   source: PRD §49, §50 M6, §51
   target: '1.0'
@@ -2699,6 +2880,7 @@ requirements:
   - scripts/release_gate.sh
   - cjpm bundle
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: cjpm bundle --skip-test after the full 1410-test gate; exit 0; GA release withheld because prerequisite requirements
     are blocked'
@@ -2706,9 +2888,7 @@ requirements:
   - '2026-08-25: canonical benchmark is now bound to source commit 0275f27a, SDK, source archive, harness and all drivers; release-ready validation still fails closed because the release is draft, the evidence tree is dirty and MD-PERF-002 fails'
   - '2026-08-25: refreshed canonical benchmark is bound to product commit 34113ea6, SDK, source archive, harness and all drivers; its evidence projection is clean, while release-ready validation still fails closed because the release is draft and MD-PERF-002 fails'
   - '2026-08-29: release evidence is ready and commit-bound; full fresh-archive Server release gate exit 0, with bundle target/markdown-0.9.0.cjp size 467103 bytes and SHA-256 2a9a743ebf440813594662fb92071ac6da1b5c9d14b663ad4e0fbce9421a5ade.'
-  notes: A-036 keeps the breaking pre-GA package at 0.9.0 rather than prematurely freezing a 1.x ABI. All release
-    artifacts and 1.0-target requirements are nevertheless implemented and qualified; the preview bundle is ready
-    for publication, and the private vulnerability reporting channel is enabled.
+  notes: "A-036 keeps the breaking pre-GA package at 0.9.0 rather than prematurely freezing a 1.x ABI. All release artifacts and 1.0-target requirements are nevertheless implemented and qualified; the preview bundle is ready for publication, and the private vulnerability reporting channel is enabled. Assumptions: A-001, A-002, A-004, A-009, A-023, A-024, A-027, A-039."
 - id: MD-QUAL-001
   source: PRD §51.7, §52
   target: '1.0'
@@ -2729,7 +2909,8 @@ requirements:
   - scripts/release_gate.sh
   - benchmarks/measure.py
   evidence:
+  - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-29: full fresh-archive Server release gate exit 0; 1455/1455 tests, CommonMark 652/652, GFM 671/671, differential 25/24/1/0, native ASan+UBSan fuzz 10000, benchmark smoke 3/3 and bundle all pass.'
   - '2026-08-29: latest canonical performance passes CommonMark 2.380950x and GFM 2.454213x with all ordinary, scaling, pathological and RSS gates true; no threshold or assertion was weakened.'
-  notes: All correctness, conformance, security, package, deterministic behavior and performance success metrics pass.
+  notes: "All correctness, conformance, security, package, deterministic behavior and performance success metrics pass. Assumptions: A-001, A-002, A-004, A-010, A-023."

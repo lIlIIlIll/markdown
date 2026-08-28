@@ -90,13 +90,14 @@
 - 决策日期：2026-08-17
 - 涉及：`MD-PERF-001-003`
 - 歧义：PRD 规定“固定 reference host 和 release build”及数值门槛，但没有机器、CPU 绑定、SDK、参考实现版本、预热/采样和统计协议。
-- 决定：本候选版本 reference host 冻结为 Linux x86_64、Intel Core i7-8700
-  6C/12T、Cangjie `1.1.0-alpha.20260817040003`、`-O2`、clang 15.0.7；参考实现
-  固定为 cmark 0.31.1 commit `bb3678d7...` 与 cmark-gfm 0.29.0.gfm.13 commit
-  `587a12bb...`。每个有效点至少 7 个进程内样本，发布原始 wall/RSS 数据和语料
-  SHA-256。当前未固定 CPU 频率，因此噪声超过门槛的结果只能失败或重测，不能放宽。
+- 决定：最终 canonical reference host 冻结为 Linux x86_64、Intel Xeon Gold
+  6248R 的 CPU 24、Cangjie `1.1.0-alpha.20260803040049`、`-O2` 和 2 GiB heap；
+  参考实现固定为 cmark 0.31.1 commit `bb3678d7...` 与 cmark-gfm
+  0.29.0.gfm.13 commit `587a12bb...`。每个有效点至少 7 个交替 paired 样本，发布
+  原始 wall/RSS 数据、语料 SHA-256、driver/harness/archive identity。候选仍先执行
+  A/A 和正反序 A/B；噪声超过门槛的结果只能失败或重测，不能放宽。
 
-## A-023：项目许可证
+## A-039：项目许可证
 
 - 状态：`resolved`
 - 决策日期：2026-08-17
@@ -191,12 +192,16 @@
 
 ## A-023：私密漏洞报告渠道不能由实现 Agent 虚构
 
-- 状态：`blocked_external`
-- 决策日期：2026-08-18
+- 状态：`resolved`
+- 决策日期：2026-08-18；2026-08-24 验证
 - 涉及：`MD-SEC-005`、`MD-REL-001`、`MD-QUAL-001`
 - 歧义：PRD 强制要求私密漏洞报告渠道，但仓库没有安全邮箱、托管平台 security advisory URL 或维护者提供的其他私密端点。
-- 决定：发布响应流程和所需报告内容继续写入 `SECURITY.md`，但不把“repository security contact”占位文字当作可用渠道，也不虚构邮箱或外部服务。
-- 影响：在维护者配置并验证真实渠道前，相关要求保持 `blocked`，项目不得声明 1.0 GA。
+- 决定：不虚构邮箱或外部服务；使用维护者启用的 GitHub Private Vulnerability
+  Reporting 与 `SECURITY.md` 中的私密 advisory 表单作为正式渠道。
+- 证据：`gh api -H 'X-GitHub-Api-Version: 2026-03-10'
+  repos/lIlIIlIll/markdown/private-vulnerability-reporting` exit 0，返回
+  `{"enabled":true}`。
+- 影响：`MD-SEC-005`、`MD-REL-001` 和 `MD-QUAL-001` 的外部阻塞已解除。
 
 ## A-024：`cjpm bundle` 的字节级可复现性
 
@@ -221,8 +226,8 @@
 - 决策日期：2026-08-19
 - 涉及：`MD-PERF-002`、`MD-PKG-001`、`MD-DOC-001`
 - 歧义：PRD 允许用 `@FastNative` 提升 foreign 函数性能，但要求函数不长时间运行、不阻塞且不调用仓颉方法；仓库同时需要保留可复核的 native scanner 入口。
-- 决定：2026-08-19 的实现曾仅为 `MD_Markdown_ScanLines` 添加 `@FastNative`；后续审计确认，尽管其 C 实现只读输入、写 packed records、无锁无 I/O 且无 Cangjie 回调，整输入扫描的总执行时间随输入变化，无法证明短时且有界，因此在 2026-08-22 删除 annotation。native scanner 与 static archive 发布边界仍保留；仓库内 CLI、benchmark driver 和 quickstart 显式链接 `target/native/libmarkdown_scanner.a`，README/迁移文档公开该依赖。
-- 理由：删除 annotation 满足运行时调用约束，不改变 foreign signature、packed record ABI 或发布依赖，也不代表 `MD-PERF-002` 已完成；parser、GC 和对象分配路径仍不得标记 `@FastNative`。
+- 决定：2026-08-19 的实现曾仅为 `MD_Markdown_ScanLines` 添加 `@FastNative`；后续审计确认整输入扫描耗时随输入变化，无法证明短时且有界，因此删除 annotation。native scanner 现在是显式可选 accelerator；默认包构建不运行 C toolchain、不携带 linker option，benchmark 可以显式构建并启用 target-aware static archive，纯仓颉 fallback 保持完整语义。
+- 理由：删除 annotation 满足运行时调用约束；可选化同时满足核心无非标准原生运行时依赖。parser、GC、对象分配和整输入 foreign scan 均不得使用 `@FastNative`。
 - 影响 requirements：`MD-PERF-002`、`MD-PKG-001`、`MD-DOC-001`。
 
 ## A-027：UInt64 repair 与 reference evidence 边界
@@ -249,9 +254,9 @@
 - 决策日期：2026-08-25
 - 涉及：`MD-CAP-001`、`MD-PERF-001`、`MD-PKG-001`
 - 歧义：既有 `commonmark-parse` 已用于历史报告和外部脚本，但实际调用 owned-byte API；运行时关闭 native scanner 是否等同于移除 native 构建依赖也容易混淆。
-- 决定：保留 `commonmark-parse` 作为 `commonmark-parse-owned` 的兼容 alias，并新增 String/Array/Owned/Stream 四个明确 profile。builder 开关只控制解析执行路径；capability 同时报告 available、enabled 和 String 路径是否使用 native。当前静态 archive 仍是包链接依赖，不把“禁用执行”描述为“纯仓颉发布物”。
+- 决定：保留 `commonmark-parse` 作为完整 AST canonical profile，并新增 String/Array/Owned/Reusable/Stream 明确输入 profile。builder 开关控制解析执行路径；capability 同时报告 available、enabled 和 String 路径是否使用 native。native foreign 声明位于可选 accelerator 子包，默认根包不链接静态 archive，因此禁用且不选择 accelerator 的发布物是纯仓颉路径。
 - 理由：避免历史 harness 静默换入口，同时让默认 README API 与最优 owned-byte API 的成本可分别测量；不对尚未实现的跨平台无 native 打包作虚假声明。
-- 后续：真正移除 native 链接依赖需要独立 package/build feature 或可选 accelerator 模块，并在目标平台矩阵证明。
+- 后续：非 Unix target 的真实发布资格仍由对应 SDK runner 验证；命令构造测试不能冒充实机矩阵。
 
 ## A-030：VisualPosition 的显示宽度边界
 
@@ -289,7 +294,7 @@
 - 决策日期：2026-08-25
 - 涉及：`MD-IN-003-004`、`MD-SINK-001`、`MD-CAP-001`、`MD-PKG-001`、`MD-TST-004`
 - 歧义：要求既可解释为删除现有根包 API 并实现真正增量 parser，也可解释为校准执行合同并提供可逐步采用的窄入口；直接删除已公开符号会违反现有兼容约束。
-- 决定：采用成本更低且可验证的 buffered 路线，新增 `BufferedInputSession`、`BufferedAsyncHtmlOutputSession` 和 `tryParse`，保留旧名称并明确它们不提前产生语义、不降低峰值内存。根 `markdown` 继续作为兼容 umbrella；新增 `markdown.core/render/extensions/editor/artifact/document/testkit` 精选子包。0.8 pre-GA 审计确认 `NodeIdAllocator` 和 `Sha256` 仅为内部构造/fingerprint helper，收回为 internal；其余既有行为型 API 不在本切片删除。native foreign 声明隔离到 `markdown.native`，byte/owned/stream 仅经显式 `acceleratedBy` 包装器启用；默认 build 不执行 C toolchain、不携带 linker option。
+- 决定：采用成本更低且可验证的 buffered 路线，新增 `BufferedInputSession`、`BufferedAsyncHtmlOutputSession` 和 `tryParse`，保留旧名称并明确它们不提前产生语义、不降低峰值内存。根 `markdown` 继续作为兼容 umbrella；新增 `markdown.core/render/extensions/editor/artifact/document/testkit` 精选子包。0.9 breaking pre-GA 审计确认 `NodeIdAllocator` 和 `Sha256` 仅为内部构造/fingerprint helper，收回为 internal；其余既有行为型 API 不在本切片删除。native foreign 声明隔离到 `markdown.native`，byte/owned/stream 仅经显式 `acceleratedBy` 包装器启用；默认 build 不执行 C toolchain、不携带 linker option。
 - 理由：保留已有消费者的源码/布局兼容，同时让新消费者只导入所需能力；一个共享 parser 避免维护两套语义实现。非 Unix 支持以 target-aware `CC`/`AR` 或 `cl`/`lib` 构建及 consumer linker 资产为边界，真实平台发布资格仍须在相应 SDK runner 验证。
 - 影响 requirements：上述条目的 notes 引用本假设；不得把 buffered adapter 宣称为真正 incremental execution，也不得把跨 target 命令测试宣称为实机平台验证。
 
@@ -328,12 +333,12 @@
 ## A-037：Event API 的功能规范与发布时点
 
 - 状态：`resolved`
-- 决策日期：2026-08-27
+- 决策日期：2026-08-27；2026-08-29 修订
 - 涉及：`MD-GOV-004`、`MD-EVT-001`、`MD-COMP-001-002`
 - 歧义：PRD §27 规定了最终 Event API 的 Resolved/RawBlock 行为，但冻结产品决策 §54.10 明确 Event API 在 1.1；此前 A-036 和 0.9 changelog 又把 source event 纳入 0.9 reset，三处发布时点不一致。
-- 决定：以编号更晚且明确标为“已冻结产品决策”的 §54.10 为发布时点来源。0.9 删除从完整 `Document` AST walk 生成事件数组的兼容适配器，不以它冒充低分配 source event；§27 的完整 Resolved/RawBlock API 保留为 1.1 pending。显式 FullAst/PreferFused/RequireFused HTML 选择仍属于 0.9，且不能替代 full-AST canonical benchmark。
-- 理由：这同时满足 §27 禁止 AST walk 伪装流式解析、§54.10 的版本边界，以及用户冻结的“Event/Fused 独立研究线不能替代完整 AST 主线”。用户已允许 0.9 破坏性变更，因此不保留误导性 runtime adapter。
-- 影响 requirements：`MD-GOV-004` 可在适配器删除、fused fail-closed 和 API snapshot 验证后验收；`MD-EVT-001` target 改为 1.1 并保持 pending，直到真正两种 source execution mode 完成。
+- 决定：0.9 删除从完整 `Document` AST walk 生成事件数组的兼容适配器。随后按完整 PRD 验收目标提前交付 §27 的 Resolved/RawBlock source execution：事件不引用 AST，Resolved 先建立 reference index，RawBlock 随 chunk 输出已闭合 block 并显式标记非最终语义。该能力仍标记为 1.1 contract/experimental surface，可在 0.9 preview 中提前提供。显式 FullAst/PreferFused/RequireFused HTML 选择不能替代 full-AST canonical benchmark。
+- 理由：这同时满足 §27 的真实执行语义、§54.10 的兼容冻结时点和用户要求的全 PRD 实现；提前提供不等于把 1.1 API 冻结为 1.0 ABI。
+- 影响 requirements：`MD-GOV-004`、`MD-EVT-001` 和 `MD-COMP-001-002` 均以真实 source execution、fail-closed fallback、API snapshot 和迁移文档验收。
 
 ## A-038：重复 canonical run 的选择与参考实现漂移
 
@@ -343,7 +348,7 @@
 - 歧义：完全相同的 R42 源码、benchmark driver、SDK、CPU 和语料连续运行两次完整 release harness 时，产品绝对中位数基本稳定，但 cmark/cmark-gfm 的短进程参考频率产生明显漂移，导致总 ratio 在两轮间变化；选择数值较好的轮次会形成 cherry-pick。
 - 决定：使用最新完成的整轮结果作为唯一 canonical，不选择数值最优的一轮。候选归因继续使用固定 CPU 的 A/A、正反序 paired A/B、产品绝对耗时和硬件计数器；这些只解释收益来源，不能覆盖完整 canonical raw。保留两轮结果作为噪声证据，不放宽 `2.5x` 门槛。
 - 理由：R42 两轮完整结果分别为 CommonMark `4.279733x`/`4.444100x`、GFM `3.741081x`/`3.569983x`；large-table GFM 产品中位数稳定在约 `0.1643s`，相对 R29 的 `0.1768s` 确认目标收益，而多项 reference 中位数变化解释了 aggregate ratio 的反向波动。固定选择规则比事后挑选最佳结果更可复核。
-- 影响 requirements：`MD-PERF-002` 始终引用最新完整、身份绑定的 canonical run。R45 raw `72f9897c...530d` 已按此规则替换 R42，而不是保留数值更好的旧 GFM 结果；R29 与全部 R42 结果均标为历史证据。
+- 影响 requirements：`MD-PERF-002` 始终引用最新完整、身份绑定的 canonical run。最终 R139 raw `530d206f...337d0c` 按此规则成为唯一 current result；全部 R0-R138 结果均为历史或候选证据。
 
 ```text
 ### A-XXX：标题

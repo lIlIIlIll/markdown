@@ -1,5 +1,28 @@
 # markdown 实施计划
 
+## Final completion closure (2026-08-29)
+
+The dependency graph below is complete. R139 is the sole clean-commit canonical
+benchmark and passes the frozen full-AST limits: CommonMark `2.380950x`, GFM
+`2.454213x`, ordinary `3.631640x/2.026894x`, scaling
+`0.364821/2.498950`, pathological scaling `0.632235/2.437232`, and extra
+10 MiB RSS `30764 KiB`. R140 then ran the complete release gate from a fresh
+tracked-source archive: format, API snapshot 1311, check/build, native
+ASan+UBSan fuzz 10000, `1455/1455` tests, CLI, public quickstart,
+differential `25/24/1/0`, benchmark smoke `3/3`, bundle and release-ready
+verification all passed. The authoritative ledger is therefore 125 pass and
+zero pending, implemented_unverified, or blocked items.
+
+The final bidirectional audit reread all 3754 PRD lines, mapped all 52 normative
+sections and 33 explicit requirement labels, verified 125 unique ledger IDs and
+488 existing implementation/test path references, removed generic test
+placeholders, linked every item to R140, and confirmed 39 unique assumptions are
+referenced by affected requirement notes. No implementation slice remains.
+
+Historical R0-R138 sections are retained as design and rejection evidence. Any
+historical sentence that says a then-current candidate was blocked does not
+override this final closure or `.agent/requirements.yaml`.
+
 ## 0.9 breaking execution-model implementation (2026-08-26)
 
 This section supersedes compatibility-preserving 0.8 notes for AST, parser SPI,
@@ -127,19 +150,19 @@ same source-backed Text/SoftBreak/Paragraph/Document arena graph through the
 limit-aware factory. Its target guard improves large-table CommonMark to
 `0.647552` of R96; large-code and the twelve-profile broad guard remain below the
 stable `10%` rejection limit, and local plus remote tests pass `1447/1447`.
-Step 7's current authoritative R115 Server gate is CommonMark `2.915703x` and GFM
-`3.078800x`; ordinary is `4.847819x/2.767217x`. The two `2.5x` limits fail, so the
-performance limits and their release/quality dependents remain the three blocked
-requirements.
+Step 7 is complete. The current authoritative R139 Server gate is CommonMark
+`2.380950x` and GFM `2.454213x`; ordinary is
+`3.631640x/2.026894x`. Every frozen performance limit passes, and the subsequent
+R140 fresh-archive release gate passes, so the performance, release and quality
+requirements are all `pass`.
 
 ## 0. 2026-08-18 最终实施校准
 
 本计划的 S0-S11 主链路已有可运行实现，最终全量测试为 1410/1410，
 CommonMark/GFM 官方语料为 652/652 与 671/671；随后执行
 `cjpm bundle --skip-test` 通过并生成当前包，避免无意义地重复同一轮测试。
-当前仍不能声明 GA：`requirements.yaml` 有 3 个 `blocked` 项；私密安全
-报告渠道已启用并验证，但 `benchmarks/measure.py` 的性能 GA gate 真实失败，
-并连带阻塞 release 与 quality gate。
+本节记录的是 2026-08-18 的历史校准；当时 `requirements.yaml` 有 3 个
+`blocked` 项且性能 gate 失败。该状态已被上方 R139/R140 最终闭环取代。
 
 本轮性能切片已按 profile 证据完成：`LineRecord`/list marker 改为值类型、
 共享空 immutable array、普通 inline 跳过 delimiter 链、段落只计算一次续行
@@ -147,12 +170,12 @@ CommonMark/GFM 官方语料为 652/652 与 671/671；随后执行
 规则调用。全部改动保持公开 API snapshot 1155 项不变，并通过 1410 项回归；
 最终固定矩阵仍未达到 PRD 数值，因此该切片不能转为 `pass`。
 
-后续依赖顺序冻结为：
+当时冻结的后续依赖顺序为：
 
 ```text
-full-AST allocation profile and performance convergence
-→ full correctness/performance/package gate rerun
-→ final 125/125 audit
+full-AST allocation profile and performance convergence (complete)
+→ full correctness/performance/package gate rerun (complete)
+→ final 125/125 audit (complete)
 ```
 
 每个后续切片仍必须同时修改行为、负例/正例测试、文档和需求账本；性能
