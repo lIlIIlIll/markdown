@@ -278,7 +278,7 @@ private func appendBinarySemantic(out: CanonicalDescriptor, node: NodeRef): Unit
 
 private func binaryNodeKind(node: NodeRef): String {
     match (node.kind) {
-        case NodeKind.Document => "document";
+        case NodeKind.DocumentNode => "document";
         case NodeKind.BlockQuote => "quote";
         case NodeKind.List => "list"
         case NodeKind.ListItem => "item";

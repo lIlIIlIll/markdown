@@ -77,13 +77,16 @@ public class TreeRewriter {
             }
             outputs.add(frame.node.index, result)
         }
-        let roots = outputs[document.root().index]
+        let documentRootIndex = document.root().index
+        let roots = outputs[documentRootIndex]
         if (roots.size != 1) {
             throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation,
                 "document rewrite must produce exactly one root", phase: "transform")
         }
-        if (!anyChange && roots[0] == document.root().index) {
-            return document
+        if (!anyChange) {
+            if (roots[0] == documentRootIndex) {
+                return document
+            }
         }
         let result = builder.freeze(roots[0])
         AstInvariantValidator().validate(result)

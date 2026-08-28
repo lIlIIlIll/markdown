@@ -162,7 +162,7 @@ public enum NodeCategory {
 
 // cjlint-ignore -start !G.ENU.01 Stable public NodeKind names intentionally mirror node type names.
 public enum NodeKind {
-    | Document
+    | DocumentNode
     | BlockQuote
     | List
     | ListItem
@@ -298,12 +298,17 @@ public class AstInvariantValidator {
                 index--
             }
         }
-        if (visited != document.nodeCount) {
+        let nodeCount = document.nodeCount
+        if (visited != nodeCount) {
             var missing: Int64 = 0
-            while (missing < document.nodeCount && seen.contains(document.nodeAt(missing).nodeId.value)) {
+            while (missing < nodeCount) {
+                let missingNodeId = document.nodeAt(missing).nodeId.value
+                if (!seen.contains(missingNodeId)) {
+                    break
+                }
                 missing++
             }
-            let detail = if (missing < document.nodeCount) {
+            let detail = if (missing < nodeCount) {
                 let node = document.nodeAt(missing)
                 match (node.span) {
                     case Some(span) => "AST arena contains unreachable node ${node.nodeId.value} at ${span.startByte}..${span.endByte}"
@@ -357,7 +362,7 @@ public class AstInvariantValidator {
                 case ChildrenPolicy.Any => ()
             }
         }
-        if (let NodeKind.Document <- node.kind) {
+        if (let NodeKind.DocumentNode <- node.kind) {
             if (let NodeCategory.Inline <- node.category) {
                 fail("Document category must be block", node.span)
             }
@@ -366,7 +371,8 @@ public class AstInvariantValidator {
 
     private func arenaChildrenPolicy(kind: NodeKind): ChildrenPolicy {
         match (kind) {
-            case NodeKind.Document | NodeKind.BlockQuote | NodeKind.List | NodeKind.ListItem => ChildrenPolicy.Blocks
+            case NodeKind.DocumentNode | NodeKind.BlockQuote | NodeKind.List | NodeKind.ListItem => ChildrenPolicy
+                .Blocks
             case NodeKind.Paragraph | NodeKind.Heading | NodeKind.TableCell | NodeKind.Emphasis | NodeKind.Strong
                 | NodeKind.Strikethrough | NodeKind.Link | NodeKind.Image => ChildrenPolicy.Inlines
             case NodeKind.Table => ChildrenPolicy.Rows

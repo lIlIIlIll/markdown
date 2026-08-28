@@ -200,8 +200,8 @@ public class AstQuery {
 
 private func sameNodeKind(left: NodeKind, right: NodeKind): Bool {
     match (left) {
-        case NodeKind.Document =>
-            if (let NodeKind.Document <- right) {
+        case NodeKind.DocumentNode =>
+            if (let NodeKind.DocumentNode <- right) {
                 true
             } else {
                 false

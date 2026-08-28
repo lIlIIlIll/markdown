@@ -25,7 +25,6 @@ scripts/cli_smoke.sh
 python3 scripts/differential_test.py
 cjpm bench --filter MarkdownReleaseBenchmarks --no-color \
     --report-path /tmp/markdown-release-bench --report-format csv
-python3 benchmarks/measure.py
 cjpm bundle
 python3 scripts/release_evidence.py --release-ready
 

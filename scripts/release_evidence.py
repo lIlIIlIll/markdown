@@ -28,7 +28,11 @@ def load() -> dict[str, object]:
 def benchmark_markdown(data: dict[str, object]) -> str:
     benchmark = data["benchmark"]
     assert isinstance(benchmark, dict)
-    status = "PASS" if benchmark["status"] == "current" and data["release"]["complete"] else "FAIL"
+    ratios_pass = (
+        benchmark["commonmarkRatio"] <= benchmark["ratioLimit"]
+        and benchmark["gfmRatio"] <= benchmark["ratioLimit"]
+    )
+    status = "PASS" if benchmark["status"] == "current" and ratios_pass else "FAIL"
     return f"""# Release benchmark report
 
 Status: **{status}**
@@ -63,6 +67,11 @@ def readme_block(data: dict[str, object]) -> str:
         if source["sourceCommit"] and source["treeState"] == "clean"
         else "The source identity or evidence tree is not yet release-bound."
     )
+    release_state = (
+        "The preview release evidence is ready and every mandatory gate passes."
+        if release["status"] == "ready" and release["complete"]
+        else "The release remains fail-closed until its status is ready and every mandatory gate passes."
+    )
     return f"""<!-- release-evidence:start -->
 | Release evidence | Value |
 | --- | --- |
@@ -73,8 +82,7 @@ def readme_block(data: dict[str, object]) -> str:
 | Benchmark identity | `{benchmark['status']}`; commit `{benchmark['sourceCommit'] or 'UNBOUND'}`; SDK `{benchmark['sdkVersion'] or 'UNBOUND'}` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
-{source_state} The release remains fail-closed until its status is ready and
-every mandatory gate passes.
+{source_state} {release_state}
 <!-- release-evidence:end -->"""
 
 
@@ -88,6 +96,23 @@ def acceptance_block(data: dict[str, object]) -> str:
         if source["sourceCommit"] and source["treeState"] == "clean"
         else "The benchmark source identity or evidence tree is not release-bound"
     )
+    ratios_pass = (
+        benchmark["commonmarkRatio"] <= benchmark["ratioLimit"]
+        and benchmark["gfmRatio"] <= benchmark["ratioLimit"]
+    )
+    ready = (
+        release["status"] == "ready"
+        and release["complete"]
+        and source["sourceCommit"]
+        and source["treeState"] == "clean"
+        and benchmark["status"] == "current"
+        and ratios_pass
+    )
+    conclusion = (
+        "All mandatory performance ratios and release-evidence gates pass."
+        if ready
+        else "One or more mandatory release-evidence gates remain incomplete."
+    )
     return f"""<!-- release-evidence:start -->
 ## Generated Release Evidence
 
@@ -97,8 +122,7 @@ def acceptance_block(data: dict[str, object]) -> str:
 - Benchmark: CommonMark `{benchmark['commonmarkRatio']:.2f}x`, GFM `{benchmark['gfmRatio']:.2f}x`, status `{benchmark['status']}`.
 - Raw digest: `{benchmark['rawSha256']}`.
 
-{source_state}, but both mandatory performance ratios fail and the release
-status is not ready. It cannot change the overall `INCOMPLETE` verdict.
+{source_state}. {conclusion}
 <!-- release-evidence:end -->"""
 
 
@@ -153,6 +177,9 @@ def validate(data: dict[str, object], release_ready: bool) -> list[str]:
             errors.append(f"benchmark identity mismatch: {raw_key}")
     if raw["environment"].get("cangjieSdkVersion") != benchmark["sdkVersion"]:
         errors.append("benchmark SDK identity does not match raw benchmark")
+    failed_raw_gates = sorted(name for name, passed in raw.get("gates", {}).items() if not passed)
+    if failed_raw_gates:
+        errors.append("canonical benchmark gates failed: " + ", ".join(failed_raw_gates))
     if benchmark["status"] == "current" and benchmark["sourceCommit"] != data["source"]["sourceCommit"]:
         errors.append("current benchmark source does not match release source")
     if release_ready:

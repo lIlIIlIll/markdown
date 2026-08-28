@@ -23,8 +23,8 @@ public class AstArenaTests {
                     NodeOriginKind.Parsed, []))
             index++
         }
-        let rootIndex = builder.append(NodeKind.Document, NodeCategory.Block, Some(SourceSpan(0, AST_NODE_CHUNK_SIZE + 1)),
-            NodeOriginKind.Parsed, leaves.toArray())
+        let rootIndex = builder.append(NodeKind.DocumentNode, NodeCategory.Block,
+            Some(SourceSpan(0, AST_NODE_CHUNK_SIZE + 1)), NodeOriginKind.Parsed, leaves.toArray())
         let snapshot = builder.freeze()
 
         @Expect(snapshot.nodeCount, AST_NODE_CHUNK_SIZE + 2)
@@ -37,11 +37,11 @@ public class AstArenaTests {
     @TestCase
     public func rejectsCrossDocumentNodeRefs(): Unit {
         let firstBuilder = AstArenaBuilder()
-        let _ = firstBuilder.append(NodeKind.Document, NodeCategory.Block, Some(SourceSpan(0, 0)), NodeOriginKind.Parsed,
-            [])
+        let _ = firstBuilder.append(NodeKind.DocumentNode, NodeCategory.Block, Some(SourceSpan(0, 0)),
+            NodeOriginKind.Parsed, [])
         let first = firstBuilder.freeze()
         let secondBuilder = AstArenaBuilder()
-        let _ = secondBuilder.append(NodeKind.Document, NodeCategory.Block, Some(SourceSpan(0, 0)),
+        let _ = secondBuilder.append(NodeKind.DocumentNode, NodeCategory.Block, Some(SourceSpan(0, 0)),
             NodeOriginKind.Parsed, [])
         let second = secondBuilder.freeze()
 
@@ -52,7 +52,7 @@ public class AstArenaTests {
     @TestCase
     public func rejectsForwardAndUnknownChildren(): Unit {
         let builder = AstArenaBuilder()
-        @ExpectThrows[IllegalArgumentException](builder.append(NodeKind.Document, NodeCategory.Block,
+        @ExpectThrows[IllegalArgumentException](builder.append(NodeKind.DocumentNode, NodeCategory.Block,
             Some(SourceSpan(0, 0)), NodeOriginKind.Parsed, [0]))
     }
 
@@ -71,7 +71,7 @@ public class AstArenaTests {
             NodeOriginKind.Parsed, [child])
         @ExpectThrows[IllegalArgumentException](multipleBuilder.append(NodeKind.Heading, NodeCategory.Block,
             Some(SourceSpan(0, 1)), NodeOriginKind.Parsed, [child], payload: ArenaNodePayload.HeadingValue(1)))
-        let _ = multipleBuilder.append(NodeKind.Document, NodeCategory.Block, Some(SourceSpan(0, 1)),
+        let _ = multipleBuilder.append(NodeKind.DocumentNode, NodeCategory.Block, Some(SourceSpan(0, 1)),
             NodeOriginKind.Parsed, [firstParent])
         @Expect(multipleBuilder.freeze().root().children().toArray().size, 1)
     }
@@ -81,7 +81,7 @@ public class AstArenaTests {
         let originalBuilder = AstArenaBuilder()
         let _ = originalBuilder.append(NodeKind.Text, NodeCategory.Inline, Some(SourceSpan(0, 1)), NodeOriginKind.Parsed,
             [])
-        let _ = originalBuilder.append(NodeKind.Document, NodeCategory.Block, Some(SourceSpan(0, 1)),
+        let _ = originalBuilder.append(NodeKind.DocumentNode, NodeCategory.Block, Some(SourceSpan(0, 1)),
             NodeOriginKind.Parsed, [0])
         let original = originalBuilder.freeze()
 
@@ -105,7 +105,7 @@ public class AstArenaTests {
         let child = builder.append(NodeKind.Text, NodeCategory.Inline, Some(SourceSpan(0, 1)), NodeOriginKind.Parsed, [])
         let parent = builder.append(NodeKind.Paragraph, NodeCategory.Block, Some(SourceSpan(0, 1)),
             NodeOriginKind.Parsed, [child])
-        @ExpectThrows[LimitExceededException](builder.append(NodeKind.Document, NodeCategory.Block,
+        @ExpectThrows[LimitExceededException](builder.append(NodeKind.DocumentNode, NodeCategory.Block,
             Some(SourceSpan(0, 1)), NodeOriginKind.Parsed, [parent]))
         @Expect(builder.freeze().nodeCount, 2)
     }
@@ -137,7 +137,7 @@ public class AstArenaTests {
         builder.rollback(checkpoint)
         let paragraph = builder.append(NodeKind.Paragraph, NodeCategory.Block, Some(SourceSpan(0, 1)),
             NodeOriginKind.Parsed, [retained])
-        let _ = builder.append(NodeKind.Document, NodeCategory.Block, Some(SourceSpan(0, 1)), NodeOriginKind.Parsed,
+        let _ = builder.append(NodeKind.DocumentNode, NodeCategory.Block, Some(SourceSpan(0, 1)), NodeOriginKind.Parsed,
             [paragraph])
         let snapshot = builder.freeze()
 
@@ -159,7 +159,7 @@ public class AstArenaTests {
         builder.rollback(checkpoint)
         let paragraph = builder.appendParserOwned(NodeKind.Paragraph, NodeCategory.Block, Some(SourceSpan(0, 1)),
             NodeOriginKind.Parsed, [retained])
-        let _ = builder.appendParserOwned(NodeKind.Document, NodeCategory.Block, Some(SourceSpan(0, 1)),
+        let _ = builder.appendParserOwned(NodeKind.DocumentNode, NodeCategory.Block, Some(SourceSpan(0, 1)),
             NodeOriginKind.Parsed, [paragraph])
         let snapshot = builder.freeze()
 
@@ -175,7 +175,7 @@ public class AstArenaTests {
             payload: ArenaNodePayload.TextValue(LiteralStorage.Copy("raw"), LiteralStorage.Copy("value"), None))
         let heading = builder.append(NodeKind.Heading, NodeCategory.Block, Some(SourceSpan(0, 6)), NodeOriginKind.Parsed,
             [text], payload: ArenaNodePayload.HeadingValue(2))
-        let _ = builder.append(NodeKind.Document, NodeCategory.Block, Some(SourceSpan(0, 6)), NodeOriginKind.Parsed,
+        let _ = builder.append(NodeKind.DocumentNode, NodeCategory.Block, Some(SourceSpan(0, 6)), NodeOriginKind.Parsed,
             [heading])
         let snapshot = builder.freeze()
 
@@ -198,7 +198,7 @@ public class AstArenaTests {
             origin: Some(
                 NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: Some(SourceSpan(0, 1)),
                     extensionId: Some("example"))))
-        let _ = builder.append(NodeKind.Document, NodeCategory.Block, Some(SourceSpan(0, 1)), NodeOriginKind.Parsed,
+        let _ = builder.append(NodeKind.DocumentNode, NodeCategory.Block, Some(SourceSpan(0, 1)), NodeOriginKind.Parsed,
             [generated])
         let snapshot = builder.freeze()
         @Expect(snapshot.nodeAt(generated).origin.extensionId, Some("example"))
@@ -226,8 +226,8 @@ public class AstArenaTests {
             NodeOriginKind.ExtensionGenerated, [],
             payload: ArenaNodePayload.CustomValue("ext", "1.0.0", "block", ArenaTestPayload()),
             origin: Some(NodeOrigin(NodeOriginKind.ExtensionGenerated, extensionId: Some("ext"))))
-        let root = builder.append(NodeKind.Document, NodeCategory.Block, Some(SourceSpan(0, 13)), NodeOriginKind.Parsed,
-            [item, thematic, html, row, custom],
+        let root = builder.append(NodeKind.DocumentNode, NodeCategory.Block, Some(SourceSpan(0, 13)),
+            NodeOriginKind.Parsed, [item, thematic, html, row, custom],
             payload: ArenaNodePayload.DocumentValue(MarkdownProfile.commonMark0312(), "fp",
                 ImmutableArray<ReferenceDefinition>([])))
         let snapshot = builder.freeze()
@@ -267,7 +267,7 @@ public class AstArenaTests {
             NodeOriginKind.ExtensionGenerated, [],
             payload: ArenaNodePayload.CustomValue("ext", "1.0.0", "inline", ArenaTestPayload()),
             origin: Some(NodeOrigin(NodeOriginKind.ExtensionGenerated, extensionId: Some("ext"))))
-        let _ = builder.append(NodeKind.Document, NodeCategory.Block, Some(SourceSpan(0, 12)), NodeOriginKind.Parsed,
+        let _ = builder.append(NodeKind.DocumentNode, NodeCategory.Block, Some(SourceSpan(0, 12)), NodeOriginKind.Parsed,
             [hardBreak, codeSpan, html, link, image, custom])
         let snapshot = builder.freeze()
 

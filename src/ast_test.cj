@@ -20,7 +20,7 @@ class AstContractTest {
         let heading = builder.append(NodeKind.Heading, NodeCategory.Block, Some(SourceSpan(0, 8)), NodeOriginKind.Parsed,
             original, payload: ArenaNodePayload.HeadingValue(1))
         original[0] = heading
-        let _ = builder.append(NodeKind.Document, NodeCategory.Block, Some(SourceSpan(0, 8)), NodeOriginKind.Parsed,
+        let _ = builder.append(NodeKind.DocumentNode, NodeCategory.Block, Some(SourceSpan(0, 8)), NodeOriginKind.Parsed,
             [heading],
             payload: ArenaNodePayload.DocumentValue(MarkdownProfile.commonMark0312(), "test-fingerprint",
                 ImmutableArray<ReferenceDefinition>([])))
@@ -55,7 +55,7 @@ class AstContractTest {
             payload: ArenaNodePayload.TextValue(LiteralStorage.Copy("x"), LiteralStorage.Copy("x"), None))
         let paragraph = builder.append(NodeKind.Paragraph, NodeCategory.Block, Some(SourceSpan(0, 1)),
             NodeOriginKind.Parsed, [text])
-        let _ = builder.append(NodeKind.Document, NodeCategory.Block, Some(SourceSpan(0, 3)), NodeOriginKind.Parsed,
+        let _ = builder.append(NodeKind.DocumentNode, NodeCategory.Block, Some(SourceSpan(0, 3)), NodeOriginKind.Parsed,
             [paragraph],
             payload: ArenaNodePayload.DocumentValue(MarkdownProfile.commonMark0312(), "test",
                 ImmutableArray<ReferenceDefinition>([])))
@@ -70,7 +70,7 @@ class AstContractTest {
             NodeOriginKind.Parsed, [])
         let paragraph = builder.append(NodeKind.Paragraph, NodeCategory.Block, Some(SourceSpan(0, 1)),
             NodeOriginKind.Parsed, [nested])
-        let _ = builder.append(NodeKind.Document, NodeCategory.Block, Some(SourceSpan(0, 1)), NodeOriginKind.Parsed,
+        let _ = builder.append(NodeKind.DocumentNode, NodeCategory.Block, Some(SourceSpan(0, 1)), NodeOriginKind.Parsed,
             [paragraph],
             payload: ArenaNodePayload.DocumentValue(MarkdownProfile.commonMark0312(), "test",
                 ImmutableArray<ReferenceDefinition>([])))

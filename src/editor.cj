@@ -4,7 +4,7 @@ import std.collection.*
 
 // cjlint-ignore -start !G.ENU.01 Stable syntax kinds intentionally mirror semantic type names.
 public enum SyntaxKind {
-    | Document
+    | DocumentNode
     | Text
     | Whitespace
     | Newline
@@ -177,7 +177,7 @@ public class SyntaxTree {
                     SourceSpan(source.originalOffset(start), source.originalOffset(index))))
         }
         let tokenValues = tokens.toArray()
-        let flatRoot = SyntaxNode(SyntaxKind.Document, SourceSpan(0, source.byteLength()), tokenValues, 0,
+        let flatRoot = SyntaxNode(SyntaxKind.DocumentNode, SourceSpan(0, source.byteLength()), tokenValues, 0,
             tokenValues.size)
         match (document) {
             case Some(value) => SyntaxTree(source, syntaxRootForDocument(value, tokenValues), tokenValues)
@@ -336,7 +336,7 @@ private func syntaxRootForDocument(document: Document, tokens: Array<SyntaxToken
                 }
             }
             let kind = match (node.kind) {
-                case NodeKind.Document => SyntaxKind.Document
+                case NodeKind.DocumentNode => SyntaxKind.DocumentNode
                 case _ => match (node.category) {
                     case NodeCategory.Block => SyntaxKind.BlockNode
                     case NodeCategory.Inline => SyntaxKind.InlineNode
@@ -349,7 +349,7 @@ private func syntaxRootForDocument(document: Document, tokens: Array<SyntaxToken
     }
     match (built.get(document.root().nodeId.value)) {
         case Some(value) => value
-        case None => SyntaxNode(SyntaxKind.Document, SourceSpan(0, 0), tokens, 0, 0)
+        case None => SyntaxNode(SyntaxKind.DocumentNode, SourceSpan(0, 0), tokens, 0, 0)
     }
 }
 
@@ -520,10 +520,16 @@ public class DocumentSnapshot {
 
     private func tryIncrementalEdit(edit: SourceEdit): ?ReparseResult {
         if (edit.range.endByte > result.source.byteLength() || edit.range.length() != edit.replacement.size ||
-            !result.source.hasIdentityMapping() || !incrementalPlainText(edit.replacement) ||
-            !result.document.references.isEmpty() || !engine.dialect.blockRules.isEmpty() ||
-            !engine.dialect.inlineRules.isEmpty() || !engine.dialect.parserSpis.isEmpty() ||
-            !engine.dialect.documentProcessors.isEmpty()) {
+            !result.source.hasIdentityMapping() || !incrementalPlainText(edit.replacement)) {
+            return None
+        }
+        let hasReferences = !result.document.references.isEmpty()
+        if (hasReferences) {
+            return None
+        }
+        let dialect = engine.dialect
+        if (!dialect.blockRules.isEmpty() || !dialect.inlineRules.isEmpty() || !dialect.parserSpis.isEmpty() ||
+            !dialect.documentProcessors.isEmpty()) {
             return None
         }
         var target: ?NodeRef = None
@@ -700,7 +706,7 @@ private func buildStableNodeIds(result: ParseResult): HashMap<Int64, StableNodeI
 
 private func stableNodeKind(node: NodeRef): String {
     match (node.kind) {
-        case NodeKind.Document => "document"
+        case NodeKind.DocumentNode => "document"
         case NodeKind.BlockQuote => "block-quote"
         case NodeKind.List => "list"
         case NodeKind.ListItem => "list-item"

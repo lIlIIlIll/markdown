@@ -22,7 +22,7 @@ internal class ParserNodeFactory {
 
     func finishDocument(children: Array<Int64>, span: SourceSpan, profile: MarkdownProfile, dialectFingerprint: String,
         references: Array<ReferenceDefinition>): Document {
-        let root = arena.appendParserOwned(NodeKind.Document, NodeCategory.Block, Some(span), NodeOriginKind.Parsed,
+        let root = arena.appendParserOwned(NodeKind.DocumentNode, NodeCategory.Block, Some(span), NodeOriginKind.Parsed,
             children,
             payload: ArenaNodePayload.DocumentValue(profile, dialectFingerprint,
                 ImmutableArray<ReferenceDefinition>(references)))

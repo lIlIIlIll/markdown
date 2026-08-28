@@ -7,6 +7,13 @@ move to a document-owned arena without carrying the 0.8 object graph as a
 runtime adapter. Consumers must rebuild against the 0.9 API snapshot; binary
 artifacts and cached fingerprints from 0.8 are not compatible.
 
+The final pre-GA CodeCheck qualification also renames the public
+`NodeKind.Document` and `SyntaxKind.Document` variants to
+`NodeKind.DocumentNode` and `SyntaxKind.DocumentNode`. This avoids the Cangjie
+enum-sugar collision with the public `Document` type. Match expressions and
+extension or editor code that inspect the root node must use the new variant
+names; the document object type and its behavior are unchanged.
+
 Extension authors must implement `InlineParserSpi.triggerBytes`. The returned
 byte list is the complete set of UTF-8 leading bytes that may start the rule.
 It must be non-empty and contain no duplicates. The compiler rejects invalid

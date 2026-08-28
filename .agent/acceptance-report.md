@@ -8,13 +8,12 @@
 ## Generated Release Evidence
 
 - Version/status: `0.9.0` / `draft`.
-- Source identity: `2454b0626c2fb0fe590a59bc1f79a8d4e864c856`; tree state `dirty`.
-- Tests: `1447/1447` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `2.92x`, GFM `3.08x`, status `current`.
-- Raw digest: `200a2f8f9d891eedc98e825fd2b4ebae5725accc2be30418d67da449946c2f25`.
+- Source identity: `UNCOMMITTED-R137`; tree state `dirty`.
+- Tests: `1455/1455` passed, `0` skipped, `0` failed.
+- Benchmark: CommonMark `2.27x`, GFM `2.43x`, status `current`.
+- Raw digest: `0db8982b98758b98a7bf82c4adb202a51f5b28daab5555689ec92db41bd0722f`.
 
-The benchmark source identity or evidence tree is not release-bound, but both mandatory performance ratios fail and the release
-status is not ready. It cannot change the overall `INCOMPLETE` verdict.
+The benchmark source identity or evidence tree is not release-bound. One or more mandatory release-evidence gates remain incomplete.
 <!-- release-evidence:end -->
 
 ## 2026-08-27 Parser Phase Evidence

@@ -99,7 +99,7 @@ private class CountingEventSink <: MarkdownEventSink {
 
     public func onEvent(event: MarkdownSourceEvent): Unit {
         count++
-        if (let Some(NodeKind.Document) <- event.nodeKind) {
+        if (let Some(NodeKind.DocumentNode) <- event.nodeKind) {
             sawDocument = true
         }
     }

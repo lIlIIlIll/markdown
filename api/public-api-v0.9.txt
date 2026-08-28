@@ -40,10 +40,8 @@ arena.cj:public let extensionId: String
 arena.cj:public let extensionSemanticVersion: String
 arena.cj:public let fenceCharacter: ?Byte
 arena.cj:public let fenceLength: Int64
-arena.cj:public let firstChild: Int64
 arena.cj:public let header: Bool
 arena.cj:public let infoRaw: String
-arena.cj:public let kind: NodeKind
 arena.cj:public let language: String
 arena.cj:public let level: Int64
 arena.cj:public let listKind: ListKind
@@ -56,7 +54,6 @@ arena.cj:public let nodeCount: Int64
 arena.cj:public let normalized: ?String
 arena.cj:public let openingFenceSpan: ?SourceSpan
 arena.cj:public let payload: CustomPayload
-arena.cj:public let payloadIndex: Int64
 arena.cj:public let profile: MarkdownProfile
 arena.cj:public let references: ImmutableArray<ReferenceDefinition>
 arena.cj:public let size: Int64
@@ -70,13 +67,16 @@ arena.cj:public let titleRaw: String
 arena.cj:public operator func ==(other: NodeRef): Bool {
 arena.cj:public operator func [](index: Int64): NodeRef {
 arena.cj:public prop category: NodeCategory {
+arena.cj:public prop childCount: Int64 {
 arena.cj:public prop dialectFingerprint: String {
+arena.cj:public prop firstChild: Int64 {
 arena.cj:public prop kind: NodeKind {
 arena.cj:public prop literal: String {
 arena.cj:public prop nodeId: NodeId {
 arena.cj:public prop origin: NodeOrigin {
 arena.cj:public prop originKind: NodeOriginKind {
 arena.cj:public prop originMetadataIndex: Int64 {
+arena.cj:public prop payloadIndex: Int64 {
 arena.cj:public prop profile: MarkdownProfile {
 arena.cj:public prop raw: String {
 arena.cj:public prop references: ImmutableArray<ReferenceDefinition> {
@@ -151,7 +151,7 @@ ast.cj:enum-variant | CollapsedReference
 ast.cj:enum-variant | CustomBlock
 ast.cj:enum-variant | CustomInline
 ast.cj:enum-variant | Deserialized
-ast.cj:enum-variant | Document
+ast.cj:enum-variant | DocumentNode
 ast.cj:enum-variant | Emphasis
 ast.cj:enum-variant | ExtendedAutolink
 ast.cj:enum-variant | ExtensionGenerated
@@ -379,7 +379,7 @@ document_system.cj:public static func build(engine: MarkdownEngine, inputs: Arra
 editor.cj:enum-variant | BlockNode
 editor.cj:enum-variant | BlockQuoteMarker
 editor.cj:enum-variant | Delimiter
-editor.cj:enum-variant | Document
+editor.cj:enum-variant | DocumentNode
 editor.cj:enum-variant | Entity
 editor.cj:enum-variant | Error
 editor.cj:enum-variant | ExtensionToken

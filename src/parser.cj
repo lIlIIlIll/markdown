@@ -4636,8 +4636,11 @@ private func parseSyntaxParameters(raw: String, specs: ImmutableArray<SyntaxPara
         values.add(name, parsed)
     }
     for (index in 0..specs.size) {
-        if (specs[index].required && values.get(specs[index].name).isNone()) {
-            return None
+        let spec = specs[index]
+        if (spec.required) {
+            if (values.get(spec.name).isNone()) {
+                return None
+            }
         }
     }
     Some(values)

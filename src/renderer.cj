@@ -376,7 +376,7 @@ public class HtmlRenderer {
         cancellation: CancellationToken, budget: OperationBudget): Unit {
         let node = frame.node
         match (node.kind) {
-            case NodeKind.Document => pushArenaContainer(frame, stack)
+            case NodeKind.DocumentNode => pushArenaContainer(frame, stack)
             case NodeKind.Heading =>
                 let level = node.asHeading().getOrThrow().level
                 write("<h${level}>", sink, cancellation, budget)
@@ -414,14 +414,22 @@ public class HtmlRenderer {
                     case TaskState.NotTask => write("<li>", sink, cancellation, budget)
                 }
                 let children = node.children()
-                let startsWithBlock = children.size > 0 && !isArenaParagraphNode(children[0])
+                let startsWithBlock = if (children.size > 0) {
+                    !isArenaParagraphNode(children[0])
+                } else {
+                    false
+                }
                 if (children.size > 0 && (!frame.suppressParagraph || startsWithBlock)) {
                     write("\n", sink, cancellation, budget)
                 }
                 stack.add(ArenaRenderFrame(node, true, suppressParagraph: frame.suppressParagraph))
                 var childIndex = children.size - 1
                 while (childIndex >= 0) {
-                    let childSuppress = frame.suppressParagraph && isArenaParagraphNode(children[childIndex])
+                    let childSuppress = if (frame.suppressParagraph) {
+                        isArenaParagraphNode(children[childIndex])
+                    } else {
+                        false
+                    }
                     stack.add(
                         ArenaRenderFrame(children[childIndex], false, suppressParagraph: childSuppress,
                             newlineAfter: childSuppress && childIndex + 1 < children.size))
@@ -516,7 +524,7 @@ public class HtmlRenderer {
     private func writeArenaExit(frame: ArenaRenderFrame, sink: TextSink, cancellation: CancellationToken,
         budget: OperationBudget): Unit {
         match (frame.node.kind) {
-            case NodeKind.Document => ()
+            case NodeKind.DocumentNode => ()
             case NodeKind.Heading => write("</h${frame.node.asHeading().getOrThrow().level}>\n", sink, cancellation,
                 budget)
             case NodeKind.Paragraph =>
@@ -987,9 +995,17 @@ private func containsAsciiWhitespaceToken(value: String, expected: String): Bool
     var start: Int64 = 0
     var index: Int64 = 0
     while (index <= value.size) {
-        if (index == value.size || rendererIsAsciiWhitespace(value[index])) {
-            if (index > start && rendererLowerAscii(value[start..index]) == normalizedExpected) {
-                return true
+        let separator = if (index == value.size) {
+            true
+        } else {
+            rendererIsAsciiWhitespace(value[index])
+        }
+        if (separator) {
+            if (index > start) {
+                let token = rendererLowerAscii(value[start..index])
+                if (token == normalizedExpected) {
+                    return true
+                }
             }
             start = index + 1
         }

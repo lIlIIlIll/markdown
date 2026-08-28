@@ -269,14 +269,13 @@ flowchart TD
 | Release evidence | Value |
 | --- | --- |
 | Version / status | `0.9.0` / `draft` |
-| Source commit | `2454b0626c2fb0fe590a59bc1f79a8d4e864c856` |
-| CommonMark / cmark | `2.92x` / limit `2.5x` |
-| GFM HTML / cmark-gfm | `3.08x` / limit `2.5x` |
-| Benchmark identity | `current`; commit `2454b0626c2fb0fe590a59bc1f79a8d4e864c856`; SDK `1.1.0-alpha.20260803040049` |
+| Source commit | `UNCOMMITTED-R137` |
+| CommonMark / cmark | `2.27x` / limit `2.5x` |
+| GFM HTML / cmark-gfm | `2.43x` / limit `2.5x` |
+| Benchmark identity | `current`; commit `UNCOMMITTED-R137`; SDK `1.1.0-alpha.20260803040049` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
-The source identity or evidence tree is not yet release-bound. The release remains fail-closed until its status is ready and
-every mandatory gate passes.
+The source identity or evidence tree is not yet release-bound. The release remains fail-closed until its status is ready and every mandatory gate passes.
 <!-- release-evidence:end -->
 
 历史测量仅保留在[性能说明](docs/performance.md)中，不再作为“当前值”。发布报告、README 和验收报告中的 canonical 数字都来自同一个 `release-evidence.json`。当前 benchmark 已绑定 source commit anchor、精确源码归档、SDK、语料和 raw digest，但仓库工作树仍标记为 dirty；仍需提交后刷新源码身份、通过两个性能 ratio gate 并将 release 状态转为 ready，证据才能成为 release-ready。

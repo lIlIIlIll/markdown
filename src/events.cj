@@ -284,14 +284,14 @@ extend MarkdownEngine {
         }
         let fullSpan = SourceSpan(0, source.size)
         sink.onEvent(
-            MarkdownSourceEvent(MarkdownSourceEventKind.DocumentStart, nodeKind: Some(NodeKind.Document),
+            MarkdownSourceEvent(MarkdownSourceEventKind.DocumentStart, nodeKind: Some(NodeKind.DocumentNode),
                 sourceRange: Some(fullSpan), finalSemantics: finalSemantics))
         let emitter = ParserEventEmitter(Some(sink), false, 0, finalSemantics, limits.maximumAstNodes)
         let noAccelerator: ?LineScannerAccelerator = None
         let diagnostics = ParserSession(profile, limits, cancellation, budget, SourceBuffer(source), dialect,
             nativeScannerEnabledValue, noAccelerator, eventEmitter: Some(emitter)).parseEvents([], finalSemantics)
         sink.onEvent(
-            MarkdownSourceEvent(MarkdownSourceEventKind.DocumentEnd, nodeKind: Some(NodeKind.Document),
+            MarkdownSourceEvent(MarkdownSourceEventKind.DocumentEnd, nodeKind: Some(NodeKind.DocumentNode),
                 sourceRange: Some(fullSpan), finalSemantics: finalSemantics))
         EventParseSummary(mode, diagnostics, emitter.emittedEvents + 2)
     }
@@ -351,7 +351,7 @@ public class RawBlockEventSession {
             started = true
         }
         out.add(
-            MarkdownSourceEvent(MarkdownSourceEventKind.DocumentEnd, nodeKind: Some(NodeKind.Document),
+            MarkdownSourceEvent(MarkdownSourceEventKind.DocumentEnd, nodeKind: Some(NodeKind.DocumentNode),
                 sourceRange: Some(SourceSpan(0, totalBytes)), finalSemantics: false))
         out.toArray()
     }
@@ -423,7 +423,7 @@ public class RawBlockEventSession {
     }
 
     private func documentStart(): MarkdownSourceEvent {
-        MarkdownSourceEvent(MarkdownSourceEventKind.DocumentStart, nodeKind: Some(NodeKind.Document),
+        MarkdownSourceEvent(MarkdownSourceEventKind.DocumentStart, nodeKind: Some(NodeKind.DocumentNode),
             finalSemantics: false)
     }
 

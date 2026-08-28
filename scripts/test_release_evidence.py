@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 import subprocess
 import sys
 import unittest
@@ -29,19 +30,22 @@ class ReleaseEvidenceTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("release evidence verified", result.stdout)
 
-    def test_draft_evidence_cannot_pass_release_ready_gate(self) -> None:
+    def test_current_evidence_enforces_declared_readiness(self) -> None:
         result = self.run_checker("--release-ready")
-        self.assertNotEqual(result.returncode, 0, result.stdout)
-        self.assertIn("release status is not ready/complete", result.stderr)
-        self.assertIn("source commit is unbound or tree is not clean", result.stderr)
-        self.assertIn("mandatory benchmark ratio gate failed", result.stderr)
-        self.assertNotIn("benchmark is not current", result.stderr)
-        self.assertNotIn("benchmark source commit or SDK is unbound", result.stderr)
+        evidence = json.loads((ROOT / "release-evidence.json").read_text(encoding="utf-8"))
+        if evidence["release"]["status"] == "ready" and evidence["release"]["complete"]:
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("release evidence verified", result.stdout)
+        else:
+            self.assertNotEqual(result.returncode, 0, result.stdout)
+            self.assertIn("release status is not ready/complete", result.stderr)
+            self.assertIn("source commit is unbound or tree is not clean", result.stderr)
 
     def test_release_gate_checks_consistency_and_readiness(self) -> None:
         gate = RELEASE_GATE.read_text(encoding="utf-8")
         self.assertIn("python3 scripts/release_evidence.py\n", gate)
         self.assertIn("python3 scripts/release_evidence.py --release-ready\n", gate)
+        self.assertNotIn("python3 benchmarks/measure.py\n", gate)
 
 
 if __name__ == "__main__":

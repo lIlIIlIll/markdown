@@ -63,7 +63,7 @@ private func compactPayloadIndex(value: Int64): UInt32 {
 
 private func nodeKindTag(kind: NodeKind): Int64 {
     match (kind) {
-        case NodeKind.Document => 0
+        case NodeKind.DocumentNode => 0
         case NodeKind.BlockQuote => 1
         case NodeKind.List => 2
         case NodeKind.ListItem => 3
@@ -92,7 +92,7 @@ private func nodeKindTag(kind: NodeKind): Int64 {
 
 private func nodeKindFromTag(tag: Int64): NodeKind {
     match (tag) {
-        case 0 => NodeKind.Document
+        case 0 => NodeKind.DocumentNode
         case 1 => NodeKind.BlockQuote
         case 2 => NodeKind.List
         case 3 => NodeKind.ListItem
@@ -218,10 +218,10 @@ public struct ArenaNodeRecord {
     public prop category: NodeCategory {
         get() {
             match (kind) {
-                case NodeKind.Document | NodeKind.BlockQuote | NodeKind.List | NodeKind.ListItem | NodeKind.Paragraph
-                    | NodeKind.Heading | NodeKind.ThematicBreak | NodeKind.CodeBlock | NodeKind.HtmlBlock
-                    | NodeKind.Table | NodeKind.TableRow | NodeKind.TableCell | NodeKind.CustomBlock => NodeCategory
-                    .Block
+                case NodeKind.DocumentNode | NodeKind.BlockQuote | NodeKind.List | NodeKind.ListItem
+                    | NodeKind.Paragraph | NodeKind.Heading | NodeKind.ThematicBreak | NodeKind.CodeBlock
+                    | NodeKind.HtmlBlock | NodeKind.Table | NodeKind.TableRow | NodeKind.TableCell
+                    | NodeKind.CustomBlock => NodeCategory.Block
                 case _ => NodeCategory.Inline
             }
         }

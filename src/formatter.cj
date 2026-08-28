@@ -100,7 +100,7 @@ public class CanonicalMarkdownRenderer {
 
     private func formatNode(node: NodeRef, stack: ArrayList<FormatAction>, out: StringBuilder): Unit {
         match (node.kind) {
-            case NodeKind.Document => pushSeparated(node.children(), "\n\n", stack)
+            case NodeKind.DocumentNode => pushSeparated(node.children(), "\n\n", stack)
             case NodeKind.Paragraph => pushNodes(node.children(), stack)
             case NodeKind.Heading =>
                 pushNodes(node.children(), stack)

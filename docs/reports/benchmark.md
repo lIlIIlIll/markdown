@@ -1,18 +1,18 @@
 # Release benchmark report
 
-Status: **FAIL**
+Status: **PASS**
 
-Evidence status: `current`. Canonical 2026-08-28 R115 remote release run for the full arena AST path. R115 adds a valid-prefix line-scan result while retaining the legacy scanLines adapter; the native scanner transfers its capacity array directly and the parser validates count against both array size and requested capacity before consuming it. InputBehaviorTest passed 12/12, the remote full suite passed 1447/1447, and the 24-round target plus twelve-profile broad paired guards preserved checksums with no stable single-corpus regression above 10%. The clean source archive excludes .git, every root or nested target/build-script-cache, .agents, .codex, Python caches and native build products. The complete run used Xeon Gold 6248R CPU 24 and seven alternating paired samples per corpus, with source commit, archive and SDK identity injected before measurement. The exact workspace archive, five input profiles, harness, all three drivers, SDK, corpora and raw data are bound. CommonMark is 2.915703x, GFM is 3.078800x, and ordinary is 4.847819x/2.767217x; both 2.5x ratio gates fail while ordinary, scaling, pathological scaling and RSS pass.
+Evidence status: `current`. Canonical 2026-08-29 R137 remote release run for the complete arena AST path. R137 retains all R136 parser optimizations and adds mandatory CodeCheck repairs, including the pre-GA NodeKind.DocumentNode and SyntaxKind.DocumentNode names, without changing parse or render semantics. The twelve-profile bidirectional guard against R136 preserved checksums, with maximum CommonMark/GFM candidate ratios 1.058556x/1.042692x and no unapproved regression above 10%. The minimal source archive excludes .git, every root or nested target/build-script-cache, .agents, .codex, Python caches and native build products. The complete run used Xeon Gold 6248R CPU 24, seven alternating paired samples per corpus, Cangjie -O2 with a 2 GiB heap, and bound the exact R137 archive, five input profiles, harness, all three drivers, SDK, corpora and raw data. CommonMark is 2.271700x, GFM is 2.434636x, ordinary is 3.627543x/1.971177x, SourceMap overhead is 7.10%, CST overhead is 1185.10%, and every timing, scaling and RSS gate passes. The source identity is deliberately UNCOMMITTED-R137, so release-ready remains fail-closed pending a real commit-bound rerun.
 
-- CommonMark parse-only geometric mean ratio vs cmark: `2.92x` (limit `2.5x`).
-- GFM parse+HTML geometric mean ratio vs cmark-gfm: `3.08x` (limit `2.5x`).
+- CommonMark parse-only geometric mean ratio vs cmark: `2.27x` (limit `2.5x`).
+- GFM parse+HTML geometric mean ratio vs cmark-gfm: `2.43x` (limit `2.5x`).
 - Raw report: `docs/reports/benchmark-raw.json`.
-- Raw SHA-256: `200a2f8f9d891eedc98e825fd2b4ebae5725accc2be30418d67da449946c2f25`.
-- Tested source commit: `2454b0626c2fb0fe590a59bc1f79a8d4e864c856`.
+- Raw SHA-256: `0db8982b98758b98a7bf82c4adb202a51f5b28daab5555689ec92db41bd0722f`.
+- Tested source commit: `UNCOMMITTED-R137`.
 - Benchmark Cangjie SDK: `1.1.0-alpha.20260803040049`.
-- Product source archive SHA-256: `e0219aa1567e0ec2d7001cb3c0fe4eb9bb303e3a5431c4c317a8b19afc36bb99`.
+- Product source archive SHA-256: `eee330d8032ac621359a8c0300d79b5ccf196cf07b2841d3662d0588a09bdd6a`.
 - Benchmark harness SHA-256: `41b068720b6b7cc9898fc3fe4aa3df174a987d6c3ba359324b2d9b63d7778c86`.
-- markdown driver SHA-256: `4d19daed81a7671080b2abec445d7356e2f1f388e52e934934b22fb3e7e4b42e`.
+- markdown driver SHA-256: `235beafe309433939d879c55af6c3cc6aa4744de5791e6f27669052b50e4005b`.
 - cmark driver SHA-256: `385d4f1842b2a85211de914a5e6600ba195e3203bd4f3e91531cbed216d7a95e`.
 - cmark-gfm driver SHA-256: `6f8ad2cf959ce26f8b9331c62beea9ff1ea116d4a66b9bae033d6138d362e0b4`.
 - cmark: `0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8`.
