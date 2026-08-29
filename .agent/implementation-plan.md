@@ -18,7 +18,7 @@ The active dependency order is:
    policy. Completed.
 4. Commit this product/harness slice on its dedicated branch, then build a fresh
    checkout on Server and run the full fixed-CPU canonical measurement. Completed;
-   the latest complete run passes CommonMark `2.471077x` and GFM `2.367420x`.
+   the latest complete run passes CommonMark `2.274715x` and GFM `2.267811x`.
 5. Replace raw/report/README/ledger/acceptance only from that latest complete run,
    execute the clean full release gate, and verify its retained manifest and
    checksums. Completed; the gate exits 0 and the retained bundle verifies.

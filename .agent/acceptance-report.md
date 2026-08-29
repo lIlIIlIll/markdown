@@ -2,18 +2,18 @@
 
 ## Final Status
 
-**COMPLETE** — 125/125 项均为 `pass`；P0-P2 修复、1456/1456 正确性测试、lockfile-bound differential、schema-v4 canonical benchmark、候选包和 checksummed full release evidence gate 全部通过。
+**COMPLETE** — 125/125 项均为 `pass`；P0-P2 修复、1457/1457 正确性测试、lockfile-bound differential、schema-v4 canonical benchmark、候选包和 checksummed full release evidence gate 全部通过。
 
 <!-- release-evidence:start -->
 ## Generated Release Evidence
 
 - Version/status: `0.9.0` / `evidence-ready`.
-- Artifact commit: `72bd6faaeea5e7921432c3e1d25f79064e747d95`.
-- Evidence subject commit: `72bd6faaeea5e7921432c3e1d25f79064e747d95`; the retained execution manifest binds the clean gate commit and Git tree.
+- Artifact commit: `a259ba4904357d3ca393ca7ccaddce9e6da11931`.
+- Evidence subject commit: `a259ba4904357d3ca393ca7ccaddce9e6da11931`; the retained execution manifest binds the clean gate commit and Git tree.
 - Hosted CI verified at that HEAD: `False`; published: `False`.
-- Tests: `1456/1456` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `2.47x`, GFM `2.37x`, status `current`.
-- Raw digest: `b2942f744ce93a88f5043c5e29fb73df3f9f7cfed230d3868602b0b765f71c29`.
+- Tests: `1457/1457` passed, `0` skipped, `0` failed.
+- Benchmark: CommonMark `2.27x`, GFM `2.27x`, status `current`.
+- Raw digest: `b80123a494932c2c1b7f63fb6895ab81c9734564141f8099d9a2c6b8f8fa136f`.
 
 All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->
@@ -22,9 +22,9 @@ All mandatory offline evidence and performance gates pass. Hosted CI and publica
 
 ## 2026-08-30 Current Audit Closure
 
-固定 product commit `72bd6faaeea5e7921432c3e1d25f79064e747d95` 的 latest-complete Server canonical raw SHA-256 为 `b2942f744ce93a88f5043c5e29fb73df3f9f7cfed230d3868602b0b765f71c29`。verifier 从底层 samples 独立重算 CommonMark `2.471077x`、GFM `2.367420x`、scaling、pathological、RSS 和全部 gate，派生误差为空。
+固定 product commit `a259ba4904357d3ca393ca7ccaddce9e6da11931` 的 latest-complete Server canonical raw SHA-256 为 `b80123a494932c2c1b7f63fb6895ab81c9734564141f8099d9a2c6b8f8fa136f`。verifier 从底层 samples 独立重算 CommonMark `2.274715x`、GFM `2.267811x`、scaling、pathological、RSS 和全部 gate，派生误差为空。受测最小源码归档排除了 `.agent`、`.agents`、`.codex` 和全部构建产物。
 
-clean full release gate exit `0`：format、docs `44/23/4`、native cache tests `5/5`、evidence tests `15/15`、bundle tests `3/3`、API checker `9/9`、API snapshot `1322`、check/build、native ASan+UBSan fuzz `10000`、full tests `1456/1456`、CommonMark `652/652`、GFM `671/671`、CLI、quickstart、cookbook、differential `25/24/1/0`、benchmark smoke `3/3`、bundle 与 evidence-ready verifier 全部通过。
+clean full release gate exit `0`：format、docs `44/23/4`、native cache tests `5/5`、evidence tests `15/15`、bundle tests `4/4`、API checker `9/9`、API snapshot `1323`、check/build、native ASan+UBSan fuzz `10000`、full tests `1457/1457`、CommonMark `652/652`、GFM `671/671`、CLI、quickstart、cookbook、differential `25/24/1/0`、benchmark smoke `3/3`、bundle 与 evidence-ready verifier 全部通过。
 
 `target/release-evidence/manifest.json` 绑定干净执行 commit/tree 和当前 daily SDK archive SHA-256 `6c050802d1d6d297c4c6ad2bf8b253865f33aa2a810f6ef62347162f1e18131d`，保留每步 argv、工作目录、exit code 和日志，并从 JUnit、API inventory 与 raw samples 派生声明；候选包、源码 tar、raw/report 和全部 retained files 均由 `target/release-evidence/SHA256SUMS` 覆盖。Hosted CI、远端发布和 package registry publication 仍是独立事实，不由本地 COMPLETE 结论暗示。
 
