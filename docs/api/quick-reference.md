@@ -3,6 +3,18 @@
 本页只列常用公开入口。签名对应 `0.9.0`；完整声明以
 [`api/public-api-v0.9.txt`](../../api/public-api-v0.9.txt) 为准。
 
+[文档首页](../README.md) · **API 速查** · [完整 API](../api.md) · [Cookbook](../cookbook.md)
+
+## 30 秒选择入口
+
+| 输入 | 目标 | 使用 |
+| --- | --- | --- |
+| 不信任的 `String` | 安全 HTML | `Markdown.toSafeHtml` |
+| `String` / bytes / stream | 完整 AST | `MarkdownEngine.parse` |
+| 完整 AST | 自定义 HTML / source map | `HtmlRenderer` |
+| 文档源码 | query、lint、编辑 | `MarkdownEngine.parseSnapshot` |
+| 文档源码 | 不持有 AST 的事件 | `MarkdownEngine.parseEvents` |
+
 ## Facade
 
 导入：`import markdown.core.{Markdown, MarkdownProfile}`
@@ -132,3 +144,7 @@ let html = renderer.render(result.document)
 - HTML：`HtmlOptions.safe()`
 
 不要解析英文错误消息。错误类别和恢复语义见[错误与能力](../errors-and-capabilities.md)。
+
+---
+
+[← 文档首页](../README.md) · [完整 API reference →](../api.md)
