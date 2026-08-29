@@ -76,6 +76,38 @@ static inline int scan_ascii_chunk(const uint8_t *input, int64_t *has_special,
 #endif
 
 #if MARKDOWN_SCANNER_AVX2_DISPATCH
+/*
+ * Eight core inline bytes fit in one exact, collision-free pair of nibble
+ * lookup tables. Each byte owns one bit; intersecting the low- and high-nibble
+ * classes therefore produces that bit only for the exact byte. Tilde is the
+ * ninth special byte and remains one explicit comparison. Besides replacing
+ * the comparison chain, the matched bits directly classify text lowering,
+ * delimiters, and reference openers.
+ */
+__attribute__((target("avx2"))) static inline __m256i classify_inline_specials_avx2(
+    const __m256i bytes) {
+    static const uint8_t low_nibble_classes[32] = {
+        0x04, 0x20, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00,
+        0x00, 0x00, 0x08, 0x40, 0x81, 0x00, 0x00, 0x10,
+        0x04, 0x20, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00,
+        0x00, 0x00, 0x08, 0x40, 0x81, 0x00, 0x00, 0x10
+    };
+    static const uint8_t high_nibble_classes[32] = {
+        0x00, 0x00, 0x2A, 0x80, 0x00, 0x51, 0x04, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x2A, 0x80, 0x00, 0x51, 0x04, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+    const __m256i nibble_mask = _mm256_set1_epi8(0x0F);
+    const __m256i low_nibbles = _mm256_and_si256(bytes, nibble_mask);
+    const __m256i high_nibbles = _mm256_and_si256(_mm256_srli_epi16(bytes, 4), nibble_mask);
+    const __m256i low_classes = _mm256_shuffle_epi8(
+        _mm256_loadu_si256((const __m256i *)low_nibble_classes), low_nibbles);
+    const __m256i high_classes = _mm256_shuffle_epi8(
+        _mm256_loadu_si256((const __m256i *)high_nibble_classes), high_nibbles);
+    return _mm256_and_si256(low_classes, high_classes);
+}
+
 __attribute__((target("avx2"))) static int scan_ascii_chunk_avx2(
     const uint8_t *input, int64_t *has_special, int64_t *has_delimiter,
     int64_t *has_text_lowering, int64_t *has_reference_opener) {
@@ -86,35 +118,13 @@ __attribute__((target("avx2"))) static int scan_ascii_chunk_avx2(
     if (_mm256_movemask_epi8(newlines) != 0) {
         return 0;
     }
-    __m256i specials = _mm256_cmpeq_epi8(bytes, _mm256_set1_epi8('\\'));
-    specials = _mm256_or_si256(
-        specials, _mm256_cmpeq_epi8(bytes, _mm256_set1_epi8('&')));
-    specials = _mm256_or_si256(
-        specials, _mm256_cmpeq_epi8(bytes, _mm256_set1_epi8('`')));
-    specials = _mm256_or_si256(
-        specials, _mm256_cmpeq_epi8(bytes, _mm256_set1_epi8('~')));
-    specials = _mm256_or_si256(
-        specials, _mm256_cmpeq_epi8(bytes, _mm256_set1_epi8('*')));
-    specials = _mm256_or_si256(
-        specials, _mm256_cmpeq_epi8(bytes, _mm256_set1_epi8('_')));
-    specials = _mm256_or_si256(
-        specials, _mm256_cmpeq_epi8(bytes, _mm256_set1_epi8('!')));
-    const __m256i reference_openers = _mm256_cmpeq_epi8(bytes, _mm256_set1_epi8('['));
-    specials = _mm256_or_si256(specials, reference_openers);
-    specials = _mm256_or_si256(
-        specials, _mm256_cmpeq_epi8(bytes, _mm256_set1_epi8('<')));
-    *has_special |= _mm256_movemask_epi8(specials) != 0;
-    __m256i text_lowering = _mm256_cmpeq_epi8(bytes, _mm256_set1_epi8('\\'));
-    text_lowering = _mm256_or_si256(
-        text_lowering, _mm256_cmpeq_epi8(bytes, _mm256_set1_epi8('&')));
-    text_lowering = _mm256_or_si256(
-        text_lowering, _mm256_cmpeq_epi8(bytes, _mm256_set1_epi8('`')));
-    *has_text_lowering |= _mm256_movemask_epi8(text_lowering) != 0;
-    const __m256i delimiters = _mm256_or_si256(
-        _mm256_cmpeq_epi8(bytes, _mm256_set1_epi8('*')),
-        _mm256_cmpeq_epi8(bytes, _mm256_set1_epi8('_')));
-    *has_delimiter |= _mm256_movemask_epi8(delimiters) != 0;
-    *has_reference_opener |= _mm256_movemask_epi8(reference_openers) != 0;
+    const __m256i classes = classify_inline_specials_avx2(bytes);
+    const int has_tilde = _mm256_movemask_epi8(
+        _mm256_cmpeq_epi8(bytes, _mm256_set1_epi8('~'))) != 0;
+    *has_special |= !_mm256_testz_si256(classes, classes) || has_tilde;
+    *has_text_lowering |= !_mm256_testz_si256(classes, _mm256_set1_epi8(0x07));
+    *has_delimiter |= !_mm256_testz_si256(classes, _mm256_set1_epi8(0x18));
+    *has_reference_opener |= !_mm256_testz_si256(classes, _mm256_set1_epi8(0x40));
     return 1;
 }
 
