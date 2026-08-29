@@ -380,6 +380,16 @@
 - 理由：同一 driver、固定 CPU、12 iterations、12 轮正反序配对测量中，500ms 配置的 CommonMark parse ratio 为 `0.942644/0.946147`，GFM HTML 为 `0.922968/0.926841`。1s 没有额外收益，因此采用较短的 500ms。随后从提交 `c63c52528aef6cc5ea46d4b152e08af6a5344f2f` 的最小源码归档在 Server 全新目录构建并执行完整 canonical，得到 CommonMark `2.334095x`、GFM `2.466373x`，全部 ratio、复杂度和 RSS gate 通过；raw SHA-256 为 `ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37`。
 - 影响 requirements：`MD-PERF-002` 只能引用 raw 中同时绑定 `cangjieHeapSize` 与 `cangjieGcInterval` 的结果。不得把该结果描述为未设置运行时参数的默认进程性能；A-038 的最新完整整轮选择规则继续适用。
 
+## A-043：release bundle 的重复门槛与易失 target 目录
+
+- 状态：`resolved`
+- 决策日期：2026-08-30
+- 涉及：`MD-REL-001`、`MD-QUAL-001`
+- 歧义：当前 SDK 的 `cjpm bundle` 会再次执行 test/lint，并会清理 `target`；完整 release gate 已在打包前独立完成 tests、static check、fuzz、consumer 和 benchmark smoke。如果证据工作目录也位于 `target`，打包会删除已经采集的 JUnit 与步骤日志。
+- 决定：release gate 先在 `mktemp -d` 创建私有证据工作目录，在打包前 snapshot 易失的 JUnit/benchmark 报告；候选包使用 `cjpm bundle --skip-test --skip-lint` 生成，随后将完整证据原子发布到 `target/release-evidence`。skip 仅消除同一 gate 内的重复执行，不删除前置验证；manifest 仍记录每个前置命令和 exit code。
+- 理由：这保持候选包与受测源码一致，同时保证成功和失败路径都能留下可下载、checksummed 的执行证据，且不会让 cjpm 的 target 清理破坏证据链。
+- 影响 requirements：`MD-REL-001`、`MD-QUAL-001` 的发布证明以 retained manifest 与 SHA256SUMS 为准；独立 lint/test 步骤缺失或非零时 bundle 不得使 gate 通过。
+
 ```text
 ### A-XXX：标题
 

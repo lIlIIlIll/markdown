@@ -2,7 +2,7 @@
 
 ## Final Status
 
-**INCOMPLETE** — 123 项为 `pass`，2 项为 `implemented_unverified`；P0-P2 实现、1456/1456 正确性测试、lockfile-bound differential 和 schema-v4 canonical benchmark 已通过，尚待 clean full release evidence gate。
+**COMPLETE** — 125/125 项均为 `pass`；P0-P2 修复、1456/1456 正确性测试、lockfile-bound differential、schema-v4 canonical benchmark、候选包和 checksummed full release evidence gate 全部通过。
 
 <!-- release-evidence:start -->
 ## Generated Release Evidence
@@ -19,6 +19,14 @@ All mandatory offline evidence and performance gates pass. Hosted CI and publica
 <!-- release-evidence:end -->
 
 本报告后续按时间保留历史失败、候选淘汰和当时的完成记录；这些历史段落不覆盖上述当前状态。R139/R140 仅作为历史证据保留。
+
+## 2026-08-30 Current Audit Closure
+
+固定 product commit `72bd6faaeea5e7921432c3e1d25f79064e747d95` 的 latest-complete Server canonical raw SHA-256 为 `b2942f744ce93a88f5043c5e29fb73df3f9f7cfed230d3868602b0b765f71c29`。verifier 从底层 samples 独立重算 CommonMark `2.471077x`、GFM `2.367420x`、scaling、pathological、RSS 和全部 gate，派生误差为空。
+
+clean full release gate exit `0`：format、docs `44/23/4`、native cache tests `5/5`、evidence tests `14/14`、bundle tests `3/3`、API checker `9/9`、API snapshot `1322`、check/build、native ASan+UBSan fuzz `10000`、full tests `1456/1456`、CommonMark `652/652`、GFM `671/671`、CLI、quickstart、cookbook、differential `25/24/1/0`、benchmark smoke `3/3`、bundle 与 evidence-ready verifier 全部通过。
+
+`target/release-evidence/manifest.json` 绑定干净执行 commit/tree，保留每步 argv、工作目录、exit code 和日志，并从 JUnit、API inventory 与 raw samples 派生声明；候选包、源码 tar、raw/report 和全部 retained files 均由 `target/release-evidence/SHA256SUMS` 覆盖。Hosted CI、远端发布和 package registry publication 仍是独立事实，不由本地 COMPLETE 结论暗示。
 
 ## 2026-08-29 Current Completion Evidence
 

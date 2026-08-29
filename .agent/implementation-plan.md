@@ -2,10 +2,10 @@
 
 ## Current completion state (2026-08-30)
 
-The 2026-08-30 P0-P2 audit remediation is implemented but not yet release-verified.
-The authoritative ledger is 123 pass, 0 pending, 2 implemented_unverified and 0
-blocked. The earlier `c63c525` benchmark remains historical because both the
-product tree and measurement harness changed.
+The 2026-08-30 P0-P2 audit remediation is release-verified. The authoritative
+ledger is 125 pass, 0 pending, 0 implemented_unverified and 0 blocked. The earlier
+`c63c525` benchmark remains historical because both the product tree and measurement
+harness changed.
 
 The active dependency order is:
 
@@ -21,7 +21,7 @@ The active dependency order is:
    the latest complete run passes CommonMark `2.471077x` and GFM `2.367420x`.
 5. Replace raw/report/README/ledger/acceptance only from that latest complete run,
    execute the clean full release gate, and verify its retained manifest and
-   checksums. Pending.
+   checksums. Completed; the gate exits 0 and the retained bundle verifies.
 
 The retained parser architecture is unchanged: one shared parsing core with
 explicit full-AST, source-event and fused-render execution models. Canonical
