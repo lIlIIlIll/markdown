@@ -24,6 +24,12 @@ README、开发者文档首页、入门教程、六组 API reference、扩展作
 
 实际验证结果：public API snapshot `1311` declarations、release evidence、format、`cjpm check`、根 build、quickstart build/run 全部 exit `0`；授权环境 full suite exit `0`，`1455/1455` passed，0 skipped/error/failed。第一次受限环境运行在执行 0 个用例前因 unittest 本地 socket 权限失败，不是产品或文档断言失败。
 
+### Usability follow-up
+
+README 和文档首页现按“首次运行、按任务复制、按符号查 API”组织；新增 task-led cookbook、故障排查、API 速查和可运行 `examples/cookbook`。审计发现原示例错误地从 `HeadingNodeView` 直接读取 span；当前文档和示例已统一使用 `heading.node.span`，并由 docs gate 防止回归。
+
+`scripts/check_docs.py` 现验证 `43` 个 Markdown 文件、`23` 个核心 API 入口和 `4` 个 runnable example 文件。cookbook 与 quickstart 均通过公开子包 build/run；API snapshot `1311` declarations、release evidence、format、root check/build 均 exit `0`；full suite `1455/1455`，0 skipped/error/failed。性能页只把 R139 `2.380950x` / `2.454213x` 作为当前 canonical 数字，并把历史 markdown4cj parse-only 数据明确隔离。
+
 ## 2026-08-27 Parser Phase Evidence
 
 R17 eliminated redundant link-target string validation after the target scanner had

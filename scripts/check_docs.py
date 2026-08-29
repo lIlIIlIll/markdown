@@ -22,13 +22,23 @@ REQUIRED_PAGES = [
     "README.md",
     "docs/README.md",
     "docs/getting-started.md",
+    "docs/cookbook.md",
+    "docs/troubleshooting.md",
     "docs/api.md",
+    "docs/api/quick-reference.md",
     "docs/api/core.md",
     "docs/api/ast-and-source.md",
     "docs/api/rendering.md",
     "docs/api/extensions.md",
     "docs/api/editor.md",
     "docs/api/artifacts-and-services.md",
+]
+
+REQUIRED_EXAMPLES = [
+    "examples/quickstart/cjpm.toml",
+    "examples/quickstart/src/main.cj",
+    "examples/cookbook/cjpm.toml",
+    "examples/cookbook/src/main.cj",
 ]
 
 REQUIRED_API_SYMBOLS = [
@@ -76,6 +86,10 @@ def main() -> int:
         if not (ROOT / name).is_file():
             failures.append(f"missing required page: {name}")
 
+    for name in REQUIRED_EXAMPLES:
+        if not (ROOT / name).is_file():
+            failures.append(f"missing required runnable example: {name}")
+
     for page in DOC_ROOTS:
         text = page.read_text(encoding="utf-8")
         if text.count("```") % 2 != 0:
@@ -111,6 +125,8 @@ def main() -> int:
     maintained = "\n".join(page.read_text(encoding="utf-8") for page in DOC_ROOTS)
     if "markdown_cj" in maintained:
         failures.append("obsolete product name appears in maintained documentation: markdown_cj")
+    if "heading.span" in maintained:
+        failures.append("invalid HeadingNodeView member appears in maintained documentation: heading.span")
 
     if failures:
         for failure in failures:
@@ -119,7 +135,8 @@ def main() -> int:
 
     print(
         f"docs check passed: {len(DOC_ROOTS)} Markdown files, "
-        f"{len(REQUIRED_API_SYMBOLS)} required API entry points"
+        f"{len(REQUIRED_API_SYMBOLS)} required API entry points, "
+        f"{len(REQUIRED_EXAMPLES)} runnable example files"
     )
     return 0
 

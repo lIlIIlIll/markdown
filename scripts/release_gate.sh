@@ -21,7 +21,8 @@ cjpm test --no-color --no-progress --report-path /tmp/markdown-release-tests --r
 
 (cd tools/markdown && cjpm build)
 scripts/cli_smoke.sh
-(cd examples/quickstart && cjpm build && cjpm run)
+(cd examples/quickstart && cjpm build && cjpm run --skip-build)
+(cd examples/cookbook && cjpm build && cjpm run --skip-build)
 
 python3 scripts/differential_test.py
 cjpm bench --filter MarkdownReleaseBenchmarks --no-color \

@@ -547,3 +547,10 @@ GA 门槛。
 - `MD-EVT-001` is now `pass`. The ledger is 122/125 pass, 0 pending, 0
   implemented_unverified and 3 blocked. Only canonical performance and its
   release/quality dependents remain non-pass; overall status stays **INCOMPLETE**.
+## 2026-08-29 Documentation usability pass
+
+- Reorganized README and the documentation home around three user paths: first successful run, task-oriented recipes, and symbol-oriented API lookup. Internal architecture and release evidence remain available but no longer block the adoption path.
+- Added `docs/cookbook.md`, `docs/troubleshooting.md`, `docs/api/quick-reference.md`, and a public-package-only `examples/cookbook` consumer. The cookbook covers safe HTML, GFM, AST/link queries, UTF-16 positions, limits/cancellation, a versioned custom container, lint, and formatting.
+- Found and fixed a concrete unusable example: `AstQuery.headings()` returns `HeadingNodeView`, whose span is `heading.node.span`; the former direct member access did not compile. `scripts/check_docs.py` now rejects that invalid spelling and requires both runnable example projects.
+- Replaced the stale R79 performance page with the current unique canonical evidence: CommonMark `2.380950x` and GFM `2.454213x`, both within the `2.5x` limit. The historical markdown4cj comparison is clearly separated from current cmark/cmark-gfm release evidence.
+- Validation: docs check `43` Markdown files / `23` required API entry points / `4` runnable example files; API snapshot `1311` declarations; release evidence; format; root check/build; cookbook build/run; quickstart build/run; full suite `1455/1455`, 0 skipped/error/failed. All commands exited `0`.
