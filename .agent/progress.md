@@ -13,7 +13,7 @@
 - `OperationBudget` 的可变、单操作拥有、非线程安全合同已写入公开 API 注释和并发文档。
 - release evidence schema v2 将 `evidence-ready`、`ciVerifiedAtHead` 和 `published` 分开；README、报告和验收投影不再把离线证据等同于 hosted CI 或发布。
 - 本地完整门禁：`cangjie_env; CC=clang AR=ar scripts/release_gate.sh`，exit `0`；format、docs 43/23/4、API 1309、check/build、native ASan+UBSan fuzz 10000、full tests 1455/1455、CommonMark 652/652、GFM 671/671、differential 25/24/1/0、benchmark smoke 3/3、bundle和 evidence-ready verifier 全部通过。
-- 待外部收口：推送审计修复 commit 后观察该 commit 的 hosted CI，并配置/验证 `main` 分支保护。二者不会被离线 `evidence-ready` 状态提前冒充。
+- Hosted CI 已在 `release-hardening` commit `e8d486f20e624159c2da043e574169f9da4250dd` 通过：run `33234237046` 的 `Candidate validation (minimum-1.1.0)` 与 `Candidate validation (current-1.1.3)` 均执行完整 gate 并成功。`main` 已启用 strict required checks、1 个批准、stale review dismissal、last-push approval、管理员约束、conversation resolution，并禁止 force-push/delete。分支尚未合入 `main`，且离线 evidence 仍不冒充 publication。
 
 ## 2026-08-29 开发者文档与 API reference 重写
 

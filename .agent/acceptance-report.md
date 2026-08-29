@@ -26,7 +26,7 @@ All mandatory offline evidence and performance gates pass. Hosted CI and publica
 
 本地最终命令 `cangjie_env; CC=clang AR=ar scripts/release_gate.sh` exit `0`。门禁实际覆盖 format、docs `43/23/4`、public API `1309` declarations、check/build、native ASan+UBSan fuzz `10000`、full tests `1455/1455`、CommonMark `652/652`、GFM `671/671`、differential `25/24/1/0`、benchmark smoke `3/3`、bundle 和 evidence-ready verifier。
 
-`release-evidence.json` 当前有意保持 `ciVerifiedAtHead=false` 与 `published=false`。它们只会在推送后通过 hosted GitHub 状态独立核验；离线 gate 通过不再写成 CI 或发布成功。
+`release-evidence.json` 当前有意保持 `ciVerifiedAtHead=false` 与 `published=false`，因为 evidence-generation HEAD 与后续 workflow commits 不同。独立 hosted 证据为 run `33234237046`：commit `e8d486f20e624159c2da043e574169f9da4250dd` 的 SDK 1.1.0/1.1.3 完整 gates 均成功。`main` 保护规则已独立读取验证；分支尚未合入 `main`，也未发布 release。
 
 ## 2026-08-29 Developer Documentation Acceptance
 
