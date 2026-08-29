@@ -74,17 +74,37 @@ class ReleaseEvidenceTest(unittest.TestCase):
 
     def test_current_identity_rejects_corpus_and_product_tree_drift(self) -> None:
         raw = {
-            "identity": {"productTreeSha256": "old-tree"},
+            "identity": {
+                "productTreeSha256": "old-tree",
+                "benchmarkHarnessSha256": "old-harness",
+            },
             "corpora": {"readme-api": {"bytes": 3, "sha256": "old-corpus"}},
         }
-        benchmark = {"productTreeSha256": "old-tree"}
+        benchmark = {
+            "productTreeSha256": "old-tree",
+            "benchmarkHarnessSha256": "old-harness",
+        }
         with patch.object(release_evidence, "benchmark_corpora",
                 return_value={"readme-api": b"new"}), patch.object(
                     release_evidence, "benchmark_product_tree_sha256",
-                    return_value="new-tree"):
+                    return_value="new-tree"), patch.object(
+                    release_evidence, "digest", return_value="new-harness"):
             errors = release_evidence.validate_current_benchmark_identity(raw, benchmark)
         self.assertIn("benchmark corpus digest mismatch: readme-api", errors)
         self.assertIn("benchmark product tree does not match current sources", errors)
+        self.assertIn("benchmark harness does not match current measure.py", errors)
+
+    def test_current_identity_rejects_unreachable_commit(self) -> None:
+        errors = release_evidence.validate_reachable_commit(
+            "0000000000000000000000000000000000000000", "benchmark source"
+        )
+        self.assertEqual(
+            errors,
+            [
+                "benchmark source commit is not reachable from repository HEAD: "
+                "0000000000000000000000000000000000000000"
+            ],
+        )
 
     def test_product_tree_identity_is_deterministic_and_content_sensitive(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
