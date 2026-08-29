@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   linux-sdk-matrix:
+    name: Candidate validation (${{ matrix.sdk }})
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -22,8 +23,8 @@ jobs:
             url: https://cangjie-lang.cn/v1/files/auth/downLoad?nsId=142267&fileName=cangjie-sdk-linux-x64-1.1.3.tar.gz&objectKey=6a19349d21f5a8178d6fd22b
             sha256: 2b68905afc466e665ae181595c63f96c18d75fd2c1fb6c6f0cb64e179c28d61a
     steps:
-      # actions/checkout v4.2.2
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      # actions/checkout v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Install declared Cangjie SDK
         shell: bash
