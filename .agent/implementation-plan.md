@@ -1,27 +1,53 @@
 # markdown 实施计划
 
-## Final completion closure (2026-08-29)
+## Current completion state (2026-08-29)
 
-The dependency graph below is complete. R139 is the sole clean-commit canonical
-benchmark and passes the frozen full-AST limits: CommonMark `2.380950x`, GFM
-`2.454213x`, ordinary `3.631640x/2.026894x`, scaling
-`0.364821/2.498950`, pathological scaling `0.632235/2.437232`, and extra
-10 MiB RSS `30764 KiB`. R140 then ran the complete release gate from a fresh
-tracked-source archive: format, API snapshot 1311, check/build, native
-ASan+UBSan fuzz 10000, `1455/1455` tests, CLI, public quickstart,
-differential `25/24/1/0`, benchmark smoke `3/3`, bundle and release-ready
-verification all passed. The authoritative ledger is therefore 125 pass and
-zero pending, implemented_unverified, or blocked items.
+The implementation dependency graph is closed. The authoritative ledger is
+125 pass, 0 pending, 0 implemented_unverified and 0 blocked. The latest complete
+identity-bound Server benchmark is canonical: CommonMark `2.334095x` and GFM
+`2.466373x`, with every timing, scaling, pathological and RSS gate passing. The
+full local release gate also passes through bundle and evidence-ready validation.
 
-The final bidirectional audit reread all 3754 PRD lines, mapped all 52 normative
-sections and 33 explicit requirement labels, verified 125 unique ledger IDs and
-488 existing implementation/test path references, removed generic test
-placeholders, linked every item to R140, and confirmed 39 unique assumptions are
-referenced by affected requirement notes. No implementation slice remains.
+The retained architecture remains one shared parsing core with explicit full-AST,
+source-event and fused-render execution models. The canonical performance profile
+continues to construct the complete public AST; it does not substitute the event
+or fused paths. Further performance work is optional and must continue using the
+A/A, bidirectional A/B and latest-complete canonical selection rules.
 
-Historical R0-R138 sections are retained as design and rejection evidence. Any
-historical sentence that says a then-current candidate was blocked does not
-override this final closure or `.agent/requirements.yaml`.
+## Historical audit remediation (2026-08-29)
+
+At that checkpoint, an independent review found that R139 no longer identified the
+benchmark corpus or benchmark-relevant source tree. R139 and R140 became historical
+evidence and could not establish release readiness. The ledger was therefore 122
+pass and 3 implemented_unverified items: `MD-PERF-002`, `MD-REL-001`, and
+`MD-QUAL-001`.
+
+The active dependency order is:
+
+1. Bind every benchmark raw report to deterministic corpus digests and a
+   benchmark product-tree digest; reject drift in the release-evidence verifier.
+2. Correct the public API and artifact documentation, then update documentation
+   checks so the same errors cannot recur.
+3. Run format, documentation, API, check/build, and full tests locally. Completed.
+4. Commit the candidate so the benchmark has a stable source identity. Completed
+   at `27f8d9fa3973265a77fc71c0b5fd22af0bfe2add`.
+5. Build from a minimal benchmark archive on Server, explicitly excluding every
+   `target`, `build-script-cache`, `.agent`, `.agents`, `.codex`, Python cache,
+   and native build product; run the complete fixed-CPU release benchmark.
+   Completed; CommonMark `2.640257x` and GFM `2.587756x` fail.
+6. Replace raw data, generated report, README, ledger, progress, and acceptance
+   report from that one canonical result. Completed. The release-gate archive
+   retains `.agent` because the verifier consumes it, while excluding `.agents`,
+   `.codex`, every build cache, and native product. The gate now isolates pinned
+   differential tools per checkout and supports the Server's pre-top-level-await
+   Node runtime. A fresh Server run passes every correctness, fuzz, differential,
+   benchmark-smoke, consumer, and bundle stage, then fails only the two canonical
+   `2.5x` performance gates as required.
+
+The current inventory is 1309 public declarations, 44 maintained Markdown files,
+23 required API entries, 4 runnable examples, and 40 unique assumptions. Historical
+R0-R140 sections remain design and rejection evidence; their then-current status
+does not override this section or `.agent/requirements.yaml`.
 
 ## 0.9 breaking execution-model implementation (2026-08-26)
 

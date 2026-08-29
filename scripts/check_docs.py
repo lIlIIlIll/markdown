@@ -128,6 +128,14 @@ def main() -> int:
     if "heading.span" in maintained:
         failures.append("invalid HeadingNodeView member appears in maintained documentation: heading.span")
 
+    quick_reference = (ROOT / "docs" / "api" / "quick-reference.md").read_text(encoding="utf-8")
+    for obsolete in ("`node.id`", "`node.children`"):
+        if obsolete in quick_reference:
+            failures.append(f"obsolete NodeRef API appears in quick reference: {obsolete}")
+    for current in ("`node.nodeId`", "`node.children()`", "`NodeChildren`"):
+        if current not in quick_reference:
+            failures.append(f"current NodeRef API is missing from quick reference: {current}")
+
     if failures:
         for failure in failures:
             print(f"docs check failed: {failure}", file=sys.stderr)

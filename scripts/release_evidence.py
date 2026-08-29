@@ -7,14 +7,22 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import subprocess
 import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "benchmarks"))
+
+from benchmark_identity import benchmark_product_tree_sha256
+from measure import benchmark_corpora
+
+
 EVIDENCE = ROOT / "release-evidence.json"
 README = ROOT / "README.md"
 BENCHMARK_REPORT = ROOT / "docs/reports/benchmark.md"
 ACCEPTANCE = ROOT / ".agent/acceptance-report.md"
+BENCHMARK_HARNESS = ROOT / "benchmarks/measure.py"
 
 
 def digest(path: Path) -> str:
@@ -46,6 +54,7 @@ Evidence status: `{benchmark['status']}`. {benchmark['note']}
 - Tested source commit: `{benchmark['sourceCommit'] or 'UNBOUND'}`.
 - Benchmark Cangjie SDK: `{benchmark['sdkVersion'] or 'UNBOUND'}`.
 - Product source archive SHA-256: `{benchmark['productSourceArchiveSha256']}`.
+- Product source tree SHA-256: `{benchmark['productTreeSha256'] or 'UNBOUND'}`.
 - Benchmark harness SHA-256: `{benchmark['benchmarkHarnessSha256']}`.
 - markdown driver SHA-256: `{benchmark['markdownDriverSha256']}`.
 - cmark driver SHA-256: `{benchmark['cmarkDriverSha256']}`.
@@ -133,10 +142,69 @@ def replace_block(path: Path, block: str) -> str:
     return prefix + block + suffix
 
 
+def validate_current_benchmark_identity(raw: dict[str, object],
+        benchmark: dict[str, object]) -> list[str]:
+    errors: list[str] = []
+    raw_corpora = raw.get("corpora", {})
+    assert isinstance(raw_corpora, dict)
+    current_corpora = benchmark_corpora()
+    if set(raw_corpora) != set(current_corpora):
+        errors.append("benchmark corpus inventory does not match current harness")
+    for name, content in current_corpora.items():
+        recorded = raw_corpora.get(name)
+        if not isinstance(recorded, dict):
+            errors.append(f"benchmark corpus is missing: {name}")
+            continue
+        if recorded.get("bytes") != len(content):
+            errors.append(f"benchmark corpus byte length mismatch: {name}")
+        if recorded.get("sha256") != hashlib.sha256(content).hexdigest():
+            errors.append(f"benchmark corpus digest mismatch: {name}")
+
+    current_tree = benchmark_product_tree_sha256(ROOT)
+    raw_tree = raw.get("identity", {}).get("productTreeSha256")
+    evidence_tree = benchmark.get("productTreeSha256")
+    if not raw_tree or raw_tree != evidence_tree:
+        errors.append("benchmark product tree identity is unbound or inconsistent")
+    if raw_tree != current_tree:
+        errors.append("benchmark product tree does not match current sources")
+
+    raw_harness = raw.get("identity", {}).get("benchmarkHarnessSha256")
+    evidence_harness = benchmark.get("benchmarkHarnessSha256")
+    if not raw_harness or raw_harness != evidence_harness:
+        errors.append("benchmark harness identity is unbound or inconsistent")
+    if raw_harness != digest(BENCHMARK_HARNESS):
+        errors.append("benchmark harness does not match current measure.py")
+    return errors
+
+
+def validate_reachable_commit(commit: object, label: str) -> list[str]:
+    if not isinstance(commit, str) or not commit:
+        return [f"{label} commit is unbound"]
+    inside = subprocess.run(
+        ["git", "rev-parse", "--is-inside-work-tree"],
+        cwd=ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if inside.returncode != 0:
+        return []
+    reachable = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
+        cwd=ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if reachable.returncode != 0:
+        return [f"{label} commit is not reachable from repository HEAD: {commit}"]
+    return []
+
+
 def validate(data: dict[str, object], evidence_ready: bool) -> list[str]:
     errors: list[str] = []
-    if data.get("schemaVersion") != 2:
-        errors.append("release evidence schemaVersion must be 2")
+    if data.get("schemaVersion") != 3:
+        errors.append("release evidence schemaVersion must be 3")
     for section, path_key, digest_key in (
         (data["conformance"]["commonmark"], "corpusPath", "corpusSha256"),
         (data["conformance"]["gfm"], "corpusPath", "corpusSha256"),
@@ -175,11 +243,20 @@ def validate(data: dict[str, object], evidence_ready: bool) -> list[str]:
             errors.append(f"benchmark identity mismatch: {raw_key}")
     if raw["environment"].get("cangjieSdkVersion") != benchmark["sdkVersion"]:
         errors.append("benchmark SDK identity does not match raw benchmark")
+    if benchmark["status"] == "current" or evidence_ready:
+        errors.extend(validate_current_benchmark_identity(raw, benchmark))
     failed_raw_gates = sorted(name for name, passed in raw.get("gates", {}).items() if not passed)
-    if failed_raw_gates:
+    if failed_raw_gates and (evidence_ready or data["release"]["evidenceReady"]):
         errors.append("canonical benchmark gates failed: " + ", ".join(failed_raw_gates))
     identity = data["identity"]
     release = data["release"]
+    if benchmark["status"] == "current" or evidence_ready:
+        errors.extend(validate_reachable_commit(benchmark["sourceCommit"], "benchmark source"))
+        errors.extend(validate_reachable_commit(identity["artifactCommit"], "artifact"))
+        errors.extend(validate_reachable_commit(identity["evidenceCommit"], "evidence"))
+        errors.extend(validate_reachable_commit(
+            identity["repositoryHeadAtGeneration"], "repository generation HEAD"
+        ))
     if benchmark["status"] == "current" and benchmark["sourceCommit"] != identity["artifactCommit"]:
         errors.append("current benchmark source does not match artifact commit")
     if release["ciVerifiedAtHead"]:

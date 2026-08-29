@@ -1256,26 +1256,27 @@ private func escapeText(value: String): String {
         return value
     }
     let out = StringBuilder()
+    var segmentStart: Int64 = 0
     var index: Int64 = 0
     while (index < value.size) {
-        let byte = value[index]
-        if (byte == b'&') {
-            out.append("&amp;");
-            index++
-        } else if (byte == b'<') {
-            out.append("&lt;");
-            index++
-        } else if (byte == b'>') {
-            out.append("&gt;");
-            index++
-        } else if (byte == b'"') {
-            out.append("&quot;");
-            index++
-        } else {
-            let next = rendererNextRune(value, index);
-            out.append(value[index..next]);
-            index = next
+        let replacement = match (value[index]) {
+            case b'&' => "&amp;"
+            case b'<' => "&lt;"
+            case b'>' => "&gt;"
+            case b'"' => "&quot;"
+            case _ => ""
         }
+        if (!replacement.isEmpty()) {
+            if (segmentStart < index) {
+                out.append(value[segmentStart..index])
+            }
+            out.append(replacement)
+            segmentStart = index + 1
+        }
+        index++
+    }
+    if (segmentStart < value.size) {
+        out.append(value[segmentStart..value.size])
     }
     out.toString()
 }

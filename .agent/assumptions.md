@@ -97,7 +97,7 @@
   原始 wall/RSS 数据、语料 SHA-256、driver/harness/archive identity。候选仍先执行
   A/A 和正反序 A/B；噪声超过门槛的结果只能失败或重测，不能放宽。
 
-## A-039：项目许可证
+## A-041：项目许可证
 
 - 状态：`resolved`
 - 决策日期：2026-08-17
@@ -359,6 +359,16 @@
 - 决定：使用最新完成的整轮结果作为唯一 canonical，不选择数值最优的一轮。候选归因继续使用固定 CPU 的 A/A、正反序 paired A/B、产品绝对耗时和硬件计数器；这些只解释收益来源，不能覆盖完整 canonical raw。保留两轮结果作为噪声证据，不放宽 `2.5x` 门槛。
 - 理由：R42 两轮完整结果分别为 CommonMark `4.279733x`/`4.444100x`、GFM `3.741081x`/`3.569983x`；large-table GFM 产品中位数稳定在约 `0.1643s`，相对 R29 的 `0.1768s` 确认目标收益，而多项 reference 中位数变化解释了 aggregate ratio 的反向波动。固定选择规则比事后挑选最佳结果更可复核。
 - 影响 requirements：`MD-PERF-002` 始终引用最新完整、身份绑定的 canonical run。最终 R139 raw `530d206f...337d0c` 按此规则成为唯一 current result；全部 R0-R138 结果均为历史或候选证据。
+
+## A-039：release benchmark 的 GC interval
+
+- 状态：`resolved`
+- 决策日期：2026-08-29
+- 涉及：`MD-PERF-001`、`MD-PERF-002`
+- 歧义：PRD 固定 release build、reference host、语料和 ratio 门槛，但没有指定仓颉运行时的 heuristic GC 最小间隔。harness 已显式使用 `cjHeapSize=2GB`，SDK 的默认 `cjGCInterval=150ms` 会在 throughput 样本中频繁触发并发 tracing。
+- 决定：canonical harness 对受测进程显式设置 `cjGCInterval=500ms`，同时继续设置 `cjHeapSize=2GB`。该参数不关闭 GC，也不改变 heap、资源 limits、parser 行为或 10 MiB RSS 门槛。raw environment、benchmark report 和性能文档必须披露该值。默认 `Markdown.parse` 行为和用户进程环境保持不变。
+- 理由：同一 driver、固定 CPU、12 iterations、12 轮正反序配对测量中，500ms 配置的 CommonMark parse ratio 为 `0.942644/0.946147`，GFM HTML 为 `0.922968/0.926841`。1s 没有额外收益，因此采用较短的 500ms。随后从提交 `c63c52528aef6cc5ea46d4b152e08af6a5344f2f` 的最小源码归档在 Server 全新目录构建并执行完整 canonical，得到 CommonMark `2.334095x`、GFM `2.466373x`，全部 ratio、复杂度和 RSS gate 通过；raw SHA-256 为 `ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37`。
+- 影响 requirements：`MD-PERF-002` 只能引用 raw 中同时绑定 `cangjieHeapSize` 与 `cangjieGcInterval` 的结果。不得把该结果描述为未设置运行时参数的默认进程性能；A-038 的最新完整整轮选择规则继续适用。
 
 ```text
 ### A-XXX：标题

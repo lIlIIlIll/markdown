@@ -210,12 +210,12 @@ evidence。测量边界和输入 API 见[性能说明](docs/performance.md)。
 | Offline evidence ready | `ready` |
 | CI verified at evidence repository HEAD | `no` |
 | Published release | `no` |
-| Artifact commit | `856a6c7164fe97450b5ab7ff34926445b48dcc35` |
-| Evidence commit | `490dad69584761733586cd674f6bc2cfd2555a78` |
-| Repository HEAD at generation | `490dad69584761733586cd674f6bc2cfd2555a78` |
-| CommonMark / cmark | `2.38x` / limit `2.5x` |
-| GFM HTML / cmark-gfm | `2.45x` / limit `2.5x` |
-| Benchmark identity | `current`; commit `856a6c7164fe97450b5ab7ff34926445b48dcc35`; SDK `1.1.0-alpha.20260803040049` |
+| Artifact commit | `c63c52528aef6cc5ea46d4b152e08af6a5344f2f` |
+| Evidence commit | `c63c52528aef6cc5ea46d4b152e08af6a5344f2f` |
+| Repository HEAD at generation | `c63c52528aef6cc5ea46d4b152e08af6a5344f2f` |
+| CommonMark / cmark | `2.33x` / limit `2.5x` |
+| GFM HTML / cmark-gfm | `2.47x` / limit `2.5x` |
+| Benchmark identity | `current`; commit `c63c52528aef6cc5ea46d4b152e08af6a5344f2f`; SDK `1.1.0-alpha.20260803040049` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
 `evidenceReady` describes reproducible offline artifacts and gates only. It does not claim that
@@ -225,7 +225,7 @@ the current repository HEAD passed hosted CI or that a GitHub release was publis
 - CommonMark `652/652`
 - GFM `671/671`
 - 全量测试 `1455/1455`
-- 公开 API snapshot `1311` declarations
+- 公开 API snapshot `1309` declarations
 
 ## 参与项目
 

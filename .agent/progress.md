@@ -1,19 +1,42 @@
 # markdown 当前进度
 
 更新时间：2026-08-29
-当前阶段：0.9 breaking 执行模型、完整 arena AST parser、source-driven Resolved/RawBlock event、发布证据和验收链路均已闭环。R139 clean-commit canonical benchmark 与 R140 fresh-archive release gate 已通过。
+当前阶段：0.9 breaking 执行模型、schema-v3 canonical identity、完整性能门槛和离线发布门禁均已完成。
 整体结论：**COMPLETE**。需求账本当前为 125 pass、0 pending、0 implemented_unverified、0 blocked。
 
-## 2026-08-29 发布审计修复
+## 2026-08-29 R143 canonical 性能与最终闭环（当前）
+
+- 唯一 canonical raw 为 `docs/reports/benchmark-raw.json`，SHA-256 `ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37`。它绑定 clean product commit `c63c52528aef6cc5ea46d4b152e08af6a5344f2f`、最小源码归档 `ec7bcd00a3621db10b0c093cb4bf31ebf30c7d0918a75e5e24939d9d523cf9e1`、product tree `64831ebd505da359605f2702c91f7ea21d8b83d212873afe9ca927918887ee3c`、harness `4d437f4a94097e3d09a62a62b48046a9363010e0f853cc288cb169641c6e8711` 和 driver `9ab161c0b7e20d32201a8bfd7dbaefec7fbc298b30414166532432e75cd1a3a1`。
+- 固定 Server CPU 24、SDK `1.1.0-alpha.20260803040049` 的完整 release benchmark exit `0`：CommonMark `2.334095x`、GFM `2.466373x`；ordinary `3.538540x/1.994487x`、scaling `0.349193/1.514705`、pathological `0.700414/2.187767`、extra RSS `31224 KiB`，全部 gate 为 true。
+- 受测根库使用 `-O2`，benchmark consumer 使用 `-O2 --lto thin`；受测进程设置 `cjHeapSize=2GB`、`cjGCInterval=500ms`。这些值写入 raw 和报告；500ms 是 heuristic GC 最小间隔，不关闭 GC，不改变库或调用者的默认进程环境。
+- 当前完整 release gate 在 Cangjie `1.1.0-alpha.20260829040003` 下 exit `0`：format、docs `44/23/4`、native build contracts `4/4`、API checker `9/9`、API snapshot `1309`、check/build、native ASan+UBSan fuzz `10000`、benchmark profiles `7/7`、full tests `1455/1455`、CLI、quickstart、cookbook、differential `25/24/1/0`、benchmark smoke `3/3`、bundle 和 evidence-ready verifier 全部通过。
+- 发布候选包 `target/markdown-0.9.0.cjp` 为 `494310` bytes，SHA-256 `7d6c3d9800d9b9757df83ced7bfb179d056d17e89599624c47e3a38c3f44b3f6`。`release-evidence.json` 的离线状态为 `evidence-ready`；hosted CI at evidence HEAD 与 published 仍明确为 false。
+- `.agent/requirements.yaml` 的 125 项全部为 `pass`。`MD-PERF-002`、`MD-REL-001` 和 `MD-QUAL-001` 已由本轮 canonical 与完整门禁解除，剩余工作为 None。
+
+## 2026-08-29 独立审计修复（历史）
+
+- 独立审计确认 R139 的 `readme-api` corpus 与 benchmark-relevant product tree 已不匹配当前 main；R139/R140 降为历史证据，不能继续声明当前 COMPLETE。
+- release evidence schema v3 新增当前 corpus inventory、byte length、SHA-256 和 product-tree SHA-256 校验。任何未绑定或漂移都 fail closed。
+- API quick reference 已改为真实的 `node.nodeId`、`node.children()` 和 `NodeChildren`；artifact 文档已区分有效 UTF-8 的 `ReplaceInvalid` 与实际发生 replacement 的非 identity mapping。
+- 当前仓库清点为 public API 1309 declarations、44 个 maintained Markdown 文件、23 个 required API entries、4 个 runnable examples、40 个唯一 assumptions。
+- `main` 已合入历史文档分支。required review 已永久移除；required status checks、strict 更新、conversation resolution、管理员约束以及禁止 force-push/delete 仍保留。当前 hosted CI 事实与本轮尚未提交的修复不是同一代码身份，不替代后续验证。
+- 本轮候选提交为 `27f8d9fa3973265a77fc71c0b5fd22af0bfe2add`。最小源码归档 SHA-256 为 `9930dd77eec1d98a0d069cea98b4084eb725b21c7061a1c68577cd32273fc815`，明确排除所有 `target`、`build-script-cache`、`.agent`、`.agents`、`.codex`、Python cache 和 native build product。
+- 固定 Server CPU 24 canonical raw SHA-256 为 `5cb80869c9b19e3e026e05313fa59decfd91eb65d67cf53508b0feed557f23cb`；product tree `1c4da3ebd42b441301b26f4710cc63cf6aa397beecf4f715118e22910fe65965`。CommonMark `2.640257x`、GFM `2.587756x` 均超过 `2.5x`；ordinary `3.640610x/1.714504x`、scaling `0.395817/1.513426`、pathological `0.684769/2.411971` 和 extra RSS `30576 KiB` 通过。
+- 当前本地验证：release-evidence regressions `9/9`、benchmark-profile regressions `6/6`、docs `44/23/4`、public API `1309`、format、`cjpm check`、`cjpm build` 均 exit `0`。受限环境 `cjpm test` 在执行 0 个用例前因 unittest local socket 被拒绝；授权环境同一命令 exit `0`，`1455/1455` passed，0 skipped/error/failed。
+- Fresh release gate 归档保留 verifier 必需的 `.agent`，但排除 `.agents`、`.codex`、所有 `target`、`build-script-cache`、Python cache 和 native build product。`scripts/release_gate.sh` 将 pinned differential checkout 隔离到当前检出的 `target/differential-tools`，不再与 Server 共享 `/tmp/markdown-*`；`commonmark_js_driver.mjs` 也移除了旧 Node 不支持的 top-level await。
+- Server 使用 `1.1.0-alpha.20260817040003` SDK 从 fresh archive 重建产品与两套 C reference；离线 source seed 只提供精确 Git checkout 和 commonmark.js 依赖，不含 CMake build 目录。最终门禁覆盖 format、docs `44/23/4`、native build regressions `4/4`、API checker `9/9`、API snapshot `1309`、check/build、native ASan+UBSan fuzz `10000`、benchmark profiles `6/6`、full tests `1455/1455`、CLI、quickstart、cookbook、differential `25/24/1/0`、benchmark smoke `3/3` 和 bundle；`markdown-0.9.0.cjp` 为 `498701` bytes，SHA-256 `a962a9292fc5baca2f950ec08ad1ccabd80d19ff45142eafc0a84ebec16d5beb`。最终 exit `1` 仅来自 `--evidence-ready` 对两个 canonical `2.5x` ratio gate 的预期拒绝。
+- 普通 evidence consistency 验证通过；`--evidence-ready` 按预期 exit `1`，明确报告两个 raw gate 和 mandatory ratio gate 失败。下一步只可通过可复现的性能改进或明确修改 PRD 门槛解除，不能把历史 R139 或重复抽样中的更优值恢复为 current。
+
+## 2026-08-29 历史发布审计修复
 
 - 逐项复核 `/home/elliot/Downloads/markdown-audit-package.zip` 后，确认九项报告均对应当时的真实仓库状态；当前切片修复代码、文档和本地发布证据问题，并保留 hosted repository 状态作为独立验收层。
 - CI 不再依赖空仓库变量：minimum SDK `1.1.0` 与 current SDK `1.1.3` 使用官方固定 URL/SHA-256，`actions/checkout` 固定到 commit，两个矩阵任务均执行完整 `scripts/release_gate.sh`。
 - release gate 现在自动准备 pinned cmark、cmark-gfm 和 commonmark.js 差分工具；归档和新 runner 不再依赖开发机 `/tmp` 中的预装 reference checkout。
 - 删除会夸大执行模型的 `ChunkedParseSession` 与 `AsyncHtmlRenderSession`；`newSession` 返回 `BufferedInputSession`，异步 sink 只公开 `BufferedAsyncHtmlOutputSession`。迁移文档与 1309-declaration API snapshot 已同步。
 - `OperationBudget` 的可变、单操作拥有、非线程安全合同已写入公开 API 注释和并发文档。
-- release evidence schema v2 将 `evidence-ready`、`ciVerifiedAtHead` 和 `published` 分开；README、报告和验收投影不再把离线证据等同于 hosted CI 或发布。
+- 当时的 release evidence schema v2 将 `evidence-ready`、`ciVerifiedAtHead` 和 `published` 分开；schema v3 当前又增加了 corpus 与 product-tree identity。
 - 本地完整门禁：`cangjie_env; CC=clang AR=ar scripts/release_gate.sh`，exit `0`；format、docs 43/23/4、API 1309、check/build、native ASan+UBSan fuzz 10000、full tests 1455/1455、CommonMark 652/652、GFM 671/671、differential 25/24/1/0、benchmark smoke 3/3、bundle和 evidence-ready verifier 全部通过。
-- Hosted CI 已在 `release-hardening` commit `e8d486f20e624159c2da043e574169f9da4250dd` 通过：run `33234237046` 的 `Candidate validation (minimum-1.1.0)` 与 `Candidate validation (current-1.1.3)` 均执行完整 gate 并成功。`main` 已启用 strict required checks、1 个批准、stale review dismissal、last-push approval、管理员约束、conversation resolution，并禁止 force-push/delete。分支尚未合入 `main`，且离线 evidence 仍不冒充 publication。
+- 当时 hosted CI 在 `release-hardening` commit `e8d486f20e624159c2da043e574169f9da4250dd` 通过：run `33234237046` 的两个 SDK job 均成功。该分支后来已合入 `main`；required review 随后按仓库治理决定永久移除，其余保护见本文件顶部当前记录。
 
 ## 2026-08-29 开发者文档与 API reference 重写
 
@@ -22,9 +45,9 @@
 - 新增 `scripts/check_docs.py`，离线检查必需页面、相对链接、code fence、旧产品名和 23 个核心公开入口；并接入 `scripts/release_gate.sh`。
 - 实际验证：docs check 40 files/23 entry points、API snapshot 1311 declarations、release evidence、format、`cjpm check`、根 build、quickstart build/run 均 exit 0。沙箱内第一次 full test 在执行 0 个用例前因 unittest socket 权限失败；授权环境同命令最终 `1455/1455` pass，0 skipped/error/failed。
 
-## 2026-08-29 Final R139/R140 completion evidence
+## 2026-08-29 Historical R139/R140 completion evidence
 
-- R139 是当前唯一 canonical benchmark。它绑定 clean product commit `856a6c7164fe97450b5ab7ff34926445b48dcc35`、source archive `bdc7964d65a631f12d527b18352e49ae3a50563589427a0e304dc8b8a569605f`、harness `b07a40056119b13e6bf1206233afe1855489d6af12aab10b08367d3a36316254`、markdown driver `363ece9a4eed545a8f85b97de5052da6f4d9037175bb40da4e677912d03334d5` 和 raw report `530d206f2558766c56eb02e33b646f7ef36b58a06b5187f52999223f32337d0c`。
+- R139 当时是唯一 canonical benchmark。它绑定 clean product commit `856a6c7164fe97450b5ab7ff34926445b48dcc35`、source archive `bdc7964d65a631f12d527b18352e49ae3a50563589427a0e304dc8b8a569605f`、harness `b07a40056119b13e6bf1206233afe1855489d6af12aab10b08367d3a36316254`、markdown driver `363ece9a4eed545a8f85b97de5052da6f4d9037175bb40da4e677912d03334d5` 和 raw report `530d206f2558766c56eb02e33b646f7ef36b58a06b5187f52999223f32337d0c`；schema-v3 审计已将其降为历史证据。
 - 固定 Server CPU 24 的完整结果为 CommonMark `2.380950x`、GFM `2.454213x`；ordinary `3.631640x/2.026894x`，scaling slope/adjacent `0.364821/2.498950`，pathological slope/adjacent `0.632235/2.437232`，10 MiB extra RSS `30764 KiB`。所有 frozen timing、scaling 和 RSS gate 均为 true。
 - `readme-api` corpus 只将自动生成的 release-evidence block 规范化为一个固定 marker；缺失或重复 marker fail closed。该修复消除了报告写回导致的递归 corpus 漂移，同时保留 README/API workload 的其余全部内容。
 - R140 从最小 tracked-source fresh archive 在 Server 上执行 `CC=/usr/bin/clang AR=/usr/bin/ar scripts/release_gate.sh`，exit `0`，最终输出 `release gate: pass`。门禁包含 format、API snapshot 1311、check/build、native ASan+UBSan coverage-guided fuzz 10000、full tests `1455/1455`、CLI、quickstart、differential `25/24/1/0`、benchmark smoke `3/3`、bundle 与 release-ready verifier。
@@ -34,7 +57,7 @@
 - 假设审计：39 个 assumption ID 唯一且全部被对应 requirement notes 引用；私密漏洞报告渠道已按真实 GitHub API 证据从外部阻塞改为 resolved。
 - 占位审计：产品/CLI 源码无 TODO、FIXME、unimplemented、not implemented 或 panic 占位；测试无 `@Skip`/`@Ignore`。
 
-下方 R0-R138 和早期治理切片全部是按时间保留的历史恢复记录；其中“当前”、`blocked` 或 `INCOMPLETE` 只描述当时状态，不覆盖本节与需求账本。
+下方发布审计、R0-R140 和早期治理切片全部是按时间保留的历史恢复记录；其中“当前”、`pass`、`blocked`、`COMPLETE` 或 `INCOMPLETE` 只描述当时状态，不覆盖本节与需求账本。
 
 ## 2026-08-28 R103-R119 arena/fence/scanner/string candidate audit
 

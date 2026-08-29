@@ -69,6 +69,15 @@ class BenchmarkInputProfilesTest(unittest.TestCase):
         self.assertIn('"diagnosticOnly": True', source)
         self.assertIn('"gfm-parse"', source)
 
+    def test_measurement_binds_runtime_and_driver_optimization(self) -> None:
+        source = MEASURE.read_text(encoding="utf-8")
+        self.assertIn('CANGJIE_HEAP_SIZE = "2GB"', source)
+        self.assertIn('CANGJIE_GC_INTERVAL = "500ms"', source)
+        self.assertIn('environment["cjHeapSize"] = CANGJIE_HEAP_SIZE', source)
+        self.assertIn('environment["cjGCInterval"] = CANGJIE_GC_INTERVAL', source)
+        self.assertIn('"benchmarkDriverOptimization": "-O2 --lto thin"', source)
+        self.assertIn('"cangjieGcInterval": CANGJIE_GC_INTERVAL', source)
+
     def test_driver_profiles_produce_the_same_parse_checksum(self) -> None:
         self.assertTrue(DRIVER.exists(), f"benchmark driver is not built: {DRIVER}")
         source = "# heading\r\n\r\nText *em* 😀\n".encode()

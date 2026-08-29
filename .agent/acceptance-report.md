@@ -2,43 +2,53 @@
 
 ## Final Status
 
-**COMPLETE** — 125 项规范性需求全部为 `pass`；clean-commit canonical 性能、完整 fresh-archive release gate、发布物和证据一致性均已通过。
+**COMPLETE** — 125 项规范性需求全部为 `pass`；当前 canonical benchmark、完整 release gate、公开 consumer、规范语料、fuzz、差分测试和发布候选包均有可复核的通过证据。
 
 <!-- release-evidence:start -->
 ## Generated Release Evidence
 
 - Version/status: `0.9.0` / `evidence-ready`.
-- Artifact commit: `856a6c7164fe97450b5ab7ff34926445b48dcc35`.
-- Evidence commit: `490dad69584761733586cd674f6bc2cfd2555a78`; repository HEAD at generation `490dad69584761733586cd674f6bc2cfd2555a78`.
+- Artifact commit: `c63c52528aef6cc5ea46d4b152e08af6a5344f2f`.
+- Evidence commit: `c63c52528aef6cc5ea46d4b152e08af6a5344f2f`; repository HEAD at generation `c63c52528aef6cc5ea46d4b152e08af6a5344f2f`.
 - Hosted CI verified at that HEAD: `False`; published: `False`.
 - Tests: `1455/1455` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `2.38x`, GFM `2.45x`, status `current`.
-- Raw digest: `530d206f2558766c56eb02e33b646f7ef36b58a06b5187f52999223f32337d0c`.
+- Benchmark: CommonMark `2.33x`, GFM `2.47x`, status `current`.
+- Raw digest: `ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37`.
 
 All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->
 
-本报告后续按时间保留历史失败与候选淘汰记录；这些历史段落不覆盖上述最终状态和 R139/R140 验收证据。
+本报告后续按时间保留历史失败、候选淘汰和当时的完成记录；这些历史段落不覆盖上述当前状态。R139/R140 仅作为历史证据保留。
 
-## 2026-08-29 Release Audit Remediation
+## 2026-08-29 Current Completion Evidence
+
+当前修复增加 schema-v3 benchmark identity：release verifier 会重新生成 corpus，逐项检查 inventory、byte length 和 SHA-256，并比较 raw、release evidence 与当前 benchmark product tree。旧 raw 因 `readme-api` 和 product tree 漂移被确定性拒绝。
+
+开发者文档现使用实际公开 API `node.nodeId`、`node.children()` 和 `NodeChildren`；artifact 文档说明只有实际无效 UTF-8 replacement 才产生 non-identity mapping。当前清点为 public API 1309 declarations、44 个 Markdown 文件、23 个 required API entries、4 个 runnable examples、41 个 assumptions。
+
+当前 canonical 从 product commit `c63c52528aef6cc5ea46d4b152e08af6a5344f2f` 的最小源码归档在 Server 全新目录构建。raw SHA-256 为 `ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37`；CommonMark `2.334095x`、GFM `2.466373x`，ordinary `3.538540x/1.994487x`、scaling `0.349193/1.514705`、pathological `0.700414/2.187767`、extra RSS `31224 KiB`，全部 gate 通过。A-038 的 latest-complete 规则继续生效，没有挑选历史最好值。
+
+当前完整 release gate 在 Cangjie `1.1.0-alpha.20260829040003` 下 exit `0`，覆盖 format、docs `44/23/4`、native build contracts `4/4`、API checker `9/9`、API snapshot `1309`、check/build、ASan+UBSan fuzz `10000`、full tests `1455/1455`、CLI、quickstart、cookbook、differential `25/24/1/0`、benchmark smoke `3/3`、bundle 和 evidence-ready verifier。发布候选包为 `494310` bytes，SHA-256 `7d6c3d9800d9b9757df83ced7bfb179d056d17e89599624c47e3a38c3f44b3f6`。
+
+## 2026-08-29 Historical Release Audit Remediation
 
 审计报告的九项发现已按当前仓库逐项复核。产品侧修复包括：固定官方 1.1.0/1.1.3 SDK 与 checkout commit 的 CI matrix、完整 release gate、自包含 pinned differential references、buffered API 破坏性改名、`OperationBudget` 并发合同，以及区分 offline evidence、hosted CI 和 publication 的 release evidence schema v2。
 
-本地最终命令 `cangjie_env; CC=clang AR=ar scripts/release_gate.sh` exit `0`。门禁实际覆盖 format、docs `43/23/4`、public API `1309` declarations、check/build、native ASan+UBSan fuzz `10000`、full tests `1455/1455`、CommonMark `652/652`、GFM `671/671`、differential `25/24/1/0`、benchmark smoke `3/3`、bundle 和 evidence-ready verifier。
+当时的最终命令 `cangjie_env; CC=clang AR=ar scripts/release_gate.sh` exit `0`。门禁实际覆盖 format、docs `43/23/4`、public API `1309` declarations、check/build、native ASan+UBSan fuzz `10000`、full tests `1455/1455`、CommonMark `652/652`、GFM `671/671`、differential `25/24/1/0`、benchmark smoke `3/3`、bundle 和 evidence-ready verifier。该结果现为历史证据，不替代当前 schema-v3 rerun。
 
-`release-evidence.json` 当前有意保持 `ciVerifiedAtHead=false` 与 `published=false`，因为 evidence-generation HEAD 与后续 workflow commits 不同。独立 hosted 证据为 run `33234237046`：commit `e8d486f20e624159c2da043e574169f9da4250dd` 的 SDK 1.1.0/1.1.3 完整 gates 均成功。`main` 保护规则已独立读取验证；分支尚未合入 `main`，也未发布 release。
+当时 `release-evidence.json` 保持 `ciVerifiedAtHead=false` 与 `published=false`。独立 hosted 证据为 run `33234237046`：commit `e8d486f20e624159c2da043e574169f9da4250dd` 的 SDK 1.1.0/1.1.3 完整 gates 均成功。该分支后来已合入 `main`；本段只保留历史追踪，不描述当前分支保护或发布状态。
 
-## 2026-08-29 Developer Documentation Acceptance
+## 2026-08-29 Historical Developer Documentation Acceptance
 
 README、开发者文档首页、入门教程、六组 API reference、扩展作者文档、迁移指南和贡献指南已按当前 0.9 公开 API 与默认行为重写。`scripts/check_docs.py` 对 40 个 Markdown 文件、相对链接、code fence、旧产品名和 23 个核心 API 入口检查通过，并已加入 release gate。
 
-实际验证结果：public API snapshot `1311` declarations、release evidence、format、`cjpm check`、根 build、quickstart build/run 全部 exit `0`；授权环境 full suite exit `0`，`1455/1455` passed，0 skipped/error/failed。第一次受限环境运行在执行 0 个用例前因 unittest 本地 socket 权限失败，不是产品或文档断言失败。
+当时的验证结果：public API snapshot `1311` declarations、release evidence、format、`cjpm check`、根 build、quickstart build/run 全部 exit `0`；授权环境 full suite exit `0`，`1455/1455` passed，0 skipped/error/failed。当前公开 API inventory 为 `1309`，以本报告顶部的独立审计修复为准。
 
 ### Usability follow-up
 
 README 和文档首页现按“首次运行、按任务复制、按符号查 API”组织；新增 task-led cookbook、故障排查、API 速查和可运行 `examples/cookbook`。审计发现原示例错误地从 `HeadingNodeView` 直接读取 span；当前文档和示例已统一使用 `heading.node.span`，并由 docs gate 防止回归。
 
-`scripts/check_docs.py` 现验证 `43` 个 Markdown 文件、`23` 个核心 API 入口和 `4` 个 runnable example 文件。cookbook 与 quickstart 均通过公开子包 build/run；API snapshot `1311` declarations、release evidence、format、root check/build 均 exit `0`；full suite `1455/1455`，0 skipped/error/failed。性能页只把 R139 `2.380950x` / `2.454213x` 作为当前 canonical 数字，并把历史 markdown4cj parse-only 数据明确隔离。
+当时 `scripts/check_docs.py` 验证 `43` 个 Markdown 文件、`23` 个核心 API 入口和 `4` 个 runnable example 文件。当前 inventory 为 44 个 Markdown 文件；R139 `2.380950x` / `2.454213x` 已降为历史数字，不能再作为当前 canonical 结果。
 
 ## 2026-08-27 Parser Phase Evidence
 
@@ -210,28 +220,27 @@ seal/path/binary identity check.
 | `MD-TST-004` | PRD §44.5-6, §51.6-7 | `pass` | 2026-08-25: arbitrary-byte fuzz found and guards two UTF-8 boundary crashes; full 1419-test suite passed |
 | `MD-TST-005` | PRD §44.7-9, §51.7 | `pass` | 2026-08-18: API snapshot, pathological corpus, and official extension TCK passed |
 | `MD-PERF-001` | PRD §45.1-3 | `pass` | 2026-08-18: 12-corpus -O2 reference-host matrix recorded raw samples, per-corpus digests, pinned CPU, SDK, reference commits, geometric means, and custom-extension cost |
-| `MD-PERF-002` | PRD §45.4, §51.7, §52 | `pass` | R139 clean-commit canonical: CommonMark 2.380950x, GFM 2.454213x, ordinary 3.631640x/2.026894x, scaling 0.364821/2.498950, pathological 0.632235/2.437232 and extra RSS 30764 KiB; all raw gates true. |
+| `MD-PERF-002` | PRD §45.4, §51.7, §52 | `pass` | Current fixed-Server canonical is identity-bound and passes CommonMark 2.334095x, GFM 2.466373x, ordinary, scaling, pathological and RSS gates. |
 | `MD-PERF-003` | PRD §45.5 | `pass` | 2026-08-18: owned byte input, SourceSlice literals, explicit parser frames, bounded output, ordinary/pathological scaling, and RSS tests passed |
 | `MD-OBS-001` | PRD §46 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DOC-001` | PRD §47, §49, §51.7 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DOC-002` | PRD §47, §49, §51.7 | `pass` | 2026-08-18: examples/quickstart built and ran using only the public package API |
 | `MD-COMP-001` | PRD §48.1-2 | `pass` | The 0.9 API snapshot verifies 1309 declarations; migration and compatibility docs include the buffered API breaking cleanup. |
 | `MD-COMP-002` | PRD §48.3-6 | `pass` | SPI v2, artifact v2 and the final 0.9 AST surface are snapshotted and tested; the removed AST-walk Event facade is explicitly excluded from the stable contract. |
-| `MD-REL-001` | PRD §49, §50 M6, §51 | `pass` | R140 fresh-archive release gate exit 0; 0.9.0 preview bundle is 467103 bytes, SHA-256 2a9a743ebf440813594662fb92071ac6da1b5c9d14b663ad4e0fbce9421a5ade. |
-| `MD-QUAL-001` | PRD §51.7, §52 | `pass` | 1455/1455 tests, 652/652 CommonMark, 671/671 GFM, differential 25/24/1/0, native sanitizer fuzz 10000, benchmark smoke 3/3 and every canonical performance gate pass. |
+| `MD-REL-001` | PRD §49, §50 M6, §51 | `pass` | The complete release gate passes through bundle and evidence-ready verification; hosted CI and publication remain separate claims. |
+| `MD-QUAL-001` | PRD §51.7, §52 | `pass` | Current correctness, compatibility, security, consumer, conformance and performance gates all pass. |
 
 ## Validation Evidence
 
-The first R139/R140 and current verifier rows are authoritative. Later dated
-rows are retained as historical slice or rejection evidence and do not replace
-the current result.
+The first two rows are authoritative. Later rows are retained as historical
+slice or rejection evidence and do not replace the current result.
 
 | Command | Exit | Result |
 | --- | ---: | --- |
-| Server CPU 24 `MARKDOWN_BENCH_* python3 benchmarks/measure.py` on clean commit `856a6c7` | 0 | R139 CommonMark 2.380950x, GFM 2.454213x; every timing, scaling and RSS gate true; raw SHA-256 530d206f...337d0c |
-| Local audit-remediation `cangjie_env; CC=clang AR=ar scripts/release_gate.sh` | 0 | format; docs 43/23/4; API 1309; check/build; native ASan+UBSan fuzz 10000; tests 1455/1455; CommonMark 652/652; GFM 671/671; differential 25/24/1/0; benchmark smoke 3/3; bundle; evidence-ready; final output `release gate: pass` |
+| Server CPU 24 `MARKDOWN_BENCH_* python3 benchmarks/measure.py` on clean commit `c63c525` | 0 | CommonMark 2.334095x, GFM 2.466373x; every timing, scaling, pathological and RSS gate true; raw SHA-256 ecb844e7...73d37 |
+| `/home/elliot/.codex/scripts/codex_cangjie_env --cwd /home/elliot/playground/markdown -- scripts/release_gate.sh` | 0 | format; docs 44/23/4; native build 4/4; API checker 9/9; API 1309; check/build; native ASan+UBSan fuzz 10000; tests 1455/1455; CLI; both consumers; differential 25/24/1/0; benchmark smoke 3/3; bundle; evidence-ready; final output `release gate: pass` |
 | Historical R140 Server fresh archive `CC=/usr/bin/clang AR=/usr/bin/ar scripts/release_gate.sh` | 0 | format; API 1311; check/build; native ASan+UBSan fuzz 10000; tests 1455/1455; CLI; quickstart; differential 25/24/1/0; benchmark smoke 3/3; bundle; historical release-ready verifier |
-| `python3 scripts/test_benchmark_input_profiles.py` | 0 | 6/6, including generated-evidence corpus stability and fail-closed marker validation |
+| `python3 scripts/test_benchmark_input_profiles.py` | 0 | 7/7, including generated-evidence corpus stability, fail-closed marker validation and runtime/driver optimization identity |
 | `python3 scripts/release_evidence.py --evidence-ready` | 0 | offline artifact, archive, SDK, harness, drivers, raw digest, ratios and generated projections are consistent; hosted CI/publication are explicitly false |
 | `scripts/check_format.sh` | 0 | all Cangjie source matches cjfmt |
 | `cjlint -f src` | 0 | 0 errors; 476 advisory diagnostics |
@@ -270,14 +279,15 @@ the current result.
 - PRD → requirements: the complete 3754-line PRD was reread. All 52 normative
   sections are covered; sections 2, 3 and 5 are descriptive summary/background/
   vision. All 33 explicit `IN`/`PAR`/`AST`/`SEC` IDs are mapped.
-- requirements → implementation/tests: 125 stable IDs are unique and all are
-  `pass`; every required field and acceptance list is non-empty. The ledger has
+- requirements → implementation/tests: 125 stable IDs are unique and all 125 are
+  `pass`. Every required field and acceptance list is non-empty. The ledger has
   488 concrete implementation/test path references, all of which exist, and no
   generic `src/*_test.cj` placeholder remains.
-- current execution evidence: all 125 items reference the same R140 full release
-  gate. R139 is the sole canonical performance result and the generated reports
-  verify its commit, archive, SDK, harness, drivers and raw digest.
-- assumptions: 39 assumption IDs are unique, all are resolved/adopted or
+- current execution evidence: R139/R140 are historical. The schema-v3 canonical
+  run is bound to source commit, archive, product tree, corpus, SDK, harness and
+  drivers; both mandatory performance ratios and every non-ratio gate pass. The
+  complete release gate also exits 0.
+- assumptions: 41 assumption IDs are unique, all are resolved/adopted or
   explicitly non-normative, and every assumption is referenced from the notes of
   its affected ledger items. The verified private vulnerability channel is no
   longer recorded as blocked.
@@ -288,10 +298,11 @@ the current result.
 
 ## Release Decision
 
-**COMPLETE.** The 0.9.0 breaking pre-GA preview is release-ready. All 125 ledger
-items pass, the current canonical benchmark and fresh-archive release gate exit
-0, the bundle is reproducible from public package inputs, and GitHub Private
-Vulnerability Reporting is enabled. No waiver or threshold reduction was used.
+**COMPLETE.** The 0.9.0 breaking pre-GA preview is offline evidence-ready. All
+125 requirements pass, the latest complete canonical satisfies both `2.5x`
+thresholds, and the complete release gate exits 0. No waiver, threshold reduction
+or best-of-reruns selection is used. Hosted CI verification and publication remain
+explicitly separate claims.
 
 ## 2026-08-18 Performance Investigation Addendum
 
