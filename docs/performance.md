@@ -1,102 +1,72 @@
-# Benchmark method
+# 性能
 
-Use release builds on the pinned reference host. Record SDK/compiler, CPU affinity, corpus digest, reference implementation version, warmup, raw samples, median/geometric mean, peak additional memory, and optional feature overhead.
+`release-evidence.json` 是当前性能数字的唯一事实源。README、canonical report、raw 数据、
+需求账本和 acceptance report 必须绑定同一份 release evidence。
 
-The corpus includes official examples, README/API docs, large code/table/reference documents, CJK, emoji, deep lists, pathological delimiters, long lines, and extensions. The README/API profile replaces the generated `release-evidence` block with one fixed marker before sizing and hashing the input. Benchmark results can therefore be written back without recursively changing the next run's corpus; missing or duplicate markers fail closed. Scaling uses 1/2/4/8/16 MiB with at least seven samples; log-log slope above 1.35 or adjacent doubling above 3.0 fails.
+## 当前 canonical 结果
 
-Allocation strategy:
+当前 release benchmark 使用固定 Server CPU、Cangjie SDK
+`1.1.0-alpha.20260803040049` 和 release 构建。
 
-- String input uses one identity SourceBuffer byte view; strict ordinary bytes
-  omit the former per-byte identity offset table.
-- `OwnedUtf8Input.take` is an explicit unsafe ownership-transfer entry that
-  requires already-valid UTF-8 and avoids both cloning and revalidating the
-  transferred byte array; the normal Array API retains validation and its
-  immutable defensive copy.
-- `ReusableUtf8Input` validates and defensively copies once, or accepts the
-  same explicit unsafe ownership transfer, then reuses immutable UTF-8 storage
-  across parses. Every parse still creates a complete AST, NodeId,
-  SourceSpan, SourceBuffer, and ParseResult.
-- Text literals of at least 256 bytes and exact LF fenced-code/raw-HTML
-  literals use `SourceSlice`; decoded/normalized/small values use `Copy`.
-- Parser scratch collections are owned only by one `ParserSession` and become
-  unreachable together at parse completion, providing an arena-equivalent
-  lifetime without exposing allocator state in the AST.
-- The semantic parser does not allocate one token per character. Lossless CST
-  tokens are opt-in and their separately measured time overhead is reported.
-  A CST owns one token arena; nested syntax nodes hold immutable range views,
-  while public `toArray()` calls still return defensive copies. AST/CST and
-  byte-offset/token queries use construction-time indexes.
-- Renderers write directly to bounded Sink instances. Entity data is generated
-  once as shared read-only tables.
-- Stable public node classes are retained instead of an ABI-risk compact tagged
-  representation; the measured RSS gate, rather than an unverified size claim,
-  decides acceptance.
-- Reference definitions are indexed once per parse session. Effective labels
-  are resolved through a hash map, delimiter link detection reuses that index,
-  and already-trimmed lowercase ASCII labels avoid the normalization builder.
-- `MD_Markdown_ScanLines` performs no I/O, locking, blocking, or Cangjie
-  callbacks, but the whole-input byte loop is not annotated `@FastNative`
-  because its total execution time is input-dependent and cannot be proven
-  short and bounded. Long parser and allocation work remains in cancellable
-  Cangjie code.
+| Profile | 对比对象 | 当前 ratio | 门槛 | 状态 |
+| --- | --- | ---: | ---: | --- |
+| CommonMark 完整 AST parse | cmark 0.31.1 | `2.380950x` | `≤2.5x` | pass |
+| GFM 完整 AST + HTML | cmark-gfm 0.29 | `2.454213x` | `≤2.5x` | pass |
 
-Input APIs are reported separately under `inputProfiles` in every newly
-generated raw benchmark. Canonical `commonmark-parse` uses one
-`ReusableUtf8Input`; `commonmark-parse-owned` separately measures the cost of
-cloning and transferring a fresh byte array for each parse. Neither profile is
-presented as the default String facade, and neither disables the public AST or
-source-position contract.
-The benchmark driver explicitly imports `markdown.native.NativeLineScanner`,
-injects it into every engine, and links the checked native archive. The root
-library defaults to the pure-Cangjie scanner and carries no foreign link
-dependency; benchmark metadata must therefore keep `nativeScanner` explicit.
-The reusable profile performs one validation or unsafe ownership transfer at
-process preparation and no input conversion inside each parse call. The String
-profile performs one process-preparation decode from benchmark stdin and no
-conversion inside each parse call. Array input performs defensive copy and
-decoding per parse, owned input clones in the driver to create a fresh ownership
-transfer, and stream input performs full buffering and decoding.
+ratio 大于 1 表示本库更慢。完整语料、样本、RSS、复杂度和 identity 见
+[canonical report](reports/benchmark.md)与其链接的 raw JSON。
 
-The driver also exposes `gfm-parse` as a diagnostic profile. It uses the same
-GFM profile, trusted limits, owned-byte input, and native scanner as `gfm-html`,
-but observes the completed AST without rendering it. Newly generated raw reports
-store alternating parse-only and parse-plus-HTML samples under
-`phaseProfiles.gfm` for five 1 MiB corpora. The reported renderer duration is an
-inference from the difference between two independent medians, not an internal
-timer. This profile locates parser-versus-renderer work; it does not replace the
-canonical GFM parse-plus-HTML comparison or any release gate.
+## 比较了什么
 
-## 2026-08-23 benchmark dependency transition
+CommonMark profile 每轮构造完整 `Document`、`NodeId`、`SourceSpan`、`SourceBuffer` 和
+`ParseResult`。GFM profile 在同样的完整 AST 后执行 HTML renderer。benchmark 不会用
+轻量 event parser 替换公开 `parse()`。
 
-Dependency H `db4392e2` makes the paired seven-sample ordering, CPU/reference
-overrides, and owned-input benchmark workload part of the committed protocol.
-The pre-H raw SHA-256 `48dbad5298825c627ebaa914909c79f7680949e9487158cd843e67dc9af54fa2`
-and ratios `6.449555x`/`5.695987x` are historical pre-dependency measurements,
-not final acceptance evidence; no trend or projection is inferred from them.
-Historical UInt32 `4.089529x`/`3.396847x` is likewise invalid for the current
-candidate. The fresh committed-H archive run at
-`/tmp/markdown-project-f001-20260823-RydvVhT9` produced raw SHA-256
-`9acd3c7b7e2077462daeff0032f8a43e4d507fab3fe21dda244a663bc3f950d0`.
-It used 11 256 KiB comparison corpora, 3 iterations per process, and 7 paired
-samples per side. CommonMark was `6.234490x` and GFM `4.845909x`; ordinary,
-scaling slope, adjacent growth, pathological slope, and RSS gates passed, but
-both ratio gates failed. This is retained as a historical dependency-transition
-run, not as the current release value. The sole canonical release result is
-declared in `release-evidence.json` and rendered into README,
-`docs/reports/benchmark.md`, and the acceptance report. The current 2026-08-28 R79 canonical
-run is bound to workspace commit anchor `2454b0626c2fb0fe590a59bc1f79a8d4e864c856`,
-Cangjie SDK `1.1.0-alpha.20260803040049`, source archive SHA-256
-`837ad48e1ce6db3e0d7487739c8fde8aa135275f60bc5dad90367f7371e988de`, benchmark harness,
-and driver SHA-256 `8b750a8172b473e55cba494545a787c7b5379b1693d89be3cacd22d8f275ea4c`.
-It measured CommonMark `3.827122x` and GFM `2.954111x`;
-all non-ratio gates passed, so `MD-PERF-002` remains blocked only by the two
-`2.5x` ratio limits. Raw SHA-256 is
-`394a769e9f408cb18daf4acf9b27c7b3897cca84122c6d238c2c94c01caef486`.
-The exact workspace archive and driver are bound, but the evidence tree remains
-explicitly dirty until the implementation and generated reports are committed.
+benchmark driver 使用显式 `ReusableUtf8Input` 和可选 native scanner，并在 metadata 中
+记录它们。默认 `parse(String)`、Array、ownership transfer 和 stream 的转换成本分项报告，
+不得把最优输入入口描述成 String facade 的结果。
 
-Reference provisioning reports `lockGenerationDeterminism: not claimed / not
-tested` and `sealedLockOfflineConsumptionReproducible: true`. Its official
-npm runtime license report records 217 reachable package instances: 216
-`declared_raw`, one generic `text_only`, and zero failed. The supported claim is
-only `license evidence closure complete`; no SPDX or legal conclusion is made.
+## 如何公平阅读结果
+
+- cmark/cmark-gfm 是当前 GA 性能硬门槛，也是 canonical release evidence。
+- pulldown-cmark 等低分配 pull/event parser 不构造相同完整 AST，应单独标注执行模型。
+- AST + SourceSpan、GFM + 安全渲染和文档工具能力应使用能力匹配 profile。
+- DSL、CST、SourceMap、formatter、lint 和 rewrite 报告绝对开销及关闭后的基础路径回退，
+  不能混进标准 parse ratio。
+
+历史同语言比较见 [markdown4cj comparison](reports/markdown4cj-comparison.md)。该报告固定旧
+commit 和 SDK，只证明冻结的 CommonMark parse-only 子集；它不是当前端到端 canonical
+结果。
+
+## 测量协议
+
+- release 构建，固定 CPU、SDK、target、reference commit 和 corpus digest；
+- baseline/candidate 交替测量，并包含 A/A 与双向 A/B；
+- README/API 输入会将生成的 release-evidence block 替换为固定 marker，避免报告写回改变
+  下一轮 corpus；
+- 1/2/4/8/16 MiB scaling 至少 7 个样本；log-log slope 超过 `1.35` 或相邻翻倍超过
+  `3.0` 失败；
+- 同时记录 wall time、raw samples、geomean、峰值附加 RSS 和可选能力开销；
+- 输出 checksum 不同或受测 driver/source identity 不匹配时 fail closed。
+
+## 输入和分配边界
+
+- `String` 使用 identity SourceBuffer byte view。
+- 普通 byte Array 保留验证和不可变防御性复制。
+- `OwnedUtf8Input.take` 是显式 unsafe ownership transfer，只接受已经有效的 UTF-8。
+- `ReusableUtf8Input` 在准备阶段验证或接管一次，后续每轮仍创建完整 AST。
+- 长 text/code/raw HTML 可用 `SourceSlice`，语义转换后的小值使用 copy。
+- CST 是 opt-in；一个 CST 共享 token arena，公开 `toArray()` 仍防御性复制。
+- renderer 直接写有界 sink，并在写入过程中执行预算与取消检查。
+- native scanner 是可选 accelerator；根库默认纯仓颉路径功能完整且没有 foreign link 依赖。
+
+## 复现与更新
+
+从仓库根目录运行发布门禁：
+
+```sh
+scripts/release_gate.sh
+```
+
+完整远端 canonical benchmark 需要固定 reference host 和依赖。运行后必须先更新
+`release-evidence.json`，再由生成脚本同步 README 和报告；不要手工维护另一套“当前数字”。

@@ -10,25 +10,28 @@ permissions:
 
 jobs:
   linux-sdk-matrix:
+    name: Candidate validation (${{ matrix.sdk }})
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        sdk: [lts, current]
-    env:
-      CANGJIE_SDK_URL: ${{ matrix.sdk == 'lts' && vars.CANGJIE_SDK_LTS_URL || vars.CANGJIE_SDK_CURRENT_URL }}
-      CANGJIE_SDK_SHA256: ${{ matrix.sdk == 'lts' && vars.CANGJIE_SDK_LTS_SHA256 || vars.CANGJIE_SDK_CURRENT_SHA256 }}
+        include:
+          - sdk: minimum-1.1.0
+            url: https://cangjie-lang.cn/v1/files/auth/downLoad?nsId=142267&fileName=cangjie-sdk-linux-x64-1.1.0.tar.gz&objectKey=69e9d50c21f5a8178d6fd219
+            sha256: 5ce7e8c8523aad9cf5965f818249e1a39f10788963aef7c5852697a3ac964060
+          - sdk: current-1.1.3
+            url: https://cangjie-lang.cn/v1/files/auth/downLoad?nsId=142267&fileName=cangjie-sdk-linux-x64-1.1.3.tar.gz&objectKey=6a19349d21f5a8178d6fd22b
+            sha256: 2b68905afc466e665ae181595c63f96c18d75fd2c1fb6c6f0cb64e179c28d61a
     steps:
-      - uses: actions/checkout@v4
+      # actions/checkout v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Install declared Cangjie SDK
         shell: bash
         run: |
           set -euo pipefail
-          test -n "${CANGJIE_SDK_URL}"
-          test -n "${CANGJIE_SDK_SHA256}"
-          curl --fail --location --retry 3 "${CANGJIE_SDK_URL}" --output /tmp/cangjie-sdk.tar.gz
-          echo "${CANGJIE_SDK_SHA256}  /tmp/cangjie-sdk.tar.gz" | sha256sum --check --strict
+          curl --fail --location --retry 3 '${{ matrix.url }}' --output /tmp/cangjie-sdk.tar.gz
+          echo '${{ matrix.sha256 }}  /tmp/cangjie-sdk.tar.gz' | sha256sum --check --strict
           mkdir -p /tmp/cangjie-sdk
           tar -xf /tmp/cangjie-sdk.tar.gz -C /tmp/cangjie-sdk
           env_file="$(find /tmp/cangjie-sdk -name envsetup.sh -type f -print -quit)"
@@ -38,17 +41,7 @@ jobs:
       - name: Validate candidate
         shell: bash
         run: |
-          set -euo pipefail
+          set -eo pipefail
           source "${CANGJIE_ENV_FILE}"
-          scripts/check_format.sh
-          python3 scripts/test_build_native_scanner.py
-          python3 scripts/test_release_evidence.py
-          python3 scripts/test_check_public_api.py
-          python3 scripts/check_public_api.py
-          cjpm check
-          cjpm build
-          CC=clang AR=ar python3 scripts/build_native_scanner.py --enable
-          (cd benchmarks/driver && cjpm build)
-          python3 scripts/fuzz_native_scanner.py --runs 10000
-          python3 scripts/test_benchmark_input_profiles.py
-          cjpm test --no-color --no-progress --report-path /tmp/markdown-tests --report-format xml
+          set -u
+          CC=clang AR=ar scripts/release_gate.sh

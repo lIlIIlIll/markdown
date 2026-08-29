@@ -135,6 +135,12 @@ public class ParseLimits {
     }
 }
 
+/**
+ * Mutable, operation-scoped work budget.
+ *
+ * Create one budget per parse, render, or transform operation. Instances are
+ * not thread-safe and must not be reused concurrently or across operations.
+ */
 public class OperationBudget {
     private let maximumScanSteps: Int64
     private let maximumDelimiterSteps: Int64

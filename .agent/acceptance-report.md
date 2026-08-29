@@ -7,16 +7,38 @@
 <!-- release-evidence:start -->
 ## Generated Release Evidence
 
-- Version/status: `0.9.0` / `ready`.
-- Source identity: `856a6c7164fe97450b5ab7ff34926445b48dcc35`; tree state `clean`.
+- Version/status: `0.9.0` / `evidence-ready`.
+- Artifact commit: `856a6c7164fe97450b5ab7ff34926445b48dcc35`.
+- Evidence commit: `490dad69584761733586cd674f6bc2cfd2555a78`; repository HEAD at generation `490dad69584761733586cd674f6bc2cfd2555a78`.
+- Hosted CI verified at that HEAD: `False`; published: `False`.
 - Tests: `1455/1455` passed, `0` skipped, `0` failed.
 - Benchmark: CommonMark `2.38x`, GFM `2.45x`, status `current`.
 - Raw digest: `530d206f2558766c56eb02e33b646f7ef36b58a06b5187f52999223f32337d0c`.
 
-The benchmark identity is bound and the evidence tree is clean. All mandatory performance ratios and release-evidence gates pass.
+All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->
 
 本报告后续按时间保留历史失败与候选淘汰记录；这些历史段落不覆盖上述最终状态和 R139/R140 验收证据。
+
+## 2026-08-29 Release Audit Remediation
+
+审计报告的九项发现已按当前仓库逐项复核。产品侧修复包括：固定官方 1.1.0/1.1.3 SDK 与 checkout commit 的 CI matrix、完整 release gate、自包含 pinned differential references、buffered API 破坏性改名、`OperationBudget` 并发合同，以及区分 offline evidence、hosted CI 和 publication 的 release evidence schema v2。
+
+本地最终命令 `cangjie_env; CC=clang AR=ar scripts/release_gate.sh` exit `0`。门禁实际覆盖 format、docs `43/23/4`、public API `1309` declarations、check/build、native ASan+UBSan fuzz `10000`、full tests `1455/1455`、CommonMark `652/652`、GFM `671/671`、differential `25/24/1/0`、benchmark smoke `3/3`、bundle 和 evidence-ready verifier。
+
+`release-evidence.json` 当前有意保持 `ciVerifiedAtHead=false` 与 `published=false`，因为 evidence-generation HEAD 与后续 workflow commits 不同。独立 hosted 证据为 run `33234237046`：commit `e8d486f20e624159c2da043e574169f9da4250dd` 的 SDK 1.1.0/1.1.3 完整 gates 均成功。`main` 保护规则已独立读取验证；分支尚未合入 `main`，也未发布 release。
+
+## 2026-08-29 Developer Documentation Acceptance
+
+README、开发者文档首页、入门教程、六组 API reference、扩展作者文档、迁移指南和贡献指南已按当前 0.9 公开 API 与默认行为重写。`scripts/check_docs.py` 对 40 个 Markdown 文件、相对链接、code fence、旧产品名和 23 个核心 API 入口检查通过，并已加入 release gate。
+
+实际验证结果：public API snapshot `1311` declarations、release evidence、format、`cjpm check`、根 build、quickstart build/run 全部 exit `0`；授权环境 full suite exit `0`，`1455/1455` passed，0 skipped/error/failed。第一次受限环境运行在执行 0 个用例前因 unittest 本地 socket 权限失败，不是产品或文档断言失败。
+
+### Usability follow-up
+
+README 和文档首页现按“首次运行、按任务复制、按符号查 API”组织；新增 task-led cookbook、故障排查、API 速查和可运行 `examples/cookbook`。审计发现原示例错误地从 `HeadingNodeView` 直接读取 span；当前文档和示例已统一使用 `heading.node.span`，并由 docs gate 防止回归。
+
+`scripts/check_docs.py` 现验证 `43` 个 Markdown 文件、`23` 个核心 API 入口和 `4` 个 runnable example 文件。cookbook 与 quickstart 均通过公开子包 build/run；API snapshot `1311` declarations、release evidence、format、root check/build 均 exit `0`；full suite `1455/1455`，0 skipped/error/failed。性能页只把 R139 `2.380950x` / `2.454213x` 作为当前 canonical 数字，并把历史 markdown4cj parse-only 数据明确隔离。
 
 ## 2026-08-27 Parser Phase Evidence
 
@@ -193,7 +215,7 @@ seal/path/binary identity check.
 | `MD-OBS-001` | PRD §46 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DOC-001` | PRD §47, §49, §51.7 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DOC-002` | PRD §47, §49, §51.7 | `pass` | 2026-08-18: examples/quickstart built and ran using only the public package API |
-| `MD-COMP-001` | PRD §48.1-2 | `pass` | The 0.9 API snapshot verifies 1269 declarations; migration and compatibility docs record the arena/value-view reset, scanner valid-prefix adapter and Event 1.1 boundary. |
+| `MD-COMP-001` | PRD §48.1-2 | `pass` | The 0.9 API snapshot verifies 1309 declarations; migration and compatibility docs include the buffered API breaking cleanup. |
 | `MD-COMP-002` | PRD §48.3-6 | `pass` | SPI v2, artifact v2 and the final 0.9 AST surface are snapshotted and tested; the removed AST-walk Event facade is explicitly excluded from the stable contract. |
 | `MD-REL-001` | PRD §49, §50 M6, §51 | `pass` | R140 fresh-archive release gate exit 0; 0.9.0 preview bundle is 467103 bytes, SHA-256 2a9a743ebf440813594662fb92071ac6da1b5c9d14b663ad4e0fbce9421a5ade. |
 | `MD-QUAL-001` | PRD §51.7, §52 | `pass` | 1455/1455 tests, 652/652 CommonMark, 671/671 GFM, differential 25/24/1/0, native sanitizer fuzz 10000, benchmark smoke 3/3 and every canonical performance gate pass. |
@@ -207,9 +229,10 @@ the current result.
 | Command | Exit | Result |
 | --- | ---: | --- |
 | Server CPU 24 `MARKDOWN_BENCH_* python3 benchmarks/measure.py` on clean commit `856a6c7` | 0 | R139 CommonMark 2.380950x, GFM 2.454213x; every timing, scaling and RSS gate true; raw SHA-256 530d206f...337d0c |
-| Server fresh archive `CC=/usr/bin/clang AR=/usr/bin/ar scripts/release_gate.sh` | 0 | format; API 1311; check/build; native ASan+UBSan fuzz 10000; tests 1455/1455; CLI; quickstart; differential 25/24/1/0; benchmark smoke 3/3; bundle; release-ready; final output `release gate: pass` |
+| Local audit-remediation `cangjie_env; CC=clang AR=ar scripts/release_gate.sh` | 0 | format; docs 43/23/4; API 1309; check/build; native ASan+UBSan fuzz 10000; tests 1455/1455; CommonMark 652/652; GFM 671/671; differential 25/24/1/0; benchmark smoke 3/3; bundle; evidence-ready; final output `release gate: pass` |
+| Historical R140 Server fresh archive `CC=/usr/bin/clang AR=/usr/bin/ar scripts/release_gate.sh` | 0 | format; API 1311; check/build; native ASan+UBSan fuzz 10000; tests 1455/1455; CLI; quickstart; differential 25/24/1/0; benchmark smoke 3/3; bundle; historical release-ready verifier |
 | `python3 scripts/test_benchmark_input_profiles.py` | 0 | 6/6, including generated-evidence corpus stability and fail-closed marker validation |
-| `python3 scripts/release_evidence.py --release-ready` | 0 | commit, archive, SDK, harness, drivers, raw digest, ratios and generated projections are consistent |
+| `python3 scripts/release_evidence.py --evidence-ready` | 0 | offline artifact, archive, SDK, harness, drivers, raw digest, ratios and generated projections are consistent; hosted CI/publication are explicitly false |
 | `scripts/check_format.sh` | 0 | all Cangjie source matches cjfmt |
 | `cjlint -f src` | 0 | 0 errors; 476 advisory diagnostics |
 | `cjpm check` | 0 | dependency graph valid |

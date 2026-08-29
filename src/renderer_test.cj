@@ -163,7 +163,7 @@ class RendererBehaviorTest {
     }
 
     @TestCase
-    func sanitizerAdapterFailsClosedAndAsyncSinkResumesWithoutDuplication(): Unit {
+    func sanitizerAdapterFailsClosed(): Unit {
         let document = Markdown.parse("<script>x</script>").document
         let options = HtmlOptions(HtmlPolicy.safe(), RawHtmlPolicyKind.Sanitize, LinkUriPolicy.safe(),
             ImageUriPolicy.safe())
@@ -176,24 +176,11 @@ class RendererBehaviorTest {
         } catch (_: IllegalStateException) {
             @Expect(true)
         }
-
-        let normal = HtmlRenderer().render(Markdown.parse("async output").document)
-        let session = AsyncHtmlRenderSession(HtmlRenderer(), Markdown.parse("async output").document, chunkBytes: 3)
-        let sink = PauseOnceSink()
-        match (session.resume(sink)) {
-            case AsyncRenderState.Paused => @Expect(true)
-            case _ => @Expect(false)
-        }
-        match (session.resume(sink)) {
-            case AsyncRenderState.Complete => @Expect(true)
-            case _ => @Expect(false)
-        }
-        @Expect(sink.content(), normal)
-        @Expect(session.bytesWritten(), normal.size)
     }
 
     @TestCase
     func explicitlyNamedBufferedAsyncSessionPreservesBackpressure(): Unit {
+        let normal = HtmlRenderer().render(Markdown.parse("buffered output").document)
         let session = BufferedAsyncHtmlOutputSession(HtmlRenderer(), Markdown.parse("buffered output").document,
             chunkBytes: 4)
         let sink = PauseOnceSink()
@@ -205,7 +192,8 @@ class RendererBehaviorTest {
             case AsyncRenderState.Complete => @Expect(true)
             case _ => @Expect(false)
         }
-        @Expect(session.bytesWritten(), "<p>buffered output</p>\n".size)
+        @Expect(sink.content(), normal)
+        @Expect(session.bytesWritten(), normal.size)
     }
 
     @TestCase

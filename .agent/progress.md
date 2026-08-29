@@ -4,6 +4,24 @@
 当前阶段：0.9 breaking 执行模型、完整 arena AST parser、source-driven Resolved/RawBlock event、发布证据和验收链路均已闭环。R139 clean-commit canonical benchmark 与 R140 fresh-archive release gate 已通过。
 整体结论：**COMPLETE**。需求账本当前为 125 pass、0 pending、0 implemented_unverified、0 blocked。
 
+## 2026-08-29 发布审计修复
+
+- 逐项复核 `/home/elliot/Downloads/markdown-audit-package.zip` 后，确认九项报告均对应当时的真实仓库状态；当前切片修复代码、文档和本地发布证据问题，并保留 hosted repository 状态作为独立验收层。
+- CI 不再依赖空仓库变量：minimum SDK `1.1.0` 与 current SDK `1.1.3` 使用官方固定 URL/SHA-256，`actions/checkout` 固定到 commit，两个矩阵任务均执行完整 `scripts/release_gate.sh`。
+- release gate 现在自动准备 pinned cmark、cmark-gfm 和 commonmark.js 差分工具；归档和新 runner 不再依赖开发机 `/tmp` 中的预装 reference checkout。
+- 删除会夸大执行模型的 `ChunkedParseSession` 与 `AsyncHtmlRenderSession`；`newSession` 返回 `BufferedInputSession`，异步 sink 只公开 `BufferedAsyncHtmlOutputSession`。迁移文档与 1309-declaration API snapshot 已同步。
+- `OperationBudget` 的可变、单操作拥有、非线程安全合同已写入公开 API 注释和并发文档。
+- release evidence schema v2 将 `evidence-ready`、`ciVerifiedAtHead` 和 `published` 分开；README、报告和验收投影不再把离线证据等同于 hosted CI 或发布。
+- 本地完整门禁：`cangjie_env; CC=clang AR=ar scripts/release_gate.sh`，exit `0`；format、docs 43/23/4、API 1309、check/build、native ASan+UBSan fuzz 10000、full tests 1455/1455、CommonMark 652/652、GFM 671/671、differential 25/24/1/0、benchmark smoke 3/3、bundle和 evidence-ready verifier 全部通过。
+- Hosted CI 已在 `release-hardening` commit `e8d486f20e624159c2da043e574169f9da4250dd` 通过：run `33234237046` 的 `Candidate validation (minimum-1.1.0)` 与 `Candidate validation (current-1.1.3)` 均执行完整 gate 并成功。`main` 已启用 strict required checks、1 个批准、stale review dismissal、last-push approval、管理员约束、conversation resolution，并禁止 force-push/delete。分支尚未合入 `main`，且离线 evidence 仍不冒充 publication。
+
+## 2026-08-29 开发者文档与 API reference 重写
+
+- README 改为采用路径优先的开发者入口；新增文档首页、5 分钟入门、贡献指南和按 `core`、`render`、`extensions`、`editor`、`artifact/document/services` 拆分的 API reference。
+- profile、AST/SourceSpan、输入与限制、安全、格式化、文档系统、扩展/DSL/SPI/TCK、CLI、迁移和兼容性主题页已按当前 0.9 行为重写；删除了 Event API 尚未实现和性能门槛未通过等过期说明。
+- 新增 `scripts/check_docs.py`，离线检查必需页面、相对链接、code fence、旧产品名和 23 个核心公开入口；并接入 `scripts/release_gate.sh`。
+- 实际验证：docs check 40 files/23 entry points、API snapshot 1311 declarations、release evidence、format、`cjpm check`、根 build、quickstart build/run 均 exit 0。沙箱内第一次 full test 在执行 0 个用例前因 unittest socket 权限失败；授权环境同命令最终 `1455/1455` pass，0 skipped/error/failed。
+
 ## 2026-08-29 Final R139/R140 completion evidence
 
 - R139 是当前唯一 canonical benchmark。它绑定 clean product commit `856a6c7164fe97450b5ab7ff34926445b48dcc35`、source archive `bdc7964d65a631f12d527b18352e49ae3a50563589427a0e304dc8b8a569605f`、harness `b07a40056119b13e6bf1206233afe1855489d6af12aab10b08367d3a36316254`、markdown driver `363ece9a4eed545a8f85b97de5052da6f4d9037175bb40da4e677912d03334d5` 和 raw report `530d206f2558766c56eb02e33b646f7ef36b58a06b5187f52999223f32337d0c`。
@@ -540,3 +558,10 @@ GA 门槛。
 - `MD-EVT-001` is now `pass`. The ledger is 122/125 pass, 0 pending, 0
   implemented_unverified and 3 blocked. Only canonical performance and its
   release/quality dependents remain non-pass; overall status stays **INCOMPLETE**.
+## 2026-08-29 Documentation usability pass
+
+- Reorganized README and the documentation home around three user paths: first successful run, task-oriented recipes, and symbol-oriented API lookup. Internal architecture and release evidence remain available but no longer block the adoption path.
+- Added `docs/cookbook.md`, `docs/troubleshooting.md`, `docs/api/quick-reference.md`, and a public-package-only `examples/cookbook` consumer. The cookbook covers safe HTML, GFM, AST/link queries, UTF-16 positions, limits/cancellation, a versioned custom container, lint, and formatting.
+- Found and fixed a concrete unusable example: `AstQuery.headings()` returns `HeadingNodeView`, whose span is `heading.node.span`; the former direct member access did not compile. `scripts/check_docs.py` now rejects that invalid spelling and requires both runnable example projects.
+- Replaced the stale R79 performance page with the current unique canonical evidence: CommonMark `2.380950x` and GFM `2.454213x`, both within the `2.5x` limit. The historical markdown4cj comparison is clearly separated from current cmark/cmark-gfm release evidence.
+- Validation: docs check `43` Markdown files / `23` required API entry points / `4` runnable example files; API snapshot `1311` declarations; release evidence; format; root check/build; cookbook build/run; quickstart build/run; full suite `1455/1455`, 0 skipped/error/failed. All commands exited `0`.

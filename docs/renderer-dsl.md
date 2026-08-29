@@ -1,27 +1,61 @@
 # Renderer DSL
 
-`RendererRule` maps an extension/local kind to a validated HTML tag/class,
-canonical Markdown opener/closer, and plain-text prefix/suffix. Custom nodes
-render through the same escaping, cancellation, node/output budgets, source-map
-and Sink error path as built-in nodes. Missing required coverage fails dialect
-compilation.
+`RendererRule` 把 custom node 降低为 HTML、Markdown 和纯文本。custom node 与内置节点
+共用 escaping、URI policy、cancellation、node/output budget、SourceMap 和 sink 错误路径。
 
-Runtime fallback is explicit: `Error` (default), `RenderChildren`,
-`RenderLiteral`, `Drop`, or `CustomFallback`. A custom HTML fallback returns
-only explicit `TrustedHtml`; missing fallback code fails rather than silently
-dropping content. `engine.htmlRenderer()` installs the compiled manifest/rule
-set so those policies are observable.
+## 定义 rule
 
-Structured attributes declare Text, LinkUri, or ImageUri kinds and obtain
-values from fixed configuration, typed payload parameters, or payload literal.
-Tag/class/attribute names are validated; event/style attributes are rejected;
-`href`/`src` require their URI kind; URI values pass the same policy as built-in
-links/images. Payload-literal and container/line Markdown lowering are explicit.
+```cangjie
+let rule = RendererRule(
+    "docs",
+    "note",
+    "aside",
+    classToken: "note",
+    markdownOpener: ":::note\n",
+    markdownCloser: "\n:::",
+    textPrefix: "Note: "
+)
+```
 
-Ordinary strings are always escaped. `TrustedHtml` has only an explicit `unsafe` factory and does not bypass budgets or cancellation.
+前三个参数是 extension ID、local kind 和 HTML tag。可选字段定义 class、Markdown
+opener/closer、text prefix/suffix、structured attributes、payload literal 和 Markdown block
+lowering。
 
-Raw HTML sanitization is an independent `HtmlSanitizerPort`; adapter failure is
-propagated without falling back to unsanitized input.
-`BufferedAsyncHtmlOutputSession` pre-renders bounded output, then adapts it to
-`Continue`/`Pause`/`Failed` sinks without duplicate writes. The compatibility
-name `AsyncHtmlRenderSession` has the same buffered, non-streaming semantics.
+## HTML 安全
+
+普通 String 始终转义。tag、class 和 attribute 名称在 dialect 编译时验证；`on*` 与
+`style` attribute 被拒绝。`href` 和 `src` 必须显式声明 URI kind，并经过内置 link/image
+相同的 policy。
+
+structured attribute 的值可来自固定配置、typed payload parameter 或 payload literal。
+自定义 HTML fallback 只能返回通过显式 unsafe factory 创建的 `TrustedHtml`。它仍受 output
+budget 和 cancellation 约束。
+
+raw HTML sanitization 是独立的 `HtmlSanitizerPort`。adapter 失败会向调用者传播，不会回退
+到未净化输出。
+
+## 缺失 renderer
+
+manifest 的 `missingRendererPolicy` 默认是 `Error`：
+
+| Policy | 行为 |
+| --- | --- |
+| `Error` | 缺失实现时失败 |
+| `RenderChildren` | 只输出 children |
+| `RenderLiteral` | 输出 payload literal |
+| `Drop` | 明确丢弃节点 |
+| `CustomFallback` | 调用显式 fallback |
+
+如果 extension 声明某个 renderer capability，却没有 rule 或明确 fallback，dialect 编译
+直接失败。
+
+## Sink 与异步适配
+
+renderer 写入前检查 output budget，并保留 sink 错误。SourceMap 在 writer 写出正文时同步
+记录，不通过 HTML 字符串反向搜索。
+
+`BufferedAsyncHtmlOutputSession` 会先生成完整、有界 HTML，再按 `Continue`、`Pause` 或
+`Failed` 推送。它是 buffered backpressure adapter，不是增量 parser-renderer。
+
+完整构造参数和 renderer API 见 [Extensions API](api/extensions.md)与
+[Rendering API](api/rendering.md)。

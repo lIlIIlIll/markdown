@@ -1,53 +1,52 @@
-# Public API map
+# API reference
 
-- Core (`markdown.core`): `MarkdownEngineBuilder`, `MarkdownEngine`, `ParseResult`, source-driven Event API, buffered input, AST and source positions.
-- Rendering (`markdown.render`): HTML/plain text/Markdown renderers, source maps, sinks and explicitly buffered async output.
-- Extensions (`markdown.extensions`): dialect, syntax, SPI, renderer rules and manifests.
-- Editor (`markdown.editor`): CST, query, rewrite, transform, lint/fix and preserving edits.
-- Artifacts/documents/testkit: isolated in `markdown.artifact`, `markdown.document` and `markdown.testkit`.
-- Native accelerator (`markdown.native`): optional `NativeLineScanner`; the root package has no foreign or linker dependency.
-- Source: `SourceBuffer`, `SourceSpan`, `SourcePosition`, `Utf16Position`, `SyntaxTree`, snapshots/edits.
-- AST: typed block/inline nodes, `NodeId`, `NodeOrigin`, custom nodes.
-- Extension: dialect/syntax/renderer builders, manifests, compiled dialect and fingerprint.
-- Output: `HtmlRenderer`, `PlainTextRenderer`, `CanonicalMarkdownRenderer`, `TextSink`, source maps.
-- Tools: Walker, Visitor, Query, TreeRewriter, TransformPipeline and AnnotationStore.
+先看[API 速查](api/quick-reference.md)。需要完整语义、错误和扩展示例时，再进入对应
+子包页面。精确声明以 [`api/public-api-v0.9.txt`](../api/public-api-v0.9.txt) 为准。
 
-- Events: `MarkdownEventMode`, `MarkdownSourceEvent`, `MarkdownEventSink`,
-  `EventParseResult`, `EventParseSummary` and `RawBlockEventSession`.
-- Editor: lint/fix/explain, snapshots, preserving edits, artifacts.
-- Convenience: `Markdown.parse`, `toSafeHtml`, `toSpecHtml`, `toText`, `format`.
+## 按符号定位
 
-The root `markdown` package remains a compatibility facade. New consumers should
-prefer curated subpackage imports so that experimental document tooling does not
-become an accidental dependency. All examples under `examples/quickstart`
-compile against public symbols only.
+| 你在找的符号 | 页面 |
+| --- | --- |
+| `Markdown`、`MarkdownEngine`、`ParseResult` | [Core API](api/core.md) |
+| `MarkdownProfile`、`ParseLimits`、`CancellationToken` | [Core API](api/core.md) |
+| `Document`、`NodeRef`、typed node view | [AST 与 Source API](api/ast-and-source.md) |
+| `SourceSpan`、`SourceBuffer`、`Utf16Position` | [AST 与 Source API](api/ast-and-source.md) |
+| `HtmlRenderer`、`HtmlOptions`、sink、source map | [Rendering API](api/rendering.md) |
+| `MarkdownDialect`、syntax、renderer rule、SPI | [Extensions API](api/extensions.md) |
+| `AstQuery`、rewrite、CST、snapshot、lint | [Editor API](api/editor.md) |
+| artifact、document graph、testkit | [Artifact 与 Document API](api/artifacts-and-services.md) |
 
-## Source events
+## 导入方式
 
-`ResolvedEventMode` performs a reference-index pass and then emits final
-semantic events directly from transient parser blocks. The event values contain
-only kinds, source ranges, attributes and text values; they do not retain a
-`Document` or `NodeRef`.
+新代码导入用途明确的最小子包：
 
 ```cangjie
-let result = MarkdownEngine.builder().build().parseEvents(
-    "[label][id]\n\n[id]: /target\n"
-)
-for (event in result.events.toArray()) {
-    match (event.kind) {
-        case MarkdownSourceEventKind.Text => println(event.semanticValue.getOrThrow())
-        case _ => ()
-    }
-}
+import markdown.core.{MarkdownEngine, MarkdownProfile}
+import markdown.render.{HtmlOptions, HtmlRenderer}
 ```
 
-Use `emitEvents(source, sink)` when the consumer can process events without
-retaining an array. `RawBlockEventMode` is deliberately non-final: use
-`newRawBlockEventSession()`, call `feed()` for arbitrary UTF-8 chunks, and
-consume events returned for blocks proven closed by later input. `finish()`
-emits the last buffered block and `DocumentEnd`. Chunked raw execution may
-buffer one unfinished top-level block and never claims reference resolution.
+根包 `markdown.*` 继续提供兼容门面，但容易让代码无意依赖 editor、artifact 或 testkit。
 
-The existing buffered parse/async adapters remain distinct from this Event
-API. They do not become incremental AST parsing merely because raw block events
-can be emitted before `finish()`.
+## 公开子包
+
+| 子包 | 职责 |
+| --- | --- |
+| `markdown.core` | parser、AST、source、diagnostic、limits、profile、events |
+| `markdown.render` | HTML、纯文本、Markdown、sink、source map、sanitizer |
+| `markdown.extensions` | manifest、dialect、Syntax DSL、renderer DSL、SPI |
+| `markdown.editor` | walk/query/rewrite、CST、snapshot、lint、format |
+| `markdown.artifact` | parse artifact 和 binary snapshot |
+| `markdown.document` | document graph 和跨文档引用 |
+| `markdown.testkit` | 第三方扩展 TCK |
+| `markdown.native` | 可选原生 line scanner |
+
+## 默认值和错误
+
+默认 parser 是 CommonMark 0.31.2，limits 和 operation budget 使用 safe 配置，bytes
+采用严格 UTF-8，HTML 使用安全策略。完整表见[API 速查](api/quick-reference.md#错误默认值)。
+
+解析和渲染的结构化失败继承 `MarkdownException`。程序应根据 `code`、`phase` 和可选
+`span` 分支，不要解析英文消息。`tryParse` 返回空文档和结构化错误，不返回部分 AST。
+
+当前 reference 对应 `0.9.0` breaking pre-GA preview。详见
+[版本与兼容性](versioning-and-compatibility.md)。

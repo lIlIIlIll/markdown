@@ -256,7 +256,7 @@ class ExtensionTckAndFuzzTest {
     }
 }
 
-private func feedFuzzPartitions(session: ChunkedParseSession, bytes: Array<Byte>, caseIndex: Int64): Unit {
+private func feedFuzzPartitions(session: BufferedInputSession, bytes: Array<Byte>, caseIndex: Int64): Unit {
     var offset: Int64 = 0
     while (offset < bytes.size) {
         let size = min(bytes.size - offset, ((offset + caseIndex) % 11) + 1)

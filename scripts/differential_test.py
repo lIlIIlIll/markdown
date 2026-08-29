@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -11,9 +12,11 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 MARKDOWN = ROOT / "tools/markdown/target/release/bin/main"
-CMARK = Path("/tmp/markdown-cmark-0.31.1/build/src/cmark")
-CMARK_GFM = Path("/tmp/markdown-cmark-gfm-0.29.0.gfm.13/build/src/cmark-gfm")
-COMMONMARK_JS = Path("/tmp/markdown-commonmark-js/node_modules/.bin/commonmark")
+TOOLS_ROOT = Path(os.environ.get("MARKDOWN_DIFFERENTIAL_ROOT", "/tmp"))
+CMARK = TOOLS_ROOT / "markdown-cmark-0.31.1/build/src/cmark"
+CMARK_GFM = TOOLS_ROOT / "markdown-cmark-gfm-0.29.0.gfm.13/build/src/cmark-gfm"
+COMMONMARK_JS = TOOLS_ROOT / "markdown-commonmark-js"
+COMMONMARK_JS_DRIVER = ROOT / "scripts/commonmark_js_driver.mjs"
 
 COMMONMARK_CASES = [
     "# heading\n",
@@ -52,7 +55,8 @@ def run(command: list[str], source: str) -> str:
 
 
 def main() -> int:
-    missing = [str(path) for path in (MARKDOWN, CMARK, CMARK_GFM, COMMONMARK_JS) if not path.exists()]
+    missing = [str(path) for path in (MARKDOWN, CMARK, CMARK_GFM, COMMONMARK_JS,
+        COMMONMARK_JS_DRIVER) if not path.exists()]
     if missing:
         print("missing differential tools: " + ", ".join(missing), file=sys.stderr)
         return 2
@@ -62,7 +66,7 @@ def main() -> int:
         ours = run([str(MARKDOWN), "render", "--profile", "commonmark-0.31.2", "--to", "spec-html"], source)
         references = {
             "cmark-0.31.1": run([str(CMARK), "--unsafe"], source),
-            "commonmark.js-0.31.2": run([str(COMMONMARK_JS)], source),
+            "commonmark.js-0.31.2": run(["node", str(COMMONMARK_JS_DRIVER), str(COMMONMARK_JS)], source),
         }
         for implementation, output in references.items():
             checked += 1
