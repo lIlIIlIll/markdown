@@ -3,6 +3,19 @@
 先确认 SDK 和依赖，再根据现象定位。仍无法解决时，请在 issue 中附上最小输入、profile、
 SDK 版本、完整命令和结构化错误码。
 
+[文档首页](README.md) · [开始使用](getting-started.md) · **故障排查** · [错误与能力](errors-and-capabilities.md)
+
+## 快速定位
+
+| 现象 | 最可能原因 | 跳转 |
+| --- | --- | --- |
+| `cjpm` 找不到包 | path 没有指向仓库根目录 | [安装与运行](#安装与运行) |
+| 表格或删除线是普通文本 | 仍在使用默认 CommonMark profile | [解析结果](#解析结果不符合预期) |
+| HTML 被转义 | 使用了安全渲染入口 | [raw HTML](#raw-html-变成转义文本) |
+| 中文或 emoji 位置偏移 | 混用了 UTF-8 byte 与 UTF-16 offset | [位置偏移](#中文或-emoji-后的位置偏移) |
+| `LimitExceededException` | 输入或操作超过安全预算 | [错误与限制](#错误限制和取消) |
+| dialect 注册失败 | ID、冲突、capability 或 SemVer 无效 | [扩展](#扩展) |
+
 ## 安装与运行
 
 ### `cjpm` 找不到 `markdown`
@@ -119,3 +132,7 @@ artifact 会绑定输入、profile、dialect、renderer 和 schema 身份。源�
 安全漏洞请使用
 [Private Vulnerability Reporting](https://github.com/lIlIIlIll/markdown/security/advisories/new)，
 不要先公开披露。
+
+---
+
+[← 文档首页](README.md) · [错误与能力](errors-and-capabilities.md) · [安全指南](security.md)

@@ -3,6 +3,12 @@
 本教程从空工程得到第一个安全 HTML 输出。基础包使用纯仓颉实现，不需要 C 编译器或
 原生链接参数。
 
+[文档首页](README.md) · **开始使用** · [Cookbook](cookbook.md) · [API 速查](api/quick-reference.md)
+
+**完成时间：约 5 分钟**
+
+`准备环境` → `创建工程` → `构建运行` → `验证输出`
+
 ## 前置条件
 
 - Cangjie SDK `1.1.0`
@@ -62,6 +68,12 @@ cjpm run --skip-build
 
 `Markdown.toSafeHtml` 默认转义 raw HTML，并拒绝危险 URI。现在你已经完成最小集成。
 
+### 成功检查
+
+- [ ] `cjpm build` 以 exit code `0` 结束。
+- [ ] 输出包含 `<h1>Hello</h1>`。
+- [ ] `<script>` 被输出为 `&lt;script&gt;`，没有作为 HTML 执行。
+
 如果依赖或运行失败，查看[安装与运行问题](troubleshooting.md#安装与运行)。
 
 ## 运行仓库示例
@@ -80,7 +92,13 @@ cjpm run --skip-build
 
 ## 下一步
 
-- 按场景复制代码：[开发者 Cookbook](cookbook.md)
-- 查常用签名：[API 速查](api/quick-reference.md)
-- 选择 CommonMark/GFM：[Profile 指南](profiles.md)
-- 遍历 AST 和处理位置：[AST 与 Source API](api/ast-and-source.md)
+| 下一项任务 | 前往 |
+| --- | --- |
+| 复制 GFM、AST、lint 或扩展示例 | [开发者 Cookbook](cookbook.md) |
+| 查常用签名、默认值和失败语义 | [API 速查](api/quick-reference.md) |
+| 选择 CommonMark 或 GFM | [Profile 指南](profiles.md) |
+| 遍历 AST 和转换源码位置 | [AST 与 Source API](api/ast-and-source.md) |
+
+---
+
+[← 文档首页](README.md) · [下一篇：开发者 Cookbook →](cookbook.md)

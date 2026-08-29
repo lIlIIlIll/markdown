@@ -3,6 +3,11 @@
 先看[API 速查](api/quick-reference.md)。需要完整语义、错误和扩展示例时，再进入对应
 子包页面。精确声明以 [`api/public-api-v0.9.txt`](../api/public-api-v0.9.txt) 为准。
 
+[文档首页](README.md) · [API 速查](api/quick-reference.md) · **API reference** · [Cookbook](cookbook.md)
+
+> [!TIP]
+> 按任务学习时从 Cookbook 开始；按符号查询时从本页开始；生成器级精确签名以 public API snapshot 为准。
+
 ## 按符号定位
 
 | 你在找的符号 | 页面 |
@@ -27,6 +32,15 @@ import markdown.render.{HtmlOptions, HtmlRenderer}
 
 根包 `markdown.*` 继续提供兼容门面，但容易让代码无意依赖 editor、artifact 或 testkit。
 
+### 最小依赖原则
+
+| 只需要…… | 导入 |
+| --- | --- |
+| 解析或便捷渲染 | `markdown.core` |
+| 自定义 HTML 输出 | `markdown.core` + `markdown.render` |
+| AST 查询和编辑 | `markdown.core` + `markdown.editor` |
+| 自定义语法 | `markdown.core` + `markdown.extensions` |
+
 ## 公开子包
 
 | 子包 | 职责 |
@@ -50,3 +64,7 @@ import markdown.render.{HtmlOptions, HtmlRenderer}
 
 当前 reference 对应 `0.9.0` breaking pre-GA preview。详见
 [版本与兼容性](versioning-and-compatibility.md)。
+
+---
+
+[← 文档首页](README.md) · [API 速查](api/quick-reference.md) · [故障排查](troubleshooting.md)

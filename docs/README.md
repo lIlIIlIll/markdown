@@ -1,14 +1,26 @@
 # markdown 开发者文档
 
-先选择你现在要完成的任务。代码符号、命令、错误码和 profile ID 保持源码拼写。
+> **从任务出发，找到最短路径。** 代码符号、命令、错误码和 profile ID 保持源码拼写。
 
-## 第一次使用
+[开始使用](getting-started.md) · [Cookbook](cookbook.md) · [API reference](api.md) · [故障排查](troubleshooting.md) · [性能与证据](performance.md)
+
+## 选择阅读路线
+
+| 如果你是…… | 建议路线 | 完成后你将能够 |
+| --- | --- | --- |
+| 第一次使用 | [开始使用](getting-started.md) → [Cookbook](cookbook.md) | 构建工程并输出安全 HTML |
+| 应用开发者 | [API 速查](api/quick-reference.md) → 对应子包 reference | 选择稳定入口并处理失败 |
+| 扩展作者 | [扩展模型](extensions.md) → [Extension TCK](extension-tck.md) | 注册、渲染并验证自定义语法 |
+| 工具开发者 | [AST](ast.md) → [Editor API](api/editor.md) | query、rewrite、lint 和保留格式编辑 |
+| 维护者 | [贡献指南](../CONTRIBUTING.md) → [性能](performance.md) → [报告索引](reports/README.md) | 运行门禁并更新可追溯证据 |
+
+## 第一次使用：15 分钟路径
 
 1. [开始使用](getting-started.md)：从空工程得到第一个安全 HTML 输出。
 2. [开发者 Cookbook](cookbook.md)：复制 GFM、AST、位置、扩展、lint 和 format 场景。
 3. [故障排查](troubleshooting.md)：解决依赖、运行、profile、位置和限制问题。
 
-## 我知道要做什么
+## 按任务查找
 
 | 任务 | 文档 |
 | --- | --- |
@@ -65,6 +77,10 @@
 ## 维护和证据
 
 - [性能方法与当前结果](performance.md)
-- [CommonMark/GFM 与 benchmark 报告](reports/)
+- [CommonMark/GFM、benchmark 与 fuzz 报告索引](reports/README.md)
 - [release-evidence.json](../release-evidence.json)
 - [贡献指南](../CONTRIBUTING.md)
+
+---
+
+[返回项目首页](../README.md) · [开始使用](getting-started.md) · [API 速查](api/quick-reference.md)

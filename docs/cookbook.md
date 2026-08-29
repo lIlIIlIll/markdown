@@ -4,6 +4,19 @@
 [`examples/cookbook`](../examples/cookbook/)；完整源码位于
 [`examples/cookbook/src/main.cj`](../examples/cookbook/src/main.cj)。
 
+[文档首页](README.md) · [开始使用](getting-started.md) · **Cookbook** · [API 速查](api/quick-reference.md)
+
+## 场景导航
+
+| 目标 | 配方 |
+| --- | --- |
+| 渲染不信任输入 | [Markdown 转安全 HTML](#markdown-转安全-html) |
+| 表格、任务列表、删除线 | [启用 GFM](#启用-gfm) |
+| 获取标题、链接和 LSP 位置 | [读取标题、链接和位置](#读取标题链接和位置) |
+| 限制资源或取消请求 | [限制资源并取消操作](#限制资源并取消操作) |
+| 注册 `:::` 容器 | [自定义容器语法](#自定义容器语法) |
+| lint 或格式化 | [Lint 和格式化](#lint-和格式化) |
+
 ```sh
 cd examples/cookbook
 cangjie_env
@@ -24,6 +37,9 @@ println(html)
 
 需要 CommonMark 规范兼容输出，而不是面向不信任输入的默认策略时，显式调用
 `Markdown.toSpecHtml`。不要对用户输入使用该入口。
+
+> [!WARNING]
+> `toSpecHtml` 追求规范输出，不是未信任内容的安全边界。面向用户输入时使用 `toSafeHtml`。
 
 ## 启用 GFM
 
@@ -133,3 +149,7 @@ println(Markdown.format("#  Title\n\n* item"))
 - 排查常见错误：[故障排查](troubleshooting.md)
 - 选择输入形式和预算：[输入、限制和取消](input-and-resources.md)
 - 编写、测试扩展：[扩展开发](extensions.md)
+
+---
+
+[← 开始使用](getting-started.md) · [文档首页](README.md) · [API 速查 →](api/quick-reference.md)
