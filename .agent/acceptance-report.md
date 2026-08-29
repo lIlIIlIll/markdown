@@ -2,33 +2,33 @@
 
 ## Final Status
 
-**INCOMPLETE** — 122 项规范性需求为 `pass`，`MD-PERF-002`、`MD-REL-001` 和 `MD-QUAL-001` 为 `implemented_unverified`；当前 canonical benchmark 已绑定源码与 corpus，但 CommonMark `2.640257x`、GFM `2.587756x` 均未达到 `2.5x` 门槛。
+**COMPLETE** — 125 项规范性需求全部为 `pass`；当前 canonical benchmark、完整 release gate、公开 consumer、规范语料、fuzz、差分测试和发布候选包均有可复核的通过证据。
 
 <!-- release-evidence:start -->
 ## Generated Release Evidence
 
-- Version/status: `0.9.0` / `incomplete`.
-- Artifact commit: `27f8d9fa3973265a77fc71c0b5fd22af0bfe2add`.
-- Evidence commit: `27f8d9fa3973265a77fc71c0b5fd22af0bfe2add`; repository HEAD at generation `27f8d9fa3973265a77fc71c0b5fd22af0bfe2add`.
+- Version/status: `0.9.0` / `evidence-ready`.
+- Artifact commit: `c63c52528aef6cc5ea46d4b152e08af6a5344f2f`.
+- Evidence commit: `c63c52528aef6cc5ea46d4b152e08af6a5344f2f`; repository HEAD at generation `c63c52528aef6cc5ea46d4b152e08af6a5344f2f`.
 - Hosted CI verified at that HEAD: `False`; published: `False`.
 - Tests: `1455/1455` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `2.64x`, GFM `2.59x`, status `current`.
-- Raw digest: `5cb80869c9b19e3e026e05313fa59decfd91eb65d67cf53508b0feed557f23cb`.
+- Benchmark: CommonMark `2.33x`, GFM `2.47x`, status `current`.
+- Raw digest: `ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37`.
 
-One or more mandatory offline evidence gates remain incomplete. Hosted CI and publication remain separate claims.
+All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->
 
 本报告后续按时间保留历史失败、候选淘汰和当时的完成记录；这些历史段落不覆盖上述当前状态。R139/R140 仅作为历史证据保留。
 
-## 2026-08-29 Independent Audit Remediation
+## 2026-08-29 Current Completion Evidence
 
 当前修复增加 schema-v3 benchmark identity：release verifier 会重新生成 corpus，逐项检查 inventory、byte length 和 SHA-256，并比较 raw、release evidence 与当前 benchmark product tree。旧 raw 因 `readme-api` 和 product tree 漂移被确定性拒绝。
 
-开发者文档现使用实际公开 API `node.nodeId`、`node.children()` 和 `NodeChildren`；artifact 文档说明只有实际无效 UTF-8 replacement 才产生 non-identity mapping。当前清点为 public API 1309 declarations、44 个 Markdown 文件、23 个 required API entries、4 个 runnable examples、40 个 assumptions。
+开发者文档现使用实际公开 API `node.nodeId`、`node.children()` 和 `NodeChildren`；artifact 文档说明只有实际无效 UTF-8 replacement 才产生 non-identity mapping。当前清点为 public API 1309 declarations、44 个 Markdown 文件、23 个 required API entries、4 个 runnable examples、41 个 assumptions。
 
-本地验证已通过 release-evidence `9/9`、benchmark-profile `6/6`、docs `44/23/4`、public API `1309`、format、`cjpm check`、`cjpm build` 和授权环境 full suite `1455/1455`。受限环境 full suite 在执行 0 个用例前因 unittest local socket 被拒绝，不是产品断言失败。固定 Server canonical 已完成：除 CommonMark/GFM 两个 `2.5x` ratio 外，ordinary、scaling、pathological 和 RSS gate 均通过。报告保持 INCOMPLETE，且不会通过重复运行挑选更有利结果。
+当前 canonical 从 product commit `c63c52528aef6cc5ea46d4b152e08af6a5344f2f` 的最小源码归档在 Server 全新目录构建。raw SHA-256 为 `ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37`；CommonMark `2.334095x`、GFM `2.466373x`，ordinary `3.538540x/1.994487x`、scaling `0.349193/1.514705`、pathological `0.700414/2.187767`、extra RSS `31224 KiB`，全部 gate 通过。A-038 的 latest-complete 规则继续生效，没有挑选历史最好值。
 
-Fresh release gate 现将差分依赖隔离到当前检出的 `target/differential-tools`，避免共享 `/tmp` 中旧 checkout 或本机构建缓存造成 glibc/identity 失败；CommonMark JS driver 不再依赖 top-level await。Server 使用 `1.1.0-alpha.20260817040003` SDK，从不含 CMake build 产物的精确提交 seed 重建 reference。最终门禁通过 format、docs、API、check/build、ASan+UBSan fuzz `10000`、full tests `1455/1455`、CLI、quickstart、cookbook、differential `25/24/1/0`、benchmark smoke `3/3` 和 bundle；生成的 `markdown-0.9.0.cjp` 为 `498701` bytes，SHA-256 `a962a9292fc5baca2f950ec08ad1ccabd80d19ff45142eafc0a84ebec16d5beb`。门禁最后只因 current raw 的 `commonmarkRatioLe2_5` 与 `gfmRatioLe2_5` 在 `--evidence-ready` 阶段 exit `1`。
+当前完整 release gate 在 Cangjie `1.1.0-alpha.20260829040003` 下 exit `0`，覆盖 format、docs `44/23/4`、native build contracts `4/4`、API checker `9/9`、API snapshot `1309`、check/build、ASan+UBSan fuzz `10000`、full tests `1455/1455`、CLI、quickstart、cookbook、differential `25/24/1/0`、benchmark smoke `3/3`、bundle 和 evidence-ready verifier。发布候选包为 `494310` bytes，SHA-256 `7d6c3d9800d9b9757df83ced7bfb179d056d17e89599624c47e3a38c3f44b3f6`。
 
 ## 2026-08-29 Historical Release Audit Remediation
 
@@ -95,8 +95,8 @@ seal/path/binary identity check.
 
 | 状态 | 数量 |
 | --- | ---: |
-| `pass` | 122 |
-| `implemented_unverified` | 3 |
+| `pass` | 125 |
+| `implemented_unverified` | 0 |
 | `pending` | 0 |
 | `blocked` | 0 |
 
@@ -220,28 +220,27 @@ seal/path/binary identity check.
 | `MD-TST-004` | PRD §44.5-6, §51.6-7 | `pass` | 2026-08-25: arbitrary-byte fuzz found and guards two UTF-8 boundary crashes; full 1419-test suite passed |
 | `MD-TST-005` | PRD §44.7-9, §51.7 | `pass` | 2026-08-18: API snapshot, pathological corpus, and official extension TCK passed |
 | `MD-PERF-001` | PRD §45.1-3 | `pass` | 2026-08-18: 12-corpus -O2 reference-host matrix recorded raw samples, per-corpus digests, pinned CPU, SDK, reference commits, geometric means, and custom-extension cost |
-| `MD-PERF-002` | PRD §45.4, §51.7, §52 | `implemented_unverified` | Current fixed-Server canonical is identity-bound, but CommonMark 2.640257x and GFM 2.587756x fail the 2.5x gates. |
+| `MD-PERF-002` | PRD §45.4, §51.7, §52 | `pass` | Current fixed-Server canonical is identity-bound and passes CommonMark 2.334095x, GFM 2.466373x, ordinary, scaling, pathological and RSS gates. |
 | `MD-PERF-003` | PRD §45.5 | `pass` | 2026-08-18: owned byte input, SourceSlice literals, explicit parser frames, bounded output, ordinary/pathological scaling, and RSS tests passed |
 | `MD-OBS-001` | PRD §46 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DOC-001` | PRD §47, §49, §51.7 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DOC-002` | PRD §47, §49, §51.7 | `pass` | 2026-08-18: examples/quickstart built and ran using only the public package API |
 | `MD-COMP-001` | PRD §48.1-2 | `pass` | The 0.9 API snapshot verifies 1309 declarations; migration and compatibility docs include the buffered API breaking cleanup. |
 | `MD-COMP-002` | PRD §48.3-6 | `pass` | SPI v2, artifact v2 and the final 0.9 AST surface are snapshotted and tested; the removed AST-walk Event facade is explicitly excluded from the stable contract. |
-| `MD-REL-001` | PRD §49, §50 M6, §51 | `implemented_unverified` | Current evidence is fail-closed because the mandatory performance prerequisite fails; publication remains separate. |
-| `MD-QUAL-001` | PRD §51.7, §52 | `implemented_unverified` | Current correctness gates pass, but both mandatory canonical performance ratios fail. |
+| `MD-REL-001` | PRD §49, §50 M6, §51 | `pass` | The complete release gate passes through bundle and evidence-ready verification; hosted CI and publication remain separate claims. |
+| `MD-QUAL-001` | PRD §51.7, §52 | `pass` | Current correctness, compatibility, security, consumer, conformance and performance gates all pass. |
 
 ## Validation Evidence
 
-The first R139/R140 and current verifier rows are authoritative. Later dated
-rows are retained as historical slice or rejection evidence and do not replace
-the current result.
+The first two rows are authoritative. Later rows are retained as historical
+slice or rejection evidence and do not replace the current result.
 
 | Command | Exit | Result |
 | --- | ---: | --- |
-| Server CPU 24 `MARKDOWN_BENCH_* python3 benchmarks/measure.py` on clean commit `856a6c7` | 0 | R139 CommonMark 2.380950x, GFM 2.454213x; every timing, scaling and RSS gate true; raw SHA-256 530d206f...337d0c |
-| Local audit-remediation `cangjie_env; CC=clang AR=ar scripts/release_gate.sh` | 0 | format; docs 43/23/4; API 1309; check/build; native ASan+UBSan fuzz 10000; tests 1455/1455; CommonMark 652/652; GFM 671/671; differential 25/24/1/0; benchmark smoke 3/3; bundle; evidence-ready; final output `release gate: pass` |
+| Server CPU 24 `MARKDOWN_BENCH_* python3 benchmarks/measure.py` on clean commit `c63c525` | 0 | CommonMark 2.334095x, GFM 2.466373x; every timing, scaling, pathological and RSS gate true; raw SHA-256 ecb844e7...73d37 |
+| `/home/elliot/.codex/scripts/codex_cangjie_env --cwd /home/elliot/playground/markdown -- scripts/release_gate.sh` | 0 | format; docs 44/23/4; native build 4/4; API checker 9/9; API 1309; check/build; native ASan+UBSan fuzz 10000; tests 1455/1455; CLI; both consumers; differential 25/24/1/0; benchmark smoke 3/3; bundle; evidence-ready; final output `release gate: pass` |
 | Historical R140 Server fresh archive `CC=/usr/bin/clang AR=/usr/bin/ar scripts/release_gate.sh` | 0 | format; API 1311; check/build; native ASan+UBSan fuzz 10000; tests 1455/1455; CLI; quickstart; differential 25/24/1/0; benchmark smoke 3/3; bundle; historical release-ready verifier |
-| `python3 scripts/test_benchmark_input_profiles.py` | 0 | 6/6, including generated-evidence corpus stability and fail-closed marker validation |
+| `python3 scripts/test_benchmark_input_profiles.py` | 0 | 7/7, including generated-evidence corpus stability, fail-closed marker validation and runtime/driver optimization identity |
 | `python3 scripts/release_evidence.py --evidence-ready` | 0 | offline artifact, archive, SDK, harness, drivers, raw digest, ratios and generated projections are consistent; hosted CI/publication are explicitly false |
 | `scripts/check_format.sh` | 0 | all Cangjie source matches cjfmt |
 | `cjlint -f src` | 0 | 0 errors; 476 advisory diagnostics |
@@ -280,14 +279,15 @@ the current result.
 - PRD → requirements: the complete 3754-line PRD was reread. All 52 normative
   sections are covered; sections 2, 3 and 5 are descriptive summary/background/
   vision. All 33 explicit `IN`/`PAR`/`AST`/`SEC` IDs are mapped.
-- requirements → implementation/tests: 125 stable IDs are unique; 122 are
-  `pass` and 3 are `implemented_unverified`. Every required field and acceptance list is non-empty. The ledger has
+- requirements → implementation/tests: 125 stable IDs are unique and all 125 are
+  `pass`. Every required field and acceptance list is non-empty. The ledger has
   488 concrete implementation/test path references, all of which exist, and no
   generic `src/*_test.cj` placeholder remains.
 - current execution evidence: R139/R140 are historical. The schema-v3 canonical
   run is bound to source commit, archive, product tree, corpus, SDK, harness and
-  drivers; both mandatory performance ratios fail.
-- assumptions: 40 assumption IDs are unique, all are resolved/adopted or
+  drivers; both mandatory performance ratios and every non-ratio gate pass. The
+  complete release gate also exits 0.
+- assumptions: 41 assumption IDs are unique, all are resolved/adopted or
   explicitly non-normative, and every assumption is referenced from the notes of
   its affected ledger items. The verified private vulnerability channel is no
   longer recorded as blocked.
@@ -298,10 +298,11 @@ the current result.
 
 ## Release Decision
 
-**INCOMPLETE.** The 0.9.0 breaking pre-GA preview is not currently evidence-ready.
-The previous R139/R140 runs remain historical. The current canonical raw is
-identity-bound, but CommonMark and GFM exceed the `2.5x` thresholds. No waiver,
-threshold reduction, or best-of-reruns selection is used.
+**COMPLETE.** The 0.9.0 breaking pre-GA preview is offline evidence-ready. All
+125 requirements pass, the latest complete canonical satisfies both `2.5x`
+thresholds, and the complete release gate exits 0. No waiver, threshold reduction
+or best-of-reruns selection is used. Hosted CI verification and publication remain
+explicitly separate claims.
 
 ## 2026-08-18 Performance Investigation Addendum
 

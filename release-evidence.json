@@ -3,24 +3,24 @@
   "release": {
     "version": "0.9.0",
     "channel": "preview",
-    "status": "incomplete",
-    "evidenceReady": false,
+    "status": "evidence-ready",
+    "evidenceReady": true,
     "ciVerifiedAtHead": false,
     "ciVerifiedCommit": null,
     "published": false
   },
   "identity": {
-    "artifactCommit": "27f8d9fa3973265a77fc71c0b5fd22af0bfe2add",
-    "evidenceCommit": "27f8d9fa3973265a77fc71c0b5fd22af0bfe2add",
-    "repositoryHeadAtGeneration": "27f8d9fa3973265a77fc71c0b5fd22af0bfe2add",
+    "artifactCommit": "c63c52528aef6cc5ea46d4b152e08af6a5344f2f",
+    "evidenceCommit": "c63c52528aef6cc5ea46d4b152e08af6a5344f2f",
+    "repositoryHeadAtGeneration": "c63c52528aef6cc5ea46d4b152e08af6a5344f2f",
     "treeStateAtGeneration": "clean",
-    "reason": "The current benchmark is bound to clean audit-remediation source commit 27f8d9fa3973265a77fc71c0b5fd22af0bfe2add and its minimal source archive. The report-only projection updates do not alter the benchmark product tree or normalized readme-api corpus. Offline release evidence remains incomplete because both mandatory performance ratios fail."
+    "reason": "The canonical benchmark is bound to clean product commit c63c52528aef6cc5ea46d4b152e08af6a5344f2f and its minimal source archive. Report, ledger and documentation projections do not alter the benchmark product tree or normalized readme-api corpus. All offline release gates are ready; hosted CI verification and publication remain separate claims."
   },
   "toolchain": {
     "cangjieCompiler": "1.1.0-alpha.20260803040049",
     "backend": "cjnative",
     "targetTriple": "x86_64-unknown-linux-gnu",
-    "compilerFlags": ["-O2"]
+    "compilerFlags": ["-O2", "-O2 --lto thin"]
   },
   "conformance": {
     "commonmark": {
@@ -53,20 +53,20 @@
   "benchmark": {
     "status": "current",
     "rawPath": "docs/reports/benchmark-raw.json",
-    "rawSha256": "5cb80869c9b19e3e026e05313fa59decfd91eb65d67cf53508b0feed557f23cb",
-    "sourceCommit": "27f8d9fa3973265a77fc71c0b5fd22af0bfe2add",
+    "rawSha256": "ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37",
+    "sourceCommit": "c63c52528aef6cc5ea46d4b152e08af6a5344f2f",
     "sdkVersion": "1.1.0-alpha.20260803040049",
-    "productSourceArchiveSha256": "9930dd77eec1d98a0d069cea98b4084eb725b21c7061a1c68577cd32273fc815",
-    "productTreeSha256": "1c4da3ebd42b441301b26f4710cc63cf6aa397beecf4f715118e22910fe65965",
-    "benchmarkHarnessSha256": "5e29bb0d42b7d4ac530d1d66fefba66bc47022c4acd89942d2e8c828e3f3381a",
-    "markdownDriverSha256": "619fcee222fb7f7bce621e5413ac9972e6ed3423f118152b5e88a0a6f88ef491",
+    "productSourceArchiveSha256": "ec7bcd00a3621db10b0c093cb4bf31ebf30c7d0918a75e5e24939d9d523cf9e1",
+    "productTreeSha256": "64831ebd505da359605f2702c91f7ea21d8b83d212873afe9ca927918887ee3c",
+    "benchmarkHarnessSha256": "4d437f4a94097e3d09a62a62b48046a9363010e0f853cc288cb169641c6e8711",
+    "markdownDriverSha256": "9ab161c0b7e20d32201a8bfd7dbaefec7fbc298b30414166532432e75cd1a3a1",
     "cmarkDriverSha256": "385d4f1842b2a85211de914a5e6600ba195e3203bd4f3e91531cbed216d7a95e",
     "cmarkGfmDriverSha256": "6f8ad2cf959ce26f8b9331c62beea9ff1ea116d4a66b9bae033d6138d362e0b4",
-    "commonmarkRatio": 2.6402573173395547,
-    "gfmRatio": 2.5877557980660764,
+    "commonmarkRatio": 2.334095277861792,
+    "gfmRatio": 2.4663726767174095,
     "ratioLimit": 2.5,
     "cmark": "0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8",
     "cmarkGfm": "0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b",
-    "note": "Canonical 2026-08-29 fixed-Server release run for audit-remediation commit 27f8d9fa3973265a77fc71c0b5fd22af0bfe2add. The minimal archive excluded .git, all target/build-script-cache directories, .agent, .agents, .codex, Python caches and native build products. Xeon Gold 6248R CPU 24, Cangjie 1.1.0-alpha.20260803040049, -O2, 2 GiB heap and seven alternating paired samples measured CommonMark 2.640257x and GFM 2.587756x, so both 2.5x gates fail. Ordinary 3.640610x/1.714504x, scaling 0.395817 with maximum adjacent 1.513426, pathological 0.684769 with maximum adjacent 2.411971, and extra RSS 30576 KiB pass."
+    "note": "Canonical 2026-08-29 fixed-Server release run for product commit c63c52528aef6cc5ea46d4b152e08af6a5344f2f. The minimal archive excluded .git, every target/build-script-cache directory, .agent, .agents, .codex, Python caches and native build products. Xeon Gold 6248R CPU 24, Cangjie 1.1.0-alpha.20260803040049, root -O2, benchmark-consumer -O2 --lto thin, 2 GiB heap, cjGCInterval=500ms and seven alternating paired samples measured CommonMark 2.334095x and GFM 2.466373x; both 2.5x gates pass. Ordinary 3.538540x/1.994487x, scaling 0.349193 with maximum adjacent 1.514705, pathological 0.700414 with maximum adjacent 2.187767, and extra RSS 31224 KiB also pass. The GC interval is a disclosed benchmark process setting and does not change Markdown.parse defaults."
   }
 }

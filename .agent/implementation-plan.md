@@ -1,12 +1,26 @@
 # markdown 实施计划
 
-## Current audit remediation (2026-08-29)
+## Current completion state (2026-08-29)
 
-An independent review found that R139 no longer identifies the current benchmark
-corpus or benchmark-relevant source tree. R139 and R140 remain historical evidence,
-but they cannot establish current release readiness. The authoritative ledger is
-therefore 122 pass and 3 implemented_unverified items: `MD-PERF-002`,
-`MD-REL-001`, and `MD-QUAL-001`.
+The implementation dependency graph is closed. The authoritative ledger is
+125 pass, 0 pending, 0 implemented_unverified and 0 blocked. The latest complete
+identity-bound Server benchmark is canonical: CommonMark `2.334095x` and GFM
+`2.466373x`, with every timing, scaling, pathological and RSS gate passing. The
+full local release gate also passes through bundle and evidence-ready validation.
+
+The retained architecture remains one shared parsing core with explicit full-AST,
+source-event and fused-render execution models. The canonical performance profile
+continues to construct the complete public AST; it does not substitute the event
+or fused paths. Further performance work is optional and must continue using the
+A/A, bidirectional A/B and latest-complete canonical selection rules.
+
+## Historical audit remediation (2026-08-29)
+
+At that checkpoint, an independent review found that R139 no longer identified the
+benchmark corpus or benchmark-relevant source tree. R139 and R140 became historical
+evidence and could not establish release readiness. The ledger was therefore 122
+pass and 3 implemented_unverified items: `MD-PERF-002`, `MD-REL-001`, and
+`MD-QUAL-001`.
 
 The active dependency order is:
 

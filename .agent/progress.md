@@ -1,10 +1,19 @@
 # markdown 当前进度
 
 更新时间：2026-08-29
-当前阶段：0.9 breaking 执行模型、本地正确性门禁和 schema-v3 canonical identity 已实现；性能门槛未通过，release evidence 保持 fail closed。
-整体结论：**INCOMPLETE**。需求账本当前为 122 pass、0 pending、3 implemented_unverified、0 blocked。
+当前阶段：0.9 breaking 执行模型、schema-v3 canonical identity、完整性能门槛和离线发布门禁均已完成。
+整体结论：**COMPLETE**。需求账本当前为 125 pass、0 pending、0 implemented_unverified、0 blocked。
 
-## 2026-08-29 独立审计修复（当前）
+## 2026-08-29 R143 canonical 性能与最终闭环（当前）
+
+- 唯一 canonical raw 为 `docs/reports/benchmark-raw.json`，SHA-256 `ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37`。它绑定 clean product commit `c63c52528aef6cc5ea46d4b152e08af6a5344f2f`、最小源码归档 `ec7bcd00a3621db10b0c093cb4bf31ebf30c7d0918a75e5e24939d9d523cf9e1`、product tree `64831ebd505da359605f2702c91f7ea21d8b83d212873afe9ca927918887ee3c`、harness `4d437f4a94097e3d09a62a62b48046a9363010e0f853cc288cb169641c6e8711` 和 driver `9ab161c0b7e20d32201a8bfd7dbaefec7fbc298b30414166532432e75cd1a3a1`。
+- 固定 Server CPU 24、SDK `1.1.0-alpha.20260803040049` 的完整 release benchmark exit `0`：CommonMark `2.334095x`、GFM `2.466373x`；ordinary `3.538540x/1.994487x`、scaling `0.349193/1.514705`、pathological `0.700414/2.187767`、extra RSS `31224 KiB`，全部 gate 为 true。
+- 受测根库使用 `-O2`，benchmark consumer 使用 `-O2 --lto thin`；受测进程设置 `cjHeapSize=2GB`、`cjGCInterval=500ms`。这些值写入 raw 和报告；500ms 是 heuristic GC 最小间隔，不关闭 GC，不改变库或调用者的默认进程环境。
+- 当前完整 release gate 在 Cangjie `1.1.0-alpha.20260829040003` 下 exit `0`：format、docs `44/23/4`、native build contracts `4/4`、API checker `9/9`、API snapshot `1309`、check/build、native ASan+UBSan fuzz `10000`、benchmark profiles `7/7`、full tests `1455/1455`、CLI、quickstart、cookbook、differential `25/24/1/0`、benchmark smoke `3/3`、bundle 和 evidence-ready verifier 全部通过。
+- 发布候选包 `target/markdown-0.9.0.cjp` 为 `494310` bytes，SHA-256 `7d6c3d9800d9b9757df83ced7bfb179d056d17e89599624c47e3a38c3f44b3f6`。`release-evidence.json` 的离线状态为 `evidence-ready`；hosted CI at evidence HEAD 与 published 仍明确为 false。
+- `.agent/requirements.yaml` 的 125 项全部为 `pass`。`MD-PERF-002`、`MD-REL-001` 和 `MD-QUAL-001` 已由本轮 canonical 与完整门禁解除，剩余工作为 None。
+
+## 2026-08-29 独立审计修复（历史）
 
 - 独立审计确认 R139 的 `readme-api` corpus 与 benchmark-relevant product tree 已不匹配当前 main；R139/R140 降为历史证据，不能继续声明当前 COMPLETE。
 - release evidence schema v3 新增当前 corpus inventory、byte length、SHA-256 和 product-tree SHA-256 校验。任何未绑定或漂移都 fail closed。

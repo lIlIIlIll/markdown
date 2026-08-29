@@ -206,16 +206,16 @@ evidence。测量边界和输入 API 见[性能说明](docs/performance.md)。
 <!-- release-evidence:start -->
 | Release evidence | Value |
 | --- | --- |
-| Version / status | `0.9.0` / `incomplete` |
-| Offline evidence ready | `not ready` |
+| Version / status | `0.9.0` / `evidence-ready` |
+| Offline evidence ready | `ready` |
 | CI verified at evidence repository HEAD | `no` |
 | Published release | `no` |
-| Artifact commit | `27f8d9fa3973265a77fc71c0b5fd22af0bfe2add` |
-| Evidence commit | `27f8d9fa3973265a77fc71c0b5fd22af0bfe2add` |
-| Repository HEAD at generation | `27f8d9fa3973265a77fc71c0b5fd22af0bfe2add` |
-| CommonMark / cmark | `2.64x` / limit `2.5x` |
-| GFM HTML / cmark-gfm | `2.59x` / limit `2.5x` |
-| Benchmark identity | `current`; commit `27f8d9fa3973265a77fc71c0b5fd22af0bfe2add`; SDK `1.1.0-alpha.20260803040049` |
+| Artifact commit | `c63c52528aef6cc5ea46d4b152e08af6a5344f2f` |
+| Evidence commit | `c63c52528aef6cc5ea46d4b152e08af6a5344f2f` |
+| Repository HEAD at generation | `c63c52528aef6cc5ea46d4b152e08af6a5344f2f` |
+| CommonMark / cmark | `2.33x` / limit `2.5x` |
+| GFM HTML / cmark-gfm | `2.47x` / limit `2.5x` |
+| Benchmark identity | `current`; commit `c63c52528aef6cc5ea46d4b152e08af6a5344f2f`; SDK `1.1.0-alpha.20260803040049` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
 `evidenceReady` describes reproducible offline artifacts and gates only. It does not claim that

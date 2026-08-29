@@ -10,8 +10,8 @@
 
 | Profile | 对比对象 | 当前 ratio | 门槛 | 状态 |
 | --- | --- | ---: | ---: | --- |
-| CommonMark 完整 AST parse | cmark 0.31.1 | `2.380950x` | `≤2.5x` | pass |
-| GFM 完整 AST + HTML | cmark-gfm 0.29 | `2.454213x` | `≤2.5x` | pass |
+| CommonMark 完整 AST parse | cmark 0.31.1 | `2.334095x` | `≤2.5x` | pass |
+| GFM 完整 AST + HTML | cmark-gfm 0.29 | `2.466373x` | `≤2.5x` | pass |
 
 ratio 大于 1 表示本库更慢。完整语料、样本、RSS、复杂度和 identity 见
 [canonical report](reports/benchmark.md)与其链接的 raw JSON。
@@ -40,7 +40,10 @@ commit 和 SDK，只证明冻结的 CommonMark parse-only 子集；它不是当�
 
 ## 测量协议
 
-- release 构建，固定 CPU、SDK、target、reference commit 和 corpus digest；
+- release 构建，固定 CPU、SDK、target、reference commit 和 corpus digest；根库使用
+  `-O2`，benchmark consumer 使用 `-O2 --lto thin`；
+- 受测进程显式设置 `cjHeapSize=2GB` 和 `cjGCInterval=500ms`。后者是 heuristic GC
+  最小间隔，不关闭 GC，也不改变库的默认进程环境；
 - baseline/candidate 交替测量，并包含 A/A 与双向 A/B；
 - README/API 输入会将生成的 release-evidence block 替换为固定 marker，避免报告写回改变
   下一轮 corpus；
