@@ -5,8 +5,8 @@
 
 ## 0.9.0 - Unreleased
 
-这是 breaking pre-GA preview。当前 release evidence 状态为 ready，但 0.9 不构成 1.x
-ABI/行为冻结。
+这是 breaking pre-GA preview。当前离线 release evidence 状态为 evidence-ready，但托管
+CI 验证和 GitHub Release 发布是独立状态；0.9 不构成 1.x ABI/行为冻结。
 
 ### Added
 
@@ -26,6 +26,10 @@ ABI/行为冻结。
 - fingerprint 使用 canonical length-prefixed encoding。
 - CST 使用共享 token arena；增量编辑明确为 block-local fast path。
 - stream、chunk 和 async adapter 明确为 buffered 语义；source Event API 是独立执行模型。
+- `newSession` 现在直接返回 `BufferedInputSession`；删除误导性的
+  `ChunkedParseSession` 和 `AsyncHtmlRenderSession` 类型名。异步输出请使用
+  `BufferedAsyncHtmlOutputSession`。
+- `OperationBudget` 明确为单次操作拥有、不可并发共享的 mutable budget。
 
 ### Evidence
 

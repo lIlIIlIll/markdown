@@ -180,14 +180,20 @@ evidence。测量边界和输入 API 见[性能说明](docs/performance.md)。
 <!-- release-evidence:start -->
 | Release evidence | Value |
 | --- | --- |
-| Version / status | `0.9.0` / `ready` |
-| Source commit | `856a6c7164fe97450b5ab7ff34926445b48dcc35` |
+| Version / status | `0.9.0` / `evidence-ready` |
+| Offline evidence ready | `ready` |
+| CI verified at evidence repository HEAD | `no` |
+| Published release | `no` |
+| Artifact commit | `856a6c7164fe97450b5ab7ff34926445b48dcc35` |
+| Evidence commit | `5d89470d7266b62ee32e4dc54f23112e01715e66` |
+| Repository HEAD at generation | `5d89470d7266b62ee32e4dc54f23112e01715e66` |
 | CommonMark / cmark | `2.38x` / limit `2.5x` |
 | GFM HTML / cmark-gfm | `2.45x` / limit `2.5x` |
 | Benchmark identity | `current`; commit `856a6c7164fe97450b5ab7ff34926445b48dcc35`; SDK `1.1.0-alpha.20260803040049` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
-The benchmark and source identities are commit-bound and the evidence tree is clean. The preview release evidence is ready and every mandatory gate passes.
+`evidenceReady` describes reproducible offline artifacts and gates only. It does not claim that
+the current repository HEAD passed hosted CI or that a GitHub release was published.
 <!-- release-evidence:end -->
 
 - CommonMark `652/652`

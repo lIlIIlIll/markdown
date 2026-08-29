@@ -7,16 +7,26 @@
 <!-- release-evidence:start -->
 ## Generated Release Evidence
 
-- Version/status: `0.9.0` / `ready`.
-- Source identity: `856a6c7164fe97450b5ab7ff34926445b48dcc35`; tree state `clean`.
+- Version/status: `0.9.0` / `evidence-ready`.
+- Artifact commit: `856a6c7164fe97450b5ab7ff34926445b48dcc35`.
+- Evidence commit: `5d89470d7266b62ee32e4dc54f23112e01715e66`; repository HEAD at generation `5d89470d7266b62ee32e4dc54f23112e01715e66`.
+- Hosted CI verified at that HEAD: `False`; published: `False`.
 - Tests: `1455/1455` passed, `0` skipped, `0` failed.
 - Benchmark: CommonMark `2.38x`, GFM `2.45x`, status `current`.
 - Raw digest: `530d206f2558766c56eb02e33b646f7ef36b58a06b5187f52999223f32337d0c`.
 
-The benchmark identity is bound and the evidence tree is clean. All mandatory performance ratios and release-evidence gates pass.
+All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->
 
 本报告后续按时间保留历史失败与候选淘汰记录；这些历史段落不覆盖上述最终状态和 R139/R140 验收证据。
+
+## 2026-08-29 Release Audit Remediation
+
+审计报告的九项发现已按当前仓库逐项复核。产品侧修复包括：固定官方 1.1.0/1.1.3 SDK 与 checkout commit 的 CI matrix、完整 release gate、自包含 pinned differential references、buffered API 破坏性改名、`OperationBudget` 并发合同，以及区分 offline evidence、hosted CI 和 publication 的 release evidence schema v2。
+
+本地最终命令 `cangjie_env; CC=clang AR=ar scripts/release_gate.sh` exit `0`。门禁实际覆盖 format、docs `43/23/4`、public API `1309` declarations、check/build、native ASan+UBSan fuzz `10000`、full tests `1455/1455`、CommonMark `652/652`、GFM `671/671`、differential `25/24/1/0`、benchmark smoke `3/3`、bundle 和 evidence-ready verifier。
+
+`release-evidence.json` 当前有意保持 `ciVerifiedAtHead=false` 与 `published=false`。它们只会在推送后通过 hosted GitHub 状态独立核验；离线 gate 通过不再写成 CI 或发布成功。
 
 ## 2026-08-29 Developer Documentation Acceptance
 
@@ -205,7 +215,7 @@ seal/path/binary identity check.
 | `MD-OBS-001` | PRD §46 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DOC-001` | PRD §47, §49, §51.7 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DOC-002` | PRD §47, §49, §51.7 | `pass` | 2026-08-18: examples/quickstart built and ran using only the public package API |
-| `MD-COMP-001` | PRD §48.1-2 | `pass` | The 0.9 API snapshot verifies 1269 declarations; migration and compatibility docs record the arena/value-view reset, scanner valid-prefix adapter and Event 1.1 boundary. |
+| `MD-COMP-001` | PRD §48.1-2 | `pass` | The 0.9 API snapshot verifies 1309 declarations; migration and compatibility docs include the buffered API breaking cleanup. |
 | `MD-COMP-002` | PRD §48.3-6 | `pass` | SPI v2, artifact v2 and the final 0.9 AST surface are snapshotted and tested; the removed AST-walk Event facade is explicitly excluded from the stable contract. |
 | `MD-REL-001` | PRD §49, §50 M6, §51 | `pass` | R140 fresh-archive release gate exit 0; 0.9.0 preview bundle is 467103 bytes, SHA-256 2a9a743ebf440813594662fb92071ac6da1b5c9d14b663ad4e0fbce9421a5ade. |
 | `MD-QUAL-001` | PRD §51.7, §52 | `pass` | 1455/1455 tests, 652/652 CommonMark, 671/671 GFM, differential 25/24/1/0, native sanitizer fuzz 10000, benchmark smoke 3/3 and every canonical performance gate pass. |
@@ -219,9 +229,10 @@ the current result.
 | Command | Exit | Result |
 | --- | ---: | --- |
 | Server CPU 24 `MARKDOWN_BENCH_* python3 benchmarks/measure.py` on clean commit `856a6c7` | 0 | R139 CommonMark 2.380950x, GFM 2.454213x; every timing, scaling and RSS gate true; raw SHA-256 530d206f...337d0c |
-| Server fresh archive `CC=/usr/bin/clang AR=/usr/bin/ar scripts/release_gate.sh` | 0 | format; API 1311; check/build; native ASan+UBSan fuzz 10000; tests 1455/1455; CLI; quickstart; differential 25/24/1/0; benchmark smoke 3/3; bundle; release-ready; final output `release gate: pass` |
+| Local audit-remediation `cangjie_env; CC=clang AR=ar scripts/release_gate.sh` | 0 | format; docs 43/23/4; API 1309; check/build; native ASan+UBSan fuzz 10000; tests 1455/1455; CommonMark 652/652; GFM 671/671; differential 25/24/1/0; benchmark smoke 3/3; bundle; evidence-ready; final output `release gate: pass` |
+| Historical R140 Server fresh archive `CC=/usr/bin/clang AR=/usr/bin/ar scripts/release_gate.sh` | 0 | format; API 1311; check/build; native ASan+UBSan fuzz 10000; tests 1455/1455; CLI; quickstart; differential 25/24/1/0; benchmark smoke 3/3; bundle; historical release-ready verifier |
 | `python3 scripts/test_benchmark_input_profiles.py` | 0 | 6/6, including generated-evidence corpus stability and fail-closed marker validation |
-| `python3 scripts/release_evidence.py --release-ready` | 0 | commit, archive, SDK, harness, drivers, raw digest, ratios and generated projections are consistent |
+| `python3 scripts/release_evidence.py --evidence-ready` | 0 | offline artifact, archive, SDK, harness, drivers, raw digest, ratios and generated projections are consistent; hosted CI/publication are explicitly false |
 | `scripts/check_format.sh` | 0 | all Cangjie source matches cjfmt |
 | `cjlint -f src` | 0 | 0 errors; 476 advisory diagnostics |
 | `cjpm check` | 0 | dependency graph valid |

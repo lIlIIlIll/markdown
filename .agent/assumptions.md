@@ -298,6 +298,16 @@
 - 理由：保留已有消费者的源码/布局兼容，同时让新消费者只导入所需能力；一个共享 parser 避免维护两套语义实现。非 Unix 支持以 target-aware `CC`/`AR` 或 `cl`/`lib` 构建及 consumer linker 资产为边界，真实平台发布资格仍须在相应 SDK runner 验证。
 - 影响 requirements：上述条目的 notes 引用本假设；不得把 buffered adapter 宣称为真正 incremental execution，也不得把跨 target 命令测试宣称为实机平台验证。
 
+## A-040：审计后的 buffered API 破坏性收口
+
+- 状态：`resolved`
+- 决策日期：2026-08-29
+- 涉及：`MD-IN-003-004`、`MD-SINK-001`、`MD-COMP-001`
+- 歧义：A-033 为兼容保留 `ChunkedParseSession` 和 `AsyncHtmlRenderSession`，但它们的名称仍可能让调用者误判为低内存增量执行；用户随后明确允许 pre-GA 破坏性变更。
+- 决定：保留 PRD 指定的 `newSession/feed/finish` 方法，但令 `newSession` 返回 `BufferedInputSession`；删除两个误导性旧类型，异步输出只公开 `BufferedAsyncHtmlOutputSession`。这仅校准命名，不改变 finish-only parse 和 pre-rendered sink backpressure 行为。
+- 理由：0.9 尚未冻结 API，直接移除错误心智模型比永久维护别名更安全；真正 source event 执行模型保持独立。
+- 影响 requirements：上述条目的 notes 由 A-040 覆盖 A-033 中“保留旧名称”的部分。
+
 ## 决策记录模板
 
 ## A-034：OwnedUtf8Input 的 unsafe UTF-8 前提

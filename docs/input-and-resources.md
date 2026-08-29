@@ -13,7 +13,6 @@ session。所有 AST parse 入口执行相同语义和资源限制。
 | `parse(ReusableUtf8Input)` | 安全构造验证和复制一次；可 unsafe take | 每次调用期间 |
 | `parse(InputStream)` | 完整缓冲后解码 | stream EOF 后 |
 | `BufferedInputSession` | 累计全部 chunks | `finish()` |
-| `ChunkedParseSession` | 与 BufferedInputSession 相同 | `finish()` |
 
 String、bytes、Owned、Reusable 和 Stream 每次都创建完整 AST、NodeId、SourceSpan、
 SourceBuffer 和 ParseResult。
@@ -91,7 +90,8 @@ let result = engine.parse(source, budget: budget)
 println(budget.usedScanSteps())
 ```
 
-budget 实例会递减。不要在独立请求之间复用同一个 budget。
+budget 实例会递减。它不是线程安全对象；每次 parse、render 或 transform 都应创建独立
+实例，不要跨请求复用或并发共享。
 
 ## 取消
 
@@ -151,12 +151,12 @@ text/code/html literal 转成 owned text。
 `tryParse` 和兼容名称 `parsePartial` 返回完整结果或带空 Document 的失败结果。
 它们不返回 AST prefix。
 
-`BufferedAsyncHtmlOutputSession` 和兼容名称 `AsyncHtmlRenderSession` 先渲染完整
-HTML，再分块写 sink。它们不降低 peak output memory。
+`BufferedAsyncHtmlOutputSession` 先渲染完整 HTML，再分块写 sink。它不降低 peak
+output memory。0.9 已删除会让使用者误以为是真正异步增量 renderer 的旧类型名
+`AsyncHtmlRenderSession`。
 
 ## 下一步
 
 - [Core API](api/core.md)
 - [AST 与 Source API](api/ast-and-source.md)
 - [并发与可观测性](concurrency-and-observability.md)
-

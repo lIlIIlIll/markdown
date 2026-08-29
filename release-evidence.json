@@ -1,16 +1,20 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "release": {
     "version": "0.9.0",
     "channel": "preview",
-    "status": "ready",
-    "complete": true
+    "status": "evidence-ready",
+    "evidenceReady": true,
+    "ciVerifiedAtHead": false,
+    "ciVerifiedCommit": null,
+    "published": false
   },
-  "source": {
-    "sourceCommit": "856a6c7164fe97450b5ab7ff34926445b48dcc35",
-    "repositoryHeadAtGeneration": "856a6c7164fe97450b5ab7ff34926445b48dcc35",
-    "treeState": "clean",
-    "reason": "The fixed-host benchmark is bound to clean product commit 856a6c7164fe97450b5ab7ff34926445b48dcc35. Generated evidence files are committed afterward and do not change the parser, renderer, driver, harness, or normalized readme-api corpus measured by that commit."
+  "identity": {
+    "artifactCommit": "856a6c7164fe97450b5ab7ff34926445b48dcc35",
+    "evidenceCommit": "5d89470d7266b62ee32e4dc54f23112e01715e66",
+    "repositoryHeadAtGeneration": "5d89470d7266b62ee32e4dc54f23112e01715e66",
+    "treeStateAtGeneration": "clean",
+    "reason": "The fixed-host benchmark is bound to clean artifact commit 856a6c7164fe97450b5ab7ff34926445b48dcc35. Commit 5d89470d7266b62ee32e4dc54f23112e01715e66 finalized the generated evidence projection. Later documentation and CI changes do not change the benchmarked parser, renderer, driver, harness, or normalized readme-api corpus."
   },
   "toolchain": {
     "cangjieCompiler": "1.1.0-alpha.20260803040049",
@@ -36,8 +40,8 @@
   },
   "api": {
     "snapshotPath": "api/public-api-v0.9.txt",
-    "declarations": 1311,
-    "sha256": "d04ff02c367e19afc7a53919c0febd5deff7a486e260e0587d667ab9f1cdee5b"
+    "declarations": 1309,
+    "sha256": "6dadb798c03578b71ba6c112a1f45859cd24d15cac77ddf794d033c4f2009680"
   },
   "tests": {
     "passed": 1455,

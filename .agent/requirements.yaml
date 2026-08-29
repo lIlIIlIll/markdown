@@ -13,7 +13,7 @@ allowed_statuses:
 - pass
 - blocked
 completion_rule: 只有本文件 requirements 下的全部条目均为 pass，才可声明整个 PRD 完成；blocked、pending 和 implemented_unverified 均不算完成。
-final_validation_evidence: &final_validation_evidence '2026-08-29 R140 fresh tracked-source Server release gate: CC=/usr/bin/clang AR=/usr/bin/ar scripts/release_gate.sh; exit 0; format, API snapshot 1311, check/build, native ASan+UBSan fuzz 10000, full tests 1455/1455 with zero skipped/error/failed, CLI, quickstart, differential 25/24/1/0, benchmark smoke 3/3, bundle and release-ready verifier all passed.'
+final_validation_evidence: &final_validation_evidence '2026-08-29 R140 fresh tracked-source Server release gate: CC=/usr/bin/clang AR=/usr/bin/ar scripts/release_gate.sh; exit 0; format, API snapshot 1311, check/build, native ASan+UBSan fuzz 10000, full tests 1455/1455 with zero skipped/error/failed, CLI, quickstart, differential 25/24/1/0, benchmark smoke 3/3, bundle and release-ready verifier all passed. The 2026-08-29 audit-remediation rerun uses the same full gate with self-contained pinned differential-tool setup and evidence-ready verification.'
 status_definitions:
   pending: 尚未开始，或尚无足以证明实现存在的证据。
   implemented_unverified: 实现已存在，但尚未完成该条目全部验收或证据尚不充分。
@@ -580,7 +580,7 @@ requirements:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: full cjpm test; exit 0; 1423 passed; docs/input-and-resources.md distinguishes buffered stream input from incremental parsing'
-  notes: "A-033: InputStream and buffered sessions do not reduce peak input memory or emit an AST before parsing starts. Assumptions: A-001, A-002, A-004, A-033."
+  notes: "A-040 overrides the compatibility portion of A-033: InputStream and BufferedInputSession do not reduce peak input memory or emit an AST before parsing starts. Assumptions: A-001, A-002, A-004, A-033, A-040."
 - id: MD-IN-004
   source: PRD §16 IN-004-005, §39.4, §44.3, §51.3
   target: '1.0'
@@ -594,16 +594,15 @@ requirements:
   - 单个 chunked session 不支持并发调用
   status: pass
   implementation:
-  - 'src/parser.cj: ChunkedParseSession feed(Array<Byte>/String), finish, preallocation limit, cancellation, and single-finish
-    lifecycle'
-  - 'src/parser.cj: explicitly named BufferedInputSession preserves the same bounded finish-only execution contract'
+  - 'src/parser.cj: BufferedInputSession feed(Array<Byte>/String), finish, preallocation limit, cancellation, and single-finish lifecycle'
+  - 'src/parser.cj: ParserSession.newSession returns the explicitly named buffered, bounded, finish-only session'
   tests:
   - 'src/input_test.cj: arbitraryChunkBoundariesMatchAllAtOnce'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: full cjpm test; exit 0; 1423 passed; arbitrary chunk, explicit buffered lifecycle and historical crash regressions passed'
-  notes: "A-033: the compatibility ChunkedParseSession is buffered input, not a true incremental parser. Assumptions: A-001, A-002, A-004, A-021, A-033."
+  notes: "A-040 overrides the compatibility portion of A-033: the public session is BufferedInputSession, not a true incremental parser. Assumptions: A-001, A-002, A-004, A-021, A-033, A-040."
 - id: MD-IN-005
   source: PRD §16 IN-006-007
   target: '1.0'
@@ -1723,15 +1722,17 @@ requirements:
   - OperationBudget 与 ParseLimits 独立配置并返回 BudgetExceeded
   - 核心库不创建或拥有 wall-clock timeout
   - 宿主可通过 CancellationToken 和外层任务系统实现 deadline
+  - OperationBudget 是单次操作拥有的可变状态，不支持并发或跨操作复用
   status: pass
   implementation:
   - 'src/limits.cj: independent scan, delimiter, extension, transform, renderer-node, and output budgets'
+  - 'src/limits.cj and docs/concurrency-and-observability.md: operation-scoped, non-thread-safe ownership contract'
   tests:
   - 'src/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: "Assumptions: A-001, A-002, A-004."
+  notes: "OperationBudget must be created per top-level operation; immutable limits may be shared, but a mutable budget may not. Assumptions: A-001, A-002, A-004."
 - id: MD-SINK-001
   source: PRD §30.5, §39.6, §45.4, §51.5
   target: '1.0'
@@ -1755,7 +1756,7 @@ requirements:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: full cjpm test; exit 0; 1423 passed; buffered async backpressure regression passed'
-  notes: "A-033: async describes sink backpressure only; it does not stream parser or renderer frames. Assumptions: A-001, A-002, A-004, A-033."
+  notes: "A-040 overrides the compatibility portion of A-033: only BufferedAsyncHtmlOutputSession is public. Async describes sink backpressure only; it does not stream parser or renderer frames. Assumptions: A-001, A-002, A-004, A-033, A-040."
 - id: MD-LIM-001
   source: PRD §6.6, §31, §51.6
   target: '1.0'
@@ -2401,6 +2402,8 @@ requirements:
   - src/testkit_fuzz_test.cj
   - src/security_corpus_test.cj
   - scripts/release_gate.sh
+  - '.github/workflows/candidate-validation.yml: pinned minimum/current SDK matrix executes the complete release gate'
+  - 'scripts/setup_differential_tools.sh: pinned, reproducible cmark/cmark-gfm/commonmark.js setup used by the gate'
   - 'tests/fuzz/native_scanner_fuzz.c and scripts/fuzz_native_scanner.py: coverage-guided libFuzzer with ASan/UBSan'
   - 'tests/fuzz/native_scanner_sanitizer.c: deterministic scanner boundary sanitizer harness'
   - 'tests/fuzz/crashes and tests/fuzz/native-scanner-corpus: checked-in historical crash and seed corpora'
@@ -2412,7 +2415,7 @@ requirements:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: differential test; 25 checked, 24 exact, 1 classified, 0 unexpected'
-  notes: "Assumptions: A-001, A-002, A-004."
+  notes: "The local gate is self-contained; hosted CI status and branch protection are repository-state evidence, not substitutes for test behavior. Assumptions: A-001, A-002, A-004."
 - id: MD-TST-003
   source: PRD §44.3-4, §51.3, §52
   target: '1.0'
@@ -2479,6 +2482,7 @@ requirements:
   - src/testkit_fuzz_test.cj
   - src/security_corpus_test.cj
   - scripts/release_gate.sh
+  - '.github/workflows/candidate-validation.yml: pinned minimum/current SDK matrix executes the complete release gate'
   tests:
   - 'src/security_corpus_test.cj: SecurityCorpusTest.pathologicalDelimiterReferenceHtmlAndTableInputsRemainBounded'
   - 'src/testkit_fuzz_test.cj: ExtensionTckAndFuzzTest.extensionTckPassesAllRequiredRuntimeChecks'
@@ -2842,7 +2846,8 @@ requirements:
   - '2026-08-25: socket-enabled full cjpm test; exit 0; 1417 passed, 0 skipped/error/failed; public API snapshot verified at 1165 declarations'
   - '2026-08-27: socket-enabled full cjpm test; exit 0; 1446 passed, 0 skipped/error/failed'
   - '2026-08-27: public API checker tests 9/9 and v0.9 snapshot verification at 1281 declarations; quickstart public consumer built and ran successfully'
-  notes: "The 0.9 breaking contract, observable compatibility surfaces, API baseline and consumer migration are verified. Assumptions: A-001, A-002, A-004, A-032, A-036, A-037."
+  - '2026-08-29: the breaking buffered API cleanup is captured by the 1309-declaration v0.9 snapshot; API checker regressions pass 9/9.'
+  notes: "A-040 authorizes removal of the misleading buffered aliases before GA. The 0.9 breaking contract, observable compatibility surfaces, API baseline and consumer migration are verified. Assumptions: A-001, A-002, A-004, A-032, A-036, A-037, A-040."
 - id: MD-COMP-002
   source: PRD §48.3-6
   target: cross-release
@@ -2885,7 +2890,9 @@ requirements:
   implementation:
   - CHANGELOG.md
   - LICENSE
+  - .github/workflows/candidate-validation.yml
   - scripts/release_gate.sh
+  - scripts/setup_differential_tools.sh
   - release-evidence.json
   - scripts/release_evidence.py
   tests:
@@ -2900,7 +2907,8 @@ requirements:
   - '2026-08-25: canonical benchmark is now bound to source commit 0275f27a, SDK, source archive, harness and all drivers; release-ready validation still fails closed because the release is draft, the evidence tree is dirty and MD-PERF-002 fails'
   - '2026-08-25: refreshed canonical benchmark is bound to product commit 34113ea6, SDK, source archive, harness and all drivers; its evidence projection is clean, while release-ready validation still fails closed because the release is draft and MD-PERF-002 fails'
   - '2026-08-29: release evidence is ready and commit-bound; full fresh-archive Server release gate exit 0, with bundle target/markdown-0.9.0.cjp size 467103 bytes and SHA-256 2a9a743ebf440813594662fb92071ac6da1b5c9d14b663ad4e0fbce9421a5ade.'
-  notes: "A-036 keeps the breaking pre-GA package at 0.9.0 rather than prematurely freezing a 1.x ABI. All release artifacts and 1.0-target requirements are nevertheless implemented and qualified; the preview bundle is ready for publication, and the private vulnerability reporting channel is enabled. Assumptions: A-001, A-002, A-004, A-009, A-023, A-024, A-027, A-039."
+  - '2026-08-29: release evidence schema v2 separates offline evidence-ready, hosted-CI verification and publication; the full gate installs only pinned differential references.'
+  notes: "A-036 keeps the breaking pre-GA package at 0.9.0 rather than prematurely freezing a 1.x ABI. Offline release evidence is ready; hosted CI and publication remain separate claims until independently observed. The private vulnerability reporting channel is enabled. Assumptions: A-001, A-002, A-004, A-009, A-023, A-024, A-027, A-039, A-040."
 - id: MD-QUAL-001
   source: PRD §51.7, §52
   target: '1.0'

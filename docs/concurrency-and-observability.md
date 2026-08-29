@@ -6,9 +6,10 @@ parse、render 和只读 traversal。
 ## 并发规则
 
 - 每次 parse 拥有独立 mutable state。
-- `BufferedInputSession`、`ChunkedParseSession` 和
-  `RawBlockEventSession` 不能并发 feed。
+- `BufferedInputSession` 和 `RawBlockEventSession` 不能并发 feed。
 - 一个 session 在 `finish()` 后不能复用。
+- `OperationBudget` 是 mutable、operation-scoped 对象；每次 parse、render 或 transform
+  创建一个实例，不能跨操作复用或并发共享。
 - 没有 mutable global extension registry。
 - extension manifest 的 `shareable=false` 表示宿主不能并发复用同一个 callback
   instance。
@@ -50,4 +51,3 @@ Render statistics 包含 rendered node、output byte 和 renderer fingerprint。
 `ObservedRenderedOutput`。
 
 完整字段见 [Artifact、Document 与 Service API](api/artifacts-and-services.md)。
-

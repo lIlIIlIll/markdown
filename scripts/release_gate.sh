@@ -24,10 +24,11 @@ scripts/cli_smoke.sh
 (cd examples/quickstart && cjpm build && cjpm run --skip-build)
 (cd examples/cookbook && cjpm build && cjpm run --skip-build)
 
+scripts/setup_differential_tools.sh
 python3 scripts/differential_test.py
 cjpm bench --filter MarkdownReleaseBenchmarks --no-color \
     --report-path /tmp/markdown-release-bench --report-format csv
 cjpm bundle
-python3 scripts/release_evidence.py --release-ready
+python3 scripts/release_evidence.py --evidence-ready
 
 printf 'release gate: pass\n'

@@ -117,7 +117,8 @@ let result = session.finish()
 ```
 
 `feed` 只累计输入。`finish` 才执行解析。session 不能在 `finish` 后继续使用，也
-不支持并发调用。`newSession` 返回行为相同的兼容类型 `ChunkedParseSession`。
+不支持并发调用。PRD 保留的 `newSession` 入口同样返回 `BufferedInputSession`；它不会
+提前产生 AST。
 
 ## Source events
 
@@ -194,8 +195,9 @@ Fused path 不会静默关闭扩展、processor 或安全策略。
 - `maximumExtensionLookaheadBytes`
 
 `OperationBudget` 是每次操作递减的 scan、delimiter、extension callback、transform、
-rendered node 和 output byte 预算。`CancellationSource.cancel()` 会使共享 token 在下一
-个检查点抛出取消错误。
+rendered node 和 output byte 预算。实例不是线程安全对象，也不能跨操作复用；每次
+parse、render 或 transform 应创建独立 budget。`CancellationSource.cancel()` 会使共享
+token 在下一个检查点抛出取消错误。
 
 ## Errors 和 diagnostics
 
@@ -228,4 +230,3 @@ scanner 状态。`ExecutionModelCapabilities` 明确 buffered input、Event 和 
 - [AST 与 Source API](ast-and-source.md)
 - [Rendering API](rendering.md)
 - [输入、限制和取消](../input-and-resources.md)
-

@@ -263,8 +263,8 @@ public class MarkdownEngine {
         utf8Policy!: Utf8Policy = Utf8Policy.Strict,
         cancellation!: CancellationToken = CancellationToken.none(),
         budget!: OperationBudget = OperationBudget.safe()
-    ): ChunkedParseSession {
-        ChunkedParseSession(this, utf8Policy, cancellation, budget)
+    ): BufferedInputSession {
+        BufferedInputSession(this, utf8Policy, cancellation, budget)
     }
 
     /** Creates a session that buffers all input and parses only at finish(). */
@@ -288,51 +288,7 @@ public class MarkdownEngine {
     }
 }
 
-public class ChunkedParseSession {
-    private let engine: MarkdownEngine
-    private let utf8Policy: Utf8Policy
-    private let cancellation: CancellationToken
-    private let budget: OperationBudget
-    private let bytes = ArrayList<Byte>()
-    private var finished = false
-
-    internal init(
-        engine: MarkdownEngine,
-        utf8Policy: Utf8Policy,
-        cancellation: CancellationToken,
-        budget: OperationBudget
-    ) {
-        this.engine = engine
-        this.utf8Policy = utf8Policy
-        this.cancellation = cancellation
-        this.budget = budget
-    }
-
-    public func feed(chunk: Array<Byte>): Unit {
-        if (finished) {
-            throw IllegalStateException("chunked session is already finished")
-        }
-        cancellation.throwIfCancelled(phase: "input")
-        if (bytes.size + chunk.size > engine.limits.maximumInputBytes) {
-            throw LimitExceededException("input_bytes", engine.limits.maximumInputBytes, bytes.size + chunk.size,
-                "input")
-        }
-        bytes.add(all: chunk)
-    }
-
-    public func feed(chunk: String): Unit {
-        feed(chunk.toArray())
-    }
-
-    public func finish(): ParseResult {
-        if (finished) {
-            throw IllegalStateException("chunked session is already finished")
-        }
-        finished = true
-        engine.parse(bytes.toArray(), utf8Policy: utf8Policy, cancellation: cancellation, budget: budget)
-    }
-}
-
+/** Buffers all input and parses only when finish() is called. */
 public class BufferedInputSession {
     private let engine: MarkdownEngine
     private let utf8Policy: Utf8Policy

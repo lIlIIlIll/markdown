@@ -4,6 +4,17 @@
 当前阶段：0.9 breaking 执行模型、完整 arena AST parser、source-driven Resolved/RawBlock event、发布证据和验收链路均已闭环。R139 clean-commit canonical benchmark 与 R140 fresh-archive release gate 已通过。
 整体结论：**COMPLETE**。需求账本当前为 125 pass、0 pending、0 implemented_unverified、0 blocked。
 
+## 2026-08-29 发布审计修复
+
+- 逐项复核 `/home/elliot/Downloads/markdown-audit-package.zip` 后，确认九项报告均对应当时的真实仓库状态；当前切片修复代码、文档和本地发布证据问题，并保留 hosted repository 状态作为独立验收层。
+- CI 不再依赖空仓库变量：minimum SDK `1.1.0` 与 current SDK `1.1.3` 使用官方固定 URL/SHA-256，`actions/checkout` 固定到 commit，两个矩阵任务均执行完整 `scripts/release_gate.sh`。
+- release gate 现在自动准备 pinned cmark、cmark-gfm 和 commonmark.js 差分工具；归档和新 runner 不再依赖开发机 `/tmp` 中的预装 reference checkout。
+- 删除会夸大执行模型的 `ChunkedParseSession` 与 `AsyncHtmlRenderSession`；`newSession` 返回 `BufferedInputSession`，异步 sink 只公开 `BufferedAsyncHtmlOutputSession`。迁移文档与 1309-declaration API snapshot 已同步。
+- `OperationBudget` 的可变、单操作拥有、非线程安全合同已写入公开 API 注释和并发文档。
+- release evidence schema v2 将 `evidence-ready`、`ciVerifiedAtHead` 和 `published` 分开；README、报告和验收投影不再把离线证据等同于 hosted CI 或发布。
+- 本地完整门禁：`cangjie_env; CC=clang AR=ar scripts/release_gate.sh`，exit `0`；format、docs 43/23/4、API 1309、check/build、native ASan+UBSan fuzz 10000、full tests 1455/1455、CommonMark 652/652、GFM 671/671、differential 25/24/1/0、benchmark smoke 3/3、bundle和 evidence-ready verifier 全部通过。
+- 待外部收口：推送审计修复 commit 后观察该 commit 的 hosted CI，并配置/验证 `main` 分支保护。二者不会被离线 `evidence-ready` 状态提前冒充。
+
 ## 2026-08-29 开发者文档与 API reference 重写
 
 - README 改为采用路径优先的开发者入口；新增文档首页、5 分钟入门、贡献指南和按 `core`、`render`、`extensions`、`editor`、`artifact/document/services` 拆分的 API reference。

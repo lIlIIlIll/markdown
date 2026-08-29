@@ -1007,7 +1007,6 @@ official_extensions.cj:public static func smartPunctuation(builder: MarkdownDial
 parser.cj:enum-variant | ReplaceInvalid
 parser.cj:enum-variant | Strict
 parser.cj:public class BufferedInputSession {
-parser.cj:public class ChunkedParseSession {
 parser.cj:public class MarkdownEngine {
 parser.cj:public class MarkdownEngineBuilder {
 parser.cj:public class ParseResult {
@@ -1020,7 +1019,7 @@ parser.cj:public func finish(): ParseResult {
 parser.cj:public func limits(limits: ParseLimits): MarkdownEngineBuilder {
 parser.cj:public func nativeScannerEnabled(enabled: Bool): MarkdownEngineBuilder {
 parser.cj:public func newBufferedInputSession( utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): BufferedInputSession {
-parser.cj:public func newSession( utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ChunkedParseSession {
+parser.cj:public func newSession( utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): BufferedInputSession {
 parser.cj:public func parse( bytes: Array<Byte>, utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
 parser.cj:public func parse( input: InputStream, utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
 parser.cj:public func parse( input: OwnedUtf8Input, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe() ): ParseResult {
@@ -1069,7 +1068,7 @@ profile.cj:public static func gfmCompatible(): HtmlPolicy {
 profile.cj:public static func gfmModernV1(): MarkdownProfile {
 profile.cj:public static func safe(): HtmlPolicy {
 profile.cj:public static func specCompatible(): HtmlPolicy {
-render/render.cj:public import markdown.{AsyncHtmlRenderSession, AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, BufferedAsyncHtmlOutputSession, CanonicalMarkdownRenderer, ExtensionRendererFallback, HtmlFidelityPolicy, HtmlInputPolicy, HtmlOptions, HtmlPolicy, HtmlPolicyKind, HtmlRenderer, HtmlSanitizerPort, HtmlToMarkdownConverter, HtmlToMarkdownOptions, ImageUriPolicy, InlineEscapePolicy, LinkUriPolicy, MissingRendererPolicy, PlainTextOptions, PlainTextRenderer, RawHtmlPolicyKind, RenderStatistics, RenderedOutput, RenderedSourceMapEntry, SinkError, SinkFailureException, SinkWriteResult, StringTextSink, TextSink, TrustedHtml}
+render/render.cj:public import markdown.{AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, BufferedAsyncHtmlOutputSession, CanonicalMarkdownRenderer, ExtensionRendererFallback, HtmlFidelityPolicy, HtmlInputPolicy, HtmlOptions, HtmlPolicy, HtmlPolicyKind, HtmlRenderer, HtmlSanitizerPort, HtmlToMarkdownConverter, HtmlToMarkdownOptions, ImageUriPolicy, InlineEscapePolicy, LinkUriPolicy, MissingRendererPolicy, PlainTextOptions, PlainTextRenderer, RawHtmlPolicyKind, RenderStatistics, RenderedOutput, RenderedSourceMapEntry, SinkError, SinkFailureException, SinkWriteResult, StringTextSink, TextSink, TrustedHtml}
 renderer.cj:enum-variant | Complete
 renderer.cj:enum-variant | Continue
 renderer.cj:enum-variant | CustomHandler
@@ -1087,7 +1086,6 @@ renderer.cj:interface-member func sanitize(html: String): String
 renderer.cj:interface-member func write(slice: String): AsyncSinkWriteResult
 renderer.cj:interface-member func write(slice: String): SinkWriteResult
 renderer.cj:interface-member prop extensionId: String
-renderer.cj:public class AsyncHtmlRenderSession {
 renderer.cj:public class BufferedAsyncHtmlOutputSession {
 renderer.cj:public class HtmlOptions {
 renderer.cj:public class HtmlRenderer {

@@ -89,12 +89,25 @@ let output = engine.renderHtml(
 
 ## 8. 更新版本假设
 
-0.9 是 breaking pre-GA preview，不是 1.0 ABI 承诺。当前 release evidence 已通过
-CommonMark/GFM、full tests、package 和性能门槛。不要保留早期报告中的 blocked 状态或
-历史 ratio 作为当前结果。
+0.9 是 breaking pre-GA preview，不是 1.0 ABI 承诺。当前离线 release evidence 已通过
+CommonMark/GFM、full tests、package 和性能门槛；这不等于当前 GitHub HEAD 已通过托管
+CI，也不等于 GitHub Release 已发布。不要保留早期报告中的 blocked 状态或历史 ratio
+作为当前结果。
 
 当前结果以 [release-evidence.json](../release-evidence.json) 和
 [性能说明](performance.md)为准。
+
+## 9. 更新 buffered session 名称
+
+`newSession()` 仍可使用，但返回类型改为 `BufferedInputSession`。显式代码优先写成：
+
+```cangjie
+let session = engine.newBufferedInputSession()
+```
+
+将 `ChunkedParseSession` 类型标注替换为 `BufferedInputSession`。将
+`AsyncHtmlRenderSession` 构造替换为 `BufferedAsyncHtmlOutputSession`。这些 API 都会先
+缓冲完整输入或输出，不是增量 parser 或 renderer。
 
 ## 验证迁移
 

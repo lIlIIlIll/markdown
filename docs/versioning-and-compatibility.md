@@ -61,9 +61,9 @@ implementation version 是 opaque build identity，不参与 SemVer 排序。
 0.9 已提供 source-driven Resolved/RawBlock Event API。Event 值不持有 Document 或
 NodeRef。
 
-`BufferedInputSession`、`ChunkedParseSession`、
-`BufferedAsyncHtmlOutputSession` 和 `AsyncHtmlRenderSession` 的 buffered 语义
-属于公开契约。它们不会被描述为 incremental AST parser 或 incremental renderer。
+`BufferedInputSession` 和 `BufferedAsyncHtmlOutputSession` 的 buffered 语义属于公开
+契约。它们不会被描述为 incremental AST parser 或 incremental renderer。0.9 删除了
+语义容易被高估的 `ChunkedParseSession` 和 `AsyncHtmlRenderSession` 类型名。
 
 ## 检查 API
 
@@ -75,4 +75,3 @@ python3 scripts/check_public_api.py
 `--update` 更新 snapshot。
 
 迁移步骤见 [0.8 到 0.9](migration.md)。
-

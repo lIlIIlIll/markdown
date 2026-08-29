@@ -154,7 +154,8 @@ let state = session.resume(sink)
 写入的 byte 数。
 
 这个 API 会在构造 session 时生成完整 HTML。它只让 sink delivery 支持 backpressure，
-不会降低 renderer 的峰值输出内存。`AsyncHtmlRenderSession` 是相同行为的兼容名称。
+不会降低 renderer 的峰值输出内存。旧的 `AsyncHtmlRenderSession` 名称已在 0.9 删除，
+避免把 buffered adapter 误解为增量 renderer。
 
 ## `PlainTextRenderer`
 

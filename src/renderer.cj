@@ -1032,39 +1032,6 @@ public interface HtmlSanitizerPort {
     func sanitize(html: String): String
 }
 
-public class AsyncHtmlRenderSession {
-    private let content: String
-    private let chunkBytes: Int64
-    private var offset: Int64 = 0
-
-    public init(renderer: HtmlRenderer, document: Document, chunkBytes!: Int64 = 4096,
-        cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()) {
-        if (chunkBytes <= 0) {
-            throw IllegalArgumentException("async render chunk size must be positive")
-        }
-        this.content = renderer.render(document, cancellation: cancellation, budget: budget)
-        this.chunkBytes = chunkBytes
-    }
-
-    public func resume(sink: AsyncTextSink, cancellation!: CancellationToken = CancellationToken.none()): AsyncRenderState {
-        while (offset < content.size) {
-            cancellation.throwIfCancelled(phase: "async_render")
-            let end = min(content.size, offset + chunkBytes)
-            let chunk = content[offset..end]
-            match (sink.write(chunk)) {
-                case AsyncSinkWriteResult.Continue => offset = end
-                case AsyncSinkWriteResult.Pause => return AsyncRenderState.Paused
-                case AsyncSinkWriteResult.Failed(error) => return AsyncRenderState.Failed(error)
-            }
-        }
-        AsyncRenderState.Complete
-    }
-
-    public func bytesWritten(): Int64 {
-        offset
-    }
-}
-
 /**
  * Pre-renders the complete HTML value, then applies sink backpressure while
  * emitting bounded chunks. This is buffered output, not incremental rendering.

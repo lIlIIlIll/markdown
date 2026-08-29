@@ -49,6 +49,10 @@ cjpm run --skip-build
 `scripts/release_gate.sh`。完整 gate 还包含 CommonMark/GFM 语料、CLI smoke、consumer
 example、fuzz smoke、benchmark smoke、bundle 和 evidence 校验。
 
+门禁会在 `/tmp` 中按不可变 commit 获取 cmark 0.31.1、cmark-gfm 0.29.0.gfm.13 和
+commonmark.js 0.31.2。设置 `MARKDOWN_DIFFERENTIAL_ROOT` 可改用预置缓存；目录存在但
+commit 不匹配时门禁会拒绝覆盖并失败。
+
 ## 扩展贡献
 
 使用 `MarkdownExtensionTestKit.verify` 验证共享契约，并增加语法特有的合法、非法、嵌套、

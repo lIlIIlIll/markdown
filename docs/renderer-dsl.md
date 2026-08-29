@@ -55,9 +55,7 @@ renderer 写入前检查 output budget，并保留 sink 错误。SourceMap 在 w
 记录，不通过 HTML 字符串反向搜索。
 
 `BufferedAsyncHtmlOutputSession` 会先生成完整、有界 HTML，再按 `Continue`、`Pause` 或
-`Failed` 推送。兼容名称 `AsyncHtmlRenderSession` 语义相同；它是 buffered backpressure
-adapter，不是增量 parser-renderer。
+`Failed` 推送。它是 buffered backpressure adapter，不是增量 parser-renderer。
 
 完整构造参数和 renderer API 见 [Extensions API](api/extensions.md)与
 [Rendering API](api/rendering.md)。
-
