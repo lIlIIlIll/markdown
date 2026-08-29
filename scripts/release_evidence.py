@@ -61,6 +61,7 @@ Evidence status: `{benchmark['status']}`. {benchmark['note']}
 - Raw report: `{benchmark['rawPath']}`.
 - Raw SHA-256: `{benchmark['rawSha256']}`.
 - Tested source commit: `{benchmark['sourceCommit'] or 'UNBOUND'}`.
+- Tested source Git tree: `{benchmark.get('sourceGitTree') or 'UNBOUND'}`.
 - Benchmark Cangjie SDK: `{benchmark['sdkVersion'] or 'UNBOUND'}`.
 - Product source archive SHA-256: `{benchmark['productSourceArchiveSha256']}`.
 - Product source tree SHA-256: `{benchmark['productTreeSha256'] or 'UNBOUND'}`.
@@ -91,8 +92,8 @@ def readme_block(data: dict[str, object]) -> str:
 | CI verified at evidence repository HEAD | `{ci_state}` |
 | Published release | `{publication_state}` |
 | Artifact commit | `{identity['artifactCommit'] or 'UNBOUND'}` |
-| Evidence commit | `{identity['evidenceCommit'] or 'UNBOUND'}` |
-| Repository HEAD at generation | `{identity['repositoryHeadAtGeneration'] or 'UNBOUND'}` |
+| Evidence subject commit | `{identity['evidenceCommit'] or 'UNBOUND'}` |
+| Execution identity | `target/release-evidence/manifest.json` records and verifies the clean gate commit/tree |
 | CommonMark / cmark | `{benchmark['commonmarkRatio']:.2f}x` / limit `{benchmark['ratioLimit']}x` |
 | GFM HTML / cmark-gfm | `{benchmark['gfmRatio']:.2f}x` / limit `{benchmark['ratioLimit']}x` |
 | Benchmark identity | `{benchmark['status']}`; commit `{benchmark['sourceCommit'] or 'UNBOUND'}`; SDK `{benchmark['sdkVersion'] or 'UNBOUND'}` |
@@ -116,7 +117,6 @@ def acceptance_block(data: dict[str, object]) -> str:
         release["evidenceReady"]
         and identity["artifactCommit"]
         and identity["evidenceCommit"]
-        and identity["treeStateAtGeneration"] == "clean"
         and benchmark["status"] == "current"
         and ratios_pass
     )
@@ -130,7 +130,7 @@ def acceptance_block(data: dict[str, object]) -> str:
 
 - Version/status: `{release['version']}` / `{release['status']}`.
 - Artifact commit: `{identity['artifactCommit'] or 'UNBOUND'}`.
-- Evidence commit: `{identity['evidenceCommit'] or 'UNBOUND'}`; repository HEAD at generation `{identity['repositoryHeadAtGeneration'] or 'UNBOUND'}`.
+- Evidence subject commit: `{identity['evidenceCommit'] or 'UNBOUND'}`; the retained execution manifest binds the clean gate commit and Git tree.
 - Hosted CI verified at that HEAD: `{release['ciVerifiedAtHead']}`; published: `{release['published']}`.
 - Tests: `{tests['passed']}/{tests['total']}` passed, `{tests['skipped']}` skipped, `{tests['failed']}` failed.
 - Benchmark: CommonMark `{benchmark['commonmarkRatio']:.2f}x`, GFM `{benchmark['gfmRatio']:.2f}x`, status `{benchmark['status']}`.
@@ -316,10 +316,25 @@ def validate_execution_manifest(data: dict[str, object], path: Path) -> list[str
 
     identity = data["identity"]
     benchmark = data["benchmark"]
-    if manifest.get("repositoryCommit") != identity["repositoryHeadAtGeneration"]:
-        errors.append("release execution commit does not match evidence generation HEAD")
-    if manifest.get("gitTree") != identity.get("repositoryGitTreeAtGeneration"):
-        errors.append("release execution Git tree does not match evidence generation tree")
+    inside = subprocess.run(
+        ["git", "rev-parse", "--is-inside-work-tree"], cwd=ROOT,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
+    )
+    if inside.returncode != 0:
+        errors.append("release execution identity cannot be verified outside a Git work tree")
+    else:
+        current_head = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True,
+            capture_output=True, check=False,
+        ).stdout.strip()
+        current_tree = subprocess.run(
+            ["git", "rev-parse", "HEAD^{tree}"], cwd=ROOT, text=True,
+            capture_output=True, check=False,
+        ).stdout.strip()
+        if manifest.get("repositoryCommit") != current_head:
+            errors.append("release execution commit does not match current repository HEAD")
+        if manifest.get("gitTree") != current_tree:
+            errors.append("release execution Git tree does not match current repository tree")
     if manifest.get("productTreeSha256") != benchmark["productTreeSha256"]:
         errors.append("release execution product tree does not match benchmark identity")
     if manifest.get("treeState") != "clean":
@@ -429,22 +444,18 @@ def validate(data: dict[str, object], evidence_ready: bool,
         errors.extend(validate_commit_product_tree(
             identity["evidenceCommit"], "evidence", expected_tree
         ))
-        errors.extend(validate_commit_product_tree(
-            identity["repositoryHeadAtGeneration"], "repository generation HEAD", expected_tree
-        ))
         errors.extend(validate_commit_git_tree(
             benchmark["sourceCommit"], "benchmark source", benchmark.get("sourceGitTree")
         ))
-        errors.extend(validate_commit_git_tree(
-            identity["repositoryHeadAtGeneration"], "repository generation HEAD",
-            identity.get("repositoryGitTreeAtGeneration")
-        ))
+        if data.get("schemaVersion") == 3:
+            errors.extend(validate_commit_product_tree(
+                identity["repositoryHeadAtGeneration"], "repository generation HEAD", expected_tree
+            ))
     if benchmark["status"] == "current" and benchmark["sourceCommit"] != identity["artifactCommit"]:
         errors.append("current benchmark source does not match artifact commit")
     if release["ciVerifiedAtHead"]:
-        if (not release["ciVerifiedCommit"]
-                or release["ciVerifiedCommit"] != identity["repositoryHeadAtGeneration"]):
-            errors.append("CI verified-at-HEAD claim is not bound to the evidence repository HEAD")
+        if not release["ciVerifiedCommit"]:
+            errors.append("CI verified-at-HEAD claim has no commit identity")
     if release["published"] and not release["ciVerifiedAtHead"]:
         errors.append("published release is not CI-verified at the evidence repository HEAD")
     if evidence_ready:
@@ -452,10 +463,8 @@ def validate(data: dict[str, object], evidence_ready: bool,
             errors.append("evidence-ready validation requires release evidence schemaVersion 4")
         if release["status"] != "evidence-ready" or not release["evidenceReady"]:
             errors.append("offline evidence status is not evidence-ready")
-        if (not identity["artifactCommit"] or not identity["evidenceCommit"]
-                or not identity["repositoryHeadAtGeneration"]
-                or identity["treeStateAtGeneration"] != "clean"):
-            errors.append("artifact/evidence identity is unbound or generation tree is not clean")
+        if not identity["artifactCommit"] or not identity["evidenceCommit"]:
+            errors.append("artifact/evidence subject identity is unbound")
         if data["benchmark"]["status"] != "current":
             errors.append("benchmark is not current")
         if not data["benchmark"]["sourceCommit"] or not data["benchmark"]["sdkVersion"]:

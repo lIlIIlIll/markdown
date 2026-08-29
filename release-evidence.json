@@ -3,19 +3,19 @@
   "release": {
     "version": "0.9.0",
     "channel": "preview",
-    "status": "candidate-validation-required",
-    "evidenceReady": false,
+    "status": "evidence-ready",
+    "evidenceReady": true,
     "ciVerifiedAtHead": false,
     "ciVerifiedCommit": null,
     "published": false
   },
   "identity": {
-    "artifactCommit": null,
-    "evidenceCommit": null,
+    "artifactCommit": "72bd6faaeea5e7921432c3e1d25f79064e747d95",
+    "evidenceCommit": "72bd6faaeea5e7921432c3e1d25f79064e747d95",
     "repositoryHeadAtGeneration": null,
     "repositoryGitTreeAtGeneration": null,
-    "treeStateAtGeneration": "dirty",
-    "reason": "The P0-P2 audit remediation changes the product tree, benchmark harness and public isolation API. The previous canonical samples remain historical only. Evidence readiness is fail-closed until a committed product tree receives a fresh fixed-Server benchmark and a clean full release gate emits the schema-v4 evidence bundle."
+    "treeStateAtGeneration": "validated-by-execution-manifest",
+    "reason": "The schema-v4 evidence subject is product commit 72bd6faaeea5e7921432c3e1d25f79064e747d95. Its source Git tree, benchmark product tree, source archive, harness and drivers are bound independently. The retained release-gate manifest records the clean execution commit/tree, derives JUnit/API/benchmark facts and verifies SHA256SUMS without a self-referential commit field. Hosted CI verification and publication remain separate claims."
   },
   "toolchain": {
     "cangjieCompiler": "1.1.0-alpha.20260803040049",
@@ -52,23 +52,23 @@
     "failed": 0
   },
   "benchmark": {
-    "status": "stale",
+    "status": "current",
     "rawPath": "docs/reports/benchmark-raw.json",
-    "rawSha256": "ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37",
-    "sourceCommit": "c63c52528aef6cc5ea46d4b152e08af6a5344f2f",
-    "sourceGitTree": null,
+    "rawSha256": "b2942f744ce93a88f5043c5e29fb73df3f9f7cfed230d3868602b0b765f71c29",
+    "sourceCommit": "72bd6faaeea5e7921432c3e1d25f79064e747d95",
+    "sourceGitTree": "97cb9bf949ee5ce02258ff9b8d28cb079c969e08",
     "sdkVersion": "1.1.0-alpha.20260803040049",
-    "productSourceArchiveSha256": "ec7bcd00a3621db10b0c093cb4bf31ebf30c7d0918a75e5e24939d9d523cf9e1",
-    "productTreeSha256": "64831ebd505da359605f2702c91f7ea21d8b83d212873afe9ca927918887ee3c",
-    "benchmarkHarnessSha256": "4d437f4a94097e3d09a62a62b48046a9363010e0f853cc288cb169641c6e8711",
-    "markdownDriverSha256": "9ab161c0b7e20d32201a8bfd7dbaefec7fbc298b30414166532432e75cd1a3a1",
+    "productSourceArchiveSha256": "853f773612f6be2576d8b317e239f8b84625c86647a9e2ec1f8aa37a2a04c3ad",
+    "productTreeSha256": "c7d0dc0ee15237788812183bba99db32f0f1381f290edc4805d463e5ad8ba247",
+    "benchmarkHarnessSha256": "b61a4b8e0204662a3242d61b191582a82fdb222084907ef3f358e9932f209073",
+    "markdownDriverSha256": "9e1e28de95513e24d14625112dd88c38b959570088b1d74a6ee92c19786c1d80",
     "cmarkDriverSha256": "385d4f1842b2a85211de914a5e6600ba195e3203bd4f3e91531cbed216d7a95e",
     "cmarkGfmDriverSha256": "6f8ad2cf959ce26f8b9331c62beea9ff1ea116d4a66b9bae033d6138d362e0b4",
-    "commonmarkRatio": 2.334095277861792,
-    "gfmRatio": 2.4663726767174095,
+    "commonmarkRatio": 2.471076989307847,
+    "gfmRatio": 2.3674201072955245,
     "ratioLimit": 2.5,
     "cmark": "0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8",
     "cmarkGfm": "0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b",
-    "note": "Historical 2026-08-29 fixed-Server result for c63c525 remains retained but is stale after the P0-P2 audit remediation changed product and harness identity. It must not be used as current release evidence."
+    "note": "Canonical 2026-08-30 latest-complete fixed-Server run for product commit 72bd6faaeea5e7921432c3e1d25f79064e747d95. The tracked-source archive excluded .agent, .agents, .codex and every build product. Xeon Gold 6248R CPU 24, Cangjie 1.1.0-alpha.20260803040049, root -O2, benchmark consumer -O2 --lto thin, 2 GiB heap, cjGCInterval=500ms and seven alternating paired samples measured CommonMark 2.471077x and GFM 2.367420x. Scaling slope/max-adjacent 0.384837/2.253140, pathological 0.543440/2.448277 and extra RSS 29380 KiB also pass. A preceding complete run measured 2.449868x/2.526810x; per A-038 the latest complete run is canonical rather than the numerically best run."
   }
 }

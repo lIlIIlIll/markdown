@@ -3,7 +3,7 @@
 ## Current completion state (2026-08-30)
 
 The 2026-08-30 P0-P2 audit remediation is implemented but not yet release-verified.
-The authoritative ledger is 121 pass, 0 pending, 4 implemented_unverified and 0
+The authoritative ledger is 123 pass, 0 pending, 2 implemented_unverified and 0
 blocked. The earlier `c63c525` benchmark remains historical because both the
 product tree and measurement harness changed.
 
@@ -17,7 +17,8 @@ The active dependency order is:
 3. Lock the commonmark.js npm graph and publish supported-version/security response
    policy. Completed.
 4. Commit this product/harness slice on its dedicated branch, then build a fresh
-   checkout on Server and run the full fixed-CPU canonical measurement. Pending.
+   checkout on Server and run the full fixed-CPU canonical measurement. Completed;
+   the latest complete run passes CommonMark `2.471077x` and GFM `2.367420x`.
 5. Replace raw/report/README/ledger/acceptance only from that latest complete run,
    execute the clean full release gate, and verify its retained manifest and
    checksums. Pending.

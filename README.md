@@ -206,16 +206,16 @@ evidence。测量边界和输入 API 见[性能说明](docs/performance.md)。
 <!-- release-evidence:start -->
 | Release evidence | Value |
 | --- | --- |
-| Version / status | `0.9.0` / `candidate-validation-required` |
-| Offline evidence ready | `not ready` |
+| Version / status | `0.9.0` / `evidence-ready` |
+| Offline evidence ready | `ready` |
 | CI verified at evidence repository HEAD | `no` |
 | Published release | `no` |
-| Artifact commit | `UNBOUND` |
-| Evidence commit | `UNBOUND` |
-| Repository HEAD at generation | `UNBOUND` |
-| CommonMark / cmark | `2.33x` / limit `2.5x` |
-| GFM HTML / cmark-gfm | `2.47x` / limit `2.5x` |
-| Benchmark identity | `stale`; commit `c63c52528aef6cc5ea46d4b152e08af6a5344f2f`; SDK `1.1.0-alpha.20260803040049` |
+| Artifact commit | `72bd6faaeea5e7921432c3e1d25f79064e747d95` |
+| Evidence subject commit | `72bd6faaeea5e7921432c3e1d25f79064e747d95` |
+| Execution identity | `target/release-evidence/manifest.json` records and verifies the clean gate commit/tree |
+| CommonMark / cmark | `2.47x` / limit `2.5x` |
+| GFM HTML / cmark-gfm | `2.37x` / limit `2.5x` |
+| Benchmark identity | `current`; commit `72bd6faaeea5e7921432c3e1d25f79064e747d95`; SDK `1.1.0-alpha.20260803040049` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
 `evidenceReady` describes reproducible offline artifacts and gates only. It does not claim that

@@ -2508,7 +2508,7 @@ requirements:
   - 语料覆盖规范示例、README/API docs、大 code/table/reference、CJK、emoji、deep list、pathological delimiter、long line 和 extensions
   - cmark、cmark-gfm、commonmark.js 仅用于测试/benchmark
   - 固定 reference host、工具版本、构建模式和原始样本可复核
-  status: implemented_unverified
+  status: pass
   implementation:
   - src/benchmark_test.cj
   - src/renderer.cj
@@ -2542,7 +2542,8 @@ requirements:
   - '2026-08-28: historical R60 canonical raw SHA-256 30f3a7000ad0b57e11857cee33a9f72c9681b704d16ba2981ba08aaaba53f613 superseded R57 and bound workspace commit anchor 2454b062, exact minimal archive b79cd108f8a1afa5b4818c9ab0626d8284beed97895db50c9e71184085b7d69d, fresh driver 81c82f3d690cfeb9e01b03e9c5b35884ad19436c8d05c7cbab23ee78b742dcb5, harness 41b068720b6b7cc9898fc3fe4aa3df174a987d6c3ba359324b2d9b63d7778c86, SDK 1.1.0-alpha.20260803040049 and both frozen reference drivers'
   - '2026-08-28: historical R65 canonical raw SHA-256 442842c801231d738b423aaf8e00b61cba6359c22a1d1a6ae5f1c48f72ed6d41 superseded R60 and bound workspace commit anchor 2454b062, exact minimal archive d05f78e676a374cd579459078bdf517fc5e15dac4879860ddd086eef9a30cc04, fresh driver a1048827aea26427625a7870a386d7b2e87c5b09ef44983741d21c1372d7440a, harness 41b068720b6b7cc9898fc3fe4aa3df174a987d6c3ba359324b2d9b63d7778c86, SDK 1.1.0-alpha.20260803040049 and both frozen reference drivers'
   - '2026-08-28: current R76 canonical raw SHA-256 730249530cad110b3c38dccd95cd7ad973ff580a45e13a4ec963616a1f6160c8 supersedes R65 and binds workspace commit anchor 2454b062, exact minimal archive cef965b03d8cc9d2d878ae30221c38db5d405103afe098473f548d7387b5da61, fresh driver ce8812ae91f5bebff65f7139dcfd9d044000ae75686d3b015b176723544c1df4, harness 41b068720b6b7cc9898fc3fe4aa3df174a987d6c3ba359324b2d9b63d7778c86, SDK 1.1.0-alpha.20260803040049 and both frozen reference drivers'
-  notes: "The previous raw is intentionally stale because product and harness identity changed. A fresh fixed-Server run bound to a committed source/Git/product tree is required. Assumptions: A-001, A-002, A-004, A-011, A-017, A-029, A-034, A-035, A-038."
+  - '2026-08-30 schema-v4 canonical raw b2942f744ce93a88f5043c5e29fb73df3f9f7cfed230d3868602b0b765f71c29 binds source commit 72bd6faa, Git tree 97cb9bf9, product tree c7d0dc0e, source archive 853f7736, harness b61a4b8e, SDK and all three drivers; independent sample recomputation returns zero errors'
+  notes: "The previous raw is historical. The latest-complete fixed-Server run is identity-bound and independently recomputed. Assumptions: A-001, A-002, A-004, A-011, A-017, A-029, A-034, A-035, A-038, A-042."
 - id: MD-PERF-002
   source: PRD §45.4, §51.7, §52
   target: '1.0'
@@ -2556,7 +2557,7 @@ requirements:
   - renderer 不无界缓存输出
   - 相对接受基线回退超过 10% 时 CI 失败或有显式批准
   - SourceMap、CST 等可选能力分别记录开销
-  status: implemented_unverified
+  status: pass
   implementation:
   - src/benchmark_test.cj
   - benchmarks/measure.py
@@ -2569,6 +2570,7 @@ requirements:
   - scripts/test_benchmark_input_profiles.py
   evidence:
   - *final_validation_evidence
+  - '2026-08-30 latest-complete Server canonical: CommonMark 2.471077x, GFM 2.367420x, ordinary gate pass, scaling slope/max 0.384837/2.253140, pathological 0.543440/2.448277, extra RSS 29380 KiB; all raw gates true'
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: release_gate.sh; exit 1 at benchmarks/measure.py after all preceding gates passed'
   - '2026-08-18: remote Server full release benchmark; CPU 24, Xeon Gold 6248R, glibc 2.35, -O2, heap 2GB, 7 samples x 3 iterations; exit 1 with raw report and all corpus digests'

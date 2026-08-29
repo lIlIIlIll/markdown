@@ -2,20 +2,20 @@
 
 ## Final Status
 
-**INCOMPLETE** — 121 项为 `pass`，4 项为 `implemented_unverified`；P0-P2 实现、1456/1456 正确性测试和 lockfile-bound differential 已通过，但修复后的固定提交尚未完成 canonical benchmark 和 clean full release evidence gate。
+**INCOMPLETE** — 123 项为 `pass`，2 项为 `implemented_unverified`；P0-P2 实现、1456/1456 正确性测试、lockfile-bound differential 和 schema-v4 canonical benchmark 已通过，尚待 clean full release evidence gate。
 
 <!-- release-evidence:start -->
 ## Generated Release Evidence
 
-- Version/status: `0.9.0` / `candidate-validation-required`.
-- Artifact commit: `UNBOUND`.
-- Evidence commit: `UNBOUND`; repository HEAD at generation `UNBOUND`.
+- Version/status: `0.9.0` / `evidence-ready`.
+- Artifact commit: `72bd6faaeea5e7921432c3e1d25f79064e747d95`.
+- Evidence subject commit: `72bd6faaeea5e7921432c3e1d25f79064e747d95`; the retained execution manifest binds the clean gate commit and Git tree.
 - Hosted CI verified at that HEAD: `False`; published: `False`.
 - Tests: `1456/1456` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `2.33x`, GFM `2.47x`, status `stale`.
-- Raw digest: `ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37`.
+- Benchmark: CommonMark `2.47x`, GFM `2.37x`, status `current`.
+- Raw digest: `b2942f744ce93a88f5043c5e29fb73df3f9f7cfed230d3868602b0b765f71c29`.
 
-One or more mandatory offline evidence gates remain incomplete. Hosted CI and publication remain separate claims.
+All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->
 
 本报告后续按时间保留历史失败、候选淘汰和当时的完成记录；这些历史段落不覆盖上述当前状态。R139/R140 仅作为历史证据保留。

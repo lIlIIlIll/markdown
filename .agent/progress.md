@@ -2,7 +2,7 @@
 
 更新时间：2026-08-30
 当前阶段：审计 P0-P2 修复已实现并通过聚焦验证；schema-v4 canonical 与完整证据包待固定提交后刷新。
-整体结论：**INCOMPLETE**。需求账本当前为 121 pass、0 pending、4 implemented_unverified、0 blocked。
+整体结论：**INCOMPLETE**。需求账本当前为 123 pass、0 pending、2 implemented_unverified、0 blocked。
 
 ## 2026-08-30 P0-P2 深度审计修复（当前）
 
@@ -13,7 +13,9 @@
 - P1：隔离插件 transport 改为增量 `IsolatedPluginResponseSink` 协议；output、diagnostic count、单条 message、diagnostic aggregate 和完整 response 在保留数据前检查，diagnostic message 必须分块解码。
 - P2：commonmark.js oracle 使用提交的 package/package-lock 和 `npm ci --ignore-scripts`；差分报告记录三个 oracle commit 与 lockfile digest。`SECURITY.md` 新增支持版本、备用私密联系、响应目标、advisory/CVE 与 backport 范围。
 - 当前通过：format、docs `44/23/4`、API checker tests `9/9`、native cache tests `5/5`、release-bundle tests `2/2`、release-evidence tests `14/14`、`cjpm check`、PluginIsolation 聚焦测试和完整 Cangjie suite `1456/1456`；CommonMark `652/652`、GFM `671/671`。
-- 当前 canonical 故意标记 `stale`。旧 `c63c525` raw 只保留为历史样本，不能证明本轮 product/harness。下一步是提交当前切片，在 Server fresh checkout 运行完整 canonical，再用同一身份刷新 raw、报告、账本和 clean full release gate。
+- 旧 `c63c525` raw 已降为历史样本，不能证明本轮 product/harness；当前 canonical 只指向下面固定提交 `72bd6faa` 的最新完整整轮。
+- 固定提交 `72bd6faa` 的最新完整 Server canonical 已刷新：raw SHA-256 `b2942f744ce93a88f5043c5e29fb73df3f9f7cfed230d3868602b0b765f71c29`，CommonMark `2.471077x`、GFM `2.367420x`，全部 ratio、ordinary、scaling、pathological 和 RSS gate 为 true。上一完整轮 `2.449868x/2.526810x` 作为噪声证据保留；按 A-038 无条件采用最新整轮。
+- 需求账本已恢复性能两项；剩余 `MD-REL-001`、`MD-QUAL-001` 等待 clean full release gate 的结构化 manifest 和 SHA256SUMS。
 
 ## 2026-08-29 R143 canonical 性能与最终闭环（当前）
 
