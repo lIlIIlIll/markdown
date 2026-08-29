@@ -185,8 +185,8 @@ evidence。测量边界和输入 API 见[性能说明](docs/performance.md)。
 | CI verified at evidence repository HEAD | `no` |
 | Published release | `no` |
 | Artifact commit | `856a6c7164fe97450b5ab7ff34926445b48dcc35` |
-| Evidence commit | `5d89470d7266b62ee32e4dc54f23112e01715e66` |
-| Repository HEAD at generation | `5d89470d7266b62ee32e4dc54f23112e01715e66` |
+| Evidence commit | `490dad69584761733586cd674f6bc2cfd2555a78` |
+| Repository HEAD at generation | `490dad69584761733586cd674f6bc2cfd2555a78` |
 | CommonMark / cmark | `2.38x` / limit `2.5x` |
 | GFM HTML / cmark-gfm | `2.45x` / limit `2.5x` |
 | Benchmark identity | `current`; commit `856a6c7164fe97450b5ab7ff34926445b48dcc35`; SDK `1.1.0-alpha.20260803040049` |

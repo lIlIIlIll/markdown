@@ -9,7 +9,7 @@
 
 - Version/status: `0.9.0` / `evidence-ready`.
 - Artifact commit: `856a6c7164fe97450b5ab7ff34926445b48dcc35`.
-- Evidence commit: `5d89470d7266b62ee32e4dc54f23112e01715e66`; repository HEAD at generation `5d89470d7266b62ee32e4dc54f23112e01715e66`.
+- Evidence commit: `490dad69584761733586cd674f6bc2cfd2555a78`; repository HEAD at generation `490dad69584761733586cd674f6bc2cfd2555a78`.
 - Hosted CI verified at that HEAD: `False`; published: `False`.
 - Tests: `1455/1455` passed, `0` skipped, `0` failed.
 - Benchmark: CommonMark `2.38x`, GFM `2.45x`, status `current`.

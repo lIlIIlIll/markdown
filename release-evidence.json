@@ -11,10 +11,10 @@
   },
   "identity": {
     "artifactCommit": "856a6c7164fe97450b5ab7ff34926445b48dcc35",
-    "evidenceCommit": "5d89470d7266b62ee32e4dc54f23112e01715e66",
-    "repositoryHeadAtGeneration": "5d89470d7266b62ee32e4dc54f23112e01715e66",
+    "evidenceCommit": "490dad69584761733586cd674f6bc2cfd2555a78",
+    "repositoryHeadAtGeneration": "490dad69584761733586cd674f6bc2cfd2555a78",
     "treeStateAtGeneration": "clean",
-    "reason": "The fixed-host benchmark is bound to clean artifact commit 856a6c7164fe97450b5ab7ff34926445b48dcc35. Commit 5d89470d7266b62ee32e4dc54f23112e01715e66 finalized the generated evidence projection. Later documentation and CI changes do not change the benchmarked parser, renderer, driver, harness, or normalized readme-api corpus."
+    "reason": "The fixed-host benchmark is bound to clean artifact commit 856a6c7164fe97450b5ab7ff34926445b48dcc35. Commit 490dad69584761733586cd674f6bc2cfd2555a78 is the audited code, API, workflow and offline-evidence snapshot. These release-hardening changes do not alter the benchmarked parser core, renderer core, driver, harness, or normalized readme-api corpus."
   },
   "toolchain": {
     "cangjieCompiler": "1.1.0-alpha.20260803040049",
