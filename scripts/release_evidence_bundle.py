@@ -102,6 +102,19 @@ def copy_path(source: Path, destination: Path) -> None:
         shutil.copy2(source, destination)
 
 
+def snapshot_artifacts(output: Path) -> None:
+    """Copy volatile target artifacts before a later cjpm command can clean them."""
+    copy_path(ROOT / "target" / "release-tests", output / "junit")
+    copy_path(ROOT / "target" / "release-bench", output / "benchmark-smoke")
+    copy_path(ROOT / "docs" / "reports" / "differential-smoke.json",
+        output / "reports" / "differential-smoke.json")
+    copy_path(ROOT / "docs" / "reports" / "benchmark-raw.json",
+        output / "reports" / "benchmark-raw.json")
+    copy_path(ROOT / "api" / "public-api-v0.9.txt", output / "api" / "public-api-v0.9.txt")
+    for bundle in sorted((ROOT / "target").glob("*.cjp")):
+        copy_path(bundle, output / "candidate" / bundle.name)
+
+
 def junit_metrics(directory: Path) -> tuple[dict[str, int], dict[str, dict[str, int]]]:
     totals = {"total": 0, "passed": 0, "skipped": 0, "failures": 0, "errors": 0}
     suites: dict[str, dict[str, int]] = {}
@@ -131,15 +144,7 @@ def load_steps(path: Path) -> list[dict[str, object]]:
 
 
 def finalize(output: Path, gate_exit: int) -> None:
-    copy_path(ROOT / "target" / "release-tests", output / "junit")
-    copy_path(ROOT / "target" / "release-bench", output / "benchmark-smoke")
-    copy_path(ROOT / "docs" / "reports" / "differential-smoke.json",
-        output / "reports" / "differential-smoke.json")
-    copy_path(ROOT / "docs" / "reports" / "benchmark-raw.json",
-        output / "reports" / "benchmark-raw.json")
-    copy_path(ROOT / "api" / "public-api-v0.9.txt", output / "api" / "public-api-v0.9.txt")
-    for bundle in sorted((ROOT / "target").glob("*.cjp")):
-        copy_path(bundle, output / "candidate" / bundle.name)
+    snapshot_artifacts(output)
     source_archive = output / "source" / "repository.tar"
     source_archive.parent.mkdir(parents=True, exist_ok=True)
     archive = subprocess.run(
@@ -195,6 +200,18 @@ def finalize(output: Path, gate_exit: int) -> None:
     )
 
 
+def publish(output: Path, destination: Path) -> None:
+    """Atomically replace the retained bundle with a copy of the working bundle."""
+    temporary = destination.with_name(destination.name + ".tmp")
+    if temporary.exists():
+        shutil.rmtree(temporary)
+    temporary.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(output, temporary)
+    if destination.exists():
+        shutil.rmtree(destination)
+    temporary.replace(destination)
+
+
 def verify_checksums(output: Path) -> list[str]:
     errors: list[str] = []
     sums = output / "SHA256SUMS"
@@ -221,6 +238,9 @@ def main() -> int:
     record_parser.add_argument("argv", nargs=argparse.REMAINDER)
     finalize_parser = subparsers.add_parser("finalize")
     finalize_parser.add_argument("--gate-exit", type=int, required=True)
+    subparsers.add_parser("snapshot")
+    publish_parser = subparsers.add_parser("publish")
+    publish_parser.add_argument("--destination", type=Path, required=True)
     subparsers.add_parser("verify")
     args = parser.parse_args()
     output = args.output.resolve()
@@ -231,6 +251,10 @@ def main() -> int:
         record(output, args.name, args.working_directory, args.exit_code, command, args.log)
     elif args.command == "finalize":
         finalize(output, args.gate_exit)
+    elif args.command == "snapshot":
+        snapshot_artifacts(output)
+    elif args.command == "publish":
+        publish(output, args.destination.resolve())
     else:
         errors = verify_checksums(output)
         if errors:

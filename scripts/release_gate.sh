@@ -5,13 +5,16 @@ repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$repo_root"
 
 evidence_dir="$repo_root/target/release-evidence"
-python3 scripts/release_evidence_bundle.py --output "$evidence_dir" init
+evidence_work_dir="$(mktemp -d "${TMPDIR:-/tmp}/markdown-release-evidence.XXXXXX")"
+python3 scripts/release_evidence_bundle.py --output "$evidence_work_dir" init
 
 finalize_evidence() {
     status=$?
     trap - EXIT
-    python3 scripts/release_evidence_bundle.py --output "$evidence_dir" \
+    python3 scripts/release_evidence_bundle.py --output "$evidence_work_dir" \
         finalize --gate-exit "$status" || true
+    python3 scripts/release_evidence_bundle.py --output "$evidence_work_dir" \
+        publish --destination "$evidence_dir" || true
     exit "$status"
 }
 trap finalize_evidence EXIT
@@ -21,10 +24,10 @@ run_step() {
     shift
     log="logs/${name}.log"
     set +e
-    "$@" 2>&1 | tee "$evidence_dir/$log"
+    "$@" 2>&1 | tee "$evidence_work_dir/$log"
     status=${PIPESTATUS[0]}
     set -e
-    python3 scripts/release_evidence_bundle.py --output "$evidence_dir" record \
+    python3 scripts/release_evidence_bundle.py --output "$evidence_work_dir" record \
         --name "$name" --working-directory "$PWD" --exit-code "$status" --log "$log" -- "$@"
     return "$status"
 }
@@ -58,10 +61,18 @@ run_step differential-setup scripts/setup_differential_tools.sh
 run_step differential python3 scripts/differential_test.py
 run_step benchmark-smoke cjpm bench --filter MarkdownReleaseBenchmarks --no-color \
     --report-path "$repo_root/target/release-bench" --report-format csv
-run_step bundle cjpm bundle
-python3 scripts/release_evidence_bundle.py --output "$evidence_dir" finalize --gate-exit 0
-python3 scripts/release_evidence.py --evidence-ready \
+run_step evidence-snapshot python3 scripts/release_evidence_bundle.py \
+    --output "$evidence_work_dir" snapshot
+run_step bundle cjpm bundle --skip-test --skip-lint
+python3 scripts/release_evidence_bundle.py --output "$evidence_work_dir" finalize --gate-exit 0
+python3 scripts/release_evidence_bundle.py --output "$evidence_work_dir" \
+    publish --destination "$evidence_dir"
+run_step release-evidence-ready python3 scripts/release_evidence.py --evidence-ready \
     --execution-manifest "$evidence_dir/manifest.json"
+python3 scripts/release_evidence_bundle.py --output "$evidence_work_dir" finalize --gate-exit 0
+python3 scripts/release_evidence_bundle.py --output "$evidence_work_dir" \
+    publish --destination "$evidence_dir"
 python3 scripts/release_evidence_bundle.py --output "$evidence_dir" verify
+trap - EXIT
 
 printf 'release gate: pass\n'
