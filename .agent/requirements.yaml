@@ -2775,6 +2775,7 @@ requirements:
   - docs/
   - examples/quickstart/
   tests:
+  - 'scripts/check_docs.py'
   - 'scripts/test_release_evidence.py'
   - 'scripts/cli_smoke.sh'
   - 'examples/quickstart/src/main.cj'
@@ -2782,6 +2783,7 @@ requirements:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: README, PRD, CLI guide, changelog, historical reports, raw report schemas and .agent records use the markdown product name; JSON/YAML parsing and full test suite passed'
+  - '2026-08-29: developer documentation rewrite; offline docs check passed for 40 Markdown files and 23 required API entry points; public API snapshot verified at 1311 declarations; release evidence verified; format/check/build and full tests 1455/1455 passed'
   notes: "Assumptions: A-001, A-002, A-004, A-008, A-026, A-031, A-039."
 - id: MD-DOC-002
   source: PRD §47, §49, §51.7
@@ -2800,11 +2802,13 @@ requirements:
   - examples/quickstart/
   tests:
   - 'examples/quickstart/src/main.cj'
+  - 'scripts/check_docs.py'
   - 'scripts/release_gate.sh'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: examples/quickstart built and ran using only the public package API'
+  - '2026-08-29: examples/quickstart built and ran with --skip-build; Safe HTML, AST heading query, extension renderer and cancellation output matched the rewritten guide'
   notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-COMP-001
   source: PRD §48.1-2

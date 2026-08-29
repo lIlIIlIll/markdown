@@ -18,6 +18,12 @@ The benchmark identity is bound and the evidence tree is clean. All mandatory pe
 
 本报告后续按时间保留历史失败与候选淘汰记录；这些历史段落不覆盖上述最终状态和 R139/R140 验收证据。
 
+## 2026-08-29 Developer Documentation Acceptance
+
+README、开发者文档首页、入门教程、六组 API reference、扩展作者文档、迁移指南和贡献指南已按当前 0.9 公开 API 与默认行为重写。`scripts/check_docs.py` 对 40 个 Markdown 文件、相对链接、code fence、旧产品名和 23 个核心 API 入口检查通过，并已加入 release gate。
+
+实际验证结果：public API snapshot `1311` declarations、release evidence、format、`cjpm check`、根 build、quickstart build/run 全部 exit `0`；授权环境 full suite exit `0`，`1455/1455` passed，0 skipped/error/failed。第一次受限环境运行在执行 0 个用例前因 unittest 本地 socket 权限失败，不是产品或文档断言失败。
+
 ## 2026-08-27 Parser Phase Evidence
 
 R17 eliminated redundant link-target string validation after the target scanner had

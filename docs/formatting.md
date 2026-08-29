@@ -1,28 +1,71 @@
-# Formatting
+# 格式化 Markdown
 
-`CanonicalMarkdownRenderer` is deterministic and iterative. Options cover newline, list/heading/emphasis/fence markers, minimum fence length, table padding, final newline, width, and paragraph reflow; reflow is off by default. It preserves destinations, code/raw literals, ordered starts, tasks, alignment, and break semantics.
+`markdown` 提供两类 formatter：
 
-Canonical text punctuation/space is emitted as numeric entities where necessary
-to prevent a literal from joining an adjacent Markdown delimiter or becoming
-block indentation. Nested ambiguous emphasis may lower to legal inline HTML;
-ordinary unambiguous emphasis still honors the configured marker.
+- `CanonicalMarkdownRenderer` 从 AST 生成确定的 Markdown。
+- `PreservingFormatter` 对 snapshot 的目标范围生成最小 source edits。
 
-`SyntaxTree` is lossless and binds nested block/inline syntax nodes to semantic
-NodeIds. Tokens retain whitespace, newlines, markers, delimiters, link parts,
-HTML, entities, extensions and invalid input; leading/trailing trivia remains
-outside the stable AST. One shared token arena backs range views on nested
-syntax nodes, so nested spans do not copy the same token references repeatedly.
-`SyntaxToAstMap` builds NodeId and token-owner indexes once; byte-offset token
-lookup is binary rather than a full token scan.
+## Canonical formatting
 
-`DocumentSnapshot.applyEdits` and
-`PreservingFormatter.applyEdits` preserve untouched bytes, validate ranges,
-reject overlap, and return changed ranges. `formatRange`, `formatNode`, and
-`formatChangedRanges` use an explicit preserve-or-error fallback for extension
-nodes. Current snapshot reparsing is intentionally reported as full
-(`wasIncremental=false`) unless the documented block-local fast path applies.
+```cangjie
+let renderer = CanonicalMarkdownRenderer(
+    options: MarkdownFormatOptions(
+        newline: "\n",
+        bulletMarker: "-",
+        orderedDelimiter: ".",
+        emphasisMarker: "*",
+        strongMarker: "**",
+        fenceMarker: "`",
+        minimumFenceLength: 3,
+        tablePadding: true,
+        finalNewline: true,
+        maximumLineWidth: 100,
+        reflowParagraphs: false
+    )
+)
+let formatted = renderer.render(document)
+```
 
-The preserving range formatter reads lossless source directly: it normalizes
-only targeted heading-marker spacing and leaves markers, blank lines, entity
-spelling, fences, code content and untouched extension syntax byte-for-byte
-unchanged.
+`reflowParagraphs` 默认 false。formatter 保留 link destination、code/raw literal、
+ordered start、task state、table alignment 和 break semantics。
+
+需要防止 text 和相邻 delimiter 产生新语义时，formatter 会使用 numeric entity。嵌套且
+含混的 emphasis 可降低为合法 inline HTML。
+
+## Preserving formatting
+
+```cangjie
+let snapshot = engine.parseSnapshot(source)
+let edits = PreservingFormatter.formatRange(
+    snapshot,
+    SourceSpan(startByte, endByte),
+    fallback: RangeFormatFallback.PreserveSource
+)
+let result = PreservingFormatter.applyEdits(snapshot, edits)
+```
+
+preserving formatter 只修改目标 range。未触及的 marker、blank line、entity spelling、
+fence、code content 和 extension syntax 保持 byte-for-byte 不变。
+
+## Range fallback
+
+| Fallback | 扩展节点没有 Markdown lowering 时 |
+| --- | --- |
+| `PreserveSource` | 返回无 edit |
+| `Error` | 抛出 `UnsupportedNode` |
+
+还可使用 `formatNode` 和 `formatChangedRanges`。
+
+## Snapshot edit
+
+`DocumentSnapshot.applyEdits` 验证 range、拒绝 overlap，并返回
+`ReparseResult`。单个等 byte 长度的顶层 paragraph/heading 纯文本 edit 可走
+block-local fast path。其他 edit 回退完整 parse。
+
+## CST
+
+`SyntaxTree` 保留 whitespace、newline、marker、delimiter、link part、HTML、entity、
+extension 和 invalid input。`losslessText()` 重建原始 source。
+
+完整接口见 [Editor API](api/editor.md) 和 [Rendering API](api/rendering.md)。
+

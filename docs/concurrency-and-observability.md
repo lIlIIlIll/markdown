@@ -1,16 +1,53 @@
-# Concurrency and observability
+# 并发与可观测性
 
-`MarkdownEngine`, renderer configuration, and `Document` are immutable and may
-be shared for concurrent parse/render/read-only work. Every parse and chunked
-session owns independent mutable state; one chunked session is not safe for
-concurrent calls. There is no mutable global extension registry. Host-code
-extensions declare `shareable`; a host must not concurrently reuse a
-non-shareable callback instance. `AnnotationStore` is explicitly owner-thread
-confined (`threadSafe == false`) and must be externally synchronized if shared.
+`MarkdownEngine`、renderer 配置和 `Document` 是不可变对象，可由多个线程共享进行
+parse、render 和只读 traversal。
 
-Metrics are local and opt-in through `parseObserved` and `renderObserved`.
-Timing is additionally opt-in with `StatisticsOptions(timing: true)` so the
-default hot path does not read a clock. Statistics include byte/line/node/depth,
-reference, callback, scan, rendered-node, output-byte, diagnostic, profile and
-fingerprint values. They never include document text, destinations, image URLs,
-code literals, front matter, thread IDs, absolute paths, or remote telemetry.
+## 并发规则
+
+- 每次 parse 拥有独立 mutable state。
+- `BufferedInputSession`、`ChunkedParseSession` 和
+  `RawBlockEventSession` 不能并发 feed。
+- 一个 session 在 `finish()` 后不能复用。
+- 没有 mutable global extension registry。
+- extension manifest 的 `shareable=false` 表示宿主不能并发复用同一个 callback
+  instance。
+- `AnnotationStore.threadSafe` 为 false。共享时由宿主同步。
+
+## 收集统计
+
+```cangjie
+let parsed = engine.parseObserved(
+    source,
+    options: StatisticsOptions(timing: true)
+)
+
+let rendered = renderer.renderObserved(
+    parsed.result.document,
+    options: StatisticsOptions(timing: true)
+)
+```
+
+`timing` 默认 false。关闭时 hot path 不读取时钟。
+
+Parse statistics 包含 input byte、line、node、depth、reference、extension callback、
+scan step、diagnostic、profile 和 dialect fingerprint。
+
+Render statistics 包含 rendered node、output byte 和 renderer fingerprint。
+
+## 隐私
+
+统计信息不包含：
+
+- 文档文本
+- link destination 或 image URL
+- code literal 或 front matter
+- thread ID
+- 绝对路径
+- 远程 telemetry
+
+库不会自动发送 metrics。宿主决定是否记录 `ObservedParseResult` 和
+`ObservedRenderedOutput`。
+
+完整字段见 [Artifact、Document 与 Service API](api/artifacts-and-services.md)。
+

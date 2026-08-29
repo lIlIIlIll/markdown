@@ -5,6 +5,7 @@ repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$repo_root"
 
 scripts/check_format.sh
+python3 scripts/check_docs.py
 python3 scripts/test_build_native_scanner.py
 python3 scripts/test_check_public_api.py
 python3 scripts/check_public_api.py

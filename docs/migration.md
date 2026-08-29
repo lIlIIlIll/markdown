@@ -1,66 +1,108 @@
-# Migration guide
+# 从 0.8 迁移到 0.9
 
-## 0.8 to 0.9 (pre-GA breaking reset)
+0.9 重置了 pre-GA AST、Event、artifact 和 parser SPI。消费工程必须重新编译，并删除
+0.8 cache artifact。
 
-0.9 deliberately resets the pre-GA compatibility surface so the parser can
-move to a document-owned arena without carrying the 0.8 object graph as a
-runtime adapter. Consumers must rebuild against the 0.9 API snapshot; binary
-artifacts and cached fingerprints from 0.8 are not compatible.
+## 1. 更新包名和 import
 
-The final pre-GA CodeCheck qualification also renames the public
-`NodeKind.Document` and `SyntaxKind.Document` variants to
-`NodeKind.DocumentNode` and `SyntaxKind.DocumentNode`. This avoids the Cangjie
-enum-sugar collision with the public `Document` type. Match expressions and
-extension or editor code that inspect the root node must use the new variant
-names; the document object type and its behavior are unchanged.
+依赖名和包名都是 `markdown`：
 
-Extension authors must implement `InlineParserSpi.triggerBytes`. The returned
-byte list is the complete set of UTF-8 leading bytes that may start the rule.
-It must be non-empty and contain no duplicates. The compiler rejects invalid
-declarations, and the parser does not invoke the SPI at other byte positions.
-Syntax DSL rules derive the same dispatch information from their opener.
+```toml
+[dependencies]
+  "markdown" = { path = "/path/to/markdown", output-type = "static" }
+```
 
-The following 0.9 contracts are staged in dependency order and are not
-available merely because the package version changed:
+新代码优先使用子包 import：
 
-1. `Document` owns the node/child arenas and public nodes become stable value
-   views; parsed origin is derived from the stored span.
-2. artifact schema 2 binds the arena layout and original input identity;
-   schema 1 artifacts are rejected rather than adapted.
-3. fused HTML is selected only through an explicit execution policy. A
-   required fused path fails closed when processors or extensions need a full
-   AST; it never silently drops capabilities.
+```cangjie
+import markdown.core.{MarkdownEngine, MarkdownProfile}
+import markdown.render.{HtmlOptions, HtmlRenderer}
+```
 
-The source Event API now uses `MarkdownSourceEvent` values that cannot retain
-`Document` or `NodeRef`. `ResolvedEventMode` performs two source passes and
-emits final reference semantics from transient parser blocks;
-`RawBlockEventSession` incrementally emits only blocks proven closed and marks
-its events as non-final. The removed 0.8 AST-walk event adapter is not restored,
-so consumers must migrate to `parseEvents`, `emitEvents`, or
-`newRawBlockEventSession` instead of expecting AST objects in event values.
+## 2. 使用 arena AST
 
-Until each staged contract has implementation and test evidence, its
-requirement remains non-pass in `.agent/requirements.yaml`.
+0.9 的 `Document` 拥有 node/child arena。节点使用 `NodeRef` 和 typed view：
 
-Depend on module `markdown` even though the product/repository is `markdown`. Replace string-to-HTML helpers with `MarkdownEngine → ParseResult.document → renderer`. Choose an explicit versioned profile and HTML policy. Treat spans as UTF-8 bytes and convert through `SourceBuffer` for UTF-16 clients. Code extensions require a manifest, finite rules, renderer coverage, and TCK evidence.
+```cangjie
+let result = engine.parse(source)
+for (node in AstQuery.byKind(result.document, NodeKind.Heading)) {
+    let heading = node.asHeading().getOrThrow()
+}
+```
 
-The package uses one native line-scanning helper. Repository consumers get
-`libmarkdown_scanner` from the root pre-build hook; standalone consumers must
-ship and link that archive beside the Cangjie package. The whole-input helper
-does not perform I/O, lock, or call Cangjie methods, but it is not annotated
-`@FastNative` because its input-dependent execution time cannot be proven short
-and bounded.
+删除依赖旧 object-tree subclass、parent pointer 或 mutable child array 的代码。
 
-The committed FFI declaration and native packed-record storage use UInt64.
-The parser consumes the valid prefix returned by `scanLineRecords` without
-trimming the accelerator-owned capacity array. Existing accelerators remain
-source-compatible because the interface default adapts `scanLines`; custom
-implementations may override the new method after validating their returned
-count is within both the array size and requested capacity.
-Earlier UInt32 benchmark data is historical and superseded; it is not evidence
-for the current candidate. Benchmark dependency H keeps this ABI unchanged and
-requires a fresh committed-archive no-cast validation; pre-H raw data cannot
-satisfy that gate. The committed-H archive now passes the typed UInt64 no-cast
-probe and the complete correctness/package gates; its fresh final CommonMark
-`6.234490x` and GFM `4.845909x` ratios still fail the `2.5x` limits.
-`MD-PERF-002` therefore remains blocked.
+`NodeKind.Document` 和 `SyntaxKind.Document` 已改名为
+`DocumentNode`，避免与公开 `Document` 类型冲突。
+
+## 3. 更新 Event consumer
+
+0.9 Event API 使用 `MarkdownSourceEvent`。Event 不包含 Document 或 NodeRef。
+
+- 使用 `parseEvents` 收集最终事件。
+- 使用 `emitEvents` 写 sink。
+- 使用 `newRawBlockEventSession` 接收非最终的 incremental block events。
+
+删除对 0.8 AST-walk event adapter 的依赖。
+
+## 4. 更新 parser SPI
+
+`InlineParserSpi` 必须实现 `triggerBytes`。它返回所有可能 opener 的 UTF-8 首 byte。
+列表必须非空且无重复。
+
+parser 只在匹配的 byte 位置调用 SPI。编译器拒绝 unbounded 或 non-deterministic SPI。
+
+## 5. 更新 artifact
+
+parse artifact 和 binary snapshot 使用 schema 2。schema 1 artifact 直接 cache miss。
+
+0.9 artifact 绑定 original bytes、decoded text、UTF-8 policy 和 offset mapping。
+`ReplaceInvalid` source 不能创建 identity-only artifact。
+
+清除旧 cache，不要尝试修改 schema 字段绕过验证。
+
+## 6. 选择 HTML execution
+
+```cangjie
+let output = engine.renderHtml(
+    source,
+    mode: HtmlExecutionMode.FullAst,
+    options: HtmlOptions.safe()
+)
+```
+
+`PreferFused` 只在 preflight 证明语义等价时使用 fused path。`RequireFused` 无法证明时
+失败。0.9 不会为了 fused output 静默关闭 extension 或 processor。
+
+## 7. 更新 native scanner 集成
+
+基础包默认纯仓颉，不再要求所有消费工程链接 native archive。
+
+需要 accelerator 时：
+
+1. 使用 `scripts/build_native_scanner.py --enable` 为目标构建 archive。
+2. 在最终 executable 配置 linker。
+3. 导入 `markdown.native.NativeLineScanner`。
+4. 调用 `engine.acceleratedBy(NativeLineScanner())`。
+
+不要把本机构建的 `target` 或 `build-script-cache` 打入源码归档。
+
+## 8. 更新版本假设
+
+0.9 是 breaking pre-GA preview，不是 1.0 ABI 承诺。当前 release evidence 已通过
+CommonMark/GFM、full tests、package 和性能门槛。不要保留早期报告中的 blocked 状态或
+历史 ratio 作为当前结果。
+
+当前结果以 [release-evidence.json](../release-evidence.json) 和
+[性能说明](performance.md)为准。
+
+## 验证迁移
+
+```sh
+cangjie_env
+cjpm check
+cjpm test --no-color --no-progress
+python3 scripts/check_public_api.py
+```
+
+消费工程至少验证 parse、Safe HTML、profile、SourceSpan 和自定义 extension 路径。

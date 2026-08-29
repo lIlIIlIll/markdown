@@ -4,6 +4,13 @@
 当前阶段：0.9 breaking 执行模型、完整 arena AST parser、source-driven Resolved/RawBlock event、发布证据和验收链路均已闭环。R139 clean-commit canonical benchmark 与 R140 fresh-archive release gate 已通过。
 整体结论：**COMPLETE**。需求账本当前为 125 pass、0 pending、0 implemented_unverified、0 blocked。
 
+## 2026-08-29 开发者文档与 API reference 重写
+
+- README 改为采用路径优先的开发者入口；新增文档首页、5 分钟入门、贡献指南和按 `core`、`render`、`extensions`、`editor`、`artifact/document/services` 拆分的 API reference。
+- profile、AST/SourceSpan、输入与限制、安全、格式化、文档系统、扩展/DSL/SPI/TCK、CLI、迁移和兼容性主题页已按当前 0.9 行为重写；删除了 Event API 尚未实现和性能门槛未通过等过期说明。
+- 新增 `scripts/check_docs.py`，离线检查必需页面、相对链接、code fence、旧产品名和 23 个核心公开入口；并接入 `scripts/release_gate.sh`。
+- 实际验证：docs check 40 files/23 entry points、API snapshot 1311 declarations、release evidence、format、`cjpm check`、根 build、quickstart build/run 均 exit 0。沙箱内第一次 full test 在执行 0 个用例前因 unittest socket 权限失败；授权环境同命令最终 `1455/1455` pass，0 skipped/error/failed。
+
 ## 2026-08-29 Final R139/R140 completion evidence
 
 - R139 是当前唯一 canonical benchmark。它绑定 clean product commit `856a6c7164fe97450b5ab7ff34926445b48dcc35`、source archive `bdc7964d65a631f12d527b18352e49ae3a50563589427a0e304dc8b8a569605f`、harness `b07a40056119b13e6bf1206233afe1855489d6af12aab10b08367d3a36316254`、markdown driver `363ece9a4eed545a8f85b97de5052da6f4d9037175bb40da4e677912d03334d5` 和 raw report `530d206f2558766c56eb02e33b646f7ef36b58a06b5187f52999223f32337d0c`。
