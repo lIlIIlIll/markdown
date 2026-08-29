@@ -34,12 +34,15 @@ GFM_PHASE_CORPORA = ("official-spec", "large-table", "many-references", "patholo
 RELEASE_EVIDENCE_START = b"<!-- release-evidence:start -->"
 RELEASE_EVIDENCE_END = b"<!-- release-evidence:end -->"
 RELEASE_EVIDENCE_PLACEHOLDER = b"<!-- release-evidence:normalized -->\n"
+CANGJIE_HEAP_SIZE = "2GB"
+CANGJIE_GC_INTERVAL = "500ms"
 
 
 def run_sample(command: list[str], data: bytes) -> dict[str, float | int | str]:
     started = time.perf_counter_ns()
     environment = dict(os.environ)
-    environment["cjHeapSize"] = "2GB"
+    environment["cjHeapSize"] = CANGJIE_HEAP_SIZE
+    environment["cjGCInterval"] = CANGJIE_GC_INTERVAL
     process = subprocess.Popen(["taskset", "-c", CPU, *command], stdin=subprocess.PIPE,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=environment)
     assert process.stdin is not None
@@ -288,7 +291,8 @@ def main() -> int:
         },
         "environment": {"platform": platform.platform(), "machine": platform.machine(),
             "cpu": cpu_model(), "pinnedCpu": int(CPU), "cangjieOptimization": "-O2",
-            "cangjieHeapSize": "2GB",
+            "benchmarkDriverOptimization": "-O2 --lto thin",
+            "cangjieHeapSize": CANGJIE_HEAP_SIZE, "cangjieGcInterval": CANGJIE_GC_INTERVAL,
             "cangjieSdkVersion": os.environ.get("MARKDOWN_CANGJIE_SDK_VERSION", ""),
             "cmark": "0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8",
             "cmarkGfm": "0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b"},
