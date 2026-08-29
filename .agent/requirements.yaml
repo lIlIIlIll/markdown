@@ -13,7 +13,7 @@ allowed_statuses:
 - pass
 - blocked
 completion_rule: 只有本文件 requirements 下的全部条目均为 pass，才可声明整个 PRD 完成；blocked、pending 和 implemented_unverified 均不算完成。
-final_validation_evidence: &final_validation_evidence '2026-08-29 R140 fresh tracked-source Server release gate: CC=/usr/bin/clang AR=/usr/bin/ar scripts/release_gate.sh; exit 0; format, API snapshot 1311, check/build, native ASan+UBSan fuzz 10000, full tests 1455/1455 with zero skipped/error/failed, CLI, quickstart, differential 25/24/1/0, benchmark smoke 3/3, bundle and release-ready verifier all passed. The 2026-08-29 audit-remediation rerun uses the same full gate with self-contained pinned differential-tool setup and evidence-ready verification.'
+final_validation_evidence: &final_validation_evidence 'Historical 2026-08-29 R140 fresh tracked-source Server release gate: CC=/usr/bin/clang AR=/usr/bin/ar scripts/release_gate.sh; exit 0; format, API snapshot then at 1311, check/build, native ASan+UBSan fuzz 10000, full tests 1455/1455 with zero skipped/error/failed, CLI, quickstart, differential 25/24/1/0, benchmark smoke 3/3, bundle and release-ready verifier all passed. The 2026-08-29 independent audit found that the current benchmark corpus and benchmark-relevant source tree no longer match R139; this historical evidence does not establish current release readiness.'
 status_definitions:
   pending: 尚未开始，或尚无足以证明实现存在的证据。
   implemented_unverified: 实现已存在，但尚未完成该条目全部验收或证据尚不充分。
@@ -2550,7 +2550,7 @@ requirements:
   - renderer 不无界缓存输出
   - 相对接受基线回退超过 10% 时 CI 失败或有显式批准
   - SourceMap、CST 等可选能力分别记录开销
-  status: pass
+  status: implemented_unverified
   implementation:
   - src/benchmark_test.cj
   - benchmarks/measure.py
@@ -2716,7 +2716,8 @@ requirements:
   - '2026-08-29: canonical readme-api input now replaces the generated release-evidence block with one fixed marker before sizing and hashing. Six benchmark-profile tests prove generated values cannot recursively change the corpus and missing or duplicate markers fail closed.'
   - '2026-08-29: complete clean-commit R139 canonical on Server CPU 24 passed every gate and binds commit 856a6c7164fe97450b5ab7ff34926445b48dcc35, archive bdc7964d65a631f12d527b18352e49ae3a50563589427a0e304dc8b8a569605f, harness b07a40056119b13e6bf1206233afe1855489d6af12aab10b08367d3a36316254, driver 363ece9a4eed545a8f85b97de5052da6f4d9037175bb40da4e677912d03334d5 and raw 530d206f2558766c56eb02e33b646f7ef36b58a06b5187f52999223f32337d0c. CommonMark is 2.380950x, GFM 2.454213x, ordinary 3.631640x/2.026894x, scaling 0.364821/2.498950, pathological 0.632235/2.437232 and extra RSS 30764 KiB; all raw gates are true.'
   - '2026-08-29: full fresh-archive Server release gate exit 0 after format, API 1311, check/build, native ASan+UBSan fuzz 10000, tests 1455/1455, CLI, quickstart, differential 25/24/1/0, benchmark smoke 3/3, bundle and release-ready validation.'
-  notes: "R139 is the latest complete canonical run under A-038 and passes every frozen performance gate without a threshold waiver. The normalized release-evidence block removes self-referential corpus drift while retaining the complete README/API workload and an explicit checksum. Historical failed runs remain recorded above. Assumptions: A-001, A-002, A-004, A-011, A-018, A-025, A-026, A-027, A-034, A-035, A-038."
+  - '2026-08-29 independent audit remediation: release_evidence schema v3 recomputes every current corpus digest and a deterministic benchmark product-tree digest. It rejects R139 because readme-api and the benchmark-relevant source tree drifted; a complete fixed-Server rerun is in progress.'
+  notes: "R139 is historical and must not be presented as current evidence. The current implementation is retained, but all performance acceptance criteria require a new schema-v3 fixed-Server raw report before this item can return to pass. Assumptions: A-001, A-002, A-004, A-011, A-018, A-025, A-026, A-027, A-034, A-035, A-038."
 - id: MD-PERF-003
   source: PRD §45.5
   target: '1.0'
@@ -2887,7 +2888,7 @@ requirements:
   - 记录第三方测试数据归属
   - 核心发布无非标准原生动态库
   - requirements.yaml 中所有 target=1.0 或 cross-release 且适用于 1.0 的条目均为 pass
-  status: pass
+  status: implemented_unverified
   implementation:
   - CHANGELOG.md
   - LICENSE
@@ -2909,7 +2910,8 @@ requirements:
   - '2026-08-25: refreshed canonical benchmark is bound to product commit 34113ea6, SDK, source archive, harness and all drivers; its evidence projection is clean, while release-ready validation still fails closed because the release is draft and MD-PERF-002 fails'
   - '2026-08-29: release evidence is ready and commit-bound; full fresh-archive Server release gate exit 0, with bundle target/markdown-0.9.0.cjp size 467103 bytes and SHA-256 2a9a743ebf440813594662fb92071ac6da1b5c9d14b663ad4e0fbce9421a5ade.'
   - '2026-08-29: release evidence schema v2 separates offline evidence-ready, hosted-CI verification and publication; the full gate installs only pinned differential references.'
-  notes: "A-036 keeps the breaking pre-GA package at 0.9.0 rather than prematurely freezing a 1.x ABI. Offline release evidence is ready; hosted CI passed on release-hardening and main protection is enabled, while merge and publication remain separate claims. The private vulnerability reporting channel is enabled. Assumptions: A-001, A-002, A-004, A-009, A-023, A-024, A-027, A-039, A-040."
+  - '2026-08-29 independent audit remediation: release-evidence.json is fail-closed at incomplete/stale-source-drift until the current source and corpus receive a complete fixed-Server benchmark and fresh release gate.'
+  notes: "A-036 keeps the breaking pre-GA package at 0.9.0 rather than prematurely freezing a 1.x ABI. R140 is historical; current offline release evidence is not ready because its canonical benchmark identity is stale. Hosted CI and publication remain separate claims. The private vulnerability reporting channel is enabled. Assumptions: A-001, A-002, A-004, A-009, A-023, A-024, A-027, A-039, A-040."
 - id: MD-QUAL-001
   source: PRD §51.7, §52
   target: '1.0'
@@ -2921,7 +2923,7 @@ requirements:
   - 默认 raw HTML passthrough=0，核心非标准原生依赖=0
   - 未批准性能回归不超过 10%
   - Tier 1 输出一致且示例可在干净环境构建
-  status: pass
+  status: implemented_unverified
   implementation:
   - docs/reports/benchmark.md
   - docs/reports/fuzz-summary.md
@@ -2934,4 +2936,5 @@ requirements:
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-29: full fresh-archive Server release gate exit 0; 1455/1455 tests, CommonMark 652/652, GFM 671/671, differential 25/24/1/0, native ASan+UBSan fuzz 10000, benchmark smoke 3/3 and bundle all pass.'
   - '2026-08-29: latest canonical performance passes CommonMark 2.380950x and GFM 2.454213x with all ordinary, scaling, pathological and RSS gates true; no threshold or assertion was weakened.'
-  notes: "All correctness, conformance, security, package, deterministic behavior and performance success metrics pass. Assumptions: A-001, A-002, A-004, A-010, A-023."
+  - '2026-08-29 independent audit remediation: current correctness checks are being rerun, but the aggregate quality requirement cannot pass until schema-v3 canonical performance and the complete release gate are current.'
+  notes: "The implementation and historical correctness evidence remain available, but current performance and release evidence are stale. This aggregate item is implemented_unverified until the new canonical run and complete release gate pass. Assumptions: A-001, A-002, A-004, A-010, A-023."

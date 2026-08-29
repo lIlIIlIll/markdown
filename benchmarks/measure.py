@@ -15,6 +15,7 @@ import subprocess
 import time
 
 from generate_corpus import corpus, ordinary_corpus, COMMONMARK, GFM
+from benchmark_identity import benchmark_product_tree_sha256
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -279,6 +280,7 @@ def main() -> int:
             "generatedAt": datetime.now(timezone.utc).isoformat(),
             "sourceCommit": os.environ.get("MARKDOWN_SOURCE_COMMIT", ""),
             "productSourceArchiveSha256": os.environ.get("MARKDOWN_SOURCE_ARCHIVE_SHA256", ""),
+            "productTreeSha256": benchmark_product_tree_sha256(ROOT),
             "benchmarkHarnessSha256": file_sha256(Path(__file__)),
             "markdownDriverSha256": file_sha256(DRIVER),
             "cmarkDriverSha256": file_sha256(CMARK),

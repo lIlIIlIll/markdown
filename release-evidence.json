@@ -1,20 +1,20 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "release": {
     "version": "0.9.0",
     "channel": "preview",
-    "status": "evidence-ready",
-    "evidenceReady": true,
-    "ciVerifiedAtHead": false,
-    "ciVerifiedCommit": null,
+    "status": "incomplete",
+    "evidenceReady": false,
+    "ciVerifiedAtHead": true,
+    "ciVerifiedCommit": "d73eecee4e19fe56a57cd9f150fe0a62bae405c4",
     "published": false
   },
   "identity": {
     "artifactCommit": "856a6c7164fe97450b5ab7ff34926445b48dcc35",
-    "evidenceCommit": "490dad69584761733586cd674f6bc2cfd2555a78",
-    "repositoryHeadAtGeneration": "490dad69584761733586cd674f6bc2cfd2555a78",
+    "evidenceCommit": "d73eecee4e19fe56a57cd9f150fe0a62bae405c4",
+    "repositoryHeadAtGeneration": "d73eecee4e19fe56a57cd9f150fe0a62bae405c4",
     "treeStateAtGeneration": "clean",
-    "reason": "The fixed-host benchmark is bound to clean artifact commit 856a6c7164fe97450b5ab7ff34926445b48dcc35. Commit 490dad69584761733586cd674f6bc2cfd2555a78 is the audited code, API, workflow and offline-evidence snapshot. These release-hardening changes do not alter the benchmarked parser core, renderer core, driver, harness, or normalized readme-api corpus."
+    "reason": "The 2026-08-29 independent audit found that the R139 benchmark corpus and benchmark-relevant product tree do not match current main. Evidence is fail-closed until a complete fixed-Server run binds the current source tree and current corpus checksums."
   },
   "toolchain": {
     "cangjieCompiler": "1.1.0-alpha.20260803040049",
@@ -51,12 +51,13 @@
     "failed": 0
   },
   "benchmark": {
-    "status": "current",
+    "status": "stale-source-drift",
     "rawPath": "docs/reports/benchmark-raw.json",
     "rawSha256": "530d206f2558766c56eb02e33b646f7ef36b58a06b5187f52999223f32337d0c",
     "sourceCommit": "856a6c7164fe97450b5ab7ff34926445b48dcc35",
     "sdkVersion": "1.1.0-alpha.20260803040049",
     "productSourceArchiveSha256": "bdc7964d65a631f12d527b18352e49ae3a50563589427a0e304dc8b8a569605f",
+    "productTreeSha256": null,
     "benchmarkHarnessSha256": "b07a40056119b13e6bf1206233afe1855489d6af12aab10b08367d3a36316254",
     "markdownDriverSha256": "363ece9a4eed545a8f85b97de5052da6f4d9037175bb40da4e677912d03334d5",
     "cmarkDriverSha256": "385d4f1842b2a85211de914a5e6600ba195e3203bd4f3e91531cbed216d7a95e",
@@ -66,6 +67,6 @@
     "ratioLimit": 2.5,
     "cmark": "0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8",
     "cmarkGfm": "0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b",
-    "note": "Canonical 2026-08-29 R139 fixed-Server release run for the complete arena AST path at clean commit 856a6c7164fe97450b5ab7ff34926445b48dcc35. The benchmark replaces only the generated release-evidence block in the readme-api corpus with a fixed marker before sizing and hashing, eliminating the previous self-referential corpus drift; tests require exactly one marker pair. The minimal source archive excludes .git, every root or nested target/build-script-cache, .agent, .agents, .codex, Python caches and native build products. The complete run used Xeon Gold 6248R CPU 24, seven alternating paired samples per corpus, Cangjie -O2 with a 2 GiB heap, and bound the exact archive, normalized corpus checksums, five input profiles, harness, all three drivers, SDK and raw data. CommonMark is 2.380950x, GFM is 2.454213x, ordinary is 3.631640x/2.026894x, SourceMap overhead is -5.32% within measurement noise, CST overhead is 1100.95%, scaling slope is 0.364821 with maximum adjacent ratio 2.498950, pathological slope is 0.632235 with maximum adjacent ratio 2.437232, and extra 10 MiB RSS is 30764 KiB. Every mandatory timing, scaling and RSS gate passes."
+    "note": "Historical R139 values are retained for traceability but are not current release evidence. The current readme-api checksum and benchmark-relevant product tree differ from the R139 inputs. A complete fixed-Server rerun is required before performance, release and quality requirements can return to pass."
   }
 }

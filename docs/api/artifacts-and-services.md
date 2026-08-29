@@ -27,8 +27,9 @@ match (engine.loadArtifact(artifact, source)) {
 - offset mapping digest
 - AST、references 和 diagnostics
 
-`createArtifact` 拒绝 incomplete parse result 和非 identity UTF-8 mapping。
-`ReplaceInvalid` 产生非 identity mapping，因此不能创建 0.9 parse artifact。
+`createArtifact` 拒绝 incomplete parse result 和非 identity UTF-8 mapping。只有输入实际
+包含无效 UTF-8 并发生替换时，`ReplaceInvalid` 才产生非 identity mapping。有效 UTF-8
+bytes 即使使用 `ReplaceInvalid` 也能创建和加载 0.9 parse artifact。
 
 `loadArtifact` 接受 String 或 bytes。任何 schema、profile、fingerprint、digest、policy
 或 mapping 不匹配都返回 `CacheMiss(reason)`。

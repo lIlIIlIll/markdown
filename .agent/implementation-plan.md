@@ -1,27 +1,32 @@
 # markdown 实施计划
 
-## Final completion closure (2026-08-29)
+## Current audit remediation (2026-08-29)
 
-The dependency graph below is complete. R139 is the sole clean-commit canonical
-benchmark and passes the frozen full-AST limits: CommonMark `2.380950x`, GFM
-`2.454213x`, ordinary `3.631640x/2.026894x`, scaling
-`0.364821/2.498950`, pathological scaling `0.632235/2.437232`, and extra
-10 MiB RSS `30764 KiB`. R140 then ran the complete release gate from a fresh
-tracked-source archive: format, API snapshot 1311, check/build, native
-ASan+UBSan fuzz 10000, `1455/1455` tests, CLI, public quickstart,
-differential `25/24/1/0`, benchmark smoke `3/3`, bundle and release-ready
-verification all passed. The authoritative ledger is therefore 125 pass and
-zero pending, implemented_unverified, or blocked items.
+An independent review found that R139 no longer identifies the current benchmark
+corpus or benchmark-relevant source tree. R139 and R140 remain historical evidence,
+but they cannot establish current release readiness. The authoritative ledger is
+therefore 122 pass and 3 implemented_unverified items: `MD-PERF-002`,
+`MD-REL-001`, and `MD-QUAL-001`.
 
-The final bidirectional audit reread all 3754 PRD lines, mapped all 52 normative
-sections and 33 explicit requirement labels, verified 125 unique ledger IDs and
-488 existing implementation/test path references, removed generic test
-placeholders, linked every item to R140, and confirmed 39 unique assumptions are
-referenced by affected requirement notes. No implementation slice remains.
+The active dependency order is:
 
-Historical R0-R138 sections are retained as design and rejection evidence. Any
-historical sentence that says a then-current candidate was blocked does not
-override this final closure or `.agent/requirements.yaml`.
+1. Bind every benchmark raw report to deterministic corpus digests and a
+   benchmark product-tree digest; reject drift in the release-evidence verifier.
+2. Correct the public API and artifact documentation, then update documentation
+   checks so the same errors cannot recur.
+3. Run format, documentation, API, check/build, and full tests locally.
+4. Commit the candidate so the benchmark has a stable source identity.
+5. Build from a minimal fresh archive on Server, explicitly excluding every
+   `target`, `build-script-cache`, `.agent`, `.agents`, `.codex`, Python cache,
+   and native build product; run the complete fixed-CPU release benchmark.
+6. Replace raw data, generated report, README, ledger, progress, and acceptance
+   report from that one canonical result, then run the complete fresh-archive
+   release gate.
+
+The current inventory is 1309 public declarations, 44 maintained Markdown files,
+23 required API entries, 4 runnable examples, and 40 unique assumptions. Historical
+R0-R140 sections remain design and rejection evidence; their then-current status
+does not override this section or `.agent/requirements.yaml`.
 
 ## 0.9 breaking execution-model implementation (2026-08-26)
 

@@ -1,8 +1,8 @@
 # Release benchmark report
 
-Status: **PASS**
+Status: **FAIL**
 
-Evidence status: `current`. Canonical 2026-08-29 R139 fixed-Server release run for the complete arena AST path at clean commit 856a6c7164fe97450b5ab7ff34926445b48dcc35. The benchmark replaces only the generated release-evidence block in the readme-api corpus with a fixed marker before sizing and hashing, eliminating the previous self-referential corpus drift; tests require exactly one marker pair. The minimal source archive excludes .git, every root or nested target/build-script-cache, .agent, .agents, .codex, Python caches and native build products. The complete run used Xeon Gold 6248R CPU 24, seven alternating paired samples per corpus, Cangjie -O2 with a 2 GiB heap, and bound the exact archive, normalized corpus checksums, five input profiles, harness, all three drivers, SDK and raw data. CommonMark is 2.380950x, GFM is 2.454213x, ordinary is 3.631640x/2.026894x, SourceMap overhead is -5.32% within measurement noise, CST overhead is 1100.95%, scaling slope is 0.364821 with maximum adjacent ratio 2.498950, pathological slope is 0.632235 with maximum adjacent ratio 2.437232, and extra 10 MiB RSS is 30764 KiB. Every mandatory timing, scaling and RSS gate passes.
+Evidence status: `stale-source-drift`. Historical R139 values are retained for traceability but are not current release evidence. The current readme-api checksum and benchmark-relevant product tree differ from the R139 inputs. A complete fixed-Server rerun is required before performance, release and quality requirements can return to pass.
 
 - CommonMark parse-only geometric mean ratio vs cmark: `2.38x` (limit `2.5x`).
 - GFM parse+HTML geometric mean ratio vs cmark-gfm: `2.45x` (limit `2.5x`).
@@ -11,6 +11,7 @@ Evidence status: `current`. Canonical 2026-08-29 R139 fixed-Server release run f
 - Tested source commit: `856a6c7164fe97450b5ab7ff34926445b48dcc35`.
 - Benchmark Cangjie SDK: `1.1.0-alpha.20260803040049`.
 - Product source archive SHA-256: `bdc7964d65a631f12d527b18352e49ae3a50563589427a0e304dc8b8a569605f`.
+- Product source tree SHA-256: `UNBOUND`.
 - Benchmark harness SHA-256: `b07a40056119b13e6bf1206233afe1855489d6af12aab10b08367d3a36316254`.
 - markdown driver SHA-256: `363ece9a4eed545a8f85b97de5052da6f4d9037175bb40da4e677912d03334d5`.
 - cmark driver SHA-256: `385d4f1842b2a85211de914a5e6600ba195e3203bd4f3e91531cbed216d7a95e`.

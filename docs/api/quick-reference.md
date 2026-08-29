@@ -69,10 +69,10 @@ let engine = MarkdownEngine.builder()
 | `result.diagnostics` | `ImmutableArray<Diagnostic>` | 可恢复诊断 |
 | `result.isComplete` | `Bool` | 是否完成 |
 | `result.errors` | `ImmutableArray<MarkdownException>` | `tryParse` 捕获的错误 |
-| `node.id` | `NodeId` | 当前文档内稳定 identity |
+| `node.nodeId` | `NodeId` | 当前文档内稳定 identity |
 | `node.kind` | `NodeKind` | 节点类型 |
 | `node.span` | `?SourceSpan` | 半开 UTF-8 byte range |
-| `node.children` | `ImmutableArray<NodeRef>` | 子节点 |
+| `node.children()` | `NodeChildren` | 零复制子节点视图，可按索引访问 |
 
 ## 查询和位置
 
