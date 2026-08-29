@@ -162,13 +162,14 @@ let engine = MarkdownEngine.builder().dialect(dialect).build()
 ## 性能对比
 
 完整 AST benchmark 每轮仍创建 `Document`、`NodeId`、`SourceSpan`、`SourceBuffer` 和
-`ParseResult`。以下结果不使用轻量 event parser 替代公开 `parse()`。
+`ParseResult`。以下比较不使用轻量 event parser 替代公开 `parse()`；当前比值只在对应报告
+和 release evidence 中维护。
 
-| 对比 | 工作负载 | 结果 | 证据 |
-| --- | --- | ---: | --- |
-| cmark 0.31.1 | CommonMark 完整 AST parse | `2.38x` 较慢 | [canonical report](docs/reports/benchmark.md) |
-| cmark-gfm 0.29 | GFM 完整 AST + HTML | `2.45x` 较慢 | [canonical report](docs/reports/benchmark.md) |
-| markdown4cj | 同语言 CommonMark parse-only | `11.00x` 较快 | [同语言对比](docs/reports/markdown4cj-comparison.md) |
+| 对比 | 工作负载 | 当前结果 |
+| --- | --- | --- |
+| cmark 0.31.1 | CommonMark 完整 AST parse | [Canonical benchmark](docs/reports/benchmark.md) |
+| cmark-gfm 0.29 | GFM 完整 AST + HTML | [Canonical benchmark](docs/reports/benchmark.md) |
+| markdown4cj | 同语言 CommonMark parse-only | [同语言对比](docs/reports/markdown4cj-comparison.md) |
 
 markdown4cj 数据来自固定旧提交和 SDK，只证明报告中冻结的共同 parse subset，不代表当前
 两库所有功能的端到端比较。cmark/cmark-gfm 数据来自当前唯一 canonical release
