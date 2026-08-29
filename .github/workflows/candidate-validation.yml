@@ -19,9 +19,11 @@ jobs:
           - sdk: minimum-1.1.0
             url: https://cangjie-lang.cn/v1/files/auth/downLoad?nsId=142267&fileName=cangjie-sdk-linux-x64-1.1.0.tar.gz&objectKey=69e9d50c21f5a8178d6fd219
             sha256: 5ce7e8c8523aad9cf5965f818249e1a39f10788963aef7c5852697a3ac964060
+            benchmark-driver-mode: compatibility
           - sdk: current-1.1.3
             url: https://cangjie-lang.cn/v1/files/auth/downLoad?nsId=142267&fileName=cangjie-sdk-linux-x64-1.1.3.tar.gz&objectKey=6a19349d21f5a8178d6fd22b
             sha256: 2b68905afc466e665ae181595c63f96c18d75fd2c1fb6c6f0cb64e179c28d61a
+            benchmark-driver-mode: canonical
     steps:
       # actions/checkout v7.0.1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -44,4 +46,6 @@ jobs:
           set -eo pipefail
           source "${CANGJIE_ENV_FILE}"
           set -u
-          CC=clang AR=ar scripts/release_gate.sh
+          CC=clang AR=ar \
+            MARKDOWN_BENCHMARK_DRIVER_MODE='${{ matrix.benchmark-driver-mode }}' \
+            scripts/release_gate.sh

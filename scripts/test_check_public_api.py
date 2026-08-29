@@ -229,6 +229,12 @@ class PublicApiCheckerCliTest(unittest.TestCase):
         self.write_python_stub(scripts / "check_public_api.py", "checker", "CHECKER_EXIT")
         self.write_python_stub(scripts / "release_evidence.py", "release-evidence")
         self.write_python_stub(scripts / "test_release_evidence.py", "release-evidence-test")
+        self.write_python_stub(
+            scripts / "test_build_benchmark_driver.py", "benchmark-driver-build-test"
+        )
+        self.write_python_stub(
+            scripts / "build_benchmark_driver.py", "benchmark-driver-build"
+        )
         self.write_python_stub(scripts / "test_benchmark_input_profiles.py", "benchmark-input-profiles")
         self.write_shell_stub(scripts / "cli_smoke.sh", "cli-smoke")
         self.write_shell_stub(scripts / "setup_differential_tools.sh", "differential-tools")
