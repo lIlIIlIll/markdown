@@ -16,6 +16,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 CHECKER = ROOT / "scripts" / "release_evidence.py"
 RELEASE_GATE = ROOT / "scripts" / "release_gate.sh"
+COMMONMARK_JS_DRIVER = ROOT / "scripts" / "commonmark_js_driver.mjs"
 
 SPEC = importlib.util.spec_from_file_location("release_evidence", CHECKER)
 assert SPEC is not None and SPEC.loader is not None
@@ -37,6 +38,17 @@ class ReleaseEvidenceTest(unittest.TestCase):
         result = self.run_checker()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("release evidence verified", result.stdout)
+
+    def test_incomplete_release_can_project_current_failing_benchmark(self) -> None:
+        evidence = json.loads((ROOT / "release-evidence.json").read_text(encoding="utf-8"))
+        if evidence["benchmark"]["status"] == "current" and not evidence["release"]["evidenceReady"]:
+            raw = json.loads((ROOT / evidence["benchmark"]["rawPath"]).read_text(encoding="utf-8"))
+            if not all(raw["gates"].values()):
+                result = self.run_checker()
+                self.assertEqual(result.returncode, 0, result.stderr)
+                ready = self.run_checker("--evidence-ready")
+                self.assertNotEqual(ready.returncode, 0, ready.stdout)
+                self.assertIn("canonical benchmark gates failed", ready.stderr)
 
     def test_current_evidence_enforces_declared_readiness(self) -> None:
         result = self.run_checker("--evidence-ready")
@@ -92,6 +104,22 @@ class ReleaseEvidenceTest(unittest.TestCase):
         self.assertIn("python3 scripts/release_evidence.py\n", gate)
         self.assertIn("python3 scripts/release_evidence.py --evidence-ready\n", gate)
         self.assertNotIn("python3 benchmarks/measure.py\n", gate)
+
+    def test_release_gate_isolates_differential_tools_per_checkout(self) -> None:
+        gate = RELEASE_GATE.read_text(encoding="utf-8")
+        self.assertIn(
+            'export MARKDOWN_DIFFERENTIAL_ROOT="$repo_root/target/differential-tools"\n',
+            gate,
+        )
+        self.assertLess(
+            gate.index("export MARKDOWN_DIFFERENTIAL_ROOT="),
+            gate.index("scripts/setup_differential_tools.sh"),
+        )
+
+    def test_commonmark_js_driver_avoids_top_level_await(self) -> None:
+        driver = COMMONMARK_JS_DRIVER.read_text(encoding="utf-8")
+        self.assertNotIn(" await ", driver)
+        self.assertIn("import(moduleUrl).then((commonmark) => {", driver)
 
 
 if __name__ == "__main__":

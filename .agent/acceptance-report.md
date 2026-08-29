@@ -2,18 +2,18 @@
 
 ## Final Status
 
-**INCOMPLETE** — 122 项规范性需求为 `pass`，`MD-PERF-002`、`MD-REL-001` 和 `MD-QUAL-001` 为 `implemented_unverified`；R139/R140 与当前 corpus/source identity 不一致，必须重新运行 canonical benchmark 和完整 release gate。
+**INCOMPLETE** — 122 项规范性需求为 `pass`，`MD-PERF-002`、`MD-REL-001` 和 `MD-QUAL-001` 为 `implemented_unverified`；当前 canonical benchmark 已绑定源码与 corpus，但 CommonMark `2.640257x`、GFM `2.587756x` 均未达到 `2.5x` 门槛。
 
 <!-- release-evidence:start -->
 ## Generated Release Evidence
 
 - Version/status: `0.9.0` / `incomplete`.
-- Artifact commit: `856a6c7164fe97450b5ab7ff34926445b48dcc35`.
-- Evidence commit: `d73eecee4e19fe56a57cd9f150fe0a62bae405c4`; repository HEAD at generation `d73eecee4e19fe56a57cd9f150fe0a62bae405c4`.
-- Hosted CI verified at that HEAD: `True`; published: `False`.
+- Artifact commit: `27f8d9fa3973265a77fc71c0b5fd22af0bfe2add`.
+- Evidence commit: `27f8d9fa3973265a77fc71c0b5fd22af0bfe2add`; repository HEAD at generation `27f8d9fa3973265a77fc71c0b5fd22af0bfe2add`.
+- Hosted CI verified at that HEAD: `False`; published: `False`.
 - Tests: `1455/1455` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `2.38x`, GFM `2.45x`, status `stale-source-drift`.
-- Raw digest: `530d206f2558766c56eb02e33b646f7ef36b58a06b5187f52999223f32337d0c`.
+- Benchmark: CommonMark `2.64x`, GFM `2.59x`, status `current`.
+- Raw digest: `5cb80869c9b19e3e026e05313fa59decfd91eb65d67cf53508b0feed557f23cb`.
 
 One or more mandatory offline evidence gates remain incomplete. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->
@@ -26,7 +26,9 @@ One or more mandatory offline evidence gates remain incomplete. Hosted CI and pu
 
 开发者文档现使用实际公开 API `node.nodeId`、`node.children()` 和 `NodeChildren`；artifact 文档说明只有实际无效 UTF-8 replacement 才产生 non-identity mapping。当前清点为 public API 1309 declarations、44 个 Markdown 文件、23 个 required API entries、4 个 runnable examples、40 个 assumptions。
 
-本地验证已通过 release-evidence `6/6`、benchmark-profile `6/6`、docs `44/23/4`、public API `1309`、format、`cjpm check`、`cjpm build` 和授权环境 full suite `1455/1455`。受限环境 full suite 在执行 0 个用例前因 unittest local socket 被拒绝，不是产品断言失败。固定 Server rerun 仍未完成；在新 raw、完整 release gate 和所有投影文件同步前，本报告保持 INCOMPLETE。
+本地验证已通过 release-evidence `9/9`、benchmark-profile `6/6`、docs `44/23/4`、public API `1309`、format、`cjpm check`、`cjpm build` 和授权环境 full suite `1455/1455`。受限环境 full suite 在执行 0 个用例前因 unittest local socket 被拒绝，不是产品断言失败。固定 Server canonical 已完成：除 CommonMark/GFM 两个 `2.5x` ratio 外，ordinary、scaling、pathological 和 RSS gate 均通过。报告保持 INCOMPLETE，且不会通过重复运行挑选更有利结果。
+
+Fresh release gate 现将差分依赖隔离到当前检出的 `target/differential-tools`，避免共享 `/tmp` 中旧 checkout 或本机构建缓存造成 glibc/identity 失败；CommonMark JS driver 不再依赖 top-level await。Server 使用 `1.1.0-alpha.20260817040003` SDK，从不含 CMake build 产物的精确提交 seed 重建 reference。最终门禁通过 format、docs、API、check/build、ASan+UBSan fuzz `10000`、full tests `1455/1455`、CLI、quickstart、cookbook、differential `25/24/1/0`、benchmark smoke `3/3` 和 bundle；生成的 `markdown-0.9.0.cjp` 为 `498701` bytes，SHA-256 `a962a9292fc5baca2f950ec08ad1ccabd80d19ff45142eafc0a84ebec16d5beb`。门禁最后只因 current raw 的 `commonmarkRatioLe2_5` 与 `gfmRatioLe2_5` 在 `--evidence-ready` 阶段 exit `1`。
 
 ## 2026-08-29 Historical Release Audit Remediation
 
@@ -218,15 +220,15 @@ seal/path/binary identity check.
 | `MD-TST-004` | PRD §44.5-6, §51.6-7 | `pass` | 2026-08-25: arbitrary-byte fuzz found and guards two UTF-8 boundary crashes; full 1419-test suite passed |
 | `MD-TST-005` | PRD §44.7-9, §51.7 | `pass` | 2026-08-18: API snapshot, pathological corpus, and official extension TCK passed |
 | `MD-PERF-001` | PRD §45.1-3 | `pass` | 2026-08-18: 12-corpus -O2 reference-host matrix recorded raw samples, per-corpus digests, pinned CPU, SDK, reference commits, geometric means, and custom-extension cost |
-| `MD-PERF-002` | PRD §45.4, §51.7, §52 | `implemented_unverified` | R139 is historical; schema v3 rejects its current corpus and product-tree identity. A complete fixed-Server rerun is required. |
+| `MD-PERF-002` | PRD §45.4, §51.7, §52 | `implemented_unverified` | Current fixed-Server canonical is identity-bound, but CommonMark 2.640257x and GFM 2.587756x fail the 2.5x gates. |
 | `MD-PERF-003` | PRD §45.5 | `pass` | 2026-08-18: owned byte input, SourceSlice literals, explicit parser frames, bounded output, ordinary/pathological scaling, and RSS tests passed |
 | `MD-OBS-001` | PRD §46 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DOC-001` | PRD §47, §49, §51.7 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DOC-002` | PRD §47, §49, §51.7 | `pass` | 2026-08-18: examples/quickstart built and ran using only the public package API |
 | `MD-COMP-001` | PRD §48.1-2 | `pass` | The 0.9 API snapshot verifies 1309 declarations; migration and compatibility docs include the buffered API breaking cleanup. |
 | `MD-COMP-002` | PRD §48.3-6 | `pass` | SPI v2, artifact v2 and the final 0.9 AST surface are snapshotted and tested; the removed AST-walk Event facade is explicitly excluded from the stable contract. |
-| `MD-REL-001` | PRD §49, §50 M6, §51 | `implemented_unverified` | R140 is historical; current release evidence is fail-closed until the new canonical raw and complete release gate pass. |
-| `MD-QUAL-001` | PRD §51.7, §52 | `implemented_unverified` | Current local gates and canonical performance evidence have not yet both completed for the audit-remediation candidate. |
+| `MD-REL-001` | PRD §49, §50 M6, §51 | `implemented_unverified` | Current evidence is fail-closed because the mandatory performance prerequisite fails; publication remains separate. |
+| `MD-QUAL-001` | PRD §51.7, §52 | `implemented_unverified` | Current correctness gates pass, but both mandatory canonical performance ratios fail. |
 
 ## Validation Evidence
 
@@ -282,9 +284,9 @@ the current result.
   `pass` and 3 are `implemented_unverified`. Every required field and acceptance list is non-empty. The ledger has
   488 concrete implementation/test path references, all of which exist, and no
   generic `src/*_test.cj` placeholder remains.
-- current execution evidence: R139/R140 are historical and fail the schema-v3
-  current corpus/product-tree identity check. A new fixed-Server run and complete
-  release gate are required for the three dependent items.
+- current execution evidence: R139/R140 are historical. The schema-v3 canonical
+  run is bound to source commit, archive, product tree, corpus, SDK, harness and
+  drivers; both mandatory performance ratios fail.
 - assumptions: 40 assumption IDs are unique, all are resolved/adopted or
   explicitly non-normative, and every assumption is referenced from the notes of
   its affected ledger items. The verified private vulnerability channel is no
@@ -297,9 +299,9 @@ the current result.
 ## Release Decision
 
 **INCOMPLETE.** The 0.9.0 breaking pre-GA preview is not currently evidence-ready.
-The previous performance and release runs remain historical, but their corpus and
-source identity do not match the current repository. No waiver or threshold
-reduction is used; the fixed-Server benchmark and full release gate must be rerun.
+The previous R139/R140 runs remain historical. The current canonical raw is
+identity-bound, but CommonMark and GFM exceed the `2.5x` thresholds. No waiver,
+threshold reduction, or best-of-reruns selection is used.
 
 ## 2026-08-18 Performance Investigation Addendum
 

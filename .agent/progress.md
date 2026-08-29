@@ -1,7 +1,7 @@
 # markdown 当前进度
 
 更新时间：2026-08-29
-当前阶段：0.9 breaking 执行模型和本地正确性门禁已实现；canonical benchmark identity 与 release evidence 正在按独立审计结果重新闭环。
+当前阶段：0.9 breaking 执行模型、本地正确性门禁和 schema-v3 canonical identity 已实现；性能门槛未通过，release evidence 保持 fail closed。
 整体结论：**INCOMPLETE**。需求账本当前为 122 pass、0 pending、3 implemented_unverified、0 blocked。
 
 ## 2026-08-29 独立审计修复（当前）
@@ -11,8 +11,12 @@
 - API quick reference 已改为真实的 `node.nodeId`、`node.children()` 和 `NodeChildren`；artifact 文档已区分有效 UTF-8 的 `ReplaceInvalid` 与实际发生 replacement 的非 identity mapping。
 - 当前仓库清点为 public API 1309 declarations、44 个 maintained Markdown 文件、23 个 required API entries、4 个 runnable examples、40 个唯一 assumptions。
 - `main` 已合入历史文档分支。required review 已永久移除；required status checks、strict 更新、conversation resolution、管理员约束以及禁止 force-push/delete 仍保留。当前 hosted CI 事实与本轮尚未提交的修复不是同一代码身份，不替代后续验证。
-- 下一步是完成本地门禁，在专用 GitButler 分支提交当前候选，再用最小 fresh archive 运行固定 Server canonical benchmark 和完整 release gate。只有三个非 pass 项均有当前证据后才能恢复 COMPLETE。
-- 当前本地验证：release-evidence regressions `6/6`、benchmark-profile regressions `6/6`、docs `44/23/4`、public API `1309`、format、`cjpm check`、`cjpm build` 均 exit `0`。受限环境 `cjpm test` 在执行 0 个用例前因 unittest local socket 被拒绝；授权环境同一命令 exit `0`，`1455/1455` passed，0 skipped/error/failed。
+- 本轮候选提交为 `27f8d9fa3973265a77fc71c0b5fd22af0bfe2add`。最小源码归档 SHA-256 为 `9930dd77eec1d98a0d069cea98b4084eb725b21c7061a1c68577cd32273fc815`，明确排除所有 `target`、`build-script-cache`、`.agent`、`.agents`、`.codex`、Python cache 和 native build product。
+- 固定 Server CPU 24 canonical raw SHA-256 为 `5cb80869c9b19e3e026e05313fa59decfd91eb65d67cf53508b0feed557f23cb`；product tree `1c4da3ebd42b441301b26f4710cc63cf6aa397beecf4f715118e22910fe65965`。CommonMark `2.640257x`、GFM `2.587756x` 均超过 `2.5x`；ordinary `3.640610x/1.714504x`、scaling `0.395817/1.513426`、pathological `0.684769/2.411971` 和 extra RSS `30576 KiB` 通过。
+- 当前本地验证：release-evidence regressions `9/9`、benchmark-profile regressions `6/6`、docs `44/23/4`、public API `1309`、format、`cjpm check`、`cjpm build` 均 exit `0`。受限环境 `cjpm test` 在执行 0 个用例前因 unittest local socket 被拒绝；授权环境同一命令 exit `0`，`1455/1455` passed，0 skipped/error/failed。
+- Fresh release gate 归档保留 verifier 必需的 `.agent`，但排除 `.agents`、`.codex`、所有 `target`、`build-script-cache`、Python cache 和 native build product。`scripts/release_gate.sh` 将 pinned differential checkout 隔离到当前检出的 `target/differential-tools`，不再与 Server 共享 `/tmp/markdown-*`；`commonmark_js_driver.mjs` 也移除了旧 Node 不支持的 top-level await。
+- Server 使用 `1.1.0-alpha.20260817040003` SDK 从 fresh archive 重建产品与两套 C reference；离线 source seed 只提供精确 Git checkout 和 commonmark.js 依赖，不含 CMake build 目录。最终门禁覆盖 format、docs `44/23/4`、native build regressions `4/4`、API checker `9/9`、API snapshot `1309`、check/build、native ASan+UBSan fuzz `10000`、benchmark profiles `6/6`、full tests `1455/1455`、CLI、quickstart、cookbook、differential `25/24/1/0`、benchmark smoke `3/3` 和 bundle；`markdown-0.9.0.cjp` 为 `498701` bytes，SHA-256 `a962a9292fc5baca2f950ec08ad1ccabd80d19ff45142eafc0a84ebec16d5beb`。最终 exit `1` 仅来自 `--evidence-ready` 对两个 canonical `2.5x` ratio gate 的预期拒绝。
+- 普通 evidence consistency 验证通过；`--evidence-ready` 按预期 exit `1`，明确报告两个 raw gate 和 mandatory ratio gate 失败。下一步只可通过可复现的性能改进或明确修改 PRD 门槛解除，不能把历史 R139 或重复抽样中的更优值恢复为 current。
 
 ## 2026-08-29 历史发布审计修复
 

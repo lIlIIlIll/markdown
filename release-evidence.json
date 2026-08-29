@@ -5,16 +5,16 @@
     "channel": "preview",
     "status": "incomplete",
     "evidenceReady": false,
-    "ciVerifiedAtHead": true,
-    "ciVerifiedCommit": "d73eecee4e19fe56a57cd9f150fe0a62bae405c4",
+    "ciVerifiedAtHead": false,
+    "ciVerifiedCommit": null,
     "published": false
   },
   "identity": {
-    "artifactCommit": "856a6c7164fe97450b5ab7ff34926445b48dcc35",
-    "evidenceCommit": "d73eecee4e19fe56a57cd9f150fe0a62bae405c4",
-    "repositoryHeadAtGeneration": "d73eecee4e19fe56a57cd9f150fe0a62bae405c4",
+    "artifactCommit": "27f8d9fa3973265a77fc71c0b5fd22af0bfe2add",
+    "evidenceCommit": "27f8d9fa3973265a77fc71c0b5fd22af0bfe2add",
+    "repositoryHeadAtGeneration": "27f8d9fa3973265a77fc71c0b5fd22af0bfe2add",
     "treeStateAtGeneration": "clean",
-    "reason": "The 2026-08-29 independent audit found that the R139 benchmark corpus and benchmark-relevant product tree do not match current main. Evidence is fail-closed until a complete fixed-Server run binds the current source tree and current corpus checksums."
+    "reason": "The current benchmark is bound to clean audit-remediation source commit 27f8d9fa3973265a77fc71c0b5fd22af0bfe2add and its minimal source archive. The report-only projection updates do not alter the benchmark product tree or normalized readme-api corpus. Offline release evidence remains incomplete because both mandatory performance ratios fail."
   },
   "toolchain": {
     "cangjieCompiler": "1.1.0-alpha.20260803040049",
@@ -51,22 +51,22 @@
     "failed": 0
   },
   "benchmark": {
-    "status": "stale-source-drift",
+    "status": "current",
     "rawPath": "docs/reports/benchmark-raw.json",
-    "rawSha256": "530d206f2558766c56eb02e33b646f7ef36b58a06b5187f52999223f32337d0c",
-    "sourceCommit": "856a6c7164fe97450b5ab7ff34926445b48dcc35",
+    "rawSha256": "5cb80869c9b19e3e026e05313fa59decfd91eb65d67cf53508b0feed557f23cb",
+    "sourceCommit": "27f8d9fa3973265a77fc71c0b5fd22af0bfe2add",
     "sdkVersion": "1.1.0-alpha.20260803040049",
-    "productSourceArchiveSha256": "bdc7964d65a631f12d527b18352e49ae3a50563589427a0e304dc8b8a569605f",
-    "productTreeSha256": null,
-    "benchmarkHarnessSha256": "b07a40056119b13e6bf1206233afe1855489d6af12aab10b08367d3a36316254",
-    "markdownDriverSha256": "363ece9a4eed545a8f85b97de5052da6f4d9037175bb40da4e677912d03334d5",
+    "productSourceArchiveSha256": "9930dd77eec1d98a0d069cea98b4084eb725b21c7061a1c68577cd32273fc815",
+    "productTreeSha256": "1c4da3ebd42b441301b26f4710cc63cf6aa397beecf4f715118e22910fe65965",
+    "benchmarkHarnessSha256": "5e29bb0d42b7d4ac530d1d66fefba66bc47022c4acd89942d2e8c828e3f3381a",
+    "markdownDriverSha256": "619fcee222fb7f7bce621e5413ac9972e6ed3423f118152b5e88a0a6f88ef491",
     "cmarkDriverSha256": "385d4f1842b2a85211de914a5e6600ba195e3203bd4f3e91531cbed216d7a95e",
     "cmarkGfmDriverSha256": "6f8ad2cf959ce26f8b9331c62beea9ff1ea116d4a66b9bae033d6138d362e0b4",
-    "commonmarkRatio": 2.380949801350554,
-    "gfmRatio": 2.4542126241975666,
+    "commonmarkRatio": 2.6402573173395547,
+    "gfmRatio": 2.5877557980660764,
     "ratioLimit": 2.5,
     "cmark": "0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8",
     "cmarkGfm": "0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b",
-    "note": "Historical R139 values are retained for traceability but are not current release evidence. The current readme-api checksum and benchmark-relevant product tree differ from the R139 inputs. A complete fixed-Server rerun is required before performance, release and quality requirements can return to pass."
+    "note": "Canonical 2026-08-29 fixed-Server release run for audit-remediation commit 27f8d9fa3973265a77fc71c0b5fd22af0bfe2add. The minimal archive excluded .git, all target/build-script-cache directories, .agent, .agents, .codex, Python caches and native build products. Xeon Gold 6248R CPU 24, Cangjie 1.1.0-alpha.20260803040049, -O2, 2 GiB heap and seven alternating paired samples measured CommonMark 2.640257x and GFM 2.587756x, so both 2.5x gates fail. Ordinary 3.640610x/1.714504x, scaling 0.395817 with maximum adjacent 1.513426, pathological 0.684769 with maximum adjacent 2.411971, and extra RSS 30576 KiB pass."
   }
 }

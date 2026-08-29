@@ -9,7 +9,13 @@ if (process.argv.length !== 3) {
 }
 
 const root = path.resolve(process.argv[2]);
-const commonmark = await import(pathToFileURL(path.join(root, "lib", "index.js")));
 const source = fs.readFileSync(0, "utf8");
-const document = new commonmark.Parser().parse(source);
-process.stdout.write(new commonmark.HtmlRenderer().render(document));
+const moduleUrl = pathToFileURL(path.join(root, "lib", "index.js")).href;
+
+import(moduleUrl).then((commonmark) => {
+    const document = new commonmark.Parser().parse(source);
+    process.stdout.write(new commonmark.HtmlRenderer().render(document));
+}).catch((error) => {
+    process.stderr.write(`${error.stack || error}\n`);
+    process.exitCode = 1;
+});

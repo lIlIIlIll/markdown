@@ -213,7 +213,7 @@ def validate(data: dict[str, object], evidence_ready: bool) -> list[str]:
     if benchmark["status"] == "current" or evidence_ready:
         errors.extend(validate_current_benchmark_identity(raw, benchmark))
     failed_raw_gates = sorted(name for name, passed in raw.get("gates", {}).items() if not passed)
-    if failed_raw_gates:
+    if failed_raw_gates and (evidence_ready or data["release"]["evidenceReady"]):
         errors.append("canonical benchmark gates failed: " + ", ".join(failed_raw_gates))
     identity = data["identity"]
     release = data["release"]

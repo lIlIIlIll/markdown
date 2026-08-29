@@ -208,14 +208,14 @@ evidence。测量边界和输入 API 见[性能说明](docs/performance.md)。
 | --- | --- |
 | Version / status | `0.9.0` / `incomplete` |
 | Offline evidence ready | `not ready` |
-| CI verified at evidence repository HEAD | `yes` |
+| CI verified at evidence repository HEAD | `no` |
 | Published release | `no` |
-| Artifact commit | `856a6c7164fe97450b5ab7ff34926445b48dcc35` |
-| Evidence commit | `d73eecee4e19fe56a57cd9f150fe0a62bae405c4` |
-| Repository HEAD at generation | `d73eecee4e19fe56a57cd9f150fe0a62bae405c4` |
-| CommonMark / cmark | `2.38x` / limit `2.5x` |
-| GFM HTML / cmark-gfm | `2.45x` / limit `2.5x` |
-| Benchmark identity | `stale-source-drift`; commit `856a6c7164fe97450b5ab7ff34926445b48dcc35`; SDK `1.1.0-alpha.20260803040049` |
+| Artifact commit | `27f8d9fa3973265a77fc71c0b5fd22af0bfe2add` |
+| Evidence commit | `27f8d9fa3973265a77fc71c0b5fd22af0bfe2add` |
+| Repository HEAD at generation | `27f8d9fa3973265a77fc71c0b5fd22af0bfe2add` |
+| CommonMark / cmark | `2.64x` / limit `2.5x` |
+| GFM HTML / cmark-gfm | `2.59x` / limit `2.5x` |
+| Benchmark identity | `current`; commit `27f8d9fa3973265a77fc71c0b5fd22af0bfe2add`; SDK `1.1.0-alpha.20260803040049` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
 `evidenceReady` describes reproducible offline artifacts and gates only. It does not claim that

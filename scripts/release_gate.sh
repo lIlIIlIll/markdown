@@ -24,6 +24,7 @@ scripts/cli_smoke.sh
 (cd examples/quickstart && cjpm build && cjpm run --skip-build)
 (cd examples/cookbook && cjpm build && cjpm run --skip-build)
 
+export MARKDOWN_DIFFERENTIAL_ROOT="$repo_root/target/differential-tools"
 scripts/setup_differential_tools.sh
 python3 scripts/differential_test.py
 cjpm bench --filter MarkdownReleaseBenchmarks --no-color \

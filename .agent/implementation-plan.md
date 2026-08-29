@@ -14,14 +14,21 @@ The active dependency order is:
    benchmark product-tree digest; reject drift in the release-evidence verifier.
 2. Correct the public API and artifact documentation, then update documentation
    checks so the same errors cannot recur.
-3. Run format, documentation, API, check/build, and full tests locally.
-4. Commit the candidate so the benchmark has a stable source identity.
-5. Build from a minimal fresh archive on Server, explicitly excluding every
+3. Run format, documentation, API, check/build, and full tests locally. Completed.
+4. Commit the candidate so the benchmark has a stable source identity. Completed
+   at `27f8d9fa3973265a77fc71c0b5fd22af0bfe2add`.
+5. Build from a minimal benchmark archive on Server, explicitly excluding every
    `target`, `build-script-cache`, `.agent`, `.agents`, `.codex`, Python cache,
    and native build product; run the complete fixed-CPU release benchmark.
+   Completed; CommonMark `2.640257x` and GFM `2.587756x` fail.
 6. Replace raw data, generated report, README, ledger, progress, and acceptance
-   report from that one canonical result, then run the complete fresh-archive
-   release gate.
+   report from that one canonical result. Completed. The release-gate archive
+   retains `.agent` because the verifier consumes it, while excluding `.agents`,
+   `.codex`, every build cache, and native product. The gate now isolates pinned
+   differential tools per checkout and supports the Server's pre-top-level-await
+   Node runtime. A fresh Server run passes every correctness, fuzz, differential,
+   benchmark-smoke, consumer, and bundle stage, then fails only the two canonical
+   `2.5x` performance gates as required.
 
 The current inventory is 1309 public declarations, 44 maintained Markdown files,
 23 required API entries, 4 runnable examples, and 40 unique assumptions. Historical
