@@ -820,10 +820,9 @@ formatter.cj:public let orderedDelimiter: String
 formatter.cj:public let reflowParagraphs: Bool
 formatter.cj:public let strongMarker: String
 formatter.cj:public let tablePadding: Bool
-isolation.cj:interface-member func invoke(request: IsolatedPluginRequest, policy: PluginIsolationPolicy, cancellation: CancellationToken, responseSink: IsolatedPluginResponseSink): IsolatedPluginResponseIdentity
+isolation.cj:interface-member func invoke(request: IsolatedPluginRequest, policy: PluginIsolationPolicy, cancellation: CancellationToken, responseSink: IsolatedPluginResponseSink): Unit
 isolation.cj:public class IsolatedPluginRequest {
 isolation.cj:public class IsolatedPluginResponse {
-isolation.cj:public class IsolatedPluginResponseIdentity {
 isolation.cj:public class IsolatedPluginResponseSink {
 isolation.cj:public class IsolatedPluginRunner {
 isolation.cj:public class PluginIsolationCapabilities {
@@ -835,12 +834,14 @@ isolation.cj:public func capabilities(): PluginIsolationCapabilities {
 isolation.cj:public func finishDiagnostic(): Unit {
 isolation.cj:public func invoke(request: IsolatedPluginRequest, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): IsolatedPluginResponse {
 isolation.cj:public func writeDiagnosticMessage(chunk: String): Unit {
+isolation.cj:public func writeExtensionId(chunk: String): Unit {
+isolation.cj:public func writeImplementationVersion(chunk: String): Unit {
 isolation.cj:public func writeOutput(chunk: String): Unit {
+isolation.cj:public func writeProtocolVersion(chunk: String): Unit {
 isolation.cj:public init() {}
 isolation.cj:public init(allowFileRead!: Bool = false, allowFileWrite!: Bool = false, allowNetwork!: Bool = false, allowChildProcesses!: Bool = false, maximumInputBytes!: Int64 = 1024 * 1024, maximumOutputBytes!: Int64 = 4 * 1024 * 1024, maximumDiagnosticCount!: Int64 = 1024, maximumDiagnosticMessageBytes!: Int64 = 64 * 1024, maximumDiagnosticAggregateBytes!: Int64 = 1024 * 1024, maximumResponseBytes!: Int64 = 5 * 1024 * 1024, protocolVersion!: String = "markdown-isolation-ipc-1") {
 isolation.cj:public init(extensionId: String, implementationVersion: String, operation: String, payload: String, protocolVersion!: String = "markdown-isolation-ipc-1") {
 isolation.cj:public init(extensionId: String, implementationVersion: String, output: String, diagnostics!: Array<Diagnostic> = [], protocolVersion!: String = "markdown-isolation-ipc-1") {
-isolation.cj:public init(protocolVersion: String, extensionId: String, implementationVersion: String) {
 isolation.cj:public init(transport: PluginIsolationTransport, policy!: PluginIsolationPolicy = PluginIsolationPolicy()) {
 isolation.cj:public interface PluginIsolationTransport {
 isolation.cj:public let allowChildProcesses: Bool

@@ -89,10 +89,12 @@ code extension 与宿主进程权限相同，库不声称对 callback 做进程�
 `IsolatedPluginRunner` 是 fail-closed IPC 契约；真正的 OS process、文件系统和网络隔离由
 宿主提供的 `PluginIsolationTransport` 实现。
 
-transport 的 `invoke` 实现必须增量调用 `IsolatedPluginResponseSink.writeOutput`；每条
-diagnostic 使用 `beginDiagnostic`、分块 `writeDiagnosticMessage` 和 `finishDiagnostic`，
-最后只返回 `IsolatedPluginResponseIdentity`。不要先把不可信 output 或 diagnostics 解码到
-宿主集合中；这样会绕过 `PluginIsolationPolicy` 的 response 预算。
+transport 的 `invoke` 实现必须把响应身份、output 和 diagnostics 增量写入
+`IsolatedPluginResponseSink`。身份字段分别使用 `writeProtocolVersion`、`writeExtensionId` 和
+`writeImplementationVersion`。输出使用 `writeOutput`。每条 diagnostic 使用
+`beginDiagnostic`、分块 `writeDiagnosticMessage` 和 `finishDiagnostic`。`invoke` 返回
+`Unit`。不要先把不可信字符串解码到宿主集合中。这样做会绕过
+`PluginIsolationPolicy` 的 response 预算。
 
 外部 JSON/YAML descriptor 只能携带数据，不能携带或执行 callback。Front Matter 和 Math
 官方扩展也只保留 literal，不解释配置或执行数学引擎。

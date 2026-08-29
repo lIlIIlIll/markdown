@@ -52,7 +52,8 @@ host-code extension 拥有宿主进程权限。`IsolatedPluginRunner` 只定义 
 宿主的 `PluginIsolationTransport` 必须建立 OS process、filesystem、network 和 child
 process 限制。transport 必须在解码时将 output chunk 写入 `writeOutput`；diagnostic 依次
 调用 `beginDiagnostic`、分块 `writeDiagnosticMessage`、逐项 related span/fix 和
-`finishDiagnostic`。不能先构造无界 response 或 diagnostic message。
+`finishDiagnostic`。响应身份字段必须分块写入 `writeProtocolVersion`、`writeExtensionId` 和
+`writeImplementationVersion`。不能先构造无界身份字段、response 或 diagnostic message。
 
 `PluginIsolationPolicy` 分别限制 output、diagnostic 数量、单条 diagnostic message、
 diagnostic 聚合字节和完整 response 字节。达到任一上限时，sink 在保留该项之前失败。

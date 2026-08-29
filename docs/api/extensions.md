@@ -274,13 +274,15 @@ TCK 检查 parse/render、span、determinism、chunk invariance 和 AST invarian
 host-code extension 拥有宿主进程权限。`IsolatedPluginRunner` 只定义 fail-closed IPC
 协议；`PluginIsolationTransport` 必须由宿主创建真实 OS process 或 sandbox。
 
-transport 通过 `IsolatedPluginResponseSink` 增量提交解码结果：使用 `writeOutput` 写 output
-chunk；每条诊断依次调用 `beginDiagnostic`、分块 `writeDiagnosticMessage`、按需调用
-`addDiagnosticRelatedSpan` / `addDiagnosticFix`，再调用 `finishDiagnostic`。transport 返回
-`IsolatedPluginResponseIdentity` 结束响应。
+transport 通过 `IsolatedPluginResponseSink` 增量提交全部不可信字符串。依次使用
+`writeProtocolVersion`、`writeExtensionId` 和 `writeImplementationVersion` 提交响应身份字段，
+使用 `writeOutput` 提交 output chunk。每条诊断调用 `beginDiagnostic`，分块调用
+`writeDiagnosticMessage`，按需调用 `addDiagnosticRelatedSpan` 和 `addDiagnosticFix`，然后调用
+`finishDiagnostic`。`PluginIsolationTransport.invoke` 返回 `Unit`。
 sink 在保留数据前执行 `maximumOutputBytes`、`maximumDiagnosticCount`、
 `maximumDiagnosticMessageBytes`、`maximumDiagnosticAggregateBytes` 和
-`maximumResponseBytes`。transport 不得先构造完整的 `IsolatedPluginResponse`。
+`maximumResponseBytes`。transport 不得先构造完整的身份字段、`IsolatedPluginResponse` 或
+diagnostic message。
 
 ## 下一步
 
