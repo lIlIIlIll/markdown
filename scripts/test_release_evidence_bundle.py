@@ -53,6 +53,28 @@ class ReleaseEvidenceBundleTest(unittest.TestCase):
                 ["release evidence checksum mismatch: result.json"],
             )
 
+    def test_checksum_verification_rejects_unlisted_and_stale_files(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            artifact = root / "result.json"
+            artifact.write_text(json.dumps({"passed": 1}) + "\n", encoding="utf-8")
+            (root / "SHA256SUMS").write_text(
+                f"{bundle.sha256(artifact)}  result.json\n", encoding="utf-8"
+            )
+            injected = root / "candidate" / "injected.cjp"
+            injected.parent.mkdir()
+            injected.write_bytes(b"untrusted")
+            self.assertEqual(
+                bundle.verify_checksums(root),
+                ["release evidence file is missing from SHA256SUMS: candidate/injected.cjp"],
+            )
+            injected.unlink()
+            artifact.unlink()
+            self.assertEqual(
+                bundle.verify_checksums(root),
+                ["release evidence checksum mismatch: result.json"],
+            )
+
     def test_snapshot_survives_target_cleanup_and_publish(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

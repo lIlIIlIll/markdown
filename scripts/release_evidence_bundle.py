@@ -217,11 +217,34 @@ def verify_checksums(output: Path) -> list[str]:
     sums = output / "SHA256SUMS"
     if not sums.is_file():
         return ["release evidence bundle is missing SHA256SUMS"]
-    for line in sums.read_text(encoding="utf-8").splitlines():
-        expected, relative = line.split("  ", 1)
+    listed: set[str] = set()
+    for line_number, line in enumerate(sums.read_text(encoding="utf-8").splitlines(), start=1):
+        parts = line.split("  ", 1)
+        if len(parts) != 2:
+            errors.append(f"release evidence checksum entry is malformed at line {line_number}")
+            continue
+        expected, relative = parts
+        relative_path = Path(relative)
+        if relative_path.is_absolute() or ".." in relative_path.parts or relative == "SHA256SUMS":
+            errors.append(f"release evidence checksum path is invalid: {relative}")
+            continue
+        if relative in listed:
+            errors.append(f"release evidence checksum path is duplicated: {relative}")
+            continue
+        listed.add(relative)
         path = output / relative
         if not path.is_file() or sha256(path) != expected:
             errors.append(f"release evidence checksum mismatch: {relative}")
+    retained = {
+        path.relative_to(output).as_posix()
+        for path in output.rglob("*")
+        if path.is_file() and path.name != "SHA256SUMS"
+    }
+    for relative in sorted(retained - listed):
+        errors.append(f"release evidence file is missing from SHA256SUMS: {relative}")
+    for relative in sorted(listed - retained):
+        if f"release evidence checksum mismatch: {relative}" not in errors:
+            errors.append(f"release evidence checksum lists a missing file: {relative}")
     return errors
 
 
