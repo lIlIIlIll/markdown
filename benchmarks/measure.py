@@ -5,17 +5,21 @@ from __future__ import annotations
 
 import hashlib
 import json
-import math
 import os
 from datetime import datetime, timezone
 from pathlib import Path
 import platform
-import statistics
 import subprocess
 import time
 
 from generate_corpus import corpus, ordinary_corpus, COMMONMARK, GFM
 from benchmark_identity import benchmark_product_tree_sha256
+from release_statistics import (
+    benchmark_harness_sha256,
+    geometric_mean,
+    median_seconds,
+    slope,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -84,14 +88,6 @@ def paired_samples(left: list[str], right: list[str], data: bytes,
         for command, destination in order:
             destination.append(run_sample(command, data))
     return left_values, right_values
-
-
-def median_seconds(values: list[dict[str, float | int | str]]) -> float:
-    return statistics.median(float(value["seconds"]) for value in values)
-
-
-def geometric_mean(values: list[float]) -> float:
-    return math.exp(statistics.mean(math.log(value) for value in values))
 
 
 def sized(data: bytes, size: int = MATRIX_BYTES) -> bytes:
@@ -195,14 +191,6 @@ def gfm_phase_profiles(corpora: dict[str, bytes]) -> dict[str, object]:
     }
 
 
-def slope(points: list[tuple[int, float]]) -> float:
-    xs = [math.log(float(size)) for size, _ in points]
-    ys = [math.log(duration) for _, duration in points]
-    xmean = statistics.mean(xs)
-    ymean = statistics.mean(ys)
-    return sum((x - xmean) * (y - ymean) for x, y in zip(xs, ys)) / sum((x - xmean) ** 2 for x in xs)
-
-
 def cpu_model() -> str:
     for line in Path("/proc/cpuinfo").read_text().splitlines():
         if line.startswith("model name"):
@@ -282,9 +270,10 @@ def main() -> int:
         "identity": {
             "generatedAt": datetime.now(timezone.utc).isoformat(),
             "sourceCommit": os.environ.get("MARKDOWN_SOURCE_COMMIT", ""),
+            "sourceGitTree": os.environ.get("MARKDOWN_SOURCE_GIT_TREE", ""),
             "productSourceArchiveSha256": os.environ.get("MARKDOWN_SOURCE_ARCHIVE_SHA256", ""),
             "productTreeSha256": benchmark_product_tree_sha256(ROOT),
-            "benchmarkHarnessSha256": file_sha256(Path(__file__)),
+            "benchmarkHarnessSha256": benchmark_harness_sha256(ROOT),
             "markdownDriverSha256": file_sha256(DRIVER),
             "cmarkDriverSha256": file_sha256(CMARK),
             "cmarkGfmDriverSha256": file_sha256(CMARK_GFM),

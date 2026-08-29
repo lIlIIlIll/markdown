@@ -27,7 +27,7 @@ tag/class/attribute 和缺失 renderer coverage。
 
 TCK 验证协议行为，不是宿主代码沙箱证明。SPI 和 processor callback 拥有宿主进程权限。
 需要隔离时，使用宿主实现的 `PluginIsolationTransport`，并测试 worker failure、协议版本、
-oversized output、cancellation 和权限策略。
+oversized output、diagnostic count、单条和聚合 diagnostic 大小、完整 response、
+cancellation 和权限策略。
 
 仓库内扩展测试入口和更多验证命令见 [贡献指南](../CONTRIBUTING.md)。
-

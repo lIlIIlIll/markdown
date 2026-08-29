@@ -13,16 +13,25 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "benchmarks"))
+sys.path.insert(0, str(ROOT / "scripts"))
 
-from benchmark_identity import benchmark_product_tree_sha256
+from benchmark_identity import (
+    PRODUCT_FILES,
+    PRODUCT_ROOTS,
+    benchmark_product_tree_sha256,
+)
 from measure import benchmark_corpora
+from release_statistics import (
+    benchmark_harness_sha256,
+    validate_benchmark_derivations,
+)
+from release_evidence_bundle import verify_checksums
 
 
 EVIDENCE = ROOT / "release-evidence.json"
 README = ROOT / "README.md"
 BENCHMARK_REPORT = ROOT / "docs/reports/benchmark.md"
 ACCEPTANCE = ROOT / ".agent/acceptance-report.md"
-BENCHMARK_HARNESS = ROOT / "benchmarks/measure.py"
 
 
 def digest(path: Path) -> str:
@@ -172,8 +181,9 @@ def validate_current_benchmark_identity(raw: dict[str, object],
     evidence_harness = benchmark.get("benchmarkHarnessSha256")
     if not raw_harness or raw_harness != evidence_harness:
         errors.append("benchmark harness identity is unbound or inconsistent")
-    if raw_harness != digest(BENCHMARK_HARNESS):
-        errors.append("benchmark harness does not match current measure.py")
+    if raw_harness != benchmark_harness_sha256(ROOT):
+        errors.append("benchmark harness does not match current harness files")
+    errors.extend(validate_benchmark_derivations(raw))
     return errors
 
 
@@ -188,7 +198,7 @@ def validate_reachable_commit(commit: object, label: str) -> list[str]:
         check=False,
     )
     if inside.returncode != 0:
-        return []
+        return [f"{label} commit cannot be verified outside a Git work tree"]
     reachable = subprocess.run(
         ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
         cwd=ROOT,
@@ -201,10 +211,167 @@ def validate_reachable_commit(commit: object, label: str) -> list[str]:
     return []
 
 
-def validate(data: dict[str, object], evidence_ready: bool) -> list[str]:
+def benchmark_product_tree_sha256_at_commit(commit: str, root: Path | None = None) -> str:
+    """Compute the benchmark product tree from Git blobs, never the work tree."""
+    if root is None:
+        root = ROOT
+    listing = subprocess.run(
+        ["git", "ls-tree", "-rz", "--name-only", commit, "--", *PRODUCT_FILES,
+         *PRODUCT_ROOTS],
+        cwd=root,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if listing.returncode != 0:
+        raise ValueError(listing.stderr.decode("utf-8", errors="replace").strip())
+    paths = sorted(
+        path.decode("utf-8")
+        for path in listing.stdout.split(b"\0")
+        if path
+    )
+    digest_value = hashlib.sha256(b"markdown-benchmark-product-tree-v1\0")
+    for path in paths:
+        blob = subprocess.run(
+            ["git", "show", f"{commit}:{path}"],
+            cwd=root,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if blob.returncode != 0:
+            raise ValueError(blob.stderr.decode("utf-8", errors="replace").strip())
+        encoded = path.encode("utf-8")
+        digest_value.update(len(encoded).to_bytes(8, "big"))
+        digest_value.update(encoded)
+        digest_value.update(len(blob.stdout).to_bytes(8, "big"))
+        digest_value.update(blob.stdout)
+    return digest_value.hexdigest()
+
+
+def validate_commit_product_tree(commit: object, label: str,
+        expected_tree: object) -> list[str]:
+    errors = validate_reachable_commit(commit, label)
+    if errors:
+        return errors
+    if not isinstance(expected_tree, str) or not expected_tree:
+        return [f"{label} product tree is unbound"]
+    assert isinstance(commit, str)
+    try:
+        actual_tree = benchmark_product_tree_sha256_at_commit(commit)
+    except ValueError as error:
+        return [f"{label} product tree cannot be read from commit {commit}: {error}"]
+    if actual_tree != expected_tree:
+        return [f"{label} commit product tree does not match benchmark identity: {commit}"]
+    return []
+
+
+def validate_commit_git_tree(commit: object, label: str, expected_tree: object) -> list[str]:
+    if not isinstance(commit, str) or not commit:
+        return [f"{label} commit is unbound"]
+    if not isinstance(expected_tree, str) or not expected_tree:
+        return [f"{label} Git tree is unbound"]
+    result = subprocess.run(
+        ["git", "rev-parse", f"{commit}^{{tree}}"], cwd=ROOT, text=True,
+        capture_output=True, check=False,
+    )
+    if result.returncode != 0:
+        return [f"{label} Git tree cannot be read from commit: {commit}"]
+    if result.stdout.strip() != expected_tree:
+        return [f"{label} Git tree does not match commit: {commit}"]
+    return []
+
+
+def validate_execution_manifest(data: dict[str, object], path: Path) -> list[str]:
     errors: list[str] = []
-    if data.get("schemaVersion") != 3:
-        errors.append("release evidence schemaVersion must be 3")
+    if not path.is_file():
+        return [f"release execution manifest is missing: {path}"]
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    if manifest.get("schemaVersion") != 1:
+        errors.append("release execution manifest schemaVersion must be 1")
+    if manifest.get("gateExitCode") != 0:
+        errors.append("release execution manifest records a failed gate")
+    steps = manifest.get("steps")
+    required_steps = {
+        "format", "docs", "native-build-tests", "api-checker-tests", "api",
+        "static-check", "release-evidence-consistency", "release-evidence-tests",
+        "benchmark-driver-tests", "build", "native-build", "benchmark-driver",
+        "native-fuzz", "benchmark-profile-tests", "tests", "cli-build", "cli-smoke",
+        "quickstart", "cookbook", "differential-setup", "differential",
+        "benchmark-smoke", "bundle",
+    }
+    if not isinstance(steps, list):
+        errors.append("release execution manifest has no step records")
+        steps = []
+    names = {step.get("name") for step in steps if isinstance(step, dict)}
+    missing = sorted(required_steps - names)
+    if missing:
+        errors.append("release execution manifest is missing steps: " + ", ".join(missing))
+    failed = sorted(
+        str(step.get("name")) for step in steps
+        if isinstance(step, dict) and step.get("exitCode") != 0
+    )
+    if failed:
+        errors.append("release execution steps failed: " + ", ".join(failed))
+
+    identity = data["identity"]
+    benchmark = data["benchmark"]
+    if manifest.get("repositoryCommit") != identity["repositoryHeadAtGeneration"]:
+        errors.append("release execution commit does not match evidence generation HEAD")
+    if manifest.get("gitTree") != identity.get("repositoryGitTreeAtGeneration"):
+        errors.append("release execution Git tree does not match evidence generation tree")
+    if manifest.get("productTreeSha256") != benchmark["productTreeSha256"]:
+        errors.append("release execution product tree does not match benchmark identity")
+    if manifest.get("treeState") != "clean":
+        errors.append("release execution work tree was not clean")
+
+    actual_tests = manifest.get("tests")
+    declared_tests = data["tests"]
+    if not isinstance(actual_tests, dict):
+        errors.append("release execution JUnit metrics are missing")
+    else:
+        expected_tests = {
+            "total": declared_tests["total"],
+            "passed": declared_tests["passed"],
+            "skipped": declared_tests["skipped"],
+            "failures": declared_tests["failed"],
+            "errors": declared_tests["errors"],
+        }
+        if actual_tests != expected_tests:
+            errors.append("declared test metrics do not match JUnit XML")
+        if (actual_tests.get("failures") != 0 or actual_tests.get("errors") != 0
+                or actual_tests.get("passed", 0) + actual_tests.get("skipped", 0)
+                != actual_tests.get("total")):
+            errors.append("JUnit XML does not prove a complete passing test run")
+
+    conformance = manifest.get("conformance", {})
+    for key in ("commonmark", "gfm"):
+        actual = conformance.get(key) if isinstance(conformance, dict) else None
+        declared = data["conformance"][key]
+        if (not isinstance(actual, dict) or actual.get("passed") != declared["passed"]
+                or actual.get("total") != declared["total"]
+                or actual.get("failures") != 0 or actual.get("errors") != 0):
+            errors.append(f"declared {key} conformance metrics do not match JUnit XML")
+
+    actual_api = manifest.get("api")
+    if (not isinstance(actual_api, dict)
+            or actual_api.get("declarations") != data["api"]["declarations"]
+            or actual_api.get("snapshotSha256") != data["api"]["sha256"]):
+        errors.append("declared API metrics do not match the generated inventory")
+    actual_benchmark = manifest.get("benchmark")
+    if (not isinstance(actual_benchmark, dict)
+            or actual_benchmark.get("rawSha256") != benchmark["rawSha256"]
+            or actual_benchmark.get("derivationErrors") != []):
+        errors.append("release execution benchmark samples do not prove declared statistics")
+    errors.extend(verify_checksums(path.parent))
+    return errors
+
+
+def validate(data: dict[str, object], evidence_ready: bool,
+        execution_manifest: Path | None = None) -> list[str]:
+    errors: list[str] = []
+    if data.get("schemaVersion") not in (3, 4):
+        errors.append("release evidence schemaVersion must be 3 or 4")
     for section, path_key, digest_key in (
         (data["conformance"]["commonmark"], "corpusPath", "corpusSha256"),
         (data["conformance"]["gfm"], "corpusPath", "corpusSha256"),
@@ -233,6 +400,7 @@ def validate(data: dict[str, object], evidence_ready: bool) -> list[str]:
         errors.append("benchmark optimization is absent from compiler flags")
     for raw_key, evidence_key in (
         ("sourceCommit", "sourceCommit"),
+        ("sourceGitTree", "sourceGitTree"),
         ("productSourceArchiveSha256", "productSourceArchiveSha256"),
         ("benchmarkHarnessSha256", "benchmarkHarnessSha256"),
         ("markdownDriverSha256", "markdownDriverSha256"),
@@ -251,11 +419,25 @@ def validate(data: dict[str, object], evidence_ready: bool) -> list[str]:
     identity = data["identity"]
     release = data["release"]
     if benchmark["status"] == "current" or evidence_ready:
-        errors.extend(validate_reachable_commit(benchmark["sourceCommit"], "benchmark source"))
-        errors.extend(validate_reachable_commit(identity["artifactCommit"], "artifact"))
-        errors.extend(validate_reachable_commit(identity["evidenceCommit"], "evidence"))
-        errors.extend(validate_reachable_commit(
-            identity["repositoryHeadAtGeneration"], "repository generation HEAD"
+        expected_tree = benchmark["productTreeSha256"]
+        errors.extend(validate_commit_product_tree(
+            benchmark["sourceCommit"], "benchmark source", expected_tree
+        ))
+        errors.extend(validate_commit_product_tree(
+            identity["artifactCommit"], "artifact", expected_tree
+        ))
+        errors.extend(validate_commit_product_tree(
+            identity["evidenceCommit"], "evidence", expected_tree
+        ))
+        errors.extend(validate_commit_product_tree(
+            identity["repositoryHeadAtGeneration"], "repository generation HEAD", expected_tree
+        ))
+        errors.extend(validate_commit_git_tree(
+            benchmark["sourceCommit"], "benchmark source", benchmark.get("sourceGitTree")
+        ))
+        errors.extend(validate_commit_git_tree(
+            identity["repositoryHeadAtGeneration"], "repository generation HEAD",
+            identity.get("repositoryGitTreeAtGeneration")
         ))
     if benchmark["status"] == "current" and benchmark["sourceCommit"] != identity["artifactCommit"]:
         errors.append("current benchmark source does not match artifact commit")
@@ -266,6 +448,8 @@ def validate(data: dict[str, object], evidence_ready: bool) -> list[str]:
     if release["published"] and not release["ciVerifiedAtHead"]:
         errors.append("published release is not CI-verified at the evidence repository HEAD")
     if evidence_ready:
+        if data.get("schemaVersion") != 4:
+            errors.append("evidence-ready validation requires release evidence schemaVersion 4")
         if release["status"] != "evidence-ready" or not release["evidenceReady"]:
             errors.append("offline evidence status is not evidence-ready")
         if (not identity["artifactCommit"] or not identity["evidenceCommit"]
@@ -279,6 +463,10 @@ def validate(data: dict[str, object], evidence_ready: bool) -> list[str]:
         if (benchmark["commonmarkRatio"] > benchmark["ratioLimit"]
                 or benchmark["gfmRatio"] > benchmark["ratioLimit"]):
             errors.append("mandatory benchmark ratio gate failed")
+        if execution_manifest is None:
+            errors.append("evidence-ready validation requires an execution manifest")
+        else:
+            errors.extend(validate_execution_manifest(data, execution_manifest))
     return errors
 
 
@@ -286,6 +474,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--write", action="store_true")
     parser.add_argument("--evidence-ready", action="store_true")
+    parser.add_argument("--execution-manifest", type=Path)
     args = parser.parse_args()
     data = load()
     expected_readme = replace_block(README, readme_block(data))
@@ -305,7 +494,7 @@ def main() -> int:
         if BENCHMARK_REPORT.read_text(encoding="utf-8") != expected_benchmark:
             print("benchmark report is stale", file=sys.stderr)
             return 1
-    errors = validate(data, args.evidence_ready)
+    errors = validate(data, args.evidence_ready, args.execution_manifest)
     if errors:
         for error in errors:
             print(error, file=sys.stderr)

@@ -107,6 +107,16 @@
   fixture 继续保留各自上游许可证，不重许可。
 - 理由：MIT 是简洁、宽松且不改变上游测试数据归属的最小发布选择。
 
+## A-042：审计修复后的证据失效与隔离协议破坏性变更
+
+- 状态：`resolved`
+- 决策日期：2026-08-30
+- 涉及：`MD-FUT-002`、`MD-TST-002`、`MD-PERF-001-002`、`MD-REL-001`、`MD-QUAL-001`
+- 歧义：2026-08-30 审计发现旧 release evidence 可以用可达祖先冒名、信任可修改派生值且没有下载证据包；同时修复 diagnostic 预算需要改变公开 transport SPI。旧性能样本的数值仍通过，但产品和 harness 已改变。
+- 决定：旧 raw 降为 historical/stale，不沿用其 pass 状态。schema v4 必须绑定 source commit、source Git tree、product tree、执行 commit/tree、JUnit/API inventory、独立 benchmark 重算和证据包校验和。`PluginIsolationTransport` 在 0.9 pre-GA 采用破坏性增量 response sink；不能用构造完整 response 的兼容 adapter 绕过预算。
+- 理由：用户明确允许破坏性变更；fail-closed 证据和解码前资源控制优先于 preview SPI 兼容。固定提交的 fresh canonical 与 clean full gate 用于恢复其余 4 个聚合 requirement 的 `pass`。
+- 影响 requirements：lockfile-bound differential 完成后 `MD-TST-002` 可恢复 `pass`；其余 4 个聚合发布/性能条目在新 canonical 与证据包完成前为 `implemented_unverified`。隔离与安全条目由当前 1456/1456 测试保持 `pass`。
+
 ## A-012：`≈` 的 AST 语义等价规则未定义
 
 - 状态：`resolved`

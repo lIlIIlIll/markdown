@@ -1,8 +1,8 @@
 # Release benchmark report
 
-Status: **PASS**
+Status: **FAIL**
 
-Evidence status: `current`. Canonical 2026-08-29 fixed-Server release run for product commit c63c52528aef6cc5ea46d4b152e08af6a5344f2f. The minimal archive excluded .git, every target/build-script-cache directory, .agent, .agents, .codex, Python caches and native build products. Xeon Gold 6248R CPU 24, Cangjie 1.1.0-alpha.20260803040049, root -O2, benchmark-consumer -O2 --lto thin, 2 GiB heap, cjGCInterval=500ms and seven alternating paired samples measured CommonMark 2.334095x and GFM 2.466373x; both 2.5x gates pass. Ordinary 3.538540x/1.994487x, scaling 0.349193 with maximum adjacent 1.514705, pathological 0.700414 with maximum adjacent 2.187767, and extra RSS 31224 KiB also pass. The GC interval is a disclosed benchmark process setting and does not change Markdown.parse defaults.
+Evidence status: `stale`. Historical 2026-08-29 fixed-Server result for c63c525 remains retained but is stale after the P0-P2 audit remediation changed product and harness identity. It must not be used as current release evidence.
 
 - CommonMark parse-only geometric mean ratio vs cmark: `2.33x` (limit `2.5x`).
 - GFM parse+HTML geometric mean ratio vs cmark-gfm: `2.47x` (limit `2.5x`).

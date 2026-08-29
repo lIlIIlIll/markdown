@@ -50,7 +50,13 @@ policy。普通扩展字符串会被转义。
 
 host-code extension 拥有宿主进程权限。`IsolatedPluginRunner` 只定义 IPC contract。
 宿主的 `PluginIsolationTransport` 必须建立 OS process、filesystem、network 和 child
-process 限制。
+process 限制。transport 必须在解码时将 output chunk 写入 `writeOutput`；diagnostic 依次
+调用 `beginDiagnostic`、分块 `writeDiagnosticMessage`、逐项 related span/fix 和
+`finishDiagnostic`。不能先构造无界 response 或 diagnostic message。
+
+`PluginIsolationPolicy` 分别限制 output、diagnostic 数量、单条 diagnostic message、
+diagnostic 聚合字节和完整 response 字节。达到任一上限时，sink 在保留该项之前失败。
+这些协议预算不能替代 OS sandbox，两者都必须配置。
 
 ## 资源攻击面
 
@@ -68,4 +74,3 @@ delimiter、callback、transform 和 render work。
 
 请附带版本、profile、最小输入、配置、输出或资源使用和复现步骤。维护策略见
 [`SECURITY.md`](../SECURITY.md)。
-

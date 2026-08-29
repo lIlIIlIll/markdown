@@ -1906,6 +1906,7 @@ requirements:
   - src/security_corpus_test.cj
   - SECURITY.md
   - docs/security.md
+  - 'SECURITY.md: supported-version table, private fallback contact, response targets, advisory/CVE and backport policy'
   tests:
   - GitHub private vulnerability reporting API verification
   evidence:
@@ -2120,8 +2121,10 @@ requirements:
   status: pass
   implementation:
   - docs/prd/markdown-library.md
+  - 'src/isolation.cj: bounded incremental output and diagnostic response decoder'
   tests:
   - 'src/isolation_test.cj: PluginIsolationTest.isolationPolicyIpcIdentityLimitsCancellationAndFailClosedAreEnforced'
+  - 'src/isolation_test.cj: PluginIsolationTest.isolationDiagnosticsAreBoundedDuringTransportDecode'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2404,6 +2407,7 @@ requirements:
   - scripts/release_gate.sh
   - '.github/workflows/candidate-validation.yml: pinned minimum/current SDK matrix executes the complete release gate'
   - 'scripts/setup_differential_tools.sh: pinned, reproducible cmark/cmark-gfm/commonmark.js setup used by the gate'
+  - 'tests/differential/commonmark-js/package.json and package-lock.json: exact npm graph and integrity records consumed by npm ci'
   - 'tests/fuzz/native_scanner_fuzz.c and scripts/fuzz_native_scanner.py: coverage-guided libFuzzer with ASan/UBSan'
   - 'tests/fuzz/native_scanner_sanitizer.c: deterministic scanner boundary sanitizer harness'
   - 'tests/fuzz/crashes and tests/fuzz/native-scanner-corpus: checked-in historical crash and seed corpora'
@@ -2415,7 +2419,8 @@ requirements:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: differential test; 25 checked, 24 exact, 1 classified, 0 unexpected'
-  notes: "The local gate is self-contained; hosted CI status and branch protection are repository-state evidence, not substitutes for test behavior. Assumptions: A-001, A-002, A-004."
+  - '2026-08-30: lockfile-bound differential test; exit 0; 25 checked, 24 exact, 1 classified, 0 unexpected; report records all oracle commits and package-lock SHA-256 5039e5908c413995423f55a3e1303d55030e0fd2794de9655f180d5ccce956f1'
+  notes: "The npm graph is lockfile-bound, npm ci completed, and the passing report records oracle commits plus lock digest. Hosted CI status and branch protection are repository-state evidence, not substitutes for test behavior. Assumptions: A-001, A-002, A-004."
 - id: MD-TST-003
   source: PRD §44.3-4, §51.3, §52
   target: '1.0'
@@ -2503,11 +2508,12 @@ requirements:
   - 语料覆盖规范示例、README/API docs、大 code/table/reference、CJK、emoji、deep list、pathological delimiter、long line 和 extensions
   - cmark、cmark-gfm、commonmark.js 仅用于测试/benchmark
   - 固定 reference host、工具版本、构建模式和原始样本可复核
-  status: pass
+  status: implemented_unverified
   implementation:
   - src/benchmark_test.cj
   - src/renderer.cj
   - benchmarks/measure.py
+  - 'benchmarks/release_statistics.py: independent recomputation of every ratio, slope, RSS delta and gate from raw samples'
   - benchmarks/driver/src/main.cj
   - benchmarks/compare_markdown4cj.py
   - docs/reports/benchmark.md
@@ -2536,7 +2542,7 @@ requirements:
   - '2026-08-28: historical R60 canonical raw SHA-256 30f3a7000ad0b57e11857cee33a9f72c9681b704d16ba2981ba08aaaba53f613 superseded R57 and bound workspace commit anchor 2454b062, exact minimal archive b79cd108f8a1afa5b4818c9ab0626d8284beed97895db50c9e71184085b7d69d, fresh driver 81c82f3d690cfeb9e01b03e9c5b35884ad19436c8d05c7cbab23ee78b742dcb5, harness 41b068720b6b7cc9898fc3fe4aa3df174a987d6c3ba359324b2d9b63d7778c86, SDK 1.1.0-alpha.20260803040049 and both frozen reference drivers'
   - '2026-08-28: historical R65 canonical raw SHA-256 442842c801231d738b423aaf8e00b61cba6359c22a1d1a6ae5f1c48f72ed6d41 superseded R60 and bound workspace commit anchor 2454b062, exact minimal archive d05f78e676a374cd579459078bdf517fc5e15dac4879860ddd086eef9a30cc04, fresh driver a1048827aea26427625a7870a386d7b2e87c5b09ef44983741d21c1372d7440a, harness 41b068720b6b7cc9898fc3fe4aa3df174a987d6c3ba359324b2d9b63d7778c86, SDK 1.1.0-alpha.20260803040049 and both frozen reference drivers'
   - '2026-08-28: current R76 canonical raw SHA-256 730249530cad110b3c38dccd95cd7ad973ff580a45e13a4ec963616a1f6160c8 supersedes R65 and binds workspace commit anchor 2454b062, exact minimal archive cef965b03d8cc9d2d878ae30221c38db5d405103afe098473f548d7387b5da61, fresh driver ce8812ae91f5bebff65f7139dcfd9d044000ae75686d3b015b176723544c1df4, harness 41b068720b6b7cc9898fc3fe4aa3df174a987d6c3ba359324b2d9b63d7778c86, SDK 1.1.0-alpha.20260803040049 and both frozen reference drivers'
-  notes: "Assumptions: A-001, A-002, A-004, A-011, A-017, A-029, A-034, A-035, A-038."
+  notes: "The previous raw is intentionally stale because product and harness identity changed. A fresh fixed-Server run bound to a committed source/Git/product tree is required. Assumptions: A-001, A-002, A-004, A-011, A-017, A-029, A-034, A-035, A-038."
 - id: MD-PERF-002
   source: PRD §45.4, §51.7, §52
   target: '1.0'
@@ -2550,7 +2556,7 @@ requirements:
   - renderer 不无界缓存输出
   - 相对接受基线回退超过 10% 时 CI 失败或有显式批准
   - SourceMap、CST 等可选能力分别记录开销
-  status: pass
+  status: implemented_unverified
   implementation:
   - src/benchmark_test.cj
   - benchmarks/measure.py
@@ -2892,7 +2898,7 @@ requirements:
   - 记录第三方测试数据归属
   - 核心发布无非标准原生动态库
   - requirements.yaml 中所有 target=1.0 或 cross-release 且适用于 1.0 的条目均为 pass
-  status: pass
+  status: implemented_unverified
   implementation:
   - CHANGELOG.md
   - LICENSE
@@ -2901,6 +2907,7 @@ requirements:
   - scripts/setup_differential_tools.sh
   - release-evidence.json
   - scripts/release_evidence.py
+  - 'scripts/release_evidence_bundle.py: command/exit/JUnit/API/benchmark/source-archive manifest and SHA256SUMS collector'
   tests:
   - scripts/release_gate.sh
   - cjpm bundle
@@ -2919,7 +2926,7 @@ requirements:
   - '2026-08-29 release gate isolates pinned differential tools under the checkout target directory and uses a top-level-await-free CommonMark JS driver. A fresh Server run rebuilt C references from exact commits and reached the final evidence-ready check; every earlier stage passed, including 1455/1455 tests, differential 25/24/1/0 and bundle.'
   - '2026-08-29 current bundle evidence: target/markdown-0.9.0.cjp is 498701 bytes with SHA-256 a962a9292fc5baca2f950ec08ad1ccabd80d19ff45142eafc0a84ebec16d5beb.'
   - '2026-08-29 current full release gate exit 0; bundle target/markdown-0.9.0.cjp is 494310 bytes with SHA-256 7d6c3d9800d9b9757df83ced7bfb179d056d17e89599624c47e3a38c3f44b3f6; release-evidence --evidence-ready passes.'
-  notes: "A-036 keeps the breaking pre-GA package at 0.9.0 rather than prematurely freezing a 1.x ABI. Current offline release evidence is ready. Hosted CI verification, repository publication and package publication remain separate claims and are false in release-evidence.json. The private vulnerability reporting channel is enabled. Assumptions: A-001, A-002, A-004, A-009, A-023, A-024, A-027, A-036, A-039, A-040, A-041."
+  notes: "Schema v4 and CI artifact upload are implemented, but offline evidence is deliberately not ready until the remediated committed tree receives a fresh canonical benchmark and clean full release gate. Hosted CI verification, repository publication and package publication remain separate claims. Assumptions: A-001, A-002, A-004, A-009, A-023, A-024, A-027, A-036, A-039, A-040, A-041."
 - id: MD-QUAL-001
   source: PRD §51.7, §52
   target: '1.0'
@@ -2931,7 +2938,7 @@ requirements:
   - 默认 raw HTML passthrough=0，核心非标准原生依赖=0
   - 未批准性能回归不超过 10%
   - Tier 1 输出一致且示例可在干净环境构建
-  status: pass
+  status: implemented_unverified
   implementation:
   - docs/reports/benchmark.md
   - docs/reports/fuzz-summary.md
@@ -2949,4 +2956,4 @@ requirements:
   - '2026-08-29 fresh-archive Server release gate passes format/docs/API/check/build, native ASan+UBSan fuzz 10000, full tests 1455/1455, public consumers, differential 25/24/1/0, benchmark smoke and bundle; its only failure is the final fail-closed performance readiness verdict.'
   - '2026-08-29 latest complete canonical passes CommonMark 2.334095x and GFM 2.466373x with every ordinary, scaling, pathological and RSS gate true; raw SHA-256 ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37.'
   - '2026-08-29 current full release gate exit 0 with 1455/1455 tests, CommonMark 652/652, GFM 671/671, differential 25/24/1/0, native ASan+UBSan fuzz 10000, benchmark smoke 3/3, both public consumers and bundle.'
-  notes: "All aggregate correctness, compatibility, security and performance targets have current evidence. Hosted CI and publication remain separate non-requirement claims. Assumptions: A-001, A-002, A-004, A-010, A-023, A-038, A-039."
+  notes: "Correctness currently passes 1456/1456, but aggregate release quality remains unverified until schema-v4 canonical performance and the complete evidence bundle are current. Hosted CI and publication remain separate claims. Assumptions: A-001, A-002, A-004, A-010, A-023, A-038, A-039."

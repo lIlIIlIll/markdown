@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 from pathlib import Path
 import subprocess
@@ -17,6 +18,13 @@ CMARK = TOOLS_ROOT / "markdown-cmark-0.31.1/build/src/cmark"
 CMARK_GFM = TOOLS_ROOT / "markdown-cmark-gfm-0.29.0.gfm.13/build/src/cmark-gfm"
 COMMONMARK_JS = TOOLS_ROOT / "markdown-commonmark-js"
 COMMONMARK_JS_DRIVER = ROOT / "scripts/commonmark_js_driver.mjs"
+COMMONMARK_JS_LOCK = ROOT / "tests/differential/commonmark-js/package-lock.json"
+
+ORACLES = {
+    "cmark": "bb3678d7a73cb02d35c8876ecd097072636200a8",
+    "cmarkGfm": "587a12bb54d95ac37241377e6ddc93ea0e45439b",
+    "commonmarkJs": "cb2c2303d3550ec6ef28ceb2841f148e8761eebf",
+}
 
 COMMONMARK_CASES = [
     "# heading\n",
@@ -91,7 +99,9 @@ def main() -> int:
             classified.append({**difference, **EXPECTED_DIFFERENCES[key]})
         else:
             unexpected.append(difference)
-    report = {"checked": checked, "exactMatches": checked - len(differences),
+    report = {"oracles": ORACLES,
+        "commonmarkJsPackageLockSha256": hashlib.sha256(COMMONMARK_JS_LOCK.read_bytes()).hexdigest(),
+        "checked": checked, "exactMatches": checked - len(differences),
         "classifiedDifferences": len(classified), "unexpectedDifferences": len(unexpected),
         "classifications": classified, "unexpected": unexpected}
     report_path = ROOT / "docs/reports/differential-smoke.json"

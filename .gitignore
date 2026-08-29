@@ -10,5 +10,9 @@ __pycache__/
 !api/public-api-v0.9.txt
 !docs/reports/*.json
 !release-evidence.json
+!tests/differential/
+!tests/differential/commonmark-js/
+!tests/differential/commonmark-js/package.json
+!tests/differential/commonmark-js/package-lock.json
 !tests/spec/commonmark-0.31.2/spec.txt
 !tests/spec/gfm-0.29/spec.txt

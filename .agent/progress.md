@@ -1,8 +1,19 @@
 # markdown 当前进度
 
-更新时间：2026-08-29
-当前阶段：0.9 breaking 执行模型、schema-v3 canonical identity、完整性能门槛和离线发布门禁均已完成。
-整体结论：**COMPLETE**。需求账本当前为 125 pass、0 pending、0 implemented_unverified、0 blocked。
+更新时间：2026-08-30
+当前阶段：审计 P0-P2 修复已实现并通过聚焦验证；schema-v4 canonical 与完整证据包待固定提交后刷新。
+整体结论：**INCOMPLETE**。需求账本当前为 121 pass、0 pending、4 implemented_unverified、0 blocked。
+
+## 2026-08-30 P0-P2 深度审计修复（当前）
+
+- P0：benchmark verifier 从底层 samples 独立重算每个 corpus ratio、几何平均、scaling/pathological slope、相邻增长、RSS、phase、optional overhead 和全部 gate；篡改顶层 summary/gates 会确定性失败。
+- P0：release identity 不再接受“仅为 HEAD 可达祖先”。verifier 从声明 commit 的 Git blobs 独立枚举并哈希 product file set，同时校验 source Git tree、product tree、raw 与 evidence identity；非 Git 环境 fail closed。
+- P0：`scripts/release_evidence_bundle.py` 记录每条 gate 的 argv、工作目录、exit code 和日志，从 JUnit XML、API inventory 与 benchmark samples 派生事实，归档候选包、源码 tar、raw/report 并生成 `SHA256SUMS`。GitHub Actions 使用 `if: always()` 上传两套 SDK 的证据目录。
+- P1：native scanner cache manifest 绑定 source/header 内容、target、平台分支、CC/AR 解析路径与版本以及完整 compile/archive command，并以原子替换发布 manifest。
+- P1：隔离插件 transport 改为增量 `IsolatedPluginResponseSink` 协议；output、diagnostic count、单条 message、diagnostic aggregate 和完整 response 在保留数据前检查，diagnostic message 必须分块解码。
+- P2：commonmark.js oracle 使用提交的 package/package-lock 和 `npm ci --ignore-scripts`；差分报告记录三个 oracle commit 与 lockfile digest。`SECURITY.md` 新增支持版本、备用私密联系、响应目标、advisory/CVE 与 backport 范围。
+- 当前通过：format、docs `44/23/4`、API checker tests `9/9`、native cache tests `5/5`、release-bundle tests `2/2`、release-evidence tests `14/14`、`cjpm check`、PluginIsolation 聚焦测试和完整 Cangjie suite `1456/1456`；CommonMark `652/652`、GFM `671/671`。
+- 当前 canonical 故意标记 `stale`。旧 `c63c525` raw 只保留为历史样本，不能证明本轮 product/harness。下一步是提交当前切片，在 Server fresh checkout 运行完整 canonical，再用同一身份刷新 raw、报告、账本和 clean full release gate。
 
 ## 2026-08-29 R143 canonical 性能与最终闭环（当前）
 

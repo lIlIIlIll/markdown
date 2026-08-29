@@ -1,20 +1,21 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "release": {
     "version": "0.9.0",
     "channel": "preview",
-    "status": "evidence-ready",
-    "evidenceReady": true,
+    "status": "candidate-validation-required",
+    "evidenceReady": false,
     "ciVerifiedAtHead": false,
     "ciVerifiedCommit": null,
     "published": false
   },
   "identity": {
-    "artifactCommit": "c63c52528aef6cc5ea46d4b152e08af6a5344f2f",
-    "evidenceCommit": "c63c52528aef6cc5ea46d4b152e08af6a5344f2f",
-    "repositoryHeadAtGeneration": "c63c52528aef6cc5ea46d4b152e08af6a5344f2f",
-    "treeStateAtGeneration": "clean",
-    "reason": "The canonical benchmark is bound to clean product commit c63c52528aef6cc5ea46d4b152e08af6a5344f2f and its minimal source archive. Report, ledger and documentation projections do not alter the benchmark product tree or normalized readme-api corpus. All offline release gates are ready; hosted CI verification and publication remain separate claims."
+    "artifactCommit": null,
+    "evidenceCommit": null,
+    "repositoryHeadAtGeneration": null,
+    "repositoryGitTreeAtGeneration": null,
+    "treeStateAtGeneration": "dirty",
+    "reason": "The P0-P2 audit remediation changes the product tree, benchmark harness and public isolation API. The previous canonical samples remain historical only. Evidence readiness is fail-closed until a committed product tree receives a fresh fixed-Server benchmark and a clean full release gate emits the schema-v4 evidence bundle."
   },
   "toolchain": {
     "cangjieCompiler": "1.1.0-alpha.20260803040049",
@@ -40,21 +41,22 @@
   },
   "api": {
     "snapshotPath": "api/public-api-v0.9.txt",
-    "declarations": 1309,
-    "sha256": "6dadb798c03578b71ba6c112a1f45859cd24d15cac77ddf794d033c4f2009680"
+    "declarations": 1322,
+    "sha256": "14e978762eea0454170b67567ec9f087fcc03c83d760c08e77ce8ebed51132bb"
   },
   "tests": {
-    "passed": 1455,
-    "total": 1455,
+    "passed": 1456,
+    "total": 1456,
     "skipped": 0,
     "errors": 0,
     "failed": 0
   },
   "benchmark": {
-    "status": "current",
+    "status": "stale",
     "rawPath": "docs/reports/benchmark-raw.json",
     "rawSha256": "ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37",
     "sourceCommit": "c63c52528aef6cc5ea46d4b152e08af6a5344f2f",
+    "sourceGitTree": null,
     "sdkVersion": "1.1.0-alpha.20260803040049",
     "productSourceArchiveSha256": "ec7bcd00a3621db10b0c093cb4bf31ebf30c7d0918a75e5e24939d9d523cf9e1",
     "productTreeSha256": "64831ebd505da359605f2702c91f7ea21d8b83d212873afe9ca927918887ee3c",
@@ -67,6 +69,6 @@
     "ratioLimit": 2.5,
     "cmark": "0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8",
     "cmarkGfm": "0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b",
-    "note": "Canonical 2026-08-29 fixed-Server release run for product commit c63c52528aef6cc5ea46d4b152e08af6a5344f2f. The minimal archive excluded .git, every target/build-script-cache directory, .agent, .agents, .codex, Python caches and native build products. Xeon Gold 6248R CPU 24, Cangjie 1.1.0-alpha.20260803040049, root -O2, benchmark-consumer -O2 --lto thin, 2 GiB heap, cjGCInterval=500ms and seven alternating paired samples measured CommonMark 2.334095x and GFM 2.466373x; both 2.5x gates pass. Ordinary 3.538540x/1.994487x, scaling 0.349193 with maximum adjacent 1.514705, pathological 0.700414 with maximum adjacent 2.187767, and extra RSS 31224 KiB also pass. The GC interval is a disclosed benchmark process setting and does not change Markdown.parse defaults."
+    "note": "Historical 2026-08-29 fixed-Server result for c63c525 remains retained but is stale after the P0-P2 audit remediation changed product and harness identity. It must not be used as current release evidence."
   }
 }
