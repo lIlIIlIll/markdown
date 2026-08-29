@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 
@@ -282,6 +283,17 @@ def validate_commit_git_tree(commit: object, label: str, expected_tree: object) 
     return []
 
 
+def validate_sdk_archive_identity(manifest: dict[str, object]) -> list[str]:
+    toolchain = manifest.get("toolchain")
+    if not isinstance(toolchain, dict):
+        return ["release execution manifest has no toolchain identity"]
+    archive_digest = toolchain.get("sdkArchiveSha256")
+    if (not isinstance(archive_digest, str)
+            or re.fullmatch(r"[0-9a-f]{64}", archive_digest) is None):
+        return ["release execution manifest has no valid SDK archive SHA-256"]
+    return []
+
+
 def validate_execution_manifest(data: dict[str, object], path: Path) -> list[str]:
     errors: list[str] = []
     if not path.is_file():
@@ -291,6 +303,7 @@ def validate_execution_manifest(data: dict[str, object], path: Path) -> list[str
         errors.append("release execution manifest schemaVersion must be 1")
     if manifest.get("gateExitCode") != 0:
         errors.append("release execution manifest records a failed gate")
+    errors.extend(validate_sdk_archive_identity(manifest))
     steps = manifest.get("steps")
     required_steps = {
         "format", "docs", "native-build-tests", "api-checker-tests", "api",

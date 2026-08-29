@@ -116,6 +116,24 @@ class ReleaseEvidenceTest(unittest.TestCase):
             ],
         )
 
+    def test_execution_manifest_requires_sdk_archive_sha256(self) -> None:
+        self.assertEqual(
+            release_evidence.validate_sdk_archive_identity({"toolchain": {}}),
+            ["release execution manifest has no valid SDK archive SHA-256"],
+        )
+        self.assertEqual(
+            release_evidence.validate_sdk_archive_identity({
+                "toolchain": {"sdkArchiveSha256": "g" * 64}
+            }),
+            ["release execution manifest has no valid SDK archive SHA-256"],
+        )
+        self.assertEqual(
+            release_evidence.validate_sdk_archive_identity({
+                "toolchain": {"sdkArchiveSha256": "0" * 64}
+            }),
+            [],
+        )
+
     def test_commit_git_tree_must_match_declared_tree(self) -> None:
         head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
         errors = release_evidence.validate_commit_git_tree(head, "benchmark source", "0" * 40)
