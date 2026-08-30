@@ -2,7 +2,7 @@
 
 ## Final Status
 
-**INCOMPLETE** — 123/125 项为 `pass`；新的 canonical benchmark 已通过，2 项等待完整 release gate。
+**COMPLETE** — 125/125 项均为 `pass`；canonical benchmark 与 branch-tip-bound 完整 release gate 均已通过。
 
 <!-- release-evidence:start -->
 ## Generated Release Evidence
@@ -20,11 +20,11 @@ All mandatory offline evidence and performance gates pass. Hosted CI and publica
 
 ## 2026-08-30 Current Documentation Evidence Repair
 
-README、CHANGELOG 和性能页的当前测试、API 与 benchmark 数字已由 `release-evidence.json` 统一生成。固定 Server CPU 24 的新 canonical raw `43ce60a...f7c4ca` 已通过全部 ratio、ordinary、scaling、pathological 和 RSS gate。`MD-PERF-002` 已恢复为 `pass`；`MD-REL-001` 和 `MD-QUAL-001` 暂为 `implemented_unverified`，等待干净 evidence commit 上的完整 release gate。
+README、CHANGELOG 和性能页的当前测试、API 与 benchmark 数字已由 `release-evidence.json` 统一生成。固定 Server CPU 24 的 canonical raw `43ce60a...f7c4ca` 已通过全部 ratio、ordinary、scaling、pathological 和 RSS gate。完整 release gate 使用 `MARKDOWN_RELEASE_COMMIT` 绑定可推送分支 tip，同时验证该 commit tree 与干净 workspace tree 完全相同；26 个记录步骤全部通过。`MD-PERF-002`、`MD-REL-001` 和 `MD-QUAL-001` 均已恢复为 `pass`。
 
 本报告后续按时间保留历史失败、候选淘汰和当时的完成记录；这些历史段落不覆盖上述当前状态。R139/R140 仅作为历史证据保留。
 
-## 2026-08-30 Current Audit Closure
+## 2026-08-30 Prior Audit Closure (superseded)
 
 固定 product commit `a259ba4904357d3ca393ca7ccaddce9e6da11931` 的 latest-complete Server canonical raw SHA-256 为 `b80123a494932c2c1b7f63fb6895ab81c9734564141f8099d9a2c6b8f8fa136f`。verifier 从底层 samples 独立重算 CommonMark `2.274715x`、GFM `2.267811x`、scaling、pathological、RSS 和全部 gate，派生误差为空。受测最小源码归档排除了 `.agent`、`.agents`、`.codex` 和全部构建产物。
 
@@ -32,7 +32,7 @@ clean full release gate exit `0`：format、docs `44/23/4`、native cache tests 
 
 `target/release-evidence/manifest.json` 绑定干净执行 commit/tree 和当前 daily SDK archive SHA-256 `6c050802d1d6d297c4c6ad2bf8b253865f33aa2a810f6ef62347162f1e18131d`，保留每步 argv、工作目录、exit code 和日志，并从 JUnit、API inventory 与 raw samples 派生声明；候选包、源码 tar、raw/report 和全部 retained files 均由 `target/release-evidence/SHA256SUMS` 覆盖。Hosted CI、远端发布和 package registry publication 仍是独立事实，不由本地 COMPLETE 结论暗示。
 
-## 2026-08-29 Current Completion Evidence
+## 2026-08-29 Historical Completion Evidence
 
 当前修复增加 schema-v3 benchmark identity：release verifier 会重新生成 corpus，逐项检查 inventory、byte length 和 SHA-256，并比较 raw、release evidence 与当前 benchmark product tree。旧 raw 因 `readme-api` 和 product tree 漂移被确定性拒绝。
 
@@ -232,7 +232,7 @@ seal/path/binary identity check.
 | `MD-TST-004` | PRD §44.5-6, §51.6-7 | `pass` | 2026-08-25: arbitrary-byte fuzz found and guards two UTF-8 boundary crashes; full 1419-test suite passed |
 | `MD-TST-005` | PRD §44.7-9, §51.7 | `pass` | 2026-08-18: API snapshot, pathological corpus, and official extension TCK passed |
 | `MD-PERF-001` | PRD §45.1-3 | `pass` | 2026-08-18: 12-corpus -O2 reference-host matrix recorded raw samples, per-corpus digests, pinned CPU, SDK, reference commits, geometric means, and custom-extension cost |
-| `MD-PERF-002` | PRD §45.4, §51.7, §52 | `pass` | Current fixed-Server canonical is identity-bound and passes CommonMark 2.334095x, GFM 2.466373x, ordinary, scaling, pathological and RSS gates. |
+| `MD-PERF-002` | PRD §45.4, §51.7, §52 | `pass` | Current fixed-Server canonical is identity-bound and passes CommonMark 2.368184x, GFM 2.367749x, ordinary, scaling, pathological and RSS gates. |
 | `MD-PERF-003` | PRD §45.5 | `pass` | 2026-08-18: owned byte input, SourceSlice literals, explicit parser frames, bounded output, ordinary/pathological scaling, and RSS tests passed |
 | `MD-OBS-001` | PRD §46 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
 | `MD-DOC-001` | PRD §47, §49, §51.7 | `pass` | 2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed |
@@ -249,8 +249,8 @@ slice or rejection evidence and do not replace the current result.
 
 | Command | Exit | Result |
 | --- | ---: | --- |
-| Server CPU 24 `MARKDOWN_BENCH_* python3 benchmarks/measure.py` on clean commit `c63c525` | 0 | CommonMark 2.334095x, GFM 2.466373x; every timing, scaling, pathological and RSS gate true; raw SHA-256 ecb844e7...73d37 |
-| `/home/elliot/.codex/scripts/codex_cangjie_env --cwd /home/elliot/playground/markdown -- scripts/release_gate.sh` | 0 | format; docs 44/23/4; native build 4/4; API checker 9/9; API 1309; check/build; native ASan+UBSan fuzz 10000; tests 1455/1455; CLI; both consumers; differential 25/24/1/0; benchmark smoke 3/3; bundle; evidence-ready; final output `release gate: pass` |
+| Server CPU 24 `MARKDOWN_BENCH_* python3 benchmarks/measure.py` on product commit `6a75709d` | 0 | CommonMark 2.368184x, GFM 2.367749x; every timing, scaling, pathological and RSS gate true; raw SHA-256 43ce60a4...f7c4ca |
+| `MARKDOWN_RELEASE_COMMIT=<publishable-tip> ... scripts/release_gate.sh` | 0 | 26 recorded steps; format; docs 44/23/4; native cache 5/5; bundle evidence 5/5; release evidence 18/18; API checker 9/9; API 1323; check/build; native ASan+UBSan fuzz 10000; tests 1457/1457; CommonMark 652/652; GFM 671/671; CLI; both consumers; differential 25/24/1/0; benchmark smoke 3/3; bundle; evidence-ready; checksums; final output `release gate: pass` |
 | Historical R140 Server fresh archive `CC=/usr/bin/clang AR=/usr/bin/ar scripts/release_gate.sh` | 0 | format; API 1311; check/build; native ASan+UBSan fuzz 10000; tests 1455/1455; CLI; quickstart; differential 25/24/1/0; benchmark smoke 3/3; bundle; historical release-ready verifier |
 | `python3 scripts/test_benchmark_input_profiles.py` | 0 | 7/7, including generated-evidence corpus stability, fail-closed marker validation and runtime/driver optimization identity |
 | `python3 scripts/release_evidence.py --evidence-ready` | 0 | offline artifact, archive, SDK, harness, drivers, raw digest, ratios and generated projections are consistent; hosted CI/publication are explicitly false |
@@ -295,7 +295,7 @@ slice or rejection evidence and do not replace the current result.
   `pass`. Every required field and acceptance list is non-empty. The ledger has
   488 concrete implementation/test path references, all of which exist, and no
   generic `src/*_test.cj` placeholder remains.
-- current execution evidence: R139/R140 are historical. The schema-v3 canonical
+- current execution evidence: R139/R140 are historical. The schema-v4 canonical
   run is bound to source commit, archive, product tree, corpus, SDK, harness and
   drivers; both mandatory performance ratios and every non-ratio gate pass. The
   complete release gate also exits 0.

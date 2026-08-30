@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -371,6 +372,44 @@ def validate_sdk_archive_identity(manifest: dict[str, object]) -> list[str]:
     return []
 
 
+def validate_execution_repository_identity(manifest: dict[str, object]) -> list[str]:
+    """Bind execution evidence to a real commit with the current exact tree.
+
+    GitButler may place a synthetic workspace commit at HEAD.  An explicitly
+    selected publishable branch tip is acceptable only when it is reachable and
+    its complete Git tree is byte-identical to the checked-out workspace tree.
+    """
+    errors: list[str] = []
+    commit = manifest.get("repositoryCommit")
+    tree = manifest.get("gitTree")
+    errors.extend(validate_reachable_commit(commit, "release execution"))
+    errors.extend(validate_commit_git_tree(commit, "release execution", tree))
+    inside = subprocess.run(
+        ["git", "rev-parse", "--is-inside-work-tree"], cwd=ROOT,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
+    )
+    if inside.returncode != 0:
+        errors.append("release execution identity cannot be verified outside a Git work tree")
+        return errors
+    current_tree = subprocess.run(
+        ["git", "rev-parse", "HEAD^{tree}"], cwd=ROOT, text=True,
+        capture_output=True, check=False,
+    ).stdout.strip()
+    if current_tree != tree:
+        errors.append("release execution Git tree does not match current repository tree")
+    selected = os.environ.get("MARKDOWN_RELEASE_COMMIT")
+    if selected:
+        result = subprocess.run(
+            ["git", "rev-parse", f"{selected}^{{commit}}"], cwd=ROOT, text=True,
+            capture_output=True, check=False,
+        )
+        if result.returncode != 0:
+            errors.append("MARKDOWN_RELEASE_COMMIT cannot be resolved")
+        elif result.stdout.strip() != commit:
+            errors.append("release execution commit does not match MARKDOWN_RELEASE_COMMIT")
+    return errors
+
+
 def validate_execution_manifest(data: dict[str, object], path: Path) -> list[str]:
     errors: list[str] = []
     if not path.is_file():
@@ -384,7 +423,8 @@ def validate_execution_manifest(data: dict[str, object], path: Path) -> list[str
     steps = manifest.get("steps")
     required_steps = {
         "format", "docs", "native-build-tests", "api-checker-tests", "api",
-        "static-check", "release-evidence-consistency", "release-evidence-tests",
+        "static-check", "release-evidence-consistency", "release-evidence-bundle-tests",
+        "release-evidence-tests",
         "benchmark-driver-tests", "build", "native-build", "benchmark-driver",
         "native-fuzz", "benchmark-profile-tests", "tests", "cli-build", "cli-smoke",
         "quickstart", "cookbook", "differential-setup", "differential",
@@ -406,25 +446,7 @@ def validate_execution_manifest(data: dict[str, object], path: Path) -> list[str
 
     identity = data["identity"]
     benchmark = data["benchmark"]
-    inside = subprocess.run(
-        ["git", "rev-parse", "--is-inside-work-tree"], cwd=ROOT,
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
-    )
-    if inside.returncode != 0:
-        errors.append("release execution identity cannot be verified outside a Git work tree")
-    else:
-        current_head = subprocess.run(
-            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True,
-            capture_output=True, check=False,
-        ).stdout.strip()
-        current_tree = subprocess.run(
-            ["git", "rev-parse", "HEAD^{tree}"], cwd=ROOT, text=True,
-            capture_output=True, check=False,
-        ).stdout.strip()
-        if manifest.get("repositoryCommit") != current_head:
-            errors.append("release execution commit does not match current repository HEAD")
-        if manifest.get("gitTree") != current_tree:
-            errors.append("release execution Git tree does not match current repository tree")
+    errors.extend(validate_execution_repository_identity(manifest))
     if manifest.get("productTreeSha256") != benchmark["productTreeSha256"]:
         errors.append("release execution product tree does not match benchmark identity")
     if manifest.get("treeState") != "clean":

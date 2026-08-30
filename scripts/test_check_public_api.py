@@ -238,6 +238,9 @@ class PublicApiCheckerCliTest(unittest.TestCase):
             "    (output / 'manifest.json').write_text('{}\\n', encoding='utf-8')\n",
             encoding="utf-8",
         )
+        self.write_python_stub(
+            scripts / "test_release_evidence_bundle.py", "release-evidence-bundle-test"
+        )
         self.write_python_stub(scripts / "test_release_evidence.py", "release-evidence-test")
         self.write_python_stub(
             scripts / "test_build_benchmark_driver.py", "benchmark-driver-build-test"

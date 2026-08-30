@@ -39,6 +39,7 @@ run_step api-checker-tests python3 scripts/test_check_public_api.py
 run_step api python3 scripts/check_public_api.py
 run_step static-check cjpm check
 run_step release-evidence-consistency python3 scripts/release_evidence.py
+run_step release-evidence-bundle-tests python3 scripts/test_release_evidence_bundle.py
 run_step release-evidence-tests python3 scripts/test_release_evidence.py
 run_step benchmark-driver-tests python3 scripts/test_build_benchmark_driver.py
 run_step build cjpm build

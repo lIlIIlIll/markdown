@@ -7,8 +7,10 @@ import importlib.util
 import json
 from pathlib import Path
 import shutil
+import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,6 +23,41 @@ SPEC.loader.exec_module(bundle)
 
 
 class ReleaseEvidenceBundleTest(unittest.TestCase):
+    def test_explicit_release_commit_uses_publishable_identity_with_same_tree(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            subprocess.run(["git", "config", "user.name", "Evidence Test"],
+                cwd=root, check=True)
+            subprocess.run(["git", "config", "user.email", "evidence@example.invalid"],
+                cwd=root, check=True)
+            source = root / "src" / "parser.cj"
+            source.parent.mkdir()
+            source.write_text("package markdown\n", encoding="utf-8")
+            subprocess.run(["git", "add", "src/parser.cj"], cwd=root, check=True)
+            subprocess.run(["git", "commit", "-qm", "test: publishable"],
+                cwd=root, check=True)
+            publishable = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=root, text=True
+            ).strip()
+            subprocess.run(
+                ["git", "commit", "--allow-empty", "-qm", "test: workspace"],
+                cwd=root, check=True,
+            )
+
+            original_root = bundle.ROOT
+            bundle.ROOT = root
+            try:
+                with patch.dict("os.environ", {"MARKDOWN_RELEASE_COMMIT": publishable}):
+                    reference, commit, tree = bundle.release_subject_identity()
+                self.assertEqual(reference, publishable)
+                self.assertEqual(commit, publishable)
+                self.assertTrue(bundle.working_tree_matches_subject(tree))
+                source.write_text("package markdown\n// dirty\n", encoding="utf-8")
+                self.assertFalse(bundle.working_tree_matches_subject(tree))
+            finally:
+                bundle.ROOT = original_root
+
     def test_junit_counts_are_derived_from_xml(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
