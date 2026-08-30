@@ -2,23 +2,31 @@
 
 ## Final Status
 
-**COMPLETE** — 125 项规范性需求全部为 `pass`；当前 canonical benchmark、完整 release gate、公开 consumer、规范语料、fuzz、差分测试和发布候选包均有可复核的通过证据。
+**COMPLETE** — 125/125 项均为 `pass`；P0-P2 修复、1457/1457 正确性测试、lockfile-bound differential、schema-v4 canonical benchmark、候选包和 checksummed full release evidence gate 全部通过。
 
 <!-- release-evidence:start -->
 ## Generated Release Evidence
 
 - Version/status: `0.9.0` / `evidence-ready`.
-- Artifact commit: `c63c52528aef6cc5ea46d4b152e08af6a5344f2f`.
-- Evidence commit: `c63c52528aef6cc5ea46d4b152e08af6a5344f2f`; repository HEAD at generation `c63c52528aef6cc5ea46d4b152e08af6a5344f2f`.
+- Artifact commit: `a259ba4904357d3ca393ca7ccaddce9e6da11931`.
+- Evidence subject commit: `a259ba4904357d3ca393ca7ccaddce9e6da11931`; the retained execution manifest binds the clean gate commit and Git tree.
 - Hosted CI verified at that HEAD: `False`; published: `False`.
-- Tests: `1455/1455` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `2.33x`, GFM `2.47x`, status `current`.
-- Raw digest: `ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37`.
+- Tests: `1457/1457` passed, `0` skipped, `0` failed.
+- Benchmark: CommonMark `2.27x`, GFM `2.27x`, status `current`.
+- Raw digest: `b80123a494932c2c1b7f63fb6895ab81c9734564141f8099d9a2c6b8f8fa136f`.
 
 All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->
 
 本报告后续按时间保留历史失败、候选淘汰和当时的完成记录；这些历史段落不覆盖上述当前状态。R139/R140 仅作为历史证据保留。
+
+## 2026-08-30 Current Audit Closure
+
+固定 product commit `a259ba4904357d3ca393ca7ccaddce9e6da11931` 的 latest-complete Server canonical raw SHA-256 为 `b80123a494932c2c1b7f63fb6895ab81c9734564141f8099d9a2c6b8f8fa136f`。verifier 从底层 samples 独立重算 CommonMark `2.274715x`、GFM `2.267811x`、scaling、pathological、RSS 和全部 gate，派生误差为空。受测最小源码归档排除了 `.agent`、`.agents`、`.codex` 和全部构建产物。
+
+clean full release gate exit `0`：format、docs `44/23/4`、native cache tests `5/5`、evidence tests `15/15`、bundle tests `4/4`、API checker `9/9`、API snapshot `1323`、check/build、native ASan+UBSan fuzz `10000`、full tests `1457/1457`、CommonMark `652/652`、GFM `671/671`、CLI、quickstart、cookbook、differential `25/24/1/0`、benchmark smoke `3/3`、bundle 与 evidence-ready verifier 全部通过。
+
+`target/release-evidence/manifest.json` 绑定干净执行 commit/tree 和当前 daily SDK archive SHA-256 `6c050802d1d6d297c4c6ad2bf8b253865f33aa2a810f6ef62347162f1e18131d`，保留每步 argv、工作目录、exit code 和日志，并从 JUnit、API inventory 与 raw samples 派生声明；候选包、源码 tar、raw/report 和全部 retained files 均由 `target/release-evidence/SHA256SUMS` 覆盖。Hosted CI、远端发布和 package registry publication 仍是独立事实，不由本地 COMPLETE 结论暗示。
 
 ## 2026-08-29 Current Completion Evidence
 

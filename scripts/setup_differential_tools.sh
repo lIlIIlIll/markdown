@@ -41,9 +41,15 @@ fi
 
 clone_commit https://github.com/commonmark/commonmark.js.git \
     cb2c2303d3550ec6ef28ceb2841f148e8761eebf "$commonmark_js_dir"
-if ! test -d "$commonmark_js_dir/node_modules"; then
-    npm --prefix "$commonmark_js_dir" install --ignore-scripts --omit=dev --no-package-lock --no-audit --no-fund \
-        --save=false entities@3.0.1 mdurl@1.0.1 minimist@1.2.8
+commonmark_js_lock_sha="$(sha256sum tests/differential/commonmark-js/package-lock.json | cut -d ' ' -f 1)"
+commonmark_js_lock_marker="$commonmark_js_dir/.markdown-package-lock.sha256"
+if ! test -d "$commonmark_js_dir/node_modules" || \
+        ! test -f "$commonmark_js_lock_marker" || \
+        test "$(<"$commonmark_js_lock_marker")" != "$commonmark_js_lock_sha"; then
+    cp tests/differential/commonmark-js/package.json "$commonmark_js_dir/package.json"
+    cp tests/differential/commonmark-js/package-lock.json "$commonmark_js_dir/package-lock.json"
+    npm --prefix "$commonmark_js_dir" ci --ignore-scripts --omit=dev --no-audit --no-fund
+    printf '%s\n' "$commonmark_js_lock_sha" > "$commonmark_js_lock_marker"
 fi
 test -f "$commonmark_js_dir/lib/index.js"
 

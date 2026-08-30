@@ -1,0 +1,10 @@
+{
+  "name": "markdown-commonmark-js-oracle",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "entities": "3.0.1",
+    "mdurl": "1.0.1",
+    "minimist": "1.2.8"
+  }
+}

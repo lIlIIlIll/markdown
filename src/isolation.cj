@@ -1,5 +1,7 @@
 package markdown
 
+import std.collection.*
+
 public class PluginIsolationPolicy {
     public let allowFileRead: Bool
     public let allowFileWrite: Bool
@@ -7,11 +9,18 @@ public class PluginIsolationPolicy {
     public let allowChildProcesses: Bool
     public let maximumInputBytes: Int64
     public let maximumOutputBytes: Int64
+    public let maximumDiagnosticCount: Int64
+    public let maximumDiagnosticMessageBytes: Int64
+    public let maximumDiagnosticAggregateBytes: Int64
+    public let maximumResponseBytes: Int64
     public let protocolVersion: String
     public init(allowFileRead!: Bool = false, allowFileWrite!: Bool = false, allowNetwork!: Bool = false,
         allowChildProcesses!: Bool = false, maximumInputBytes!: Int64 = 1024 * 1024,
-        maximumOutputBytes!: Int64 = 4 * 1024 * 1024, protocolVersion!: String = "markdown-isolation-ipc-1") {
-        if (maximumInputBytes <= 0 || maximumOutputBytes <= 0) {
+        maximumOutputBytes!: Int64 = 4 * 1024 * 1024, maximumDiagnosticCount!: Int64 = 1024,
+        maximumDiagnosticMessageBytes!: Int64 = 64 * 1024, maximumDiagnosticAggregateBytes!: Int64 = 1024 * 1024,
+        maximumResponseBytes!: Int64 = 5 * 1024 * 1024, protocolVersion!: String = "markdown-isolation-ipc-1") {
+        if (maximumInputBytes <= 0 || maximumOutputBytes <= 0 || maximumDiagnosticCount <= 0 ||
+            maximumDiagnosticMessageBytes <= 0 || maximumDiagnosticAggregateBytes <= 0 || maximumResponseBytes <= 0) {
             throw IllegalArgumentException("isolation byte limits must be positive")
         }
         this.allowFileRead = allowFileRead
@@ -20,6 +29,10 @@ public class PluginIsolationPolicy {
         this.allowChildProcesses = allowChildProcesses
         this.maximumInputBytes = maximumInputBytes
         this.maximumOutputBytes = maximumOutputBytes
+        this.maximumDiagnosticCount = maximumDiagnosticCount
+        this.maximumDiagnosticMessageBytes = maximumDiagnosticMessageBytes
+        this.maximumDiagnosticAggregateBytes = maximumDiagnosticAggregateBytes
+        this.maximumResponseBytes = maximumResponseBytes
         this.protocolVersion = protocolVersion
     }
 }
@@ -56,9 +69,194 @@ public class IsolatedPluginResponse {
     }
 }
 
+/**
+ * Bounded response decoder for an isolated plugin transport.
+ *
+ * A transport must stream decoded identity, output and diagnostics through this
+ * sink. The sink rejects a limit before it retains the chunk or diagnostic.
+ */
+public class IsolatedPluginResponseSink {
+    private let policy: PluginIsolationPolicy
+    private let cancellation: CancellationToken
+    private let budget: OperationBudget
+    private let output = StringBuilder()
+    private let diagnostics = ArrayList<Diagnostic>()
+    private let responseProtocolVersion = StringBuilder()
+    private let responseExtensionId = StringBuilder()
+    private let responseImplementationVersion = StringBuilder()
+    private var outputBytes: Int64 = 0
+    private var diagnosticBytes: Int64 = 0
+    private var responseBytes: Int64 = 0
+    private var finished: Bool = false
+    private var diagnosticOpen: Bool = false
+    private var diagnosticCode: String = ""
+    private var diagnosticSeverity: DiagnosticSeverity = DiagnosticSeverity.Info
+    private var diagnosticSpan: SourceSpan = SourceSpan(0, 0)
+    private var diagnosticExtensionId: ?String = None
+    private var diagnosticRuleId: ?String = None
+    private var diagnosticMessage = StringBuilder()
+    private var diagnosticMessageBytes: Int64 = 0
+    private var diagnosticRelatedSpans = ArrayList<SourceSpan>()
+    private var diagnosticFixes = ArrayList<DiagnosticFix>()
+
+    internal init(policy: PluginIsolationPolicy, cancellation: CancellationToken, budget: OperationBudget) {
+        this.policy = policy
+        this.cancellation = cancellation
+        this.budget = budget
+    }
+
+    public func writeProtocolVersion(chunk: String): Unit {
+        consumeIdentityBytes(chunk.size)
+        responseProtocolVersion.append(chunk)
+    }
+
+    public func writeExtensionId(chunk: String): Unit {
+        consumeIdentityBytes(chunk.size)
+        responseExtensionId.append(chunk)
+    }
+
+    public func writeImplementationVersion(chunk: String): Unit {
+        consumeIdentityBytes(chunk.size)
+        responseImplementationVersion.append(chunk)
+    }
+
+    public func writeOutput(chunk: String): Unit {
+        ensureOpen()
+        cancellation.throwIfCancelled(phase: "plugin_isolation")
+        checkAdditional("isolated_plugin_output", policy.maximumOutputBytes, outputBytes, chunk.size)
+        checkAdditional("isolated_plugin_response", policy.maximumResponseBytes, responseBytes, chunk.size)
+        budget.consumeOutput(bytes: chunk.size)
+        output.append(chunk)
+        outputBytes += chunk.size
+        responseBytes += chunk.size
+    }
+
+    public func beginDiagnostic(code: String, severity: DiagnosticSeverity, span: SourceSpan,
+        extensionId!: ?String = None, ruleId!: ?String = None): Unit {
+        ensureOpen()
+        cancellation.throwIfCancelled(phase: "plugin_isolation")
+        if (diagnosticOpen) {
+            throw IllegalStateException("isolated plugin diagnostic is already open")
+        }
+        if (diagnostics.size >= policy.maximumDiagnosticCount) {
+            throw LimitExceededException("isolated_plugin_diagnostic_count", policy.maximumDiagnosticCount,
+                diagnostics.size + 1, "plugin_isolation", extensionId: extensionId)
+        }
+        if (code.isEmpty()) {
+            throw IllegalArgumentException("isolated plugin diagnostic code must not be empty")
+        }
+        var encodedBytes = code.size + 24
+        match (extensionId) {
+            case Some(value) => encodedBytes += value.size
+            case None => ()
+        }
+        match (ruleId) {
+            case Some(value) => encodedBytes += value.size
+            case None => ()
+        }
+        consumeDiagnosticBytes(encodedBytes)
+        diagnosticOpen = true
+        diagnosticCode = code
+        diagnosticSeverity = severity
+        diagnosticSpan = span
+        diagnosticExtensionId = extensionId
+        diagnosticRuleId = ruleId
+        diagnosticMessage = StringBuilder()
+        diagnosticMessageBytes = 0
+        diagnosticRelatedSpans = ArrayList<SourceSpan>()
+        diagnosticFixes = ArrayList<DiagnosticFix>()
+    }
+
+    public func writeDiagnosticMessage(chunk: String): Unit {
+        ensureDiagnosticOpen()
+        cancellation.throwIfCancelled(phase: "plugin_isolation")
+        checkAdditional("isolated_plugin_diagnostic_message", policy.maximumDiagnosticMessageBytes,
+            diagnosticMessageBytes, chunk.size)
+        consumeDiagnosticBytes(chunk.size)
+        diagnosticMessage.append(chunk)
+        diagnosticMessageBytes += chunk.size
+    }
+
+    public func addDiagnosticRelatedSpan(span: SourceSpan): Unit {
+        ensureDiagnosticOpen()
+        cancellation.throwIfCancelled(phase: "plugin_isolation")
+        consumeDiagnosticBytes(16)
+        diagnosticRelatedSpans.add(span)
+    }
+
+    public func addDiagnosticFix(title: String, span: SourceSpan, replacement: String): Unit {
+        ensureDiagnosticOpen()
+        cancellation.throwIfCancelled(phase: "plugin_isolation")
+        consumeDiagnosticBytes(title.size + replacement.size + 16)
+        diagnosticFixes.add(DiagnosticFix(title, span, replacement))
+    }
+
+    public func finishDiagnostic(): Unit {
+        ensureDiagnosticOpen()
+        diagnostics.add(
+            Diagnostic(diagnosticCode, diagnosticSeverity, diagnosticMessage.toString(), diagnosticSpan,
+                relatedSpans: diagnosticRelatedSpans.toArray(), extensionId: diagnosticExtensionId,
+                ruleId: diagnosticRuleId, fixes: diagnosticFixes.toArray()))
+        diagnosticOpen = false
+    }
+
+    private func consumeDiagnosticBytes(encodedBytes: Int64): Unit {
+        checkAdditional("isolated_plugin_diagnostics", policy.maximumDiagnosticAggregateBytes, diagnosticBytes,
+            encodedBytes)
+        checkAdditional("isolated_plugin_response", policy.maximumResponseBytes, responseBytes, encodedBytes)
+        budget.consumeOutput(bytes: encodedBytes)
+        diagnosticBytes += encodedBytes
+        responseBytes += encodedBytes
+    }
+
+    private func consumeIdentityBytes(encodedBytes: Int64): Unit {
+        ensureOpen()
+        cancellation.throwIfCancelled(phase: "plugin_isolation")
+        checkAdditional("isolated_plugin_response", policy.maximumResponseBytes, responseBytes, encodedBytes)
+        budget.consumeOutput(bytes: encodedBytes)
+        responseBytes += encodedBytes
+    }
+
+    internal func finish(request: IsolatedPluginRequest): IsolatedPluginResponse {
+        ensureOpen()
+        if (diagnosticOpen) {
+            throw IllegalStateException("isolated plugin diagnostic is unfinished")
+        }
+        if (responseProtocolVersion.toString() != request.protocolVersion || responseExtensionId.toString() != request
+            .extensionId || responseImplementationVersion.toString() != request.implementationVersion) {
+            throw MarkdownException(MarkdownErrorCode.ExtensionFailure, "isolated plugin response identity mismatch",
+                phase: "plugin_isolation")
+        }
+        finished = true
+        IsolatedPluginResponse(request.extensionId, request.implementationVersion, output.toString(),
+            diagnostics: diagnostics.toArray(), protocolVersion: request.protocolVersion)
+    }
+
+    private func ensureOpen(): Unit {
+        if (finished) {
+            throw IllegalStateException("isolated plugin response is already finished")
+        }
+    }
+
+    private func ensureDiagnosticOpen(): Unit {
+        ensureOpen()
+        if (!diagnosticOpen) {
+            throw IllegalStateException("isolated plugin diagnostic is not open")
+        }
+    }
+
+    private func checkAdditional(kind: String, maximum: Int64, current: Int64, additional: Int64): Unit {
+        if (additional < 0 || current > maximum - additional) {
+            throw LimitExceededException(kind, maximum, current + additional, "plugin_isolation")
+        }
+    }
+}
+
 public interface PluginIsolationTransport {
     // Implementations must create the OS process/sandbox and enforce the passed policy.
-    func invoke(request: IsolatedPluginRequest, policy: PluginIsolationPolicy, cancellation: CancellationToken): IsolatedPluginResponse
+    // Decode every untrusted string incrementally through responseSink; do not build an unbounded response first.
+    func invoke(request: IsolatedPluginRequest, policy: PluginIsolationPolicy, cancellation: CancellationToken,
+        responseSink: IsolatedPluginResponseSink): Unit
 }
 
 public class PluginIsolationCapabilities {
@@ -92,24 +290,15 @@ public class IsolatedPluginRunner {
                 "plugin_isolation", extensionId: Some(request.extensionId))
         }
         budget.consumeExtensionCallback()
-        let response = try {
-            transport.invoke(request, policy, cancellation)
+        let responseSink = IsolatedPluginResponseSink(policy, cancellation, budget)
+        try {
+            transport.invoke(request, policy, cancellation, responseSink)
         } catch (error: Exception) {
             throw ExtensionFailureException(request.extensionId, "isolated", request.implementationVersion,
                 "plugin_isolation", error)
         }
         cancellation.throwIfCancelled(phase: "plugin_isolation")
-        if (response.protocolVersion != policy.protocolVersion || response.extensionId != request.extensionId ||
-            response.implementationVersion != request.implementationVersion) {
-            throw MarkdownException(MarkdownErrorCode.ExtensionFailure, "isolated plugin response identity mismatch",
-                phase: "plugin_isolation")
-        }
-        if (response.output.size > policy.maximumOutputBytes) {
-            throw LimitExceededException("isolated_plugin_output", policy.maximumOutputBytes, response.output.size,
-                "plugin_isolation", extensionId: Some(request.extensionId))
-        }
-        budget.consumeOutput(bytes: response.output.size)
-        response
+        responseSink.finish(request)
     }
 
     public func capabilities(): PluginIsolationCapabilities {

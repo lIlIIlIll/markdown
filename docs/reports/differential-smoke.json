@@ -1,4 +1,10 @@
 {
+  "oracles": {
+    "cmark": "bb3678d7a73cb02d35c8876ecd097072636200a8",
+    "cmarkGfm": "587a12bb54d95ac37241377e6ddc93ea0e45439b",
+    "commonmarkJs": "cb2c2303d3550ec6ef28ceb2841f148e8761eebf"
+  },
+  "commonmarkJsPackageLockSha256": "5039e5908c413995423f55a3e1303d55030e0fd2794de9655f180d5ccce956f1",
   "checked": 25,
   "exactMatches": 24,
   "classifiedDifferences": 1,

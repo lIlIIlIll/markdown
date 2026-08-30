@@ -107,6 +107,16 @@
   fixture 继续保留各自上游许可证，不重许可。
 - 理由：MIT 是简洁、宽松且不改变上游测试数据归属的最小发布选择。
 
+## A-042：审计修复后的证据失效与隔离协议破坏性变更
+
+- 状态：`resolved`
+- 决策日期：2026-08-30
+- 涉及：`MD-FUT-002`、`MD-TST-002`、`MD-PERF-001-002`、`MD-REL-001`、`MD-QUAL-001`
+- 歧义：2026-08-30 审计发现旧 release evidence 可以用可达祖先冒名、信任可修改派生值且没有下载证据包；同时修复 diagnostic 预算需要改变公开 transport SPI。旧性能样本的数值仍通过，但产品和 harness 已改变。
+- 决定：旧 raw 降为 historical/stale，不沿用其 pass 状态。schema v4 必须绑定 source commit、source Git tree、product tree、执行 commit/tree、JUnit/API inventory、独立 benchmark 重算和证据包校验和。`PluginIsolationTransport` 在 0.9 pre-GA 采用破坏性增量 response sink；不能用构造完整 response 的兼容 adapter 绕过预算。
+- 理由：用户明确允许破坏性变更；fail-closed 证据和解码前资源控制优先于 preview SPI 兼容。固定提交的 fresh canonical 与 clean full gate 用于恢复其余 4 个聚合 requirement 的 `pass`。
+- 影响 requirements：lockfile-bound differential 完成后 `MD-TST-002` 可恢复 `pass`；其余 4 个聚合发布/性能条目在新 canonical 与证据包完成前为 `implemented_unverified`。隔离与安全条目由当前 1456/1456 测试保持 `pass`。
+
 ## A-012：`≈` 的 AST 语义等价规则未定义
 
 - 状态：`resolved`
@@ -369,6 +379,16 @@
 - 决定：canonical harness 对受测进程显式设置 `cjGCInterval=500ms`，同时继续设置 `cjHeapSize=2GB`。该参数不关闭 GC，也不改变 heap、资源 limits、parser 行为或 10 MiB RSS 门槛。raw environment、benchmark report 和性能文档必须披露该值。默认 `Markdown.parse` 行为和用户进程环境保持不变。
 - 理由：同一 driver、固定 CPU、12 iterations、12 轮正反序配对测量中，500ms 配置的 CommonMark parse ratio 为 `0.942644/0.946147`，GFM HTML 为 `0.922968/0.926841`。1s 没有额外收益，因此采用较短的 500ms。随后从提交 `c63c52528aef6cc5ea46d4b152e08af6a5344f2f` 的最小源码归档在 Server 全新目录构建并执行完整 canonical，得到 CommonMark `2.334095x`、GFM `2.466373x`，全部 ratio、复杂度和 RSS gate 通过；raw SHA-256 为 `ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37`。
 - 影响 requirements：`MD-PERF-002` 只能引用 raw 中同时绑定 `cangjieHeapSize` 与 `cangjieGcInterval` 的结果。不得把该结果描述为未设置运行时参数的默认进程性能；A-038 的最新完整整轮选择规则继续适用。
+
+## A-043：release bundle 的重复门槛与易失 target 目录
+
+- 状态：`resolved`
+- 决策日期：2026-08-30
+- 涉及：`MD-REL-001`、`MD-QUAL-001`
+- 歧义：当前 SDK 的 `cjpm bundle` 会再次执行 test/lint，并会清理 `target`；完整 release gate 已在打包前独立完成 tests、static check、fuzz、consumer 和 benchmark smoke。如果证据工作目录也位于 `target`，打包会删除已经采集的 JUnit 与步骤日志。
+- 决定：release gate 先在 `mktemp -d` 创建私有证据工作目录，在打包前 snapshot 易失的 JUnit/benchmark 报告；候选包使用 `cjpm bundle --skip-test --skip-lint` 生成，随后将完整证据原子发布到 `target/release-evidence`。skip 仅消除同一 gate 内的重复执行，不删除前置验证；manifest 仍记录每个前置命令和 exit code。
+- 理由：这保持候选包与受测源码一致，同时保证成功和失败路径都能留下可下载、checksummed 的执行证据，且不会让 cjpm 的 target 清理破坏证据链。
+- 影响 requirements：`MD-REL-001`、`MD-QUAL-001` 的发布证明以 retained manifest 与 SHA256SUMS 为准；独立 lint/test 步骤缺失或非零时 bundle 不得使 gate 通过。
 
 ```text
 ### A-XXX：标题

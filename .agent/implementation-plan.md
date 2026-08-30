@@ -1,18 +1,32 @@
 # markdown 实施计划
 
-## Current completion state (2026-08-29)
+## Current completion state (2026-08-30)
 
-The implementation dependency graph is closed. The authoritative ledger is
-125 pass, 0 pending, 0 implemented_unverified and 0 blocked. The latest complete
-identity-bound Server benchmark is canonical: CommonMark `2.334095x` and GFM
-`2.466373x`, with every timing, scaling, pathological and RSS gate passing. The
-full local release gate also passes through bundle and evidence-ready validation.
+The 2026-08-30 P0-P2 audit remediation is release-verified. The authoritative
+ledger is 125 pass, 0 pending, 0 implemented_unverified and 0 blocked. The earlier
+`c63c525` benchmark remains historical because both the product tree and measurement
+harness changed.
 
-The retained architecture remains one shared parsing core with explicit full-AST,
-source-event and fused-render execution models. The canonical performance profile
-continues to construct the complete public AST; it does not substitute the event
-or fused paths. Further performance work is optional and must continue using the
-A/A, bidirectional A/B and latest-complete canonical selection rules.
+The active dependency order is:
+
+1. Complete fail-closed runtime/build changes: bounded incremental isolation
+   responses and content/toolchain/target-bound native cache manifests. Completed.
+2. Complete evidence derivation: recompute benchmark statistics from samples,
+   bind declared commits to Git blob product trees, derive JUnit/API metrics, and
+   create checksummed CI artifacts. Completed and focused-tested.
+3. Lock the commonmark.js npm graph and publish supported-version/security response
+   policy. Completed.
+4. Commit this product/harness slice on its dedicated branch, then build a fresh
+   checkout on Server and run the full fixed-CPU canonical measurement. Completed;
+   the latest complete run passes CommonMark `2.274715x` and GFM `2.267811x`.
+5. Replace raw/report/README/ledger/acceptance only from that latest complete run,
+   execute the clean full release gate, and verify its retained manifest and
+   checksums. Completed; the gate exits 0 and the retained bundle verifies.
+
+The retained parser architecture is unchanged: one shared parsing core with
+explicit full-AST, source-event and fused-render execution models. Canonical
+performance still constructs the complete public AST and cannot substitute the
+event or fused paths.
 
 ## Historical audit remediation (2026-08-29)
 

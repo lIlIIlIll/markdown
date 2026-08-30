@@ -228,6 +228,16 @@ class PublicApiCheckerCliTest(unittest.TestCase):
         self.write_python_stub(scripts / "test_check_public_api.py", "checker-test", "CHECKER_TEST_EXIT")
         self.write_python_stub(scripts / "check_public_api.py", "checker", "CHECKER_EXIT")
         self.write_python_stub(scripts / "release_evidence.py", "release-evidence")
+        (scripts / "release_evidence_bundle.py").write_text(
+            "import pathlib, sys\n"
+            "arguments = sys.argv[1:]\n"
+            "output = pathlib.Path(arguments[arguments.index('--output') + 1])\n"
+            "if 'init' in arguments:\n"
+            "    (output / 'logs').mkdir(parents=True, exist_ok=True)\n"
+            "if 'finalize' in arguments:\n"
+            "    (output / 'manifest.json').write_text('{}\\n', encoding='utf-8')\n",
+            encoding="utf-8",
+        )
         self.write_python_stub(scripts / "test_release_evidence.py", "release-evidence-test")
         self.write_python_stub(
             scripts / "test_build_benchmark_driver.py", "benchmark-driver-build-test"
