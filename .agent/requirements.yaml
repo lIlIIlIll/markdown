@@ -2406,6 +2406,7 @@ requirements:
   - src/security_corpus_test.cj
   - scripts/release_gate.sh
   - '.github/workflows/candidate-validation.yml: pinned minimum/current SDK matrix executes the complete release gate'
+  - '.github/workflows/candidate-validation.yml: Same-language benchmark (current-1.1.3) verifies committed evidence and reruns the pinned paired comparison'
   - 'scripts/setup_differential_tools.sh: pinned, reproducible cmark/cmark-gfm/commonmark.js setup used by the gate'
   - 'tests/differential/commonmark-js/package.json and package-lock.json: exact npm graph and integrity records consumed by npm ci'
   - 'tests/fuzz/native_scanner_fuzz.c and scripts/fuzz_native_scanner.py: coverage-guided libFuzzer with ASan/UBSan'
@@ -2492,11 +2493,13 @@ requirements:
   - 'src/security_corpus_test.cj: SecurityCorpusTest.pathologicalDelimiterReferenceHtmlAndTableInputsRemainBounded'
   - 'src/testkit_fuzz_test.cj: ExtensionTckAndFuzzTest.extensionTckPassesAllRequiredRuntimeChecks'
   - 'scripts/test_check_public_api.py'
+  - 'benchmarks/test_compare_markdown4cj.py: seven fail-closed protocol, derivation, output-stability and CPU-affinity tests'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: API snapshot, pathological corpus, and official extension TCK passed'
   - '2026-08-29: GitHub Actions run 33234237046 passed both complete gates on SDK 1.1.0 and 1.1.3 at commit e8d486f20e624159c2da043e574169f9da4250dd; main requires both stable check contexts.'
+  - '2026-08-30: the same-language job uses official SDK 1.1.3, pinned comparator commits, exact protocol thresholds, fresh paired samples and always-uploaded raw/report artifacts; branch protection uses its stable job name as a required context.'
   notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-PERF-001
   source: PRD §45.1-3
@@ -2516,6 +2519,7 @@ requirements:
   - 'benchmarks/release_statistics.py: independent recomputation of every ratio, slope, RSS delta and gate from raw samples'
   - benchmarks/driver/src/main.cj
   - benchmarks/compare_markdown4cj.py
+  - '.github/workflows/candidate-validation.yml: required same-language benchmark job'
   - docs/reports/benchmark.md
   - docs/reports/markdown4cj-comparison.md
   tests:
@@ -2524,12 +2528,14 @@ requirements:
   - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks.gfmParseAndHtml'
   - benchmarks/measure.py
   - scripts/test_benchmark_input_profiles.py
+  - 'benchmarks/test_compare_markdown4cj.py: seven verifier and protocol regression tests'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: 12-corpus -O2 reference-host matrix recorded raw samples, per-corpus digests, pinned CPU, SDK, reference
     commits, geometric means, and custom-extension cost'
-  - '2026-08-24: current-SDK same-language parse-only comparison pinned markdown4cj f43cfb3a and commonmark4cj 41499e6d; shared HTML behavior 12/12, 11-corpus geomean markdown speedup 10.996x, minimum 4.150x, maximum peak-RSS ratio 0.664x; this does not replace the blocked native-reference GA gates'
+  - '2026-08-24 historical: current-SDK same-language parse-only comparison pinned markdown4cj f43cfb3a and commonmark4cj 41499e6d; shared HTML behavior 12/12, 11-corpus geomean markdown speedup 10.996x, minimum 4.150x, maximum peak-RSS ratio 0.664x'
+  - '2026-08-30: refreshed same-language schema-v3 raw SHA-256 898dfaa87f8d7bb5fc0d30c8375114ada9d11bdfabf1d82a123e93b7c0e9e458 binds product commit ebf445cf, Git tree a87795fe, official SDK 1.1.3, current corpus/product/harness hashes and pinned markdown4cj/commonmark4cj commits; Server CPU 24 measured 14.132334x geomean speedup, 3.113629x minimum, 0.460683x maximum peak-RSS ratio and 12/12 shared behavior; independent verification passed'
   - '2026-08-27: String, Array<Byte>, OwnedUtf8Input, ReusableUtf8Input and InputStream have distinct executable driver modes and canonical raw records copy/decode/native-scanner semantics; commonmark-parse reuses immutable input while still constructing the full AST and result on every iteration'
   - '2026-08-25: canonical remote raw SHA-256 1b025514500df45128e92a5fb72c77897773222e72f98e95c72db1ee89e23f57 binds source commit 0275f27a, Cangjie SDK 1.1.0-alpha.20260803040049, source archive, harness, markdown driver and both reference drivers; vendored CommonMark/GFM corpus digests match release-evidence.json'
   - '2026-08-25: trusted-owned candidate A/B raw SHA-256 382842e1f4e7c55373ca07790c810613cec7ff3aa64af058183227eb67979a83 with unchanged driver surface measured candidate/baseline 0.921434 CommonMark and 0.964209 GFM; reverse-order repeat and baseline A/A 0.997942/1.002247 distinguish the benefit from measurement drift'
@@ -2564,12 +2570,17 @@ requirements:
   - benchmarks/driver/src/main.cj
   - docs/performance.md
   - docs/reports/benchmark.md
+  - benchmarks/compare_markdown4cj.py
+  - '.github/workflows/candidate-validation.yml: Same-language benchmark (current-1.1.3) merge gate'
   tests:
   - benchmarks/measure.py
   - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks'
   - scripts/test_benchmark_input_profiles.py
+  - benchmarks/test_compare_markdown4cj.py
   evidence:
   - '2026-08-30 refreshed fixed-Server canonical for commit 6a75709d: raw SHA-256 43ce60a42d590daa807f69377405538693f6aba70bbc12b782b32eb2e0f7c4ca; CommonMark 2.368184x, GFM 2.367749x, ordinary 3.432042x/1.619950x, scaling 0.379262/1.682972, pathological 0.582071/2.046359 and extra RSS 30176 KiB; every gate true and independent derivation errors empty.'
+  - '2026-08-30 latest fixed-Server canonical for commit ebf445cf: raw SHA-256 2f4bd94efd0d486ccbdb301e8cc9f67b7a1684bd1c81d8b1d788c8bc72245f9e; official SDK 1.1.3 measured CommonMark 2.415830x, GFM 2.345149x, ordinary 3.497505x/1.930463x, scaling 0.430979/1.822906, pathological 0.588456/1.940353 and extra RSS 31132 KiB; every gate true and independent derivation errors empty.'
+  - '2026-08-30 same-language required profile: 14.132334x geomean speedup versus pinned markdown4cj, minimum 3.113629x, maximum peak-RSS ratio 0.460683x and shared behavior 12/12; raw SHA-256 898dfaa87f8d7bb5fc0d30c8375114ada9d11bdfabf1d82a123e93b7c0e9e458.'
   - *final_validation_evidence
   - '2026-08-30 latest-complete Server canonical: CommonMark 2.274715x, GFM 2.267811x, ordinary gate pass, scaling slope/max 0.323960/2.198974, pathological 0.567057/1.715981, extra RSS 30968 KiB; all raw gates true'
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'

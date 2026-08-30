@@ -1,6 +1,76 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "status": "PASS",
+  "generatedAtUtc": "2026-08-30T09:31:28.995844+00:00",
+  "identity": {
+    "repositoryRef": "ebf445cf66311fb2253ab7be0ec5517c79f0205d",
+    "repositoryCommit": "ebf445cf66311fb2253ab7be0ec5517c79f0205d",
+    "gitTree": "a87795fe167ff1660f0f22f9330ce9b0014e2aef",
+    "productTreeSha256": "7af14d294c9aef023be4353d1bb1fdf985b7d836171dad4e07f4e08467535aff",
+    "harnessFiles": {
+      "benchmarks/compare_markdown4cj.py": "0c44c99b0cd097b3f42cdc49d3f014d26f891c52e9a0f39761187e5f166928c2",
+      "benchmarks/measure.py": "e23d33fe48d5b5ba27a6e149ea61d6262132b7cf96127008baf71fcdf69dee34",
+      "benchmarks/generate_corpus.py": "a8eb3a59845ecdc1419aaf8770f49e43f8f4adaec46c1fa7a2e82e26e5a92268",
+      "benchmarks/benchmark_identity.py": "477aebeefb5a291dfcd462c5f2396222665212646a80db8003469d8ce19df438"
+    },
+    "corpora": [
+      {
+        "name": "official-spec",
+        "bytes": 262144,
+        "sha256": "536395b98b96d9433a625ac4bc8436e6f80148f1187c7808e5e8673e3131648e"
+      },
+      {
+        "name": "readme-api",
+        "bytes": 262144,
+        "sha256": "09890116d317f1b2d627ee4e93b182ff735b6066beb367deddf5ec71c26563d0"
+      },
+      {
+        "name": "large-code",
+        "bytes": 262144,
+        "sha256": "20a6afa65075787178816f7ca474aa6ce213c100632a5f0e5d0e1e789e8908e1"
+      },
+      {
+        "name": "large-table",
+        "bytes": 262144,
+        "sha256": "a263e98f565610a91820ba4fb8325339bb488a58da15c7474eb45c99325cf5ea"
+      },
+      {
+        "name": "many-references",
+        "bytes": 262144,
+        "sha256": "cfb0e42d12f9a145fe35ed3358818536e6a98993cd4e4c91f0bd8b9c8b50a2c3"
+      },
+      {
+        "name": "cjk",
+        "bytes": 262144,
+        "sha256": "dfac742c227ad9b71eec2bcf31b70207bb42b6edb4b121e0cbd79644dafa4458"
+      },
+      {
+        "name": "emoji",
+        "bytes": 262144,
+        "sha256": "7bd3ed927a9f7119b5c96558d6cc10e8cf528836cfc3763a6aba48e0d900da76"
+      },
+      {
+        "name": "deep-list",
+        "bytes": 262144,
+        "sha256": "a57f01f7815e6807b5bcb5bdf880ae2f9c57c7231ac1295448396c30ab5c4fdc"
+      },
+      {
+        "name": "pathological-delimiters",
+        "bytes": 262144,
+        "sha256": "a48eb23fff2ac39a04f2866269a9b5048a445df577de357dbeed0b8322fde56c"
+      },
+      {
+        "name": "long-line",
+        "bytes": 262144,
+        "sha256": "dc3ee1f07c948f57d5057887f7a837a897a0bebe9d3f25e4c719b092db0da40c"
+      },
+      {
+        "name": "ordinary",
+        "bytes": 262144,
+        "sha256": "590bc6cd4fe1bcacf6c87907a34b1fc35907f919e2d59dc50b0b06cdcd98df77"
+      }
+    ]
+  },
   "comparator": {
     "url": "https://gitcode.com/Cangjie-TPC/markdown4cj.git",
     "commit": "f43cfb3ae1cd3092d9a8a94332c64815fc4572f9"
@@ -9,17 +79,22 @@
     "url": "https://gitcode.com/Cangjie-TPC/commonmark4cj.git",
     "commit": "41499e6d6e50efac71db3bba64d5300d251d9c90"
   },
+  "thresholds": {
+    "minimumGeomeanSpeedup": 1.2,
+    "maximumPerCorpusRegression": 1.1,
+    "maximumPeakRssRatio": 1.2
+  },
   "environment": {
-    "platform": "Linux-7.1.8-arch1-3-x86_64-with-glibc2.44",
-    "cpu": 2,
+    "platform": "Linux-5.15.0-187-generic-x86_64-with-glibc2.35",
+    "cpu": 24,
     "cjc": {
       "command": [
         "cjc",
         "-v"
       ],
-      "cwd": "/tmp/markdown4cj-audit.grlh6fkg/repo",
+      "cwd": "/home/chenqian/markdown-same-language-20260830-ebf445c/tools/markdown4cj",
       "exitCode": 0,
-      "stdout": "Cangjie Compiler: 1.1.0-alpha.20260817040003 (cjnative)\nTarget: x86_64-unknown-linux-gnu\n",
+      "stdout": "Cangjie Compiler: 1.1.3 (cjnative)\nTarget: x86_64-unknown-linux-gnu\n",
       "stderr": ""
     },
     "cjpm": {
@@ -27,7 +102,7 @@
         "cjpm",
         "--version"
       ],
-      "cwd": "/tmp/markdown4cj-audit.grlh6fkg/repo",
+      "cwd": "/home/chenqian/markdown-same-language-20260830-ebf445c/tools/markdown4cj",
       "exitCode": 0,
       "stdout": "Cangjie Project Manager: 1.1.3\n",
       "stderr": ""
@@ -59,10 +134,10 @@
       "build",
       "-V"
     ],
-    "cwd": "/tmp/markdown4cj-comparator-repro-20260824",
+    "cwd": "/home/chenqian/markdown-same-language-20260830-ebf445c/adapter",
     "exitCode": 0,
-    "stdout": "Compiling package `commonmark4cj`: LD_LIBRARY_PATH=/tmp/markdown4cj-comparator-repro-20260824/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /tmp/markdown4cj-current-sdk-commonmark/src --import-path=/tmp/markdown4cj-comparator-repro-20260824/target/release --output-dir=/tmp/markdown4cj-comparator-repro-20260824/target/release/commonmark4cj/ --output-type=dylib -o=libcommonmark4cj.so\nCompiling package `commonmark4cj.commonmark`: LD_LIBRARY_PATH=/tmp/markdown4cj-comparator-repro-20260824/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /tmp/markdown4cj-current-sdk-commonmark/src/commonmark --import-path=/tmp/markdown4cj-comparator-repro-20260824/target/release --no-sub-pkg --output-dir=/tmp/markdown4cj-comparator-repro-20260824/target/release/commonmark4cj/ --output-type=dylib -o=libcommonmark4cj.commonmark.so\nCompiling package `commonmark4cj.strikethrough`: LD_LIBRARY_PATH=/tmp/markdown4cj-comparator-repro-20260824/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /tmp/markdown4cj-current-sdk-commonmark/src/strikethrough --import-path=/tmp/markdown4cj-comparator-repro-20260824/target/release --no-sub-pkg --output-dir=/tmp/markdown4cj-comparator-repro-20260824/target/release/commonmark4cj/ -L /tmp/markdown4cj-comparator-repro-20260824/target/release/commonmark4cj/ -lcommonmark4cj.commonmark --output-type=dylib -o=libcommonmark4cj.strikethrough.so\nCompiling package `commonmark4cj.table`: LD_LIBRARY_PATH=/tmp/markdown4cj-comparator-repro-20260824/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /tmp/markdown4cj-current-sdk-commonmark/src/table --import-path=/tmp/markdown4cj-comparator-repro-20260824/target/release --no-sub-pkg --output-dir=/tmp/markdown4cj-comparator-repro-20260824/target/release/commonmark4cj/ -L /tmp/markdown4cj-comparator-repro-20260824/target/release/commonmark4cj/ -lcommonmark4cj.commonmark --output-type=dylib -o=libcommonmark4cj.table.so\nCompiling package `markdown.core`: LD_LIBRARY_PATH=/tmp/markdown4cj-comparator-repro-20260824/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /tmp/markdown4cj-comparator-repro-20260824/src/core --import-path=/tmp/markdown4cj-comparator-repro-20260824/target/release --no-sub-pkg --output-dir=/tmp/markdown4cj-comparator-repro-20260824/target/release/markdown/ --output-type=staticlib -o=libmarkdown.core.a\nCompiling package `markdown`: LD_LIBRARY_PATH=/tmp/markdown4cj-comparator-repro-20260824/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /tmp/markdown4cj-comparator-repro-20260824/src --import-path=/tmp/markdown4cj-comparator-repro-20260824/target/release --output-dir=/tmp/markdown4cj-comparator-repro-20260824/target/release/bin/ -L /tmp/markdown4cj-comparator-repro-20260824/target/release/markdown/ -lmarkdown.core -L /tmp/markdown4cj-comparator-repro-20260824/target/release/commonmark4cj/ -lcommonmark4cj.commonmark --output-type=exe -o=main\n   Finished `build` profile compilation\n   Executable files at `/tmp/markdown4cj-comparator-repro-20260824/target/release/bin`\ncjpm build success\n",
-    "stderr": "\u001b[33mwarning\u001b[0m: unused function:'getStackTrace'\n  \u001b[36m==>\u001b[0m /tmp/markdown4cj-current-sdk-commonmark/src/commonmark/package.cj:29:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m29\u001b[0m \u001b[36m| \u001b[0m  func getStackTrace(thrown: ?Exception): String {\u001b[0m\n   \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m^\u001b[0m\n\u001b[36m30\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     var res: String = \"\"\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m41\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m }\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m^ unused function\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'char'\n   \u001b[36m==>\u001b[0m /tmp/markdown4cj-current-sdk-commonmark/src/commonmark/link_scanner.cj:133:25:\n    \u001b[36m| \u001b[0m\n\u001b[36m133\u001b[0m \u001b[36m| \u001b[0m                    let char = scanner.peek()\u001b[0m\n    \u001b[36m| \u001b[0m                        \u001b[33m^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n2 warnings generated, 2 warnings printed.\n\u001b[33mwarning\u001b[0m: unused import 'std.regex.Matcher'\n  \u001b[36m==>\u001b[0m /tmp/markdown4cj-comparator-repro-20260824/src/core/package.cj:16:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m16\u001b[0m \u001b[36m| \u001b[0minternal import std.regex.Matcher\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unused import\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused import 'std.regex.Regex'\n  \u001b[36m==>\u001b[0m /tmp/markdown4cj-comparator-repro-20260824/src/core/package.cj:17:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m17\u001b[0m \u001b[36m| \u001b[0minternal import std.regex.Regex\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unused import\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'NULL_CHAR'\n  \u001b[36m==>\u001b[0m /tmp/markdown4cj-comparator-repro-20260824/src/core/package.cj:47:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m47\u001b[0m \u001b[36m| \u001b[0mlet NULL_CHAR: Rune = '\\u{0}'\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'EMPTY_STRING'\n  \u001b[36m==>\u001b[0m /tmp/markdown4cj-comparator-repro-20260824/src/core/package.cj:48:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m48\u001b[0m \u001b[36m| \u001b[0mlet EMPTY_STRING: String = \"\"\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'EMPTY_MAP'\n  \u001b[36m==>\u001b[0m /tmp/markdown4cj-comparator-repro-20260824/src/core/package.cj:49:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m49\u001b[0m \u001b[36m| \u001b[0mlet EMPTY_MAP: Map<String, String> = HashMap()\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'appends'\n  \u001b[36m==>\u001b[0m /tmp/markdown4cj-comparator-repro-20260824/src/core/package.cj:54:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m54\u001b[0m \u001b[36m| \u001b[0m      func appends(str: ToString): StringBuilder {\u001b[0m\n   \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m55\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         this.append(str)\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m57\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n  \u001b[36m==>\u001b[0m /tmp/markdown4cj-comparator-repro-20260824/src/core/core_plugin.cj:79:17:\n   \u001b[36m| \u001b[0m\n\u001b[36m79\u001b[0m \u001b[36m| \u001b[0m                visitor, text => buildView(text, true)\u001b[0m\n   \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /tmp/markdown4cj-comparator-repro-20260824/src/core/core_plugin.cj:121:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m121\u001b[0m \u001b[36m| \u001b[0m                visitor, code => buildView(code, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'isListNode'\n   \u001b[36m==>\u001b[0m /tmp/markdown4cj-comparator-repro-20260824/src/core/node_view.cj:153:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m153\u001b[0m \u001b[36m| \u001b[0m      private func isListNode(n: Node): Bool {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m154\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         n is BlockQuote || n is OrderedList || n is BulletList\u001b[0m\n\u001b[36m155\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'listLevel'\n   \u001b[36m==>\u001b[0m /tmp/markdown4cj-comparator-repro-20260824/src/core/core_plugin.cj:200:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m200\u001b[0m \u001b[36m| \u001b[0m      private static func listLevel(node: Node): Int {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m201\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         var level: Int = 0\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m210\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /tmp/markdown4cj-comparator-repro-20260824/src/core/core_plugin.cj:216:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m216\u001b[0m \u001b[36m| \u001b[0m                visitor, thematicBreak => buildView(thematicBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /tmp/markdown4cj-comparator-repro-20260824/src/core/core_plugin.cj:236:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m236\u001b[0m \u001b[36m| \u001b[0m                visitor, softLineBreak => buildView(softLineBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /tmp/markdown4cj-comparator-repro-20260824/src/core/core_plugin.cj:245:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m245\u001b[0m \u001b[36m| \u001b[0m                visitor, hardLineBreak => buildView(hardLineBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'isInTightList'\n   \u001b[36m==>\u001b[0m /tmp/markdown4cj-comparator-repro-20260824/src/core/core_plugin.cj:261:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m261\u001b[0m \u001b[36m| \u001b[0m      private static func isInTightList(paragraph: Paragraph): Bool {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m262\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         if (let Some(Some(list: ListBlock)) <- paragraph.getParent()?.getParent()) {\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m266\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n14 warnings generated, 14 warnings printed.\n",
+    "stdout": "Compiling package `commonmark4cj`: LD_LIBRARY_PATH=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /home/chenqian/markdown-same-language-20260830-ebf445c/tools/commonmark4cj/src --import-path=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release --output-dir=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj/ --output-type=dylib -o=libcommonmark4cj.so\nCompiling package `commonmark4cj.commonmark`: LD_LIBRARY_PATH=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /home/chenqian/markdown-same-language-20260830-ebf445c/tools/commonmark4cj/src/commonmark --import-path=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release --no-sub-pkg --output-dir=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj/ --output-type=dylib -o=libcommonmark4cj.commonmark.so\nCompiling package `commonmark4cj.strikethrough`: LD_LIBRARY_PATH=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /home/chenqian/markdown-same-language-20260830-ebf445c/tools/commonmark4cj/src/strikethrough --import-path=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release --no-sub-pkg --output-dir=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj/ -L /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj/ -lcommonmark4cj.commonmark --output-type=dylib -o=libcommonmark4cj.strikethrough.so\nCompiling package `commonmark4cj.table`: LD_LIBRARY_PATH=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /home/chenqian/markdown-same-language-20260830-ebf445c/tools/commonmark4cj/src/table --import-path=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release --no-sub-pkg --output-dir=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj/ -L /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj/ -lcommonmark4cj.commonmark --output-type=dylib -o=libcommonmark4cj.table.so\nCompiling package `markdown.core`: LD_LIBRARY_PATH=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core --import-path=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release --no-sub-pkg --output-dir=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/markdown/ --output-type=staticlib -o=libmarkdown.core.a\nCompiling package `markdown`: LD_LIBRARY_PATH=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src --import-path=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release --output-dir=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/bin/ -L /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/markdown/ -lmarkdown.core -L /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj/ -lcommonmark4cj.commonmark --output-type=exe -o=main\n   Finished `build` profile compilation\n   Executable files at `/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/bin`\ncjpm build success\n",
+    "stderr": "\u001b[33mwarning\u001b[0m: unused function:'getStackTrace'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/tools/commonmark4cj/src/commonmark/package.cj:29:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m29\u001b[0m \u001b[36m| \u001b[0m  func getStackTrace(thrown: ?Exception): String {\u001b[0m\n   \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m^\u001b[0m\n\u001b[36m30\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     var res: String = \"\"\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m41\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m }\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m^ unused function\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'char'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/tools/commonmark4cj/src/commonmark/link_scanner.cj:133:25:\n    \u001b[36m| \u001b[0m\n\u001b[36m133\u001b[0m \u001b[36m| \u001b[0m                    let char = scanner.peek()\u001b[0m\n    \u001b[36m| \u001b[0m                        \u001b[33m^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n2 warnings generated, 2 warnings printed.\n\u001b[33mwarning\u001b[0m: unused import 'std.regex.Matcher'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/package.cj:16:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m16\u001b[0m \u001b[36m| \u001b[0minternal import std.regex.Matcher\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unused import\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused import 'std.regex.Regex'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/package.cj:17:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m17\u001b[0m \u001b[36m| \u001b[0minternal import std.regex.Regex\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unused import\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'NULL_CHAR'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/package.cj:47:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m47\u001b[0m \u001b[36m| \u001b[0mlet NULL_CHAR: Rune = '\\u{0}'\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'EMPTY_STRING'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/package.cj:48:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m48\u001b[0m \u001b[36m| \u001b[0mlet EMPTY_STRING: String = \"\"\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'EMPTY_MAP'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/package.cj:49:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m49\u001b[0m \u001b[36m| \u001b[0mlet EMPTY_MAP: Map<String, String> = HashMap()\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'appends'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/package.cj:54:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m54\u001b[0m \u001b[36m| \u001b[0m      func appends(str: ToString): StringBuilder {\u001b[0m\n   \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m55\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         this.append(str)\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m57\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/core_plugin.cj:79:17:\n   \u001b[36m| \u001b[0m\n\u001b[36m79\u001b[0m \u001b[36m| \u001b[0m                visitor, text => buildView(text, true)\u001b[0m\n   \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/core_plugin.cj:121:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m121\u001b[0m \u001b[36m| \u001b[0m                visitor, code => buildView(code, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'isListNode'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/node_view.cj:153:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m153\u001b[0m \u001b[36m| \u001b[0m      private func isListNode(n: Node): Bool {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m154\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         n is BlockQuote || n is OrderedList || n is BulletList\u001b[0m\n\u001b[36m155\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'listLevel'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/core_plugin.cj:200:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m200\u001b[0m \u001b[36m| \u001b[0m      private static func listLevel(node: Node): Int {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m201\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         var level: Int = 0\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m210\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/core_plugin.cj:216:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m216\u001b[0m \u001b[36m| \u001b[0m                visitor, thematicBreak => buildView(thematicBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/core_plugin.cj:236:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m236\u001b[0m \u001b[36m| \u001b[0m                visitor, softLineBreak => buildView(softLineBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/core_plugin.cj:245:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m245\u001b[0m \u001b[36m| \u001b[0m                visitor, hardLineBreak => buildView(hardLineBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'isInTightList'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/core_plugin.cj:261:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m261\u001b[0m \u001b[36m| \u001b[0m      private static func isInTightList(paragraph: Paragraph): Bool {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m262\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         if (let Some(Some(list: ListBlock)) <- paragraph.getParent()?.getParent()) {\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m266\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n14 warnings generated, 14 warnings printed.\n",
     "migrations": [
       {
         "file": "core_plugin.cj",
@@ -231,12 +306,12 @@
   },
   "drivers": {
     "markdown": {
-      "path": "/home/elliot/playground/markdown/benchmarks/driver/target/release/bin/main",
-      "sha256": "1751a01436bcf507cf1fa949e86d361b0e09a8825aee34dc10ab53274bcdced2"
+      "path": "/home/chenqian/markdown-same-language-20260830-ebf445c/repo/benchmarks/driver/target/release/bin/main",
+      "sha256": "b42438f293d766d06ce8438270c848a3297ed77a016a3824a033f9248456d497"
     },
     "markdown4cj": {
-      "path": "/tmp/markdown4cj-comparator-repro-20260824/target/release/bin/main",
-      "sha256": "66801c536d3e89e2699f920dbdb651dfb69d159866e104684523bd8ade2a41bb"
+      "path": "/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/bin/main",
+      "sha256": "560266ea1bf9e0e8d20924dc246e40ab3bed863dc621d0f1d12fff3ac50c6963"
     }
   },
   "structuralDiagnostics": {
@@ -246,8 +321,8 @@
       "equalTopLevelNodeCount": true
     },
     "readme-api": {
-      "markdown": "1113",
-      "markdown4cj": "1113",
+      "markdown": "1620",
+      "markdown4cj": "1620",
       "equalTopLevelNodeCount": true
     },
     "large-code": {
@@ -301,1048 +376,1049 @@
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.051412752,
-          "peakRssKiB": 27428,
+          "seconds": 0.050263967,
+          "peakRssKiB": 24236,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.051650365,
-          "peakRssKiB": 27704,
+          "seconds": 0.047538906,
+          "peakRssKiB": 24356,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.040824806,
-          "peakRssKiB": 27752,
+          "seconds": 0.035870674,
+          "peakRssKiB": 24232,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.038872473,
-          "peakRssKiB": 27600,
+          "seconds": 0.036747007,
+          "peakRssKiB": 24232,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.039598854,
-          "peakRssKiB": 27460,
+          "seconds": 0.034934577,
+          "peakRssKiB": 24344,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.041079781,
-          "peakRssKiB": 27280,
+          "seconds": 0.05041161,
+          "peakRssKiB": 24184,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.053839141,
-          "peakRssKiB": 27520,
+          "seconds": 0.034969287,
+          "peakRssKiB": 24164,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 0.387571915,
-          "peakRssKiB": 59612,
+          "seconds": 0.344044963,
+          "peakRssKiB": 60508,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.340377687,
-          "peakRssKiB": 61448,
+          "seconds": 0.343300841,
+          "peakRssKiB": 60596,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.367893434,
-          "peakRssKiB": 61988,
+          "seconds": 0.331430811,
+          "peakRssKiB": 60596,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.334975308,
-          "peakRssKiB": 61348,
+          "seconds": 0.338066417,
+          "peakRssKiB": 60820,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.350557412,
-          "peakRssKiB": 60876,
+          "seconds": 0.34037446,
+          "peakRssKiB": 60552,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.36358954,
-          "peakRssKiB": 60784,
+          "seconds": 0.344202759,
+          "peakRssKiB": 60668,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.345627574,
-          "peakRssKiB": 61268,
+          "seconds": 0.333558763,
+          "peakRssKiB": 60936,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         }
       ],
-      "markdownMedianSeconds": 0.041079781,
-      "markdown4cjMedianSeconds": 0.350557412,
-      "markdownSpeedup": 8.533575483277284,
-      "peakRssRatio": 0.44769955475253276
+      "markdownMedianSeconds": 0.036747007,
+      "markdown4cjMedianSeconds": 0.34037446,
+      "markdownSpeedup": 9.262644437953817,
+      "peakRssRatio": 0.3996980438492845
     },
     "readme-api": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.040901418,
-          "peakRssKiB": 29108,
-          "stdout": "3339",
-          "stdoutSha256": "3c3bf09e5c9dffd38bdc3a893c0a2a04b9df9652d44c017ea5bc299f207f0347"
+          "seconds": 0.060700329,
+          "peakRssKiB": 29124,
+          "stdout": "4860",
+          "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.050581126,
-          "peakRssKiB": 29008,
-          "stdout": "3339",
-          "stdoutSha256": "3c3bf09e5c9dffd38bdc3a893c0a2a04b9df9652d44c017ea5bc299f207f0347"
+          "seconds": 0.04670222,
+          "peakRssKiB": 29172,
+          "stdout": "4860",
+          "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.039130469,
-          "peakRssKiB": 29036,
-          "stdout": "3339",
-          "stdoutSha256": "3c3bf09e5c9dffd38bdc3a893c0a2a04b9df9652d44c017ea5bc299f207f0347"
+          "seconds": 0.039514992,
+          "peakRssKiB": 28700,
+          "stdout": "4860",
+          "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.040642906,
-          "peakRssKiB": 28960,
-          "stdout": "3339",
-          "stdoutSha256": "3c3bf09e5c9dffd38bdc3a893c0a2a04b9df9652d44c017ea5bc299f207f0347"
+          "seconds": 0.062618264,
+          "peakRssKiB": 29140,
+          "stdout": "4860",
+          "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.04097219,
-          "peakRssKiB": 29036,
-          "stdout": "3339",
-          "stdoutSha256": "3c3bf09e5c9dffd38bdc3a893c0a2a04b9df9652d44c017ea5bc299f207f0347"
+          "seconds": 0.063894,
+          "peakRssKiB": 29156,
+          "stdout": "4860",
+          "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.03869965,
-          "peakRssKiB": 29336,
-          "stdout": "3339",
-          "stdoutSha256": "3c3bf09e5c9dffd38bdc3a893c0a2a04b9df9652d44c017ea5bc299f207f0347"
+          "seconds": 0.040236864,
+          "peakRssKiB": 29592,
+          "stdout": "4860",
+          "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.041955709,
-          "peakRssKiB": 28940,
-          "stdout": "3339",
-          "stdoutSha256": "3c3bf09e5c9dffd38bdc3a893c0a2a04b9df9652d44c017ea5bc299f207f0347"
+          "seconds": 0.054446944,
+          "peakRssKiB": 29144,
+          "stdout": "4860",
+          "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 0.401964268,
-          "peakRssKiB": 61348,
-          "stdout": "3339",
-          "stdoutSha256": "3c3bf09e5c9dffd38bdc3a893c0a2a04b9df9652d44c017ea5bc299f207f0347"
+          "seconds": 0.481597156,
+          "peakRssKiB": 78704,
+          "stdout": "4860",
+          "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.448392384,
-          "peakRssKiB": 56664,
-          "stdout": "3339",
-          "stdoutSha256": "3c3bf09e5c9dffd38bdc3a893c0a2a04b9df9652d44c017ea5bc299f207f0347"
+          "seconds": 0.468186253,
+          "peakRssKiB": 78188,
+          "stdout": "4860",
+          "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.392500171,
-          "peakRssKiB": 61316,
-          "stdout": "3339",
-          "stdoutSha256": "3c3bf09e5c9dffd38bdc3a893c0a2a04b9df9652d44c017ea5bc299f207f0347"
+          "seconds": 0.448044688,
+          "peakRssKiB": 78772,
+          "stdout": "4860",
+          "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.378638661,
-          "peakRssKiB": 65956,
-          "stdout": "3339",
-          "stdoutSha256": "3c3bf09e5c9dffd38bdc3a893c0a2a04b9df9652d44c017ea5bc299f207f0347"
+          "seconds": 0.470656148,
+          "peakRssKiB": 78020,
+          "stdout": "4860",
+          "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.42538434,
-          "peakRssKiB": 56852,
-          "stdout": "3339",
-          "stdoutSha256": "3c3bf09e5c9dffd38bdc3a893c0a2a04b9df9652d44c017ea5bc299f207f0347"
+          "seconds": 0.476351344,
+          "peakRssKiB": 78800,
+          "stdout": "4860",
+          "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.395213481,
-          "peakRssKiB": 63424,
-          "stdout": "3339",
-          "stdoutSha256": "3c3bf09e5c9dffd38bdc3a893c0a2a04b9df9652d44c017ea5bc299f207f0347"
+          "seconds": 0.470643886,
+          "peakRssKiB": 76764,
+          "stdout": "4860",
+          "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.392133043,
-          "peakRssKiB": 65184,
-          "stdout": "3339",
-          "stdoutSha256": "3c3bf09e5c9dffd38bdc3a893c0a2a04b9df9652d44c017ea5bc299f207f0347"
+          "seconds": 0.481703602,
+          "peakRssKiB": 83676,
+          "stdout": "4860",
+          "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         }
       ],
-      "markdownMedianSeconds": 0.040901418,
-      "markdown4cjMedianSeconds": 0.395213481,
-      "markdownSpeedup": 9.66258629468543,
-      "peakRssRatio": 0.44478136939778035
+      "markdownMedianSeconds": 0.054446944,
+      "markdown4cjMedianSeconds": 0.470656148,
+      "markdownSpeedup": 8.644307897243968,
+      "peakRssRatio": 0.3536497920550696
     },
     "large-code": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.021545585,
-          "peakRssKiB": 14704,
+          "seconds": 0.026718539,
+          "peakRssKiB": 11104,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.02952223,
-          "peakRssKiB": 14520,
+          "seconds": 0.026335841,
+          "peakRssKiB": 11068,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.020997362,
-          "peakRssKiB": 14612,
+          "seconds": 0.026615273,
+          "peakRssKiB": 11928,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.018410839,
-          "peakRssKiB": 14968,
+          "seconds": 0.026333681,
+          "peakRssKiB": 11952,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.019294564,
-          "peakRssKiB": 14600,
+          "seconds": 0.024349713,
+          "peakRssKiB": 11064,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.02108084,
-          "peakRssKiB": 14700,
+          "seconds": 0.025087822,
+          "peakRssKiB": 11944,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.019849223,
-          "peakRssKiB": 14884,
+          "seconds": 0.02622357,
+          "peakRssKiB": 11056,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 0.110822248,
-          "peakRssKiB": 33376,
+          "seconds": 0.085635203,
+          "peakRssKiB": 33364,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.089245378,
-          "peakRssKiB": 33260,
+          "seconds": 0.083363313,
+          "peakRssKiB": 33212,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.087223836,
+          "seconds": 0.079989324,
+          "peakRssKiB": 33412,
+          "stdout": "3",
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.067894709,
+          "peakRssKiB": 33372,
+          "stdout": "3",
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.081993302,
           "peakRssKiB": 33356,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.08714714,
-          "peakRssKiB": 33284,
+          "seconds": 0.078040069,
+          "peakRssKiB": 33360,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.076984497,
-          "peakRssKiB": 33424,
-          "stdout": "3",
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.075596011,
-          "peakRssKiB": 33428,
-          "stdout": "3",
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.085953462,
-          "peakRssKiB": 33384,
+          "seconds": 0.082525774,
+          "peakRssKiB": 33240,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
-      "markdownMedianSeconds": 0.020997362,
-      "markdown4cjMedianSeconds": 0.08714714,
-      "markdownSpeedup": 4.150385176956991,
-      "peakRssRatio": 0.44776833792030635
+      "markdownMedianSeconds": 0.026333681,
+      "markdown4cjMedianSeconds": 0.081993302,
+      "markdownSpeedup": 3.1136285884225603,
+      "peakRssRatio": 0.35771579073386806
     },
     "large-table": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.039315252,
-          "peakRssKiB": 33952,
+          "seconds": 0.020890236,
+          "peakRssKiB": 20104,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.064489002,
-          "peakRssKiB": 34696,
+          "seconds": 0.02242642,
+          "peakRssKiB": 19828,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.060453497,
-          "peakRssKiB": 34704,
+          "seconds": 0.020137894,
+          "peakRssKiB": 18720,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.091494227,
-          "peakRssKiB": 34796,
+          "seconds": 0.020864303,
+          "peakRssKiB": 19576,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.067282353,
-          "peakRssKiB": 34808,
+          "seconds": 0.020106951,
+          "peakRssKiB": 18796,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.059560313,
-          "peakRssKiB": 34652,
+          "seconds": 0.024282969,
+          "peakRssKiB": 19288,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.063165373,
-          "peakRssKiB": 34924,
+          "seconds": 0.034686287,
+          "peakRssKiB": 20596,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 2.802187912,
-          "peakRssKiB": 279832,
+          "seconds": 3.198324744,
+          "peakRssKiB": 317468,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 3.146434334,
-          "peakRssKiB": 250492,
+          "seconds": 3.129396059,
+          "peakRssKiB": 305928,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 3.130278953,
-          "peakRssKiB": 263488,
+          "seconds": 3.300805758,
+          "peakRssKiB": 311048,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 3.517829393,
-          "peakRssKiB": 264920,
+          "seconds": 3.242885338,
+          "peakRssKiB": 304840,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 3.189151181,
-          "peakRssKiB": 256148,
+          "seconds": 3.362650304,
+          "peakRssKiB": 315252,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 3.182800464,
-          "peakRssKiB": 253612,
+          "seconds": 3.020842036,
+          "peakRssKiB": 331584,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 3.175357038,
-          "peakRssKiB": 283856,
+          "seconds": 2.958928726,
+          "peakRssKiB": 293276,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
-      "markdownMedianSeconds": 0.063165373,
-      "markdown4cjMedianSeconds": 3.175357038,
-      "markdownSpeedup": 50.270534110516536,
-      "peakRssRatio": 0.12303421453131165
+      "markdownMedianSeconds": 0.020890236,
+      "markdown4cjMedianSeconds": 3.198324744,
+      "markdownSpeedup": 153.10141752347846,
+      "peakRssRatio": 0.06211397413626713
     },
     "many-references": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.112579009,
-          "peakRssKiB": 42712,
+          "seconds": 0.045510635,
+          "peakRssKiB": 28780,
           "stdout": "11568",
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         },
         {
-          "seconds": 0.113424884,
-          "peakRssKiB": 43528,
+          "seconds": 0.04620197,
+          "peakRssKiB": 28896,
           "stdout": "11568",
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         },
         {
-          "seconds": 0.109625551,
-          "peakRssKiB": 42440,
+          "seconds": 0.049263799,
+          "peakRssKiB": 28884,
           "stdout": "11568",
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         },
         {
-          "seconds": 0.105485591,
-          "peakRssKiB": 42484,
+          "seconds": 0.046190534,
+          "peakRssKiB": 28812,
           "stdout": "11568",
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         },
         {
-          "seconds": 0.110366235,
-          "peakRssKiB": 42604,
+          "seconds": 0.042650941,
+          "peakRssKiB": 28984,
           "stdout": "11568",
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         },
         {
-          "seconds": 0.10551743,
-          "peakRssKiB": 42656,
+          "seconds": 0.033613677,
+          "peakRssKiB": 28020,
           "stdout": "11568",
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         },
         {
-          "seconds": 0.098153624,
-          "peakRssKiB": 42136,
+          "seconds": 0.033127634,
+          "peakRssKiB": 28812,
           "stdout": "11568",
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 0.912545191,
-          "peakRssKiB": 92916,
+          "seconds": 0.854048015,
+          "peakRssKiB": 93496,
           "stdout": "23133",
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         },
         {
-          "seconds": 0.911508112,
-          "peakRssKiB": 93124,
+          "seconds": 0.817748812,
+          "peakRssKiB": 89960,
           "stdout": "23133",
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         },
         {
-          "seconds": 1.063270245,
-          "peakRssKiB": 89564,
+          "seconds": 0.858124873,
+          "peakRssKiB": 92832,
           "stdout": "23133",
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         },
         {
-          "seconds": 1.0717359,
-          "peakRssKiB": 86264,
+          "seconds": 0.829437214,
+          "peakRssKiB": 95296,
           "stdout": "23133",
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         },
         {
-          "seconds": 0.807294377,
-          "peakRssKiB": 82292,
+          "seconds": 0.835225048,
+          "peakRssKiB": 93812,
           "stdout": "23133",
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         },
         {
-          "seconds": 1.0299053,
-          "peakRssKiB": 95072,
+          "seconds": 0.922415852,
+          "peakRssKiB": 108524,
           "stdout": "23133",
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         },
         {
-          "seconds": 0.943106897,
-          "peakRssKiB": 93784,
+          "seconds": 0.82532756,
+          "peakRssKiB": 90604,
           "stdout": "23133",
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         }
       ],
-      "markdownMedianSeconds": 0.109625551,
-      "markdown4cjMedianSeconds": 0.943106897,
-      "markdownSpeedup": 8.60298432616316,
-      "peakRssRatio": 0.45784247728037697
+      "markdownMedianSeconds": 0.045510635,
+      "markdown4cjMedianSeconds": 0.835225048,
+      "markdownSpeedup": 18.35230486236898,
+      "peakRssRatio": 0.2670745641517084
     },
     "cjk": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.11655114,
-          "peakRssKiB": 42448,
+          "seconds": 0.047119912,
+          "peakRssKiB": 24636,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.095921764,
-          "peakRssKiB": 42648,
+          "seconds": 0.045269487,
+          "peakRssKiB": 24604,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.119914257,
-          "peakRssKiB": 41764,
+          "seconds": 0.033852113,
+          "peakRssKiB": 24644,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.069929913,
-          "peakRssKiB": 41020,
+          "seconds": 0.049436354,
+          "peakRssKiB": 25016,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.098488331,
-          "peakRssKiB": 42080,
+          "seconds": 0.048732108,
+          "peakRssKiB": 24632,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.094432893,
-          "peakRssKiB": 42060,
+          "seconds": 0.045516683,
+          "peakRssKiB": 24612,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.099057031,
-          "peakRssKiB": 42404,
+          "seconds": 0.048480901,
+          "peakRssKiB": 24556,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 0.660814079,
-          "peakRssKiB": 87872,
+          "seconds": 0.612379802,
+          "peakRssKiB": 96104,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.659315882,
-          "peakRssKiB": 86856,
+          "seconds": 0.622925294,
+          "peakRssKiB": 97644,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.634614451,
-          "peakRssKiB": 92572,
+          "seconds": 0.602319146,
+          "peakRssKiB": 98780,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.644894904,
-          "peakRssKiB": 84784,
+          "seconds": 0.613038667,
+          "peakRssKiB": 97348,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.640757106,
-          "peakRssKiB": 89244,
+          "seconds": 0.620984267,
+          "peakRssKiB": 97168,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.549364471,
-          "peakRssKiB": 89664,
+          "seconds": 0.591287767,
+          "peakRssKiB": 94712,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.654904413,
-          "peakRssKiB": 82992,
+          "seconds": 0.61098822,
+          "peakRssKiB": 96784,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         }
       ],
-      "markdownMedianSeconds": 0.098488331,
-      "markdown4cjMedianSeconds": 0.644894904,
-      "markdownSpeedup": 6.547932099692095,
-      "peakRssRatio": 0.4607008598712354
+      "markdownMedianSeconds": 0.047119912,
+      "markdown4cjMedianSeconds": 0.612379802,
+      "markdownSpeedup": 12.996200035348114,
+      "peakRssRatio": 0.2532496456772626
     },
     "emoji": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.092295501,
-          "peakRssKiB": 47084,
+          "seconds": 0.109117294,
+          "peakRssKiB": 42680,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 0.103821403,
-          "peakRssKiB": 47144,
+          "seconds": 0.107378264,
+          "peakRssKiB": 42540,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 0.124723481,
-          "peakRssKiB": 47416,
+          "seconds": 0.100282192,
+          "peakRssKiB": 42620,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 0.10746584,
-          "peakRssKiB": 47492,
+          "seconds": 0.105752904,
+          "peakRssKiB": 42668,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 0.106051422,
-          "peakRssKiB": 47536,
+          "seconds": 0.094301321,
+          "peakRssKiB": 42684,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 0.113142943,
-          "peakRssKiB": 47340,
+          "seconds": 0.107612656,
+          "peakRssKiB": 42668,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 0.104951393,
-          "peakRssKiB": 47236,
+          "seconds": 0.11321344,
+          "peakRssKiB": 42680,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 1.457220554,
-          "peakRssKiB": 96460,
+          "seconds": 1.556159637,
+          "peakRssKiB": 110560,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 1.567834048,
-          "peakRssKiB": 84100,
+          "seconds": 1.5572056,
+          "peakRssKiB": 107548,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 1.633339877,
-          "peakRssKiB": 84476,
+          "seconds": 1.544988297,
+          "peakRssKiB": 108152,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 1.572929457,
-          "peakRssKiB": 88724,
+          "seconds": 1.562059685,
+          "peakRssKiB": 106896,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 1.502762865,
-          "peakRssKiB": 90152,
+          "seconds": 1.541838191,
+          "peakRssKiB": 107288,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 1.498841278,
-          "peakRssKiB": 80692,
+          "seconds": 1.555280016,
+          "peakRssKiB": 109204,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 1.597018785,
-          "peakRssKiB": 89364,
+          "seconds": 1.565686746,
+          "peakRssKiB": 111408,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         }
       ],
-      "markdownMedianSeconds": 0.106051422,
-      "markdown4cjMedianSeconds": 1.567834048,
-      "markdownSpeedup": 14.78371546965207,
-      "peakRssRatio": 0.49280530789964755
+      "markdownMedianSeconds": 0.107378264,
+      "markdown4cjMedianSeconds": 1.556159637,
+      "markdownSpeedup": 14.49231510205827,
+      "peakRssRatio": 0.38313227057302884
     },
     "deep-list": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.042384138,
-          "peakRssKiB": 29608,
+          "seconds": 0.020364557,
+          "peakRssKiB": 24496,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.028512739,
-          "peakRssKiB": 29832,
+          "seconds": 0.021125672,
+          "peakRssKiB": 24636,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.031206408,
-          "peakRssKiB": 29496,
+          "seconds": 0.019873072,
+          "peakRssKiB": 22228,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.04031768,
-          "peakRssKiB": 29760,
+          "seconds": 0.020583387,
+          "peakRssKiB": 24500,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.042955218,
-          "peakRssKiB": 29720,
+          "seconds": 0.019795957,
+          "peakRssKiB": 24288,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.040282722,
-          "peakRssKiB": 29708,
+          "seconds": 0.020410141,
+          "peakRssKiB": 24644,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.039444471,
-          "peakRssKiB": 29512,
+          "seconds": 0.0196959,
+          "peakRssKiB": 22136,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 0.504374993,
-          "peakRssKiB": 47516,
+          "seconds": 0.391874022,
+          "peakRssKiB": 56868,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.409452643,
-          "peakRssKiB": 49912,
+          "seconds": 0.419202249,
+          "peakRssKiB": 56944,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.393290177,
-          "peakRssKiB": 50152,
+          "seconds": 0.421240856,
+          "peakRssKiB": 57048,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.433944536,
-          "peakRssKiB": 50372,
+          "seconds": 0.452219407,
+          "peakRssKiB": 56932,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.432959601,
-          "peakRssKiB": 48212,
+          "seconds": 0.442766002,
+          "peakRssKiB": 56704,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.461051564,
-          "peakRssKiB": 47060,
+          "seconds": 0.383922691,
+          "peakRssKiB": 56828,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.435145468,
-          "peakRssKiB": 46500,
+          "seconds": 0.453509149,
+          "peakRssKiB": 57108,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
-      "markdownMedianSeconds": 0.040282722,
-      "markdown4cjMedianSeconds": 0.433944536,
-      "markdownSpeedup": 10.772473022056454,
-      "peakRssRatio": 0.5922337806718018
+      "markdownMedianSeconds": 0.020364557,
+      "markdown4cjMedianSeconds": 0.421240856,
+      "markdownSpeedup": 20.684999727713205,
+      "peakRssRatio": 0.43153323527351684
     },
     "pathological-delimiters": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.145644418,
-          "peakRssKiB": 63768,
+          "seconds": 0.121190084,
+          "peakRssKiB": 52636,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.167472515,
-          "peakRssKiB": 62924,
+          "seconds": 0.104791815,
+          "peakRssKiB": 52260,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.154977197,
-          "peakRssKiB": 68072,
+          "seconds": 0.104469019,
+          "peakRssKiB": 52560,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.165258074,
-          "peakRssKiB": 69068,
+          "seconds": 0.111594191,
+          "peakRssKiB": 52388,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.178547228,
-          "peakRssKiB": 68576,
+          "seconds": 0.115283895,
+          "peakRssKiB": 52680,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.103740807,
-          "peakRssKiB": 54704,
+          "seconds": 0.117862008,
+          "peakRssKiB": 52620,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.177202053,
-          "peakRssKiB": 68876,
+          "seconds": 0.11984708,
+          "peakRssKiB": 52432,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 2.294620635,
-          "peakRssKiB": 104052,
+          "seconds": 2.083557404,
+          "peakRssKiB": 110740,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 2.248010764,
-          "peakRssKiB": 101656,
+          "seconds": 2.118646533,
+          "peakRssKiB": 114352,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 2.358486817,
-          "peakRssKiB": 94764,
+          "seconds": 2.124340919,
+          "peakRssKiB": 114004,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 2.262030864,
-          "peakRssKiB": 96636,
+          "seconds": 2.06665501,
+          "peakRssKiB": 111588,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 2.314124816,
-          "peakRssKiB": 92752,
+          "seconds": 2.115014564,
+          "peakRssKiB": 110528,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 2.277301295,
-          "peakRssKiB": 101152,
+          "seconds": 2.077423328,
+          "peakRssKiB": 108480,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 2.21079264,
-          "peakRssKiB": 95560,
+          "seconds": 2.066955316,
+          "peakRssKiB": 109960,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
-      "markdownMedianSeconds": 0.165258074,
-      "markdown4cjMedianSeconds": 2.277301295,
-      "markdownSpeedup": 13.780272514854554,
-      "peakRssRatio": 0.6637834928689501
+      "markdownMedianSeconds": 0.115283895,
+      "markdown4cjMedianSeconds": 2.083557404,
+      "markdownSpeedup": 18.073273842803456,
+      "peakRssRatio": 0.46068280397369527
     },
     "long-line": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.018901617,
-          "peakRssKiB": 14224,
+          "seconds": 0.020665648,
+          "peakRssKiB": 11680,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.020528629,
-          "peakRssKiB": 14188,
+          "seconds": 0.026322059,
+          "peakRssKiB": 11680,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.019505921,
-          "peakRssKiB": 13884,
+          "seconds": 0.024268571,
+          "peakRssKiB": 11676,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.018147818,
-          "peakRssKiB": 13884,
+          "seconds": 0.026264552,
+          "peakRssKiB": 11648,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.017585913,
-          "peakRssKiB": 13944,
+          "seconds": 0.024339562,
+          "peakRssKiB": 11640,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.020083218,
-          "peakRssKiB": 13972,
+          "seconds": 0.018400687,
+          "peakRssKiB": 11780,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.020661046,
-          "peakRssKiB": 14000,
+          "seconds": 0.021710535,
+          "peakRssKiB": 11708,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 0.209309666,
-          "peakRssKiB": 39372,
+          "seconds": 0.252435831,
+          "peakRssKiB": 41492,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.209273,
-          "peakRssKiB": 39040,
+          "seconds": 0.252243608,
+          "peakRssKiB": 41460,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.222900101,
-          "peakRssKiB": 39236,
+          "seconds": 0.244279588,
+          "peakRssKiB": 41520,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.228977618,
-          "peakRssKiB": 39224,
+          "seconds": 0.231337708,
+          "peakRssKiB": 40824,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.217623959,
-          "peakRssKiB": 38976,
+          "seconds": 0.250602631,
+          "peakRssKiB": 41516,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.289955384,
-          "peakRssKiB": 39032,
+          "seconds": 0.246825408,
+          "peakRssKiB": 41424,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.222686142,
-          "peakRssKiB": 39376,
+          "seconds": 0.252547764,
+          "peakRssKiB": 41312,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
-      "markdownMedianSeconds": 0.019505921,
-      "markdown4cjMedianSeconds": 0.222686142,
-      "markdownSpeedup": 11.416335685969404,
-      "peakRssRatio": 0.3612352702153596
+      "markdownMedianSeconds": 0.024268571,
+      "markdown4cjMedianSeconds": 0.250602631,
+      "markdownSpeedup": 10.326221144211582,
+      "peakRssRatio": 0.2837186897880539
     },
     "ordinary": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.02163979,
-          "peakRssKiB": 13788,
+          "seconds": 0.024172961,
+          "peakRssKiB": 11660,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.019691434,
-          "peakRssKiB": 14024,
+          "seconds": 0.026652028,
+          "peakRssKiB": 11724,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.018349666,
-          "peakRssKiB": 14004,
+          "seconds": 0.026470512,
+          "peakRssKiB": 11660,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.017731838,
-          "peakRssKiB": 13772,
+          "seconds": 0.0197479,
+          "peakRssKiB": 11740,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.018887961,
-          "peakRssKiB": 14100,
+          "seconds": 0.024305859,
+          "peakRssKiB": 11748,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.022220042,
-          "peakRssKiB": 14052,
+          "seconds": 0.020271942,
+          "peakRssKiB": 11740,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.020639362,
-          "peakRssKiB": 13996,
+          "seconds": 0.026433566,
+          "peakRssKiB": 11720,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 0.243160193,
-          "peakRssKiB": 39412,
+          "seconds": 0.21432554,
+          "peakRssKiB": 40084,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.233961862,
-          "peakRssKiB": 39372,
+          "seconds": 0.211151562,
+          "peakRssKiB": 40240,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.242902327,
-          "peakRssKiB": 39032,
+          "seconds": 0.217443991,
+          "peakRssKiB": 40324,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.230468129,
-          "peakRssKiB": 39460,
+          "seconds": 0.213752059,
+          "peakRssKiB": 39940,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.198888073,
-          "peakRssKiB": 39500,
+          "seconds": 0.220719251,
+          "peakRssKiB": 39964,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.20977672,
-          "peakRssKiB": 39480,
+          "seconds": 0.213156232,
+          "peakRssKiB": 40108,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.206724439,
-          "peakRssKiB": 39560,
+          "seconds": 0.216535034,
+          "peakRssKiB": 40040,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         }
       ],
-      "markdownMedianSeconds": 0.019691434,
-      "markdown4cjMedianSeconds": 0.230468129,
-      "markdownSpeedup": 11.70397894840975,
-      "peakRssRatio": 0.3564206268958544
+      "markdownMedianSeconds": 0.024305859,
+      "markdown4cjMedianSeconds": 0.21432554,
+      "markdownSpeedup": 8.817854987145282,
+      "peakRssRatio": 0.29134014482690207
     }
   },
-  "geomeanMarkdownSpeedup": 10.996033738493345,
-  "promotionPassed": true
+  "geomeanMarkdownSpeedup": 14.132333733007236,
+  "promotionPassed": true,
+  "derivationErrors": []
 }
