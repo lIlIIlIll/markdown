@@ -1,8 +1,8 @@
 # Release benchmark report
 
-Status: **PASS**
+Status: **FAIL**
 
-Evidence status: `current`. Canonical 2026-08-30 latest-complete fixed-Server run for product commit a259ba4904357d3ca393ca7ccaddce9e6da11931. The tracked-source archive excluded .agent, .agents, .codex and every build product. Xeon Gold 6248R CPU 24, Cangjie 1.1.0-alpha.20260803040049, root -O2, benchmark consumer -O2 --lto thin, 2 GiB heap, cjGCInterval=500ms and seven alternating paired samples measured CommonMark 2.274715x and GFM 2.267811x. Scaling slope/max-adjacent 0.323960/2.198974, pathological 0.567057/1.715981 and extra RSS 30968 KiB also pass. The raw samples independently recompute without errors; per A-038 this latest complete run is canonical rather than a numerically selected earlier run.
+Evidence status: `stale-source-drift`. The 2026-08-30 fixed-Server run for product commit a259ba4904357d3ca393ca7ccaddce9e6da11931 remains the latest complete measurement, but it is not current evidence after the generated README release section changed the readme-api corpus. A fresh fixed-Server canonical run is required before release readiness can be restored.
 
 - CommonMark parse-only geometric mean ratio vs cmark: `2.27x` (limit `2.5x`).
 - GFM parse+HTML geometric mean ratio vs cmark-gfm: `2.27x` (limit `2.5x`).

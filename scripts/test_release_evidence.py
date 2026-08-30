@@ -41,6 +41,65 @@ class ReleaseEvidenceTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("release evidence verified", result.stdout)
 
+    def test_generated_sections_include_all_current_metrics(self) -> None:
+        evidence = json.loads((ROOT / "release-evidence.json").read_text(encoding="utf-8"))
+        readme = release_evidence.readme_block(evidence)
+        changelog = release_evidence.changelog_block(evidence)
+        performance = release_evidence.performance_block(evidence)
+        tests = evidence["tests"]
+        api = evidence["api"]
+        conformance = evidence["conformance"]
+        benchmark = evidence["benchmark"]
+        self.assertIn(
+            f"| Tests | `{tests['passed']}/{tests['total']}` passed; "
+            f"`{tests['skipped']}` skipped; `{tests['failed']}` failed |",
+            readme,
+        )
+        for name, label in (("commonmark", "CommonMark"), ("gfm", "GFM")):
+            result = conformance[name]
+            self.assertIn(
+                f"| {label} conformance | `{result['passed']}/{result['total']}` |",
+                readme,
+            )
+        self.assertIn(
+            f"| Public API snapshot | `{api['declarations']}` declarations |", readme
+        )
+        self.assertIn(
+            f"{'canonical' if benchmark['status'] == 'current' else 'last complete'} "
+            f"CommonMark ratio `{benchmark['commonmarkRatio']:.6f}x`",
+            changelog,
+        )
+        self.assertIn(
+            f"{'canonical' if benchmark['status'] == 'current' else 'last complete'} "
+            f"GFM ratio `{benchmark['gfmRatio']:.6f}x`",
+            changelog,
+        )
+        self.assertIn(
+            f"| CommonMark 完整 AST parse | cmark 0.31.1 | "
+            f"`{benchmark['commonmarkRatio']:.6f}x` |",
+            performance,
+        )
+        self.assertIn(
+            f"| GFM 完整 AST + HTML | cmark-gfm 0.29 | "
+            f"`{benchmark['gfmRatio']:.6f}x` |",
+            performance,
+        )
+
+    def test_replace_section_owns_the_complete_current_section(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "README.md"
+            path.write_text(
+                "# Example\n\n## Evidence\n\nstale metric\n\n## Next\n\nkeep me\n",
+                encoding="utf-8",
+            )
+            expected = release_evidence.replace_section(
+                path, "## Evidence", "## Next", "generated metric"
+            )
+        self.assertEqual(
+            expected,
+            "# Example\n\n## Evidence\n\ngenerated metric\n\n## Next\n\nkeep me\n",
+        )
+
     def test_incomplete_release_can_project_current_failing_benchmark(self) -> None:
         evidence = json.loads((ROOT / "release-evidence.json").read_text(encoding="utf-8"))
         if evidence["benchmark"]["status"] == "current" and not evidence["release"]["evidenceReady"]:

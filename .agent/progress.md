@@ -1,8 +1,15 @@
 # markdown 当前进度
 
 更新时间：2026-08-30
-当前阶段：审计 P0-P2 修复、schema-v4 canonical 与完整可下载证据包均已通过验收。
-整体结论：**COMPLETE**。需求账本当前为 125 pass、0 pending、0 implemented_unverified、0 blocked。
+当前阶段：发布证据文档单一来源修复已实现，等待固定 Server canonical 与完整 release gate 复验。
+整体结论：**INCOMPLETE**。需求账本当前为 122 pass、0 pending、3 implemented_unverified、0 blocked。
+
+## 2026-08-30 发布证据文档漂移修复（当前）
+
+- `scripts/release_evidence.py` 现在接管 README 验证状态、CHANGELOG Evidence 和性能页当前 canonical 三个完整章节，不再只替换表格内部的一部分。
+- README 的测试、规范和 API 数字已改为从 `release-evidence.json` 生成；CHANGELOG 和性能页的 ratio 也使用同一来源。
+- 聚焦回归覆盖完整 section replacement 及所有动态字段。文档修改改变了 `readme-api` corpus，因此旧 raw 已按设计降为 `stale-source-drift`。
+- `MD-PERF-002`、`MD-REL-001` 和 `MD-QUAL-001` 暂为 `implemented_unverified`。恢复条件是固定 Server 完整 canonical 通过、raw/evidence 投影同步，并在干净提交上完成完整 release gate。
 
 ## 2026-08-30 P0-P2 深度审计修复（当前）
 

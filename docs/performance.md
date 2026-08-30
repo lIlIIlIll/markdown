@@ -5,16 +5,18 @@
 
 ## 当前 canonical 结果
 
+<!-- release-evidence:start -->
 当前 release benchmark 使用固定 Server CPU、Cangjie SDK
 `1.1.0-alpha.20260803040049` 和 release 构建。
 
 | Profile | 对比对象 | 当前 ratio | 门槛 | 状态 |
 | --- | --- | ---: | ---: | --- |
-| CommonMark 完整 AST parse | cmark 0.31.1 | `2.334095x` | `≤2.5x` | pass |
-| GFM 完整 AST + HTML | cmark-gfm 0.29 | `2.466373x` | `≤2.5x` | pass |
+| CommonMark 完整 AST parse | cmark 0.31.1 | `2.274715x` | `≤2.5x` | stale |
+| GFM 完整 AST + HTML | cmark-gfm 0.29 | `2.267811x` | `≤2.5x` | stale |
 
 ratio 大于 1 表示本库更慢。完整语料、样本、RSS、复杂度和 identity 见
 [canonical report](reports/benchmark.md)与其链接的 raw JSON。
+<!-- release-evidence:end -->
 
 ## 比较了什么
 

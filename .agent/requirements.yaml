@@ -2557,7 +2557,7 @@ requirements:
   - renderer 不无界缓存输出
   - 相对接受基线回退超过 10% 时 CI 失败或有显式批准
   - SourceMap、CST 等可选能力分别记录开销
-  status: pass
+  status: implemented_unverified
   implementation:
   - src/benchmark_test.cj
   - benchmarks/measure.py
@@ -2569,6 +2569,7 @@ requirements:
   - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks'
   - scripts/test_benchmark_input_profiles.py
   evidence:
+  - '2026-08-30 documentation evidence repair moved all current README metrics into the generated section; this intentionally invalidated the readme-api corpus identity, so a fresh fixed-Server canonical run is required before restoring pass.'
   - *final_validation_evidence
   - '2026-08-30 latest-complete Server canonical: CommonMark 2.274715x, GFM 2.267811x, ordinary gate pass, scaling slope/max 0.323960/2.198974, pathological 0.567057/1.715981, extra RSS 30968 KiB; all raw gates true'
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2900,7 +2901,7 @@ requirements:
   - 记录第三方测试数据归属
   - 核心发布无非标准原生动态库
   - requirements.yaml 中所有 target=1.0 或 cross-release 且适用于 1.0 的条目均为 pass
-  status: pass
+  status: implemented_unverified
   implementation:
   - CHANGELOG.md
   - LICENSE
@@ -2914,6 +2915,7 @@ requirements:
   - scripts/release_gate.sh
   - cjpm bundle
   evidence:
+  - '2026-08-30 release evidence is fail-closed at incomplete/stale-source-drift while the generated README, CHANGELOG and performance sections await a fresh canonical benchmark and full release gate.'
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: cjpm bundle --skip-test after the full 1410-test gate; exit 0; GA release withheld because prerequisite requirements
@@ -2941,7 +2943,7 @@ requirements:
   - 默认 raw HTML passthrough=0，核心非标准原生依赖=0
   - 未批准性能回归不超过 10%
   - Tier 1 输出一致且示例可在干净环境构建
-  status: pass
+  status: implemented_unverified
   implementation:
   - docs/reports/benchmark.md
   - docs/reports/fuzz-summary.md
@@ -2950,6 +2952,7 @@ requirements:
   - scripts/release_gate.sh
   - benchmarks/measure.py
   evidence:
+  - '2026-08-30 aggregate quality is implemented but unverified because the readme-api corpus changed; current canonical and release-gate evidence must be regenerated before pass.'
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-29: full fresh-archive Server release gate exit 0; 1455/1455 tests, CommonMark 652/652, GFM 671/671, differential 25/24/1/0, native ASan+UBSan fuzz 10000, benchmark smoke 3/3 and bundle all pass.'

@@ -3,8 +3,8 @@
   "release": {
     "version": "0.9.0",
     "channel": "preview",
-    "status": "evidence-ready",
-    "evidenceReady": true,
+    "status": "incomplete",
+    "evidenceReady": false,
     "ciVerifiedAtHead": false,
     "ciVerifiedCommit": null,
     "published": false
@@ -52,7 +52,7 @@
     "failed": 0
   },
   "benchmark": {
-    "status": "current",
+    "status": "stale-source-drift",
     "rawPath": "docs/reports/benchmark-raw.json",
     "rawSha256": "b80123a494932c2c1b7f63fb6895ab81c9734564141f8099d9a2c6b8f8fa136f",
     "sourceCommit": "a259ba4904357d3ca393ca7ccaddce9e6da11931",
@@ -69,6 +69,6 @@
     "ratioLimit": 2.5,
     "cmark": "0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8",
     "cmarkGfm": "0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b",
-    "note": "Canonical 2026-08-30 latest-complete fixed-Server run for product commit a259ba4904357d3ca393ca7ccaddce9e6da11931. The tracked-source archive excluded .agent, .agents, .codex and every build product. Xeon Gold 6248R CPU 24, Cangjie 1.1.0-alpha.20260803040049, root -O2, benchmark consumer -O2 --lto thin, 2 GiB heap, cjGCInterval=500ms and seven alternating paired samples measured CommonMark 2.274715x and GFM 2.267811x. Scaling slope/max-adjacent 0.323960/2.198974, pathological 0.567057/1.715981 and extra RSS 30968 KiB also pass. The raw samples independently recompute without errors; per A-038 this latest complete run is canonical rather than a numerically selected earlier run."
+    "note": "The 2026-08-30 fixed-Server run for product commit a259ba4904357d3ca393ca7ccaddce9e6da11931 remains the latest complete measurement, but it is not current evidence after the generated README release section changed the readme-api corpus. A fresh fixed-Server canonical run is required before release readiness can be restored."
   }
 }
