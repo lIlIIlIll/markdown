@@ -36,13 +36,13 @@ CI 验证和 GitHub Release 发布是独立状态；0.9 不构成 1.x ABI/行为
 <!-- release-evidence:start -->
 当前数字只由 [`release-evidence.json`](release-evidence.json)提供：
 
-- benchmark evidence status `stale-source-drift`；
+- benchmark evidence status `current`；
 - CommonMark `652/652`；
 - GFM `671/671`；
 - 测试 `1457/1457`，`0` skipped，`0` failed；
 - public API snapshot `1323` declarations；
-- last complete CommonMark ratio `2.274715x`；
-- last complete GFM ratio `2.267811x`。
+- canonical CommonMark ratio `2.368184x`；
+- canonical GFM ratio `2.367749x`。
 
 原始数据和受测 commit identity 见 `docs/reports/benchmark-raw.json`。
 <!-- release-evidence:end -->

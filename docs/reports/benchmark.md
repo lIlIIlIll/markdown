@@ -1,20 +1,20 @@
 # Release benchmark report
 
-Status: **FAIL**
+Status: **PASS**
 
-Evidence status: `stale-source-drift`. The 2026-08-30 fixed-Server run for product commit a259ba4904357d3ca393ca7ccaddce9e6da11931 remains the latest complete measurement, but it is not current evidence after the generated README release section changed the readme-api corpus. A fresh fixed-Server canonical run is required before release readiness can be restored.
+Evidence status: `current`. Canonical 2026-08-30 latest-complete fixed-Server run for product commit 6a75709dfcc5510139395fe63fa69b64554718f5. The 234-entry tracked-source archive excluded .agent, .agents, .codex and every build product. Xeon Gold 6248R CPU 24, Cangjie 1.1.0-alpha.20260803040049, root -O2, benchmark consumer -O2 --lto thin, 2 GiB heap, cjGCInterval=500ms and seven alternating paired samples measured CommonMark 2.368184x and GFM 2.367749x. Ordinary ratios were 3.432042x/1.619950x, scaling slope/max-adjacent 0.379262/1.682972, pathological 0.582071/2.046359 and extra RSS 30176 KiB; all raw gates are true. Independent local recomputation returned no derivation errors.
 
-- CommonMark parse-only geometric mean ratio vs cmark: `2.27x` (limit `2.5x`).
-- GFM parse+HTML geometric mean ratio vs cmark-gfm: `2.27x` (limit `2.5x`).
+- CommonMark parse-only geometric mean ratio vs cmark: `2.37x` (limit `2.5x`).
+- GFM parse+HTML geometric mean ratio vs cmark-gfm: `2.37x` (limit `2.5x`).
 - Raw report: `docs/reports/benchmark-raw.json`.
-- Raw SHA-256: `b80123a494932c2c1b7f63fb6895ab81c9734564141f8099d9a2c6b8f8fa136f`.
-- Tested source commit: `a259ba4904357d3ca393ca7ccaddce9e6da11931`.
-- Tested source Git tree: `ff2c023772585e11d6850431c3f6ce8b5a069999`.
+- Raw SHA-256: `43ce60a42d590daa807f69377405538693f6aba70bbc12b782b32eb2e0f7c4ca`.
+- Tested source commit: `6a75709dfcc5510139395fe63fa69b64554718f5`.
+- Tested source Git tree: `1bad9f8124c68585ab4f2a8aa44a71e54056818d`.
 - Benchmark Cangjie SDK: `1.1.0-alpha.20260803040049`.
-- Product source archive SHA-256: `8695094054b9ec5977f0059f148d8e43f1aced800d7893ce69e5bb1b4c3b0f5a`.
+- Product source archive SHA-256: `69cf9392a7c1cf7d4790edc201b86a4e9c88e89b5a033732679941e90fa5d0e3`.
 - Product source tree SHA-256: `7af14d294c9aef023be4353d1bb1fdf985b7d836171dad4e07f4e08467535aff`.
 - Benchmark harness SHA-256: `b61a4b8e0204662a3242d61b191582a82fdb222084907ef3f358e9932f209073`.
-- markdown driver SHA-256: `9d2a1283a33d6a413812543f146613d29d7ad216417af6b62930e87bd31fe15f`.
+- markdown driver SHA-256: `c5d07c593d0f40d7026e184045c047976203aaee1a858e97c40a0163eea30dad`.
 - cmark driver SHA-256: `385d4f1842b2a85211de914a5e6600ba195e3203bd4f3e91531cbed216d7a95e`.
 - cmark-gfm driver SHA-256: `6f8ad2cf959ce26f8b9331c62beea9ff1ea116d4a66b9bae033d6138d362e0b4`.
 - cmark: `0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8`.

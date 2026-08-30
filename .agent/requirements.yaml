@@ -2557,7 +2557,7 @@ requirements:
   - renderer 不无界缓存输出
   - 相对接受基线回退超过 10% 时 CI 失败或有显式批准
   - SourceMap、CST 等可选能力分别记录开销
-  status: implemented_unverified
+  status: pass
   implementation:
   - src/benchmark_test.cj
   - benchmarks/measure.py
@@ -2569,7 +2569,7 @@ requirements:
   - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks'
   - scripts/test_benchmark_input_profiles.py
   evidence:
-  - '2026-08-30 documentation evidence repair moved all current README metrics into the generated section; this intentionally invalidated the readme-api corpus identity, so a fresh fixed-Server canonical run is required before restoring pass.'
+  - '2026-08-30 refreshed fixed-Server canonical for commit 6a75709d: raw SHA-256 43ce60a42d590daa807f69377405538693f6aba70bbc12b782b32eb2e0f7c4ca; CommonMark 2.368184x, GFM 2.367749x, ordinary 3.432042x/1.619950x, scaling 0.379262/1.682972, pathological 0.582071/2.046359 and extra RSS 30176 KiB; every gate true and independent derivation errors empty.'
   - *final_validation_evidence
   - '2026-08-30 latest-complete Server canonical: CommonMark 2.274715x, GFM 2.267811x, ordinary gate pass, scaling slope/max 0.323960/2.198974, pathological 0.567057/1.715981, extra RSS 30968 KiB; all raw gates true'
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2915,7 +2915,7 @@ requirements:
   - scripts/release_gate.sh
   - cjpm bundle
   evidence:
-  - '2026-08-30 release evidence is fail-closed at incomplete/stale-source-drift while the generated README, CHANGELOG and performance sections await a fresh canonical benchmark and full release gate.'
+  - '2026-08-30 generated README, CHANGELOG and performance sections now bind the passing refreshed canonical raw; a clean full release gate on the evidence commit remains required before restoring pass.'
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: cjpm bundle --skip-test after the full 1410-test gate; exit 0; GA release withheld because prerequisite requirements
@@ -2952,7 +2952,7 @@ requirements:
   - scripts/release_gate.sh
   - benchmarks/measure.py
   evidence:
-  - '2026-08-30 aggregate quality is implemented but unverified because the readme-api corpus changed; current canonical and release-gate evidence must be regenerated before pass.'
+  - '2026-08-30 refreshed canonical independently passes every performance, scaling and RSS gate; aggregate quality remains implemented_unverified until the clean full release gate is rerun on the evidence commit.'
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-29: full fresh-archive Server release gate exit 0; 1455/1455 tests, CommonMark 652/652, GFM 671/671, differential 25/24/1/0, native ASan+UBSan fuzz 10000, benchmark smoke 3/3 and bundle all pass.'

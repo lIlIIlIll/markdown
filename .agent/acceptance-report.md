@@ -2,25 +2,25 @@
 
 ## Final Status
 
-**INCOMPLETE** — 122/125 项为 `pass`；3 项在 README benchmark corpus 变化后等待新的 canonical benchmark 和完整 release gate。
+**INCOMPLETE** — 123/125 项为 `pass`；新的 canonical benchmark 已通过，2 项等待完整 release gate。
 
 <!-- release-evidence:start -->
 ## Generated Release Evidence
 
-- Version/status: `0.9.0` / `incomplete`.
-- Artifact commit: `a259ba4904357d3ca393ca7ccaddce9e6da11931`.
-- Evidence subject commit: `a259ba4904357d3ca393ca7ccaddce9e6da11931`; the retained execution manifest binds the clean gate commit and Git tree.
+- Version/status: `0.9.0` / `evidence-ready`.
+- Artifact commit: `6a75709dfcc5510139395fe63fa69b64554718f5`.
+- Evidence subject commit: `6a75709dfcc5510139395fe63fa69b64554718f5`; the retained execution manifest binds the clean gate commit and Git tree.
 - Hosted CI verified at that HEAD: `False`; published: `False`.
 - Tests: `1457/1457` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `2.27x`, GFM `2.27x`, status `stale-source-drift`.
-- Raw digest: `b80123a494932c2c1b7f63fb6895ab81c9734564141f8099d9a2c6b8f8fa136f`.
+- Benchmark: CommonMark `2.37x`, GFM `2.37x`, status `current`.
+- Raw digest: `43ce60a42d590daa807f69377405538693f6aba70bbc12b782b32eb2e0f7c4ca`.
 
-One or more mandatory offline evidence gates remain incomplete. Hosted CI and publication remain separate claims.
+All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->
 
 ## 2026-08-30 Current Documentation Evidence Repair
 
-README、CHANGELOG 和性能页的当前测试、API 与 benchmark 数字已由 `release-evidence.json` 统一生成。该修复改变了 `readme-api` corpus，旧 canonical raw 不再证明当前文档输入。`MD-PERF-002`、`MD-REL-001` 和 `MD-QUAL-001` 暂为 `implemented_unverified`；只有新的固定 Server canonical 与完整 release gate 通过后才能恢复 `COMPLETE`。
+README、CHANGELOG 和性能页的当前测试、API 与 benchmark 数字已由 `release-evidence.json` 统一生成。固定 Server CPU 24 的新 canonical raw `43ce60a...f7c4ca` 已通过全部 ratio、ordinary、scaling、pathological 和 RSS gate。`MD-PERF-002` 已恢复为 `pass`；`MD-REL-001` 和 `MD-QUAL-001` 暂为 `implemented_unverified`，等待干净 evidence commit 上的完整 release gate。
 
 本报告后续按时间保留历史失败、候选淘汰和当时的完成记录；这些历史段落不覆盖上述当前状态。R139/R140 仅作为历史证据保留。
 
