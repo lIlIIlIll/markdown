@@ -1,14 +1,14 @@
 {
   "schemaVersion": 3,
   "status": "PASS",
-  "generatedAtUtc": "2026-08-30T09:31:28.995844+00:00",
+  "generatedAtUtc": "2026-08-30T10:08:21.224819+00:00",
   "identity": {
-    "repositoryRef": "ebf445cf66311fb2253ab7be0ec5517c79f0205d",
-    "repositoryCommit": "ebf445cf66311fb2253ab7be0ec5517c79f0205d",
-    "gitTree": "a87795fe167ff1660f0f22f9330ce9b0014e2aef",
+    "repositoryRef": "HEAD",
+    "repositoryCommit": "71bb7d46d396ad49fcb34c56542219d787759b7e",
+    "gitTree": "c374bdbd198ed4ee0145937b2b9eec08cede64b4",
     "productTreeSha256": "7af14d294c9aef023be4353d1bb1fdf985b7d836171dad4e07f4e08467535aff",
     "harnessFiles": {
-      "benchmarks/compare_markdown4cj.py": "0c44c99b0cd097b3f42cdc49d3f014d26f891c52e9a0f39761187e5f166928c2",
+      "benchmarks/compare_markdown4cj.py": "d5f144244c6401f644e882e9840444675b5ebf9eb3454b5ef51108d01031eec9",
       "benchmarks/measure.py": "e23d33fe48d5b5ba27a6e149ea61d6262132b7cf96127008baf71fcdf69dee34",
       "benchmarks/generate_corpus.py": "a8eb3a59845ecdc1419aaf8770f49e43f8f4adaec46c1fa7a2e82e26e5a92268",
       "benchmarks/benchmark_identity.py": "477aebeefb5a291dfcd462c5f2396222665212646a80db8003469d8ce19df438"
@@ -134,10 +134,10 @@
       "build",
       "-V"
     ],
-    "cwd": "/home/chenqian/markdown-same-language-20260830-ebf445c/adapter",
+    "cwd": "/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter",
     "exitCode": 0,
-    "stdout": "Compiling package `commonmark4cj`: LD_LIBRARY_PATH=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /home/chenqian/markdown-same-language-20260830-ebf445c/tools/commonmark4cj/src --import-path=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release --output-dir=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj/ --output-type=dylib -o=libcommonmark4cj.so\nCompiling package `commonmark4cj.commonmark`: LD_LIBRARY_PATH=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /home/chenqian/markdown-same-language-20260830-ebf445c/tools/commonmark4cj/src/commonmark --import-path=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release --no-sub-pkg --output-dir=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj/ --output-type=dylib -o=libcommonmark4cj.commonmark.so\nCompiling package `commonmark4cj.strikethrough`: LD_LIBRARY_PATH=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /home/chenqian/markdown-same-language-20260830-ebf445c/tools/commonmark4cj/src/strikethrough --import-path=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release --no-sub-pkg --output-dir=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj/ -L /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj/ -lcommonmark4cj.commonmark --output-type=dylib -o=libcommonmark4cj.strikethrough.so\nCompiling package `commonmark4cj.table`: LD_LIBRARY_PATH=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /home/chenqian/markdown-same-language-20260830-ebf445c/tools/commonmark4cj/src/table --import-path=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release --no-sub-pkg --output-dir=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj/ -L /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj/ -lcommonmark4cj.commonmark --output-type=dylib -o=libcommonmark4cj.table.so\nCompiling package `markdown.core`: LD_LIBRARY_PATH=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core --import-path=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release --no-sub-pkg --output-dir=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/markdown/ --output-type=staticlib -o=libmarkdown.core.a\nCompiling package `markdown`: LD_LIBRARY_PATH=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src --import-path=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release --output-dir=/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/bin/ -L /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/markdown/ -lmarkdown.core -L /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/commonmark4cj/ -lcommonmark4cj.commonmark --output-type=exe -o=main\n   Finished `build` profile compilation\n   Executable files at `/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/bin`\ncjpm build success\n",
-    "stderr": "\u001b[33mwarning\u001b[0m: unused function:'getStackTrace'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/tools/commonmark4cj/src/commonmark/package.cj:29:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m29\u001b[0m \u001b[36m| \u001b[0m  func getStackTrace(thrown: ?Exception): String {\u001b[0m\n   \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m^\u001b[0m\n\u001b[36m30\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     var res: String = \"\"\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m41\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m }\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m^ unused function\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'char'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/tools/commonmark4cj/src/commonmark/link_scanner.cj:133:25:\n    \u001b[36m| \u001b[0m\n\u001b[36m133\u001b[0m \u001b[36m| \u001b[0m                    let char = scanner.peek()\u001b[0m\n    \u001b[36m| \u001b[0m                        \u001b[33m^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n2 warnings generated, 2 warnings printed.\n\u001b[33mwarning\u001b[0m: unused import 'std.regex.Matcher'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/package.cj:16:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m16\u001b[0m \u001b[36m| \u001b[0minternal import std.regex.Matcher\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unused import\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused import 'std.regex.Regex'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/package.cj:17:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m17\u001b[0m \u001b[36m| \u001b[0minternal import std.regex.Regex\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unused import\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'NULL_CHAR'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/package.cj:47:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m47\u001b[0m \u001b[36m| \u001b[0mlet NULL_CHAR: Rune = '\\u{0}'\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'EMPTY_STRING'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/package.cj:48:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m48\u001b[0m \u001b[36m| \u001b[0mlet EMPTY_STRING: String = \"\"\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'EMPTY_MAP'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/package.cj:49:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m49\u001b[0m \u001b[36m| \u001b[0mlet EMPTY_MAP: Map<String, String> = HashMap()\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'appends'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/package.cj:54:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m54\u001b[0m \u001b[36m| \u001b[0m      func appends(str: ToString): StringBuilder {\u001b[0m\n   \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m55\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         this.append(str)\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m57\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/core_plugin.cj:79:17:\n   \u001b[36m| \u001b[0m\n\u001b[36m79\u001b[0m \u001b[36m| \u001b[0m                visitor, text => buildView(text, true)\u001b[0m\n   \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/core_plugin.cj:121:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m121\u001b[0m \u001b[36m| \u001b[0m                visitor, code => buildView(code, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'isListNode'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/node_view.cj:153:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m153\u001b[0m \u001b[36m| \u001b[0m      private func isListNode(n: Node): Bool {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m154\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         n is BlockQuote || n is OrderedList || n is BulletList\u001b[0m\n\u001b[36m155\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'listLevel'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/core_plugin.cj:200:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m200\u001b[0m \u001b[36m| \u001b[0m      private static func listLevel(node: Node): Int {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m201\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         var level: Int = 0\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m210\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/core_plugin.cj:216:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m216\u001b[0m \u001b[36m| \u001b[0m                visitor, thematicBreak => buildView(thematicBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/core_plugin.cj:236:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m236\u001b[0m \u001b[36m| \u001b[0m                visitor, softLineBreak => buildView(softLineBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/core_plugin.cj:245:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m245\u001b[0m \u001b[36m| \u001b[0m                visitor, hardLineBreak => buildView(hardLineBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'isInTightList'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/adapter/src/core/core_plugin.cj:261:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m261\u001b[0m \u001b[36m| \u001b[0m      private static func isInTightList(paragraph: Paragraph): Bool {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m262\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         if (let Some(Some(list: ListBlock)) <- paragraph.getParent()?.getParent()) {\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m266\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n14 warnings generated, 14 warnings printed.\n",
+    "stdout": "Compiling package `commonmark4cj`: LD_LIBRARY_PATH=/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /home/chenqian/markdown-same-language-20260830-ebf445c/tools/commonmark4cj/src --import-path=/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release --output-dir=/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release/commonmark4cj/ --output-type=dylib -o=libcommonmark4cj.so\nCompiling package `commonmark4cj.commonmark`: LD_LIBRARY_PATH=/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /home/chenqian/markdown-same-language-20260830-ebf445c/tools/commonmark4cj/src/commonmark --import-path=/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release --no-sub-pkg --output-dir=/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release/commonmark4cj/ --output-type=dylib -o=libcommonmark4cj.commonmark.so\nCompiling package `commonmark4cj.strikethrough`: LD_LIBRARY_PATH=/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /home/chenqian/markdown-same-language-20260830-ebf445c/tools/commonmark4cj/src/strikethrough --import-path=/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release --no-sub-pkg --output-dir=/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release/commonmark4cj/ -L /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release/commonmark4cj/ -lcommonmark4cj.commonmark --output-type=dylib -o=libcommonmark4cj.strikethrough.so\nCompiling package `commonmark4cj.table`: LD_LIBRARY_PATH=/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /home/chenqian/markdown-same-language-20260830-ebf445c/tools/commonmark4cj/src/table --import-path=/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release --no-sub-pkg --output-dir=/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release/commonmark4cj/ -L /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release/commonmark4cj/ -lcommonmark4cj.commonmark --output-type=dylib -o=libcommonmark4cj.table.so\nCompiling package `markdown.core`: LD_LIBRARY_PATH=/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/src/core --import-path=/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release --no-sub-pkg --output-dir=/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release/markdown/ --output-type=staticlib -o=libmarkdown.core.a\nCompiling package `markdown`: LD_LIBRARY_PATH=/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release/commonmark4cj:$LD_LIBRARY_PATH cjc -p /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/src --import-path=/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release --output-dir=/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release/bin/ -L /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release/markdown/ -lmarkdown.core -L /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release/commonmark4cj/ -lcommonmark4cj.commonmark --output-type=exe -o=main\n   Finished `build` profile compilation\n   Executable files at `/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release/bin`\ncjpm build success\n",
+    "stderr": "\u001b[33mwarning\u001b[0m: unused function:'getStackTrace'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/tools/commonmark4cj/src/commonmark/package.cj:29:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m29\u001b[0m \u001b[36m| \u001b[0m  func getStackTrace(thrown: ?Exception): String {\u001b[0m\n   \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m^\u001b[0m\n\u001b[36m30\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     var res: String = \"\"\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m41\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m }\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m^ unused function\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'char'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-ebf445c/tools/commonmark4cj/src/commonmark/link_scanner.cj:133:25:\n    \u001b[36m| \u001b[0m\n\u001b[36m133\u001b[0m \u001b[36m| \u001b[0m                    let char = scanner.peek()\u001b[0m\n    \u001b[36m| \u001b[0m                        \u001b[33m^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n2 warnings generated, 2 warnings printed.\n\u001b[33mwarning\u001b[0m: unused import 'std.regex.Matcher'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/src/core/package.cj:16:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m16\u001b[0m \u001b[36m| \u001b[0minternal import std.regex.Matcher\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unused import\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused import 'std.regex.Regex'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/src/core/package.cj:17:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m17\u001b[0m \u001b[36m| \u001b[0minternal import std.regex.Regex\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unused import\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'NULL_CHAR'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/src/core/package.cj:47:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m47\u001b[0m \u001b[36m| \u001b[0mlet NULL_CHAR: Rune = '\\u{0}'\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'EMPTY_STRING'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/src/core/package.cj:48:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m48\u001b[0m \u001b[36m| \u001b[0mlet EMPTY_STRING: String = \"\"\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'EMPTY_MAP'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/src/core/package.cj:49:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m49\u001b[0m \u001b[36m| \u001b[0mlet EMPTY_MAP: Map<String, String> = HashMap()\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'appends'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/src/core/package.cj:54:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m54\u001b[0m \u001b[36m| \u001b[0m      func appends(str: ToString): StringBuilder {\u001b[0m\n   \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m55\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         this.append(str)\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m57\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n  \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/src/core/core_plugin.cj:79:17:\n   \u001b[36m| \u001b[0m\n\u001b[36m79\u001b[0m \u001b[36m| \u001b[0m                visitor, text => buildView(text, true)\u001b[0m\n   \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/src/core/core_plugin.cj:121:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m121\u001b[0m \u001b[36m| \u001b[0m                visitor, code => buildView(code, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'isListNode'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/src/core/node_view.cj:153:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m153\u001b[0m \u001b[36m| \u001b[0m      private func isListNode(n: Node): Bool {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m154\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         n is BlockQuote || n is OrderedList || n is BulletList\u001b[0m\n\u001b[36m155\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'listLevel'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/src/core/core_plugin.cj:200:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m200\u001b[0m \u001b[36m| \u001b[0m      private static func listLevel(node: Node): Int {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m201\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         var level: Int = 0\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m210\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/src/core/core_plugin.cj:216:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m216\u001b[0m \u001b[36m| \u001b[0m                visitor, thematicBreak => buildView(thematicBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/src/core/core_plugin.cj:236:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m236\u001b[0m \u001b[36m| \u001b[0m                visitor, softLineBreak => buildView(softLineBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/src/core/core_plugin.cj:245:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m245\u001b[0m \u001b[36m| \u001b[0m                visitor, hardLineBreak => buildView(hardLineBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'isInTightList'\n   \u001b[36m==>\u001b[0m /home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/src/core/core_plugin.cj:261:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m261\u001b[0m \u001b[36m| \u001b[0m      private static func isInTightList(paragraph: Paragraph): Bool {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m262\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         if (let Some(Some(list: ListBlock)) <- paragraph.getParent()?.getParent()) {\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m266\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n14 warnings generated, 14 warnings printed.\n",
     "migrations": [
       {
         "file": "core_plugin.cj",
@@ -306,12 +306,12 @@
   },
   "drivers": {
     "markdown": {
-      "path": "/home/chenqian/markdown-same-language-20260830-ebf445c/repo/benchmarks/driver/target/release/bin/main",
-      "sha256": "b42438f293d766d06ce8438270c848a3297ed77a016a3824a033f9248456d497"
+      "path": "/home/chenqian/markdown-same-language-20260830-71bb7d46/benchmarks/driver/target/release/bin/main",
+      "sha256": "f46ef6b2f237dd43d9273497973421190cd2f302653ab4aeba7e2bca94700600"
     },
     "markdown4cj": {
-      "path": "/home/chenqian/markdown-same-language-20260830-ebf445c/adapter/target/release/bin/main",
-      "sha256": "560266ea1bf9e0e8d20924dc246e40ab3bed863dc621d0f1d12fff3ac50c6963"
+      "path": "/home/chenqian/markdown-same-language-20260830-71bb7d46-adapter/target/release/bin/main",
+      "sha256": "074f7fd0566c203503ecfe2433d9f6d05b3e6d8bf565429379abae52ab6e2df4"
     }
   },
   "structuralDiagnostics": {
@@ -376,1049 +376,1049 @@
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.050263967,
-          "peakRssKiB": 24236,
+          "seconds": 0.050083974,
+          "peakRssKiB": 24244,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.047538906,
-          "peakRssKiB": 24356,
+          "seconds": 0.047752366,
+          "peakRssKiB": 24240,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.035870674,
-          "peakRssKiB": 24232,
+          "seconds": 0.033629271,
+          "peakRssKiB": 24172,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.036747007,
-          "peakRssKiB": 24232,
-          "stdout": "5358",
-          "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
-        },
-        {
-          "seconds": 0.034934577,
-          "peakRssKiB": 24344,
-          "stdout": "5358",
-          "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
-        },
-        {
-          "seconds": 0.05041161,
-          "peakRssKiB": 24184,
-          "stdout": "5358",
-          "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
-        },
-        {
-          "seconds": 0.034969287,
+          "seconds": 0.047373414,
           "peakRssKiB": 24164,
+          "stdout": "5358",
+          "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
+        },
+        {
+          "seconds": 0.045397024,
+          "peakRssKiB": 24168,
+          "stdout": "5358",
+          "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
+        },
+        {
+          "seconds": 0.033366375,
+          "peakRssKiB": 24156,
+          "stdout": "5358",
+          "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
+        },
+        {
+          "seconds": 0.032429913,
+          "peakRssKiB": 24304,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 0.344044963,
-          "peakRssKiB": 60508,
+          "seconds": 0.341769,
+          "peakRssKiB": 60600,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.343300841,
-          "peakRssKiB": 60596,
+          "seconds": 0.35526638,
+          "peakRssKiB": 60788,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.331430811,
-          "peakRssKiB": 60596,
+          "seconds": 0.324844857,
+          "peakRssKiB": 60544,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.338066417,
-          "peakRssKiB": 60820,
+          "seconds": 0.328524785,
+          "peakRssKiB": 60760,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.34037446,
-          "peakRssKiB": 60552,
+          "seconds": 0.338679081,
+          "peakRssKiB": 60724,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.344202759,
-          "peakRssKiB": 60668,
+          "seconds": 0.326057949,
+          "peakRssKiB": 60720,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.333558763,
-          "peakRssKiB": 60936,
+          "seconds": 0.332752534,
+          "peakRssKiB": 60488,
           "stdout": "5358",
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         }
       ],
-      "markdownMedianSeconds": 0.036747007,
-      "markdown4cjMedianSeconds": 0.34037446,
-      "markdownSpeedup": 9.262644437953817,
-      "peakRssRatio": 0.3996980438492845
+      "markdownMedianSeconds": 0.045397024,
+      "markdown4cjMedianSeconds": 0.332752534,
+      "markdownSpeedup": 7.32983144445768,
+      "peakRssRatio": 0.3998157531091663
     },
     "readme-api": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.060700329,
-          "peakRssKiB": 29124,
+          "seconds": 0.05093747,
+          "peakRssKiB": 28624,
           "stdout": "4860",
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.04670222,
-          "peakRssKiB": 29172,
+          "seconds": 0.058254773,
+          "peakRssKiB": 29188,
           "stdout": "4860",
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.039514992,
-          "peakRssKiB": 28700,
+          "seconds": 0.063106372,
+          "peakRssKiB": 29132,
           "stdout": "4860",
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.062618264,
-          "peakRssKiB": 29140,
+          "seconds": 0.059257615,
+          "peakRssKiB": 29120,
           "stdout": "4860",
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.063894,
-          "peakRssKiB": 29156,
+          "seconds": 0.042957172,
+          "peakRssKiB": 29084,
           "stdout": "4860",
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.040236864,
-          "peakRssKiB": 29592,
+          "seconds": 0.051660097,
+          "peakRssKiB": 28680,
           "stdout": "4860",
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.054446944,
-          "peakRssKiB": 29144,
+          "seconds": 0.036907329,
+          "peakRssKiB": 29176,
           "stdout": "4860",
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 0.481597156,
-          "peakRssKiB": 78704,
+          "seconds": 0.451971459,
+          "peakRssKiB": 78884,
           "stdout": "4860",
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.468186253,
-          "peakRssKiB": 78188,
+          "seconds": 0.486985361,
+          "peakRssKiB": 79004,
           "stdout": "4860",
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.448044688,
-          "peakRssKiB": 78772,
+          "seconds": 0.47685313,
+          "peakRssKiB": 77252,
           "stdout": "4860",
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.470656148,
-          "peakRssKiB": 78020,
+          "seconds": 0.424389696,
+          "peakRssKiB": 82756,
           "stdout": "4860",
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.476351344,
-          "peakRssKiB": 78800,
+          "seconds": 0.46352159,
+          "peakRssKiB": 78332,
           "stdout": "4860",
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.470643886,
-          "peakRssKiB": 76764,
+          "seconds": 0.47652937,
+          "peakRssKiB": 78196,
           "stdout": "4860",
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.481703602,
-          "peakRssKiB": 83676,
+          "seconds": 0.460727446,
+          "peakRssKiB": 76936,
           "stdout": "4860",
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         }
       ],
-      "markdownMedianSeconds": 0.054446944,
-      "markdown4cjMedianSeconds": 0.470656148,
-      "markdownSpeedup": 8.644307897243968,
-      "peakRssRatio": 0.3536497920550696
+      "markdownMedianSeconds": 0.051660097,
+      "markdown4cjMedianSeconds": 0.46352159,
+      "markdownSpeedup": 8.972526513064812,
+      "peakRssRatio": 0.35269950215090146
     },
     "large-code": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.026718539,
-          "peakRssKiB": 11104,
+          "seconds": 0.020106998,
+          "peakRssKiB": 11080,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.026335841,
-          "peakRssKiB": 11068,
+          "seconds": 0.02606403,
+          "peakRssKiB": 10884,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.026615273,
-          "peakRssKiB": 11928,
+          "seconds": 0.026713516,
+          "peakRssKiB": 10924,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.026333681,
-          "peakRssKiB": 11952,
+          "seconds": 0.022662422,
+          "peakRssKiB": 11084,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.024349713,
-          "peakRssKiB": 11064,
+          "seconds": 0.022595415,
+          "peakRssKiB": 10984,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.025087822,
-          "peakRssKiB": 11944,
+          "seconds": 0.02004221,
+          "peakRssKiB": 10924,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.02622357,
-          "peakRssKiB": 11056,
+          "seconds": 0.026521415,
+          "peakRssKiB": 11032,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 0.085635203,
-          "peakRssKiB": 33364,
+          "seconds": 0.077188789,
+          "peakRssKiB": 33300,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.083363313,
+          "seconds": 0.084328425,
+          "peakRssKiB": 33152,
+          "stdout": "3",
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.088794655,
+          "peakRssKiB": 33200,
+          "stdout": "3",
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.07661083,
           "peakRssKiB": 33212,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.079989324,
-          "peakRssKiB": 33412,
+          "seconds": 0.081531256,
+          "peakRssKiB": 33308,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.067894709,
-          "peakRssKiB": 33372,
+          "seconds": 0.078634676,
+          "peakRssKiB": 33408,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.081993302,
-          "peakRssKiB": 33356,
-          "stdout": "3",
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.078040069,
-          "peakRssKiB": 33360,
-          "stdout": "3",
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.082525774,
-          "peakRssKiB": 33240,
+          "seconds": 0.085483875,
+          "peakRssKiB": 33296,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
-      "markdownMedianSeconds": 0.026333681,
-      "markdown4cjMedianSeconds": 0.081993302,
-      "markdownSpeedup": 3.1136285884225603,
-      "peakRssRatio": 0.35771579073386806
+      "markdownMedianSeconds": 0.022662422,
+      "markdown4cjMedianSeconds": 0.081531256,
+      "markdownSpeedup": 3.597640887633281,
+      "peakRssRatio": 0.33177681992337166
     },
     "large-table": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.020890236,
-          "peakRssKiB": 20104,
+          "seconds": 0.020496402,
+          "peakRssKiB": 20096,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.02242642,
-          "peakRssKiB": 19828,
+          "seconds": 0.035074239,
+          "peakRssKiB": 20592,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.020137894,
-          "peakRssKiB": 18720,
-          "stdout": "3",
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.020864303,
-          "peakRssKiB": 19576,
-          "stdout": "3",
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.020106951,
-          "peakRssKiB": 18796,
-          "stdout": "3",
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.024282969,
-          "peakRssKiB": 19288,
-          "stdout": "3",
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.034686287,
+          "seconds": 0.037429293,
           "peakRssKiB": 20596,
+          "stdout": "3",
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.022590748,
+          "peakRssKiB": 19304,
+          "stdout": "3",
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.01963146,
+          "peakRssKiB": 20336,
+          "stdout": "3",
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.022683685,
+          "peakRssKiB": 19100,
+          "stdout": "3",
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.019624962,
+          "peakRssKiB": 18236,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 3.198324744,
-          "peakRssKiB": 317468,
+          "seconds": 3.259322972,
+          "peakRssKiB": 322724,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 3.129396059,
-          "peakRssKiB": 305928,
+          "seconds": 3.212222089,
+          "peakRssKiB": 303116,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 3.300805758,
-          "peakRssKiB": 311048,
+          "seconds": 2.960476835,
+          "peakRssKiB": 291332,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 3.242885338,
-          "peakRssKiB": 304840,
+          "seconds": 3.114966823,
+          "peakRssKiB": 294308,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 3.362650304,
-          "peakRssKiB": 315252,
+          "seconds": 3.316016278,
+          "peakRssKiB": 305144,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 3.020842036,
-          "peakRssKiB": 331584,
+          "seconds": 3.184546712,
+          "peakRssKiB": 296216,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 2.958928726,
-          "peakRssKiB": 293276,
+          "seconds": 2.934952668,
+          "peakRssKiB": 293516,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
-      "markdownMedianSeconds": 0.020890236,
-      "markdown4cjMedianSeconds": 3.198324744,
-      "markdownSpeedup": 153.10141752347846,
-      "peakRssRatio": 0.06211397413626713
+      "markdownMedianSeconds": 0.022590748,
+      "markdown4cjMedianSeconds": 3.184546712,
+      "markdownSpeedup": 140.96685563488202,
+      "peakRssRatio": 0.06381923873030824
     },
     "many-references": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.045510635,
-          "peakRssKiB": 28780,
+          "seconds": 0.045207127,
+          "peakRssKiB": 28768,
           "stdout": "11568",
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         },
         {
-          "seconds": 0.04620197,
-          "peakRssKiB": 28896,
+          "seconds": 0.033416649,
+          "peakRssKiB": 28556,
           "stdout": "11568",
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         },
         {
-          "seconds": 0.049263799,
-          "peakRssKiB": 28884,
+          "seconds": 0.039197693,
+          "peakRssKiB": 27992,
           "stdout": "11568",
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         },
         {
-          "seconds": 0.046190534,
-          "peakRssKiB": 28812,
+          "seconds": 0.045962433,
+          "peakRssKiB": 28772,
           "stdout": "11568",
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         },
         {
-          "seconds": 0.042650941,
-          "peakRssKiB": 28984,
+          "seconds": 0.055663441,
+          "peakRssKiB": 28816,
           "stdout": "11568",
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         },
         {
-          "seconds": 0.033613677,
-          "peakRssKiB": 28020,
+          "seconds": 0.044576111,
+          "peakRssKiB": 28796,
           "stdout": "11568",
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         },
         {
-          "seconds": 0.033127634,
-          "peakRssKiB": 28812,
+          "seconds": 0.042315741,
+          "peakRssKiB": 28788,
           "stdout": "11568",
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 0.854048015,
-          "peakRssKiB": 93496,
+          "seconds": 0.829084542,
+          "peakRssKiB": 93892,
           "stdout": "23133",
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         },
         {
-          "seconds": 0.817748812,
-          "peakRssKiB": 89960,
+          "seconds": 0.80973857,
+          "peakRssKiB": 91688,
           "stdout": "23133",
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         },
         {
-          "seconds": 0.858124873,
-          "peakRssKiB": 92832,
+          "seconds": 0.809305739,
+          "peakRssKiB": 93268,
           "stdout": "23133",
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         },
         {
-          "seconds": 0.829437214,
-          "peakRssKiB": 95296,
+          "seconds": 0.865750118,
+          "peakRssKiB": 102796,
           "stdout": "23133",
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         },
         {
-          "seconds": 0.835225048,
-          "peakRssKiB": 93812,
+          "seconds": 0.825203627,
+          "peakRssKiB": 90048,
           "stdout": "23133",
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         },
         {
-          "seconds": 0.922415852,
-          "peakRssKiB": 108524,
+          "seconds": 0.838677556,
+          "peakRssKiB": 95136,
           "stdout": "23133",
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         },
         {
-          "seconds": 0.82532756,
-          "peakRssKiB": 90604,
+          "seconds": 0.845573768,
+          "peakRssKiB": 93164,
           "stdout": "23133",
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         }
       ],
-      "markdownMedianSeconds": 0.045510635,
-      "markdown4cjMedianSeconds": 0.835225048,
-      "markdownSpeedup": 18.35230486236898,
-      "peakRssRatio": 0.2670745641517084
+      "markdownMedianSeconds": 0.044576111,
+      "markdown4cjMedianSeconds": 0.829084542,
+      "markdownSpeedup": 18.599301809886466,
+      "peakRssRatio": 0.28032219152496207
     },
     "cjk": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.047119912,
-          "peakRssKiB": 24636,
+          "seconds": 0.036429572,
+          "peakRssKiB": 24580,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.045269487,
-          "peakRssKiB": 24604,
+          "seconds": 0.038170465,
+          "peakRssKiB": 24592,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.033852113,
-          "peakRssKiB": 24644,
+          "seconds": 0.047817745,
+          "peakRssKiB": 24648,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.049436354,
-          "peakRssKiB": 25016,
-          "stdout": "12483",
-          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
-        },
-        {
-          "seconds": 0.048732108,
-          "peakRssKiB": 24632,
-          "stdout": "12483",
-          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
-        },
-        {
-          "seconds": 0.045516683,
+          "seconds": 0.044427475,
           "peakRssKiB": 24612,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.048480901,
-          "peakRssKiB": 24556,
+          "seconds": 0.047995032,
+          "peakRssKiB": 24600,
+          "stdout": "12483",
+          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
+        },
+        {
+          "seconds": 0.033520477,
+          "peakRssKiB": 24592,
+          "stdout": "12483",
+          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
+        },
+        {
+          "seconds": 0.033492193,
+          "peakRssKiB": 24624,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 0.612379802,
-          "peakRssKiB": 96104,
+          "seconds": 0.677985072,
+          "peakRssKiB": 112604,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.622925294,
-          "peakRssKiB": 97644,
+          "seconds": 0.602373039,
+          "peakRssKiB": 96376,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.602319146,
-          "peakRssKiB": 98780,
+          "seconds": 0.606703701,
+          "peakRssKiB": 98724,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.613038667,
-          "peakRssKiB": 97348,
+          "seconds": 0.64697467,
+          "peakRssKiB": 98496,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.620984267,
-          "peakRssKiB": 97168,
+          "seconds": 0.646372304,
+          "peakRssKiB": 98244,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.591287767,
-          "peakRssKiB": 94712,
+          "seconds": 0.626464174,
+          "peakRssKiB": 99720,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.61098822,
-          "peakRssKiB": 96784,
+          "seconds": 0.651109511,
+          "peakRssKiB": 97664,
           "stdout": "12483",
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         }
       ],
-      "markdownMedianSeconds": 0.047119912,
-      "markdown4cjMedianSeconds": 0.612379802,
-      "markdownSpeedup": 12.996200035348114,
-      "peakRssRatio": 0.2532496456772626
+      "markdownMedianSeconds": 0.038170465,
+      "markdown4cjMedianSeconds": 0.646372304,
+      "markdownSpeedup": 16.933833632888675,
+      "peakRssRatio": 0.21889098078221023
     },
     "emoji": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.109117294,
+          "seconds": 0.11592403,
+          "peakRssKiB": 42688,
+          "stdout": "17097",
+          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
+        },
+        {
+          "seconds": 0.10817749,
+          "peakRssKiB": 42856,
+          "stdout": "17097",
+          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
+        },
+        {
+          "seconds": 0.099841433,
           "peakRssKiB": 42680,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 0.107378264,
-          "peakRssKiB": 42540,
+          "seconds": 0.107508599,
+          "peakRssKiB": 42656,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 0.100282192,
-          "peakRssKiB": 42620,
+          "seconds": 0.104732952,
+          "peakRssKiB": 42724,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 0.105752904,
-          "peakRssKiB": 42668,
-          "stdout": "17097",
-          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
-        },
-        {
-          "seconds": 0.094301321,
-          "peakRssKiB": 42684,
-          "stdout": "17097",
-          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
-        },
-        {
-          "seconds": 0.107612656,
-          "peakRssKiB": 42668,
-          "stdout": "17097",
-          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
-        },
-        {
-          "seconds": 0.11321344,
+          "seconds": 0.093851246,
           "peakRssKiB": 42680,
+          "stdout": "17097",
+          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
+        },
+        {
+          "seconds": 0.1054141,
+          "peakRssKiB": 42536,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 1.556159637,
-          "peakRssKiB": 110560,
+          "seconds": 1.578062019,
+          "peakRssKiB": 109928,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 1.5572056,
-          "peakRssKiB": 107548,
+          "seconds": 1.550965858,
+          "peakRssKiB": 107760,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 1.544988297,
-          "peakRssKiB": 108152,
+          "seconds": 1.517904691,
+          "peakRssKiB": 107088,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 1.562059685,
-          "peakRssKiB": 106896,
+          "seconds": 1.573272293,
+          "peakRssKiB": 107404,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 1.541838191,
-          "peakRssKiB": 107288,
+          "seconds": 1.569055205,
+          "peakRssKiB": 107776,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 1.555280016,
-          "peakRssKiB": 109204,
+          "seconds": 1.530667235,
+          "peakRssKiB": 104424,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 1.565686746,
-          "peakRssKiB": 111408,
+          "seconds": 1.575693341,
+          "peakRssKiB": 108920,
           "stdout": "17097",
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         }
       ],
-      "markdownMedianSeconds": 0.107378264,
-      "markdown4cjMedianSeconds": 1.556159637,
-      "markdownSpeedup": 14.49231510205827,
-      "peakRssRatio": 0.38313227057302884
+      "markdownMedianSeconds": 0.1054141,
+      "markdown4cjMedianSeconds": 1.569055205,
+      "markdownSpeedup": 14.884680559811258,
+      "peakRssRatio": 0.38985517793464813
     },
     "deep-list": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.020364557,
-          "peakRssKiB": 24496,
+          "seconds": 0.035336612,
+          "peakRssKiB": 24504,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.021125672,
-          "peakRssKiB": 24636,
+          "seconds": 0.02018166,
+          "peakRssKiB": 24360,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.019873072,
-          "peakRssKiB": 22228,
+          "seconds": 0.019785,
+          "peakRssKiB": 22096,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.020583387,
-          "peakRssKiB": 24500,
+          "seconds": 0.022919922,
+          "peakRssKiB": 23120,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.019795957,
-          "peakRssKiB": 24288,
+          "seconds": 0.019508276,
+          "peakRssKiB": 21264,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.020410141,
-          "peakRssKiB": 24644,
+          "seconds": 0.034609182,
+          "peakRssKiB": 24508,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.0196959,
-          "peakRssKiB": 22136,
+          "seconds": 0.039218371,
+          "peakRssKiB": 24396,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 0.391874022,
-          "peakRssKiB": 56868,
+          "seconds": 0.401022881,
+          "peakRssKiB": 56996,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.419202249,
-          "peakRssKiB": 56944,
+          "seconds": 0.403302654,
+          "peakRssKiB": 57132,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.421240856,
-          "peakRssKiB": 57048,
+          "seconds": 0.397525481,
+          "peakRssKiB": 57112,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.452219407,
-          "peakRssKiB": 56932,
+          "seconds": 0.378681215,
+          "peakRssKiB": 56632,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.442766002,
-          "peakRssKiB": 56704,
+          "seconds": 0.369314726,
+          "peakRssKiB": 56628,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.383922691,
-          "peakRssKiB": 56828,
+          "seconds": 0.393035854,
+          "peakRssKiB": 57080,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.453509149,
-          "peakRssKiB": 57108,
+          "seconds": 0.390498711,
+          "peakRssKiB": 56616,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
-      "markdownMedianSeconds": 0.020364557,
-      "markdown4cjMedianSeconds": 0.421240856,
-      "markdownSpeedup": 20.684999727713205,
-      "peakRssRatio": 0.43153323527351684
+      "markdownMedianSeconds": 0.022919922,
+      "markdown4cjMedianSeconds": 0.393035854,
+      "markdownSpeedup": 17.148219527099613,
+      "peakRssRatio": 0.4289715045858713
     },
     "pathological-delimiters": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.121190084,
-          "peakRssKiB": 52636,
+          "seconds": 0.116059889,
+          "peakRssKiB": 52384,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.104791815,
-          "peakRssKiB": 52260,
+          "seconds": 0.11002186,
+          "peakRssKiB": 52244,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.104469019,
-          "peakRssKiB": 52560,
+          "seconds": 0.106399224,
+          "peakRssKiB": 52348,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.111594191,
-          "peakRssKiB": 52388,
+          "seconds": 0.106736305,
+          "peakRssKiB": 52228,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.115283895,
-          "peakRssKiB": 52680,
+          "seconds": 0.1187231,
+          "peakRssKiB": 52460,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.117862008,
-          "peakRssKiB": 52620,
+          "seconds": 0.104629181,
+          "peakRssKiB": 51548,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.11984708,
-          "peakRssKiB": 52432,
+          "seconds": 0.109966015,
+          "peakRssKiB": 52380,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 2.083557404,
-          "peakRssKiB": 110740,
+          "seconds": 2.075735752,
+          "peakRssKiB": 111528,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 2.118646533,
-          "peakRssKiB": 114352,
+          "seconds": 2.080500635,
+          "peakRssKiB": 110776,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 2.124340919,
-          "peakRssKiB": 114004,
+          "seconds": 2.127305208,
+          "peakRssKiB": 117004,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 2.06665501,
-          "peakRssKiB": 111588,
+          "seconds": 2.056203078,
+          "peakRssKiB": 112252,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 2.115014564,
-          "peakRssKiB": 110528,
+          "seconds": 2.143813502,
+          "peakRssKiB": 114668,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 2.077423328,
-          "peakRssKiB": 108480,
+          "seconds": 2.036509966,
+          "peakRssKiB": 111132,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 2.066955316,
-          "peakRssKiB": 109960,
+          "seconds": 2.051904646,
+          "peakRssKiB": 110552,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
-      "markdownMedianSeconds": 0.115283895,
-      "markdown4cjMedianSeconds": 2.083557404,
-      "markdownSpeedup": 18.073273842803456,
-      "peakRssRatio": 0.46068280397369527
+      "markdownMedianSeconds": 0.109966015,
+      "markdown4cjMedianSeconds": 2.075735752,
+      "markdownSpeedup": 18.876156892654517,
+      "peakRssRatio": 0.4483607398037674
     },
     "long-line": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.020665648,
+          "seconds": 0.019533293,
+          "peakRssKiB": 11672,
+          "stdout": "3",
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.02654948,
           "peakRssKiB": 11680,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.026322059,
-          "peakRssKiB": 11680,
+          "seconds": 0.025904878,
+          "peakRssKiB": 11628,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.024268571,
+          "seconds": 0.019144014,
+          "peakRssKiB": 11596,
+          "stdout": "3",
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.026253414,
+          "peakRssKiB": 11696,
+          "stdout": "3",
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.020379973,
           "peakRssKiB": 11676,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.026264552,
-          "peakRssKiB": 11648,
-          "stdout": "3",
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.024339562,
-          "peakRssKiB": 11640,
-          "stdout": "3",
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.018400687,
-          "peakRssKiB": 11780,
-          "stdout": "3",
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.021710535,
-          "peakRssKiB": 11708,
+          "seconds": 0.026184045,
+          "peakRssKiB": 11704,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 0.252435831,
-          "peakRssKiB": 41492,
+          "seconds": 0.253803069,
+          "peakRssKiB": 41404,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.252243608,
-          "peakRssKiB": 41460,
+          "seconds": 0.255982295,
+          "peakRssKiB": 41376,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.244279588,
-          "peakRssKiB": 41520,
+          "seconds": 0.249227043,
+          "peakRssKiB": 41352,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.231337708,
-          "peakRssKiB": 40824,
+          "seconds": 0.234167843,
+          "peakRssKiB": 41428,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.250602631,
-          "peakRssKiB": 41516,
+          "seconds": 0.249698018,
+          "peakRssKiB": 41316,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.246825408,
-          "peakRssKiB": 41424,
+          "seconds": 0.249473607,
+          "peakRssKiB": 41316,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.252547764,
-          "peakRssKiB": 41312,
+          "seconds": 0.254789767,
+          "peakRssKiB": 41480,
           "stdout": "3",
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
-      "markdownMedianSeconds": 0.024268571,
-      "markdown4cjMedianSeconds": 0.250602631,
-      "markdownSpeedup": 10.326221144211582,
-      "peakRssRatio": 0.2837186897880539
+      "markdownMedianSeconds": 0.025904878,
+      "markdown4cjMedianSeconds": 0.249698018,
+      "markdownSpeedup": 9.639034702267272,
+      "peakRssRatio": 0.28216007714561236
     },
     "ordinary": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.024172961,
-          "peakRssKiB": 11660,
+          "seconds": 0.019505621,
+          "peakRssKiB": 11728,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.026652028,
-          "peakRssKiB": 11724,
+          "seconds": 0.019458454,
+          "peakRssKiB": 11772,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.026470512,
-          "peakRssKiB": 11660,
+          "seconds": 0.026274352,
+          "peakRssKiB": 11716,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.0197479,
+          "seconds": 0.019557008,
           "peakRssKiB": 11740,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.024305859,
-          "peakRssKiB": 11748,
+          "seconds": 0.026193707,
+          "peakRssKiB": 11764,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.020271942,
-          "peakRssKiB": 11740,
+          "seconds": 0.025865904,
+          "peakRssKiB": 11716,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.026433566,
-          "peakRssKiB": 11720,
+          "seconds": 0.026197648,
+          "peakRssKiB": 11736,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         }
       ],
       "markdown4cj": [
         {
-          "seconds": 0.21432554,
-          "peakRssKiB": 40084,
+          "seconds": 0.21164283,
+          "peakRssKiB": 40280,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.211151562,
-          "peakRssKiB": 40240,
+          "seconds": 0.213624158,
+          "peakRssKiB": 40212,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.217443991,
-          "peakRssKiB": 40324,
+          "seconds": 0.221165932,
+          "peakRssKiB": 39984,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.213752059,
-          "peakRssKiB": 39940,
+          "seconds": 0.198086105,
+          "peakRssKiB": 40168,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.220719251,
-          "peakRssKiB": 39964,
+          "seconds": 0.218671758,
+          "peakRssKiB": 40008,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.213156232,
-          "peakRssKiB": 40108,
+          "seconds": 0.203560488,
+          "peakRssKiB": 39892,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.216535034,
-          "peakRssKiB": 40040,
+          "seconds": 0.22074908,
+          "peakRssKiB": 40284,
           "stdout": "180",
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         }
       ],
-      "markdownMedianSeconds": 0.024305859,
-      "markdown4cjMedianSeconds": 0.21432554,
-      "markdownSpeedup": 8.817854987145282,
-      "peakRssRatio": 0.29134014482690207
+      "markdownMedianSeconds": 0.025865904,
+      "markdown4cjMedianSeconds": 0.213624158,
+      "markdownSpeedup": 8.258909412174422,
+      "peakRssRatio": 0.29222520107238603
     }
   },
-  "geomeanMarkdownSpeedup": 14.132333733007236,
+  "geomeanMarkdownSpeedup": 13.993599582154005,
   "promotionPassed": true,
   "derivationErrors": []
 }

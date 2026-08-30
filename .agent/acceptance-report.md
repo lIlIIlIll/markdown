@@ -22,10 +22,12 @@ All mandatory offline evidence and performance gates pass. Hosted CI and publica
 
 同语言 benchmark 已绑定当前产品与可复核协议。固定 Server CPU 24、官方 Cangjie 1.1.3、
 `markdown4cj` `f43cfb3a` 和 `commonmark4cj` `41499e6d` 的完整结果为 PASS：共享行为
-`12/12`，CommonMark parse-only 几何平均加速 `14.132334x`，最小单语料
-`3.113629x`，最大峰值 RSS 比值 `0.460683x`。schema-v3 raw SHA-256 为
-`898dfaa87f8d7bb5fc0d30c8375114ada9d11bdfabf1d82a123e93b7c0e9e458`；verifier
+`12/12`，CommonMark parse-only 几何平均加速 `13.993600x`，最小单语料
+`3.597641x`，最大峰值 RSS 比值 `0.448361x`。schema-v3 raw SHA-256 为
+`459f086b5978851bebcc0bceceb3a0f66b78238297086003cca79c56a0d7af81`；verifier
 从底层 samples 独立重算全部统计与 gate，无派生错误。
+
+审阅发现的非 canonical `--iterations` 延迟失败问题已修复；当前入口在下载、构建或测量前即拒绝非 `3` 值，8/8 verifier/protocol 回归通过。
 
 GitHub Actions 的 `Same-language benchmark (current-1.1.3)` 对 committed evidence
 执行 product/corpus/harness 漂移检查，并对 PR merge commit 重新构建双方、固定单个 CPU、
