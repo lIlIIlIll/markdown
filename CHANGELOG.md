@@ -3,7 +3,7 @@
 本文件记录用户可观察的变更。项目遵循 Keep a Changelog；0.x 仍允许明确记录的破坏性
 调整。
 
-## 0.9.0 - Unreleased
+## 0.9.0 - 2026-08-30
 
 这是 breaking pre-GA preview。当前离线 release evidence 状态为 evidence-ready，但托管
 CI 验证和 GitHub Release 发布是独立状态；0.9 不构成 1.x ABI/行为冻结。
