@@ -10,12 +10,12 @@
     "published": false
   },
   "identity": {
-    "artifactCommit": "a259ba4904357d3ca393ca7ccaddce9e6da11931",
-    "evidenceCommit": "a259ba4904357d3ca393ca7ccaddce9e6da11931",
+    "artifactCommit": "6a75709dfcc5510139395fe63fa69b64554718f5",
+    "evidenceCommit": "6a75709dfcc5510139395fe63fa69b64554718f5",
     "repositoryHeadAtGeneration": null,
     "repositoryGitTreeAtGeneration": null,
     "treeStateAtGeneration": "validated-by-execution-manifest",
-    "reason": "The schema-v4 evidence subject is product commit a259ba4904357d3ca393ca7ccaddce9e6da11931. Its source Git tree, benchmark product tree, source archive, harness and drivers are bound independently. The retained release-gate manifest records the clean execution commit/tree, derives JUnit/API/benchmark facts and verifies SHA256SUMS without a self-referential commit field. Hosted CI verification and publication remain separate claims."
+    "reason": "The schema-v4 evidence subject is product commit 6a75709dfcc5510139395fe63fa69b64554718f5. Its source Git tree, benchmark product tree, source archive, harness and drivers are bound independently. The retained release-gate manifest records the clean execution commit/tree, derives JUnit/API/benchmark facts and verifies SHA256SUMS without a self-referential commit field. Hosted CI verification and publication remain separate claims."
   },
   "toolchain": {
     "cangjieCompiler": "1.1.0-alpha.20260803040049",
@@ -54,21 +54,21 @@
   "benchmark": {
     "status": "current",
     "rawPath": "docs/reports/benchmark-raw.json",
-    "rawSha256": "b80123a494932c2c1b7f63fb6895ab81c9734564141f8099d9a2c6b8f8fa136f",
-    "sourceCommit": "a259ba4904357d3ca393ca7ccaddce9e6da11931",
-    "sourceGitTree": "ff2c023772585e11d6850431c3f6ce8b5a069999",
+    "rawSha256": "43ce60a42d590daa807f69377405538693f6aba70bbc12b782b32eb2e0f7c4ca",
+    "sourceCommit": "6a75709dfcc5510139395fe63fa69b64554718f5",
+    "sourceGitTree": "1bad9f8124c68585ab4f2a8aa44a71e54056818d",
     "sdkVersion": "1.1.0-alpha.20260803040049",
-    "productSourceArchiveSha256": "8695094054b9ec5977f0059f148d8e43f1aced800d7893ce69e5bb1b4c3b0f5a",
+    "productSourceArchiveSha256": "69cf9392a7c1cf7d4790edc201b86a4e9c88e89b5a033732679941e90fa5d0e3",
     "productTreeSha256": "7af14d294c9aef023be4353d1bb1fdf985b7d836171dad4e07f4e08467535aff",
     "benchmarkHarnessSha256": "b61a4b8e0204662a3242d61b191582a82fdb222084907ef3f358e9932f209073",
-    "markdownDriverSha256": "9d2a1283a33d6a413812543f146613d29d7ad216417af6b62930e87bd31fe15f",
+    "markdownDriverSha256": "c5d07c593d0f40d7026e184045c047976203aaee1a858e97c40a0163eea30dad",
     "cmarkDriverSha256": "385d4f1842b2a85211de914a5e6600ba195e3203bd4f3e91531cbed216d7a95e",
     "cmarkGfmDriverSha256": "6f8ad2cf959ce26f8b9331c62beea9ff1ea116d4a66b9bae033d6138d362e0b4",
-    "commonmarkRatio": 2.2747146048951867,
-    "gfmRatio": 2.2678110776250278,
+    "commonmarkRatio": 2.368184120006044,
+    "gfmRatio": 2.367749347092361,
     "ratioLimit": 2.5,
     "cmark": "0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8",
     "cmarkGfm": "0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b",
-    "note": "Canonical 2026-08-30 latest-complete fixed-Server run for product commit a259ba4904357d3ca393ca7ccaddce9e6da11931. The tracked-source archive excluded .agent, .agents, .codex and every build product. Xeon Gold 6248R CPU 24, Cangjie 1.1.0-alpha.20260803040049, root -O2, benchmark consumer -O2 --lto thin, 2 GiB heap, cjGCInterval=500ms and seven alternating paired samples measured CommonMark 2.274715x and GFM 2.267811x. Scaling slope/max-adjacent 0.323960/2.198974, pathological 0.567057/1.715981 and extra RSS 30968 KiB also pass. The raw samples independently recompute without errors; per A-038 this latest complete run is canonical rather than a numerically selected earlier run."
+    "note": "Canonical 2026-08-30 latest-complete fixed-Server run for product commit 6a75709dfcc5510139395fe63fa69b64554718f5. The 234-entry tracked-source archive excluded .agent, .agents, .codex and every build product. Xeon Gold 6248R CPU 24, Cangjie 1.1.0-alpha.20260803040049, root -O2, benchmark consumer -O2 --lto thin, 2 GiB heap, cjGCInterval=500ms and seven alternating paired samples measured CommonMark 2.368184x and GFM 2.367749x. Ordinary ratios were 3.432042x/1.619950x, scaling slope/max-adjacent 0.379262/1.682972, pathological 0.582071/2.046359 and extra RSS 30176 KiB; all raw gates are true. Independent local recomputation returned no derivation errors."
   }
 }

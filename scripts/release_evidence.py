@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -31,6 +32,8 @@ from release_evidence_bundle import verify_checksums
 
 EVIDENCE = ROOT / "release-evidence.json"
 README = ROOT / "README.md"
+CHANGELOG = ROOT / "CHANGELOG.md"
+PERFORMANCE = ROOT / "docs/performance.md"
 BENCHMARK_REPORT = ROOT / "docs/reports/benchmark.md"
 ACCEPTANCE = ROOT / ".agent/acceptance-report.md"
 
@@ -82,16 +85,25 @@ def readme_block(data: dict[str, object]) -> str:
     release = data["release"]
     identity = data["identity"]
     benchmark = data["benchmark"]
+    tests = data["tests"]
+    api = data["api"]
+    conformance = data["conformance"]
     evidence_state = "ready" if release["evidenceReady"] else "not ready"
     ci_state = "yes" if release["ciVerifiedAtHead"] else "no"
     publication_state = "yes" if release["published"] else "no"
-    return f"""<!-- release-evidence:start -->
+    return f"""`release-evidence.json` 是当前测试、规范和 benchmark 数字的唯一事实源。
+
+<!-- release-evidence:start -->
 | Release evidence | Value |
 | --- | --- |
 | Version / status | `{release['version']}` / `{release['status']}` |
 | Offline evidence ready | `{evidence_state}` |
 | CI verified at evidence repository HEAD | `{ci_state}` |
 | Published release | `{publication_state}` |
+| Tests | `{tests['passed']}/{tests['total']}` passed; `{tests['skipped']}` skipped; `{tests['failed']}` failed |
+| CommonMark conformance | `{conformance['commonmark']['passed']}/{conformance['commonmark']['total']}` |
+| GFM conformance | `{conformance['gfm']['passed']}/{conformance['gfm']['total']}` |
+| Public API snapshot | `{api['declarations']}` declarations |
 | Artifact commit | `{identity['artifactCommit'] or 'UNBOUND'}` |
 | Evidence subject commit | `{identity['evidenceCommit'] or 'UNBOUND'}` |
 | Execution identity | `target/release-evidence/manifest.json` records and verifies the clean gate commit/tree |
@@ -102,6 +114,51 @@ def readme_block(data: dict[str, object]) -> str:
 The table is generated from [`release-evidence.json`](release-evidence.json).
 `evidenceReady` describes reproducible offline artifacts and gates only. It does not claim that
 the current repository HEAD passed hosted CI or that a GitHub release was published.
+<!-- release-evidence:end -->"""
+
+
+def changelog_block(data: dict[str, object]) -> str:
+    benchmark = data["benchmark"]
+    tests = data["tests"]
+    api = data["api"]
+    conformance = data["conformance"]
+    benchmark_label = "canonical" if benchmark["status"] == "current" else "last complete"
+    return f"""<!-- release-evidence:start -->
+当前数字只由 [`release-evidence.json`](release-evidence.json)提供：
+
+- benchmark evidence status `{benchmark['status']}`；
+- CommonMark `{conformance['commonmark']['passed']}/{conformance['commonmark']['total']}`；
+- GFM `{conformance['gfm']['passed']}/{conformance['gfm']['total']}`；
+- 测试 `{tests['passed']}/{tests['total']}`，`{tests['skipped']}` skipped，`{tests['failed']}` failed；
+- public API snapshot `{api['declarations']}` declarations；
+- {benchmark_label} CommonMark ratio `{benchmark['commonmarkRatio']:.6f}x`；
+- {benchmark_label} GFM ratio `{benchmark['gfmRatio']:.6f}x`。
+
+原始数据和受测 commit identity 见 `docs/reports/benchmark-raw.json`。
+<!-- release-evidence:end -->"""
+
+
+def performance_block(data: dict[str, object]) -> str:
+    benchmark = data["benchmark"]
+    if benchmark["status"] != "current":
+        commonmark_status = "stale"
+        gfm_status = "stale"
+    else:
+        commonmark_status = (
+            "pass" if benchmark["commonmarkRatio"] <= benchmark["ratioLimit"] else "fail"
+        )
+        gfm_status = "pass" if benchmark["gfmRatio"] <= benchmark["ratioLimit"] else "fail"
+    return f"""<!-- release-evidence:start -->
+当前 release benchmark 使用固定 Server CPU、Cangjie SDK
+`{benchmark['sdkVersion']}` 和 release 构建。
+
+| Profile | 对比对象 | 当前 ratio | 门槛 | 状态 |
+| --- | --- | ---: | ---: | --- |
+| CommonMark 完整 AST parse | cmark 0.31.1 | `{benchmark['commonmarkRatio']:.6f}x` | `≤{benchmark['ratioLimit']}x` | {commonmark_status} |
+| GFM 完整 AST + HTML | cmark-gfm 0.29 | `{benchmark['gfmRatio']:.6f}x` | `≤{benchmark['ratioLimit']}x` | {gfm_status} |
+
+ratio 大于 1 表示本库更慢。完整语料、样本、RSS、复杂度和 identity 见
+[canonical report](reports/benchmark.md)与其链接的 raw JSON。
 <!-- release-evidence:end -->"""
 
 
@@ -150,6 +207,27 @@ def replace_block(path: Path, block: str) -> str:
     prefix, remainder = text.split(start, 1)
     _, suffix = remainder.split(end, 1)
     return prefix + block + suffix
+
+
+def replace_section(path: Path, heading: str, next_heading: str, body: str) -> str:
+    """Replace one complete Markdown section so facts cannot drift outside markers."""
+    text = path.read_text(encoding="utf-8")
+    start_marker = heading + "\n"
+    end_marker = next_heading + "\n"
+    if text.count(start_marker) != 1:
+        raise ValueError(
+            f"expected exactly one {heading!r} section in {path.relative_to(ROOT)}"
+        )
+    prefix, remainder = text.split(start_marker, 1)
+    if remainder.count(end_marker) != 1:
+        raise ValueError(
+            f"expected exactly one {next_heading!r} boundary in {path.relative_to(ROOT)}"
+        )
+    _, suffix = remainder.split(end_marker, 1)
+    return (
+        prefix + start_marker + "\n" + body.rstrip() + "\n\n"
+        + end_marker + suffix
+    )
 
 
 def validate_current_benchmark_identity(raw: dict[str, object],
@@ -294,6 +372,44 @@ def validate_sdk_archive_identity(manifest: dict[str, object]) -> list[str]:
     return []
 
 
+def validate_execution_repository_identity(manifest: dict[str, object]) -> list[str]:
+    """Bind execution evidence to a real commit with the current exact tree.
+
+    GitButler may place a synthetic workspace commit at HEAD.  An explicitly
+    selected publishable branch tip is acceptable only when it is reachable and
+    its complete Git tree is byte-identical to the checked-out workspace tree.
+    """
+    errors: list[str] = []
+    commit = manifest.get("repositoryCommit")
+    tree = manifest.get("gitTree")
+    errors.extend(validate_reachable_commit(commit, "release execution"))
+    errors.extend(validate_commit_git_tree(commit, "release execution", tree))
+    inside = subprocess.run(
+        ["git", "rev-parse", "--is-inside-work-tree"], cwd=ROOT,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
+    )
+    if inside.returncode != 0:
+        errors.append("release execution identity cannot be verified outside a Git work tree")
+        return errors
+    current_tree = subprocess.run(
+        ["git", "rev-parse", "HEAD^{tree}"], cwd=ROOT, text=True,
+        capture_output=True, check=False,
+    ).stdout.strip()
+    if current_tree != tree:
+        errors.append("release execution Git tree does not match current repository tree")
+    selected = os.environ.get("MARKDOWN_RELEASE_COMMIT")
+    if selected:
+        result = subprocess.run(
+            ["git", "rev-parse", f"{selected}^{{commit}}"], cwd=ROOT, text=True,
+            capture_output=True, check=False,
+        )
+        if result.returncode != 0:
+            errors.append("MARKDOWN_RELEASE_COMMIT cannot be resolved")
+        elif result.stdout.strip() != commit:
+            errors.append("release execution commit does not match MARKDOWN_RELEASE_COMMIT")
+    return errors
+
+
 def validate_execution_manifest(data: dict[str, object], path: Path) -> list[str]:
     errors: list[str] = []
     if not path.is_file():
@@ -307,7 +423,8 @@ def validate_execution_manifest(data: dict[str, object], path: Path) -> list[str
     steps = manifest.get("steps")
     required_steps = {
         "format", "docs", "native-build-tests", "api-checker-tests", "api",
-        "static-check", "release-evidence-consistency", "release-evidence-tests",
+        "static-check", "release-evidence-consistency", "release-evidence-bundle-tests",
+        "release-evidence-tests",
         "benchmark-driver-tests", "build", "native-build", "benchmark-driver",
         "native-fuzz", "benchmark-profile-tests", "tests", "cli-build", "cli-smoke",
         "quickstart", "cookbook", "differential-setup", "differential",
@@ -329,25 +446,7 @@ def validate_execution_manifest(data: dict[str, object], path: Path) -> list[str
 
     identity = data["identity"]
     benchmark = data["benchmark"]
-    inside = subprocess.run(
-        ["git", "rev-parse", "--is-inside-work-tree"], cwd=ROOT,
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
-    )
-    if inside.returncode != 0:
-        errors.append("release execution identity cannot be verified outside a Git work tree")
-    else:
-        current_head = subprocess.run(
-            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True,
-            capture_output=True, check=False,
-        ).stdout.strip()
-        current_tree = subprocess.run(
-            ["git", "rev-parse", "HEAD^{tree}"], cwd=ROOT, text=True,
-            capture_output=True, check=False,
-        ).stdout.strip()
-        if manifest.get("repositoryCommit") != current_head:
-            errors.append("release execution commit does not match current repository HEAD")
-        if manifest.get("gitTree") != current_tree:
-            errors.append("release execution Git tree does not match current repository tree")
+    errors.extend(validate_execution_repository_identity(manifest))
     if manifest.get("productTreeSha256") != benchmark["productTreeSha256"]:
         errors.append("release execution product tree does not match benchmark identity")
     if manifest.get("treeState") != "clean":
@@ -499,16 +598,32 @@ def main() -> int:
     parser.add_argument("--execution-manifest", type=Path)
     args = parser.parse_args()
     data = load()
-    expected_readme = replace_block(README, readme_block(data))
+    expected_readme = replace_section(
+        README, "## 验证状态", "## 参与项目", readme_block(data)
+    )
+    expected_changelog = replace_section(
+        CHANGELOG, "### Evidence", "## 0.8.0 - 2026-08-25", changelog_block(data)
+    )
+    expected_performance = replace_section(
+        PERFORMANCE, "## 当前 canonical 结果", "## 比较了什么", performance_block(data)
+    )
     expected_acceptance = replace_block(ACCEPTANCE, acceptance_block(data))
     expected_benchmark = benchmark_markdown(data)
     if args.write:
         README.write_text(expected_readme, encoding="utf-8")
+        CHANGELOG.write_text(expected_changelog, encoding="utf-8")
+        PERFORMANCE.write_text(expected_performance, encoding="utf-8")
         ACCEPTANCE.write_text(expected_acceptance, encoding="utf-8")
         BENCHMARK_REPORT.write_text(expected_benchmark, encoding="utf-8")
     else:
         if README.read_text(encoding="utf-8") != expected_readme:
-            print("README release-evidence block is stale", file=sys.stderr)
+            print("README release-evidence section is stale", file=sys.stderr)
+            return 1
+        if CHANGELOG.read_text(encoding="utf-8") != expected_changelog:
+            print("CHANGELOG release-evidence section is stale", file=sys.stderr)
+            return 1
+        if PERFORMANCE.read_text(encoding="utf-8") != expected_performance:
+            print("performance release-evidence section is stale", file=sys.stderr)
             return 1
         if ACCEPTANCE.read_text(encoding="utf-8") != expected_acceptance:
             print("acceptance release-evidence block is stale", file=sys.stderr)

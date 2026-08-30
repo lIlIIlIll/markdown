@@ -41,6 +41,65 @@ class ReleaseEvidenceTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("release evidence verified", result.stdout)
 
+    def test_generated_sections_include_all_current_metrics(self) -> None:
+        evidence = json.loads((ROOT / "release-evidence.json").read_text(encoding="utf-8"))
+        readme = release_evidence.readme_block(evidence)
+        changelog = release_evidence.changelog_block(evidence)
+        performance = release_evidence.performance_block(evidence)
+        tests = evidence["tests"]
+        api = evidence["api"]
+        conformance = evidence["conformance"]
+        benchmark = evidence["benchmark"]
+        self.assertIn(
+            f"| Tests | `{tests['passed']}/{tests['total']}` passed; "
+            f"`{tests['skipped']}` skipped; `{tests['failed']}` failed |",
+            readme,
+        )
+        for name, label in (("commonmark", "CommonMark"), ("gfm", "GFM")):
+            result = conformance[name]
+            self.assertIn(
+                f"| {label} conformance | `{result['passed']}/{result['total']}` |",
+                readme,
+            )
+        self.assertIn(
+            f"| Public API snapshot | `{api['declarations']}` declarations |", readme
+        )
+        self.assertIn(
+            f"{'canonical' if benchmark['status'] == 'current' else 'last complete'} "
+            f"CommonMark ratio `{benchmark['commonmarkRatio']:.6f}x`",
+            changelog,
+        )
+        self.assertIn(
+            f"{'canonical' if benchmark['status'] == 'current' else 'last complete'} "
+            f"GFM ratio `{benchmark['gfmRatio']:.6f}x`",
+            changelog,
+        )
+        self.assertIn(
+            f"| CommonMark 完整 AST parse | cmark 0.31.1 | "
+            f"`{benchmark['commonmarkRatio']:.6f}x` |",
+            performance,
+        )
+        self.assertIn(
+            f"| GFM 完整 AST + HTML | cmark-gfm 0.29 | "
+            f"`{benchmark['gfmRatio']:.6f}x` |",
+            performance,
+        )
+
+    def test_replace_section_owns_the_complete_current_section(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "README.md"
+            path.write_text(
+                "# Example\n\n## Evidence\n\nstale metric\n\n## Next\n\nkeep me\n",
+                encoding="utf-8",
+            )
+            expected = release_evidence.replace_section(
+                path, "## Evidence", "## Next", "generated metric"
+            )
+        self.assertEqual(
+            expected,
+            "# Example\n\n## Evidence\n\ngenerated metric\n\n## Next\n\nkeep me\n",
+        )
+
     def test_incomplete_release_can_project_current_failing_benchmark(self) -> None:
         evidence = json.loads((ROOT / "release-evidence.json").read_text(encoding="utf-8"))
         if evidence["benchmark"]["status"] == "current" and not evidence["release"]["evidenceReady"]:
@@ -134,6 +193,45 @@ class ReleaseEvidenceTest(unittest.TestCase):
             [],
         )
 
+    def test_execution_identity_accepts_publishable_commit_with_exact_workspace_tree(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            subprocess.run(["git", "config", "user.name", "Evidence Test"],
+                cwd=root, check=True)
+            subprocess.run(["git", "config", "user.email", "evidence@example.invalid"],
+                cwd=root, check=True)
+            source = root / "src" / "parser.cj"
+            source.parent.mkdir()
+            source.write_text("same tree\n", encoding="utf-8")
+            subprocess.run(["git", "add", "src/parser.cj"], cwd=root, check=True)
+            subprocess.run(["git", "commit", "-qm", "test: publishable"],
+                cwd=root, check=True)
+            publishable = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=root, text=True
+            ).strip()
+            tree = subprocess.check_output(
+                ["git", "rev-parse", "HEAD^{tree}"], cwd=root, text=True
+            ).strip()
+            subprocess.run(
+                ["git", "commit", "--allow-empty", "-qm", "test: workspace"],
+                cwd=root, check=True,
+            )
+            workspace = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=root, text=True
+            ).strip()
+            manifest = {"repositoryCommit": publishable, "gitTree": tree}
+            with patch.object(release_evidence, "ROOT", root):
+                with patch.dict("os.environ", {"MARKDOWN_RELEASE_COMMIT": publishable}):
+                    self.assertEqual(
+                        release_evidence.validate_execution_repository_identity(manifest), []
+                    )
+                with patch.dict("os.environ", {"MARKDOWN_RELEASE_COMMIT": workspace}):
+                    self.assertIn(
+                        "release execution commit does not match MARKDOWN_RELEASE_COMMIT",
+                        release_evidence.validate_execution_repository_identity(manifest),
+                    )
+
     def test_commit_git_tree_must_match_declared_tree(self) -> None:
         head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
         errors = release_evidence.validate_commit_git_tree(head, "benchmark source", "0" * 40)
@@ -188,6 +286,7 @@ class ReleaseEvidenceTest(unittest.TestCase):
     def test_release_gate_checks_consistency_and_readiness(self) -> None:
         gate = RELEASE_GATE.read_text(encoding="utf-8")
         self.assertIn("python3 scripts/release_evidence.py\n", gate)
+        self.assertIn("python3 scripts/test_release_evidence_bundle.py\n", gate)
         self.assertIn("python3 scripts/release_evidence.py --evidence-ready \\\n", gate)
         self.assertIn('--execution-manifest "$evidence_dir/manifest.json"', gate)
         self.assertIn("release_evidence_bundle.py", gate)

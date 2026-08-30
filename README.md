@@ -210,22 +210,21 @@ evidence。测量边界和输入 API 见[性能说明](docs/performance.md)。
 | Offline evidence ready | `ready` |
 | CI verified at evidence repository HEAD | `no` |
 | Published release | `no` |
-| Artifact commit | `a259ba4904357d3ca393ca7ccaddce9e6da11931` |
-| Evidence subject commit | `a259ba4904357d3ca393ca7ccaddce9e6da11931` |
+| Tests | `1457/1457` passed; `0` skipped; `0` failed |
+| CommonMark conformance | `652/652` |
+| GFM conformance | `671/671` |
+| Public API snapshot | `1323` declarations |
+| Artifact commit | `6a75709dfcc5510139395fe63fa69b64554718f5` |
+| Evidence subject commit | `6a75709dfcc5510139395fe63fa69b64554718f5` |
 | Execution identity | `target/release-evidence/manifest.json` records and verifies the clean gate commit/tree |
-| CommonMark / cmark | `2.27x` / limit `2.5x` |
-| GFM HTML / cmark-gfm | `2.27x` / limit `2.5x` |
-| Benchmark identity | `current`; commit `a259ba4904357d3ca393ca7ccaddce9e6da11931`; SDK `1.1.0-alpha.20260803040049` |
+| CommonMark / cmark | `2.37x` / limit `2.5x` |
+| GFM HTML / cmark-gfm | `2.37x` / limit `2.5x` |
+| Benchmark identity | `current`; commit `6a75709dfcc5510139395fe63fa69b64554718f5`; SDK `1.1.0-alpha.20260803040049` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
 `evidenceReady` describes reproducible offline artifacts and gates only. It does not claim that
 the current repository HEAD passed hosted CI or that a GitHub release was published.
 <!-- release-evidence:end -->
-
-- CommonMark `652/652`
-- GFM `671/671`
-- 全量测试 `1455/1455`
-- 公开 API snapshot `1309` declarations
 
 ## 参与项目
 

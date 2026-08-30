@@ -49,6 +49,16 @@ cjpm run --skip-build
 `scripts/release_gate.sh`。完整 gate 还包含 CommonMark/GFM 语料、CLI smoke、consumer
 example、fuzz smoke、benchmark smoke、bundle 和 evidence 校验。
 
+普通 Git checkout 会将 release evidence 绑定到 `HEAD`。GitButler 等使用合成
+workspace commit 的环境必须将 `MARKDOWN_RELEASE_COMMIT` 设为可推送分支 tip：
+
+```sh
+MARKDOWN_RELEASE_COMMIT=<branch-tip-sha> scripts/release_gate.sh
+```
+
+gate 只接受可达提交，并要求该提交的完整 Git tree 与干净 workspace tree 完全相同；
+因此不能用旧提交或只匹配产品源码子集的提交冒充受测版本。
+
 门禁会在 `/tmp` 中按不可变 commit 获取 cmark 0.31.1、cmark-gfm 0.29.0.gfm.13 和
 commonmark.js 0.31.2。设置 `MARKDOWN_DIFFERENTIAL_ROOT` 可改用预置缓存；目录存在但
 commit 不匹配时门禁会拒绝覆盖并失败。

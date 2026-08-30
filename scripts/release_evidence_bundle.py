@@ -37,6 +37,26 @@ def git(*arguments: str) -> str:
     return result.stdout.strip()
 
 
+def release_subject_identity() -> tuple[str, str, str]:
+    """Resolve the publishable commit represented by the current work tree.
+
+    GitButler checks out a synthetic workspace commit.  Callers can set
+    MARKDOWN_RELEASE_COMMIT to the publishable branch tip; ordinary checkouts
+    continue to use HEAD.
+    """
+    reference = os.environ.get("MARKDOWN_RELEASE_COMMIT", "HEAD")
+    commit = git("rev-parse", f"{reference}^{{commit}}")
+    tree = git("rev-parse", f"{commit}^{{tree}}")
+    return reference, commit, tree
+
+
+def working_tree_matches_subject(subject_tree: str) -> bool:
+    return (
+        not git("status", "--porcelain")
+        and git("rev-parse", "HEAD^{tree}") == subject_tree
+    )
+
+
 def command_output(*arguments: str) -> str | None:
     result = subprocess.run(arguments, cwd=ROOT, text=True, capture_output=True, check=False)
     if result.returncode != 0:
@@ -57,10 +77,12 @@ def initialize(output: Path) -> None:
         if stale.exists():
             shutil.rmtree(stale)
     (output / "logs").mkdir(parents=True)
+    repository_ref, repository_commit, git_tree = release_subject_identity()
     atomic_json(output / "context.json", {
         "schemaVersion": 1,
-        "repositoryCommit": git("rev-parse", "HEAD"),
-        "gitTree": git("rev-parse", "HEAD^{tree}"),
+        "repositoryRef": repository_ref,
+        "repositoryCommit": repository_commit,
+        "gitTree": git_tree,
         "productTreeSha256": benchmark_product_tree_sha256(ROOT),
         "runner": {
             "os": os.uname().sysname,
@@ -147,14 +169,16 @@ def finalize(output: Path, gate_exit: int) -> None:
     snapshot_artifacts(output)
     source_archive = output / "source" / "repository.tar"
     source_archive.parent.mkdir(parents=True, exist_ok=True)
+    context = json.loads((output / "context.json").read_text(encoding="utf-8"))
+    repository_commit = context["repositoryCommit"]
     archive = subprocess.run(
-        ["git", "archive", "--format=tar", f"--output={source_archive}", "HEAD"],
+        ["git", "archive", "--format=tar", f"--output={source_archive}",
+         repository_commit],
         cwd=ROOT, capture_output=True, check=False,
     )
     if archive.returncode != 0 and source_archive.exists():
         source_archive.unlink()
 
-    context = json.loads((output / "context.json").read_text(encoding="utf-8"))
     steps = load_steps(output / "steps.jsonl")
     tests: dict[str, int] | None = None
     suites: dict[str, dict[str, int]] = {}
@@ -171,7 +195,9 @@ def finalize(output: Path, gate_exit: int) -> None:
     manifest = {
         "schemaVersion": 1,
         **context,
-        "treeState": "clean" if not git("status", "--porcelain") else "dirty",
+        "treeState": (
+            "clean" if working_tree_matches_subject(context["gitTree"]) else "dirty"
+        ),
         "gateExitCode": gate_exit,
         "sourceArchiveSha256": sha256(source_archive) if source_archive.exists() else None,
         "steps": steps,

@@ -2,10 +2,10 @@
 
 ## Current completion state (2026-08-30)
 
-The 2026-08-30 P0-P2 audit remediation is release-verified. The authoritative
-ledger is 125 pass, 0 pending, 0 implemented_unverified and 0 blocked. The earlier
-`c63c525` benchmark remains historical because both the product tree and measurement
-harness changed.
+The 2026-08-30 P0-P2 audit and release-documentation remediations are verified.
+The authoritative ledger is 125 pass, 0 pending, 0 implemented_unverified and
+0 blocked. Earlier benchmark runs remain historical when either the product tree,
+corpus, or measurement harness changed.
 
 The active dependency order is:
 
@@ -16,12 +16,15 @@ The active dependency order is:
    create checksummed CI artifacts. Completed and focused-tested.
 3. Lock the commonmark.js npm graph and publish supported-version/security response
    policy. Completed.
-4. Commit this product/harness slice on its dedicated branch, then build a fresh
-   checkout on Server and run the full fixed-CPU canonical measurement. Completed;
-   the latest complete run passes CommonMark `2.274715x` and GFM `2.267811x`.
-5. Replace raw/report/README/ledger/acceptance only from that latest complete run,
-   execute the clean full release gate, and verify its retained manifest and
-   checksums. Completed; the gate exits 0 and the retained bundle verifies.
+4. Make README, CHANGELOG, performance and acceptance projections derive their
+   current numbers from `release-evidence.json`; fail on any drift. Completed.
+5. Commit the corpus-changing documentation slice, then build a fresh checkout on
+   Server and run the full fixed-CPU canonical measurement. Completed; the latest
+   complete run passes CommonMark `2.368184x` and GFM `2.367749x`.
+6. Replace raw/report/README/ledger/acceptance only from that latest complete run,
+   execute the branch-tip-bound clean full release gate, and verify its retained
+   manifest and checksums. Completed; all 26 steps pass and the retained bundle
+   verifies.
 
 The retained parser architecture is unchanged: one shared parsing core with
 explicit full-AST, source-event and fused-render execution models. Canonical

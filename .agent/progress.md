@@ -1,10 +1,20 @@
 # markdown 当前进度
 
 更新时间：2026-08-30
-当前阶段：审计 P0-P2 修复、schema-v4 canonical 与完整可下载证据包均已通过验收。
+当前阶段：发布证据文档、固定 Server canonical 和 branch-tip-bound release gate 均已通过。
 整体结论：**COMPLETE**。需求账本当前为 125 pass、0 pending、0 implemented_unverified、0 blocked。
 
-## 2026-08-30 P0-P2 深度审计修复（当前）
+## 2026-08-30 发布证据文档漂移修复（当前）
+
+- `scripts/release_evidence.py` 现在接管 README 验证状态、CHANGELOG Evidence 和性能页当前 canonical 三个完整章节，不再只替换表格内部的一部分。
+- README 的测试、规范和 API 数字已改为从 `release-evidence.json` 生成；CHANGELOG 和性能页的 ratio 也使用同一来源。
+- 聚焦回归覆盖完整 section replacement 及所有动态字段。文档修改改变了 `readme-api` corpus，因此旧 raw 已按设计降为历史证据。
+- 固定 Server CPU 24 的完整 canonical 对提交 `6a75709d` exit `0`。raw SHA-256 为 `43ce60a42d590daa807f69377405538693f6aba70bbc12b782b32eb2e0f7c4ca`；CommonMark `2.368184x`、GFM `2.367749x`，ordinary、scaling、pathological 和 RSS gate 全部通过，独立派生误差为空。
+- `MARKDOWN_RELEASE_COMMIT` 允许 GitButler 工作区把证据绑定到可推送分支 tip；verifier 同时要求该提交可达、commit tree 与 manifest 一致、完整 workspace tree 相同。普通 Git checkout 继续默认绑定 `HEAD`。
+- branch-tip-bound 完整 release gate exit `0`：26 个步骤全部通过，full tests `1457/1457`、CommonMark `652/652`、GFM `671/671`、API `1323`，并保留候选包、源码归档、raw、逐步日志和完整 `SHA256SUMS`。
+- `MD-PERF-002`、`MD-REL-001` 和 `MD-QUAL-001` 均为 `pass`；剩余本地工作为 None。
+
+## 2026-08-30 P0-P2 深度审计修复（历史，已被上节取代）
 
 - P0：benchmark verifier 从底层 samples 独立重算每个 corpus ratio、几何平均、scaling/pathological slope、相邻增长、RSS、phase、optional overhead 和全部 gate；篡改顶层 summary/gates 会确定性失败。
 - P0：release identity 不再接受“仅为 HEAD 可达祖先”。verifier 从声明 commit 的 Git blobs 独立枚举并哈希 product file set，同时校验 source Git tree、product tree、raw 与 evidence identity；非 Git 环境 fail closed。
@@ -17,7 +27,7 @@
 - 固定提交 `a259ba49` 的最新完整 Server canonical 已刷新：raw SHA-256 `b80123a494932c2c1b7f63fb6895ab81c9734564141f8099d9a2c6b8f8fa136f`，CommonMark `2.274715x`、GFM `2.267811x`，scaling `0.323960/2.198974`、pathological `0.567057/1.715981`、extra RSS `30968 KiB`，全部 gate 为 true。最小源码归档明确排除 `.agent`、`.agents`、`.codex` 和所有构建产物；verifier 从底层 samples 独立重算为零错误。按 A-038 无条件采用最新完整整轮。
 - clean full release gate 已在固定提交上 exit `0`。`target/release-evidence/manifest.json` 绑定当前 SDK archive SHA-256 `6c050802...e18131d`，从 JUnit、API inventory 和 benchmark samples 独立派生数字，记录 25 个步骤的命令与 exit code，并归档候选包、源码、raw、报告和日志；`SHA256SUMS` 校验通过。`MD-REL-001`、`MD-QUAL-001` 已恢复为 `pass`，剩余工作为 None。
 
-## 2026-08-29 R143 canonical 性能与最终闭环（当前）
+## 2026-08-29 R143 canonical 性能与最终闭环（历史）
 
 - 唯一 canonical raw 为 `docs/reports/benchmark-raw.json`，SHA-256 `ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37`。它绑定 clean product commit `c63c52528aef6cc5ea46d4b152e08af6a5344f2f`、最小源码归档 `ec7bcd00a3621db10b0c093cb4bf31ebf30c7d0918a75e5e24939d9d523cf9e1`、product tree `64831ebd505da359605f2702c91f7ea21d8b83d212873afe9ca927918887ee3c`、harness `4d437f4a94097e3d09a62a62b48046a9363010e0f853cc288cb169641c6e8711` 和 driver `9ab161c0b7e20d32201a8bfd7dbaefec7fbc298b30414166532432e75cd1a3a1`。
 - 固定 Server CPU 24、SDK `1.1.0-alpha.20260803040049` 的完整 release benchmark exit `0`：CommonMark `2.334095x`、GFM `2.466373x`；ordinary `3.538540x/1.994487x`、scaling `0.349193/1.514705`、pathological `0.700414/2.187767`、extra RSS `31224 KiB`，全部 gate 为 true。

@@ -13,7 +13,7 @@ allowed_statuses:
 - pass
 - blocked
 completion_rule: 只有本文件 requirements 下的全部条目均为 pass，才可声明整个 PRD 完成；blocked、pending 和 implemented_unverified 均不算完成。
-final_validation_evidence: &final_validation_evidence '2026-08-30 clean full release gate: cangjie_env; CC=/usr/lib/llvm15/bin/clang AR=ar MARKDOWN_SDK_ARCHIVE_SHA256=6c050802d1d6d297c4c6ad2bf8b253865f33aa2a810f6ef62347162f1e18131d MARKDOWN_BENCHMARK_DRIVER_MODE=canonical scripts/release_gate.sh; exit 0 with Cangjie 1.1.0-alpha.20260829040003; format, docs 44/23/4, native cache contracts 5/5, evidence-bundle tests 4/4, release-evidence tests 15/15, API checker 9/9, public API snapshot 1323, check/build, native ASan+UBSan fuzz 10000, benchmark profiles 7/7, full tests 1457/1457 with zero skipped/error/failed, CommonMark 652/652, GFM 671/671, CLI, quickstart, cookbook, differential 25/24/1/0, benchmark smoke 3/3, package bundle and evidence-ready verifier all passed. target/release-evidence/manifest.json binds the exact clean execution commit/tree and SDK archive SHA-256, derives all counts from retained files and is covered by target/release-evidence/SHA256SUMS. Canonical release performance is separately bound to Server SDK 1.1.0-alpha.20260803040049, product commit a259ba4904357d3ca393ca7ccaddce9e6da11931 and raw SHA-256 b80123a494932c2c1b7f63fb6895ab81c9734564141f8099d9a2c6b8f8fa136f.'
+final_validation_evidence: &final_validation_evidence '2026-08-30 branch-tip-bound clean full release gate: MARKDOWN_RELEASE_COMMIT selects the publishable commit while the verifier requires its complete Git tree to equal the clean workspace tree; exit 0 with Cangjie 1.1.0-alpha.20260829040003 and SDK archive SHA-256 6c050802d1d6d297c4c6ad2bf8b253865f33aa2a810f6ef62347162f1e18131d. All 26 recorded steps passed: format, docs 44/23/4, native cache contracts 5/5, evidence-bundle tests 5/5, release-evidence tests 18/18, API checker 9/9, public API snapshot 1323, check/build, native ASan+UBSan fuzz 10000, benchmark profiles 7/7, full tests 1457/1457 with zero skipped/error/failed, CommonMark 652/652, GFM 671/671, CLI, quickstart, cookbook, differential 25/24/1/0, benchmark smoke 3/3, package bundle and evidence-ready verifier. target/release-evidence/manifest.json derives all counts from retained files; SHA256SUMS covers the candidate, source archive, benchmark raw and logs. Canonical performance separately binds Server SDK 1.1.0-alpha.20260803040049, product commit 6a75709dfcc5510139395fe63fa69b64554718f5 and raw SHA-256 43ce60a42d590daa807f69377405538693f6aba70bbc12b782b32eb2e0f7c4ca; CommonMark 2.368184x and GFM 2.367749x pass every ratio, ordinary, scaling, pathological and RSS gate.'
 status_definitions:
   pending: 尚未开始，或尚无足以证明实现存在的证据。
   implemented_unverified: 实现已存在，但尚未完成该条目全部验收或证据尚不充分。
@@ -2569,6 +2569,7 @@ requirements:
   - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks'
   - scripts/test_benchmark_input_profiles.py
   evidence:
+  - '2026-08-30 refreshed fixed-Server canonical for commit 6a75709d: raw SHA-256 43ce60a42d590daa807f69377405538693f6aba70bbc12b782b32eb2e0f7c4ca; CommonMark 2.368184x, GFM 2.367749x, ordinary 3.432042x/1.619950x, scaling 0.379262/1.682972, pathological 0.582071/2.046359 and extra RSS 30176 KiB; every gate true and independent derivation errors empty.'
   - *final_validation_evidence
   - '2026-08-30 latest-complete Server canonical: CommonMark 2.274715x, GFM 2.267811x, ordinary gate pass, scaling slope/max 0.323960/2.198974, pathological 0.567057/1.715981, extra RSS 30968 KiB; all raw gates true'
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2914,6 +2915,7 @@ requirements:
   - scripts/release_gate.sh
   - cjpm bundle
   evidence:
+  - '2026-08-30 branch-tip-bound clean full release gate exit 0; the retained manifest derives 1457/1457 tests, CommonMark 652/652, GFM 671/671 and 1323 API declarations, records all 26 steps, archives the candidate/source/raw/logs and passes exact-inventory SHA256SUMS verification.'
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-18: cjpm bundle --skip-test after the full 1410-test gate; exit 0; GA release withheld because prerequisite requirements
@@ -2950,6 +2952,7 @@ requirements:
   - scripts/release_gate.sh
   - benchmarks/measure.py
   evidence:
+  - '2026-08-30 refreshed canonical independently passes every performance, scaling and RSS gate; the branch-tip-bound clean full release gate also passes all correctness, conformance, fuzz, consumer, differential, package and evidence checks.'
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-29: full fresh-archive Server release gate exit 0; 1455/1455 tests, CommonMark 652/652, GFM 671/671, differential 25/24/1/0, native ASan+UBSan fuzz 10000, benchmark smoke 3/3 and bundle all pass.'
