@@ -3,6 +3,9 @@
 
 from __future__ import annotations
 
+from io import StringIO
+from pathlib import Path
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -93,6 +96,16 @@ class SameLanguageBenchmarkTest(unittest.TestCase):
             self.assertEqual(comparison.resolve_cpu(9), 9)
             with self.assertRaises(ValueError):
                 comparison.resolve_cpu(2)
+
+    def test_noncanonical_iterations_fail_before_setup(self) -> None:
+        args = SimpleNamespace(verify_report=None, output=Path("unused.json"),
+            workspace=Path("unused-workspace"), iterations=comparison.ITERATIONS + 1)
+        with patch.object(comparison, "arguments", return_value=args), \
+                patch.object(comparison, "resolve_sources") as resolve_sources, \
+                patch("sys.stderr", new_callable=StringIO) as stderr:
+            self.assertEqual(comparison.main(), 2)
+        resolve_sources.assert_not_called()
+        self.assertIn("fixed at", stderr.getvalue())
 
 
 if __name__ == "__main__":

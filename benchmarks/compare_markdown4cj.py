@@ -544,8 +544,9 @@ def main() -> int:
     if args.output is None or args.workspace is None:
         print("measurement requires --output and --workspace", file=sys.stderr)
         return 2
-    if args.iterations <= 0:
-        print("--iterations must be positive", file=sys.stderr)
+    if args.iterations != ITERATIONS:
+        print(f"--iterations is fixed at {ITERATIONS} by the canonical protocol",
+              file=sys.stderr)
         return 2
     try:
         source, commonmark = resolve_sources(args)
