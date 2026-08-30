@@ -99,7 +99,7 @@ jobs:
             --verify-report docs/reports/markdown4cj-comparison-raw.json \
             --markdown-report docs/reports/markdown4cj-comparison.md \
             --require-current-product
-          CC=clang AR=ar python3 scripts/build_native_scanner.py --required
+          CC=clang AR=ar python3 scripts/build_native_scanner.py --enable
           python3 scripts/build_benchmark_driver.py --mode canonical
           (cd tools/markdown && cjpm build)
           mkdir -p target/same-language-benchmark

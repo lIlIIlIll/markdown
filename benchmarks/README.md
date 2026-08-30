@@ -36,7 +36,7 @@ create exact comparator checkouts:
 
 ```sh
 cangjie_env
-CC=clang AR=ar python3 scripts/build_native_scanner.py --required
+CC=clang AR=ar python3 scripts/build_native_scanner.py --enable
 python3 scripts/build_benchmark_driver.py --mode canonical
 (cd tools/markdown && cjpm build)
 python3 benchmarks/compare_markdown4cj.py \
