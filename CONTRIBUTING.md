@@ -49,6 +49,21 @@ cjpm run --skip-build
 `scripts/release_gate.sh`。完整 gate 还包含 CommonMark/GFM 语料、CLI smoke、consumer
 example、fuzz smoke、benchmark smoke、bundle 和 evidence 校验。
 
+修改 parser、AST 分配、输入路径、native scanner 或 benchmark harness 时，还必须刷新并
+验证同语言 benchmark：
+
+```sh
+python3 benchmarks/compare_markdown4cj.py \
+  --verify-report docs/reports/markdown4cj-comparison-raw.json \
+  --markdown-report docs/reports/markdown4cj-comparison.md \
+  --require-current-product
+```
+
+`Same-language benchmark (current-1.1.3)` 会在每个 PR 上重新测量固定的
+`markdown4cj` CommonMark parse-only 子集。它要求共享行为 `12/12`、几何平均加速至少
+`1.20×`、任何单语料回退不超过 `10%`，并且最大峰值 RSS 不超过 comparator 的
+`1.20×`。该 job 是 `main` 的 required check，不能以本地 smoke 或手工编辑 report 代替。
+
 普通 Git checkout 会将 release evidence 绑定到 `HEAD`。GitButler 等使用合成
 workspace commit 的环境必须将 `MARKDOWN_RELEASE_COMMIT` 设为可推送分支 tip：
 

@@ -36,9 +36,10 @@ benchmark driver 使用显式 `ReusableUtf8Input` 和可选 native scanner，并
 - DSL、CST、SourceMap、formatter、lint 和 rewrite 报告绝对开销及关闭后的基础路径回退，
   不能混进标准 parse ratio。
 
-历史同语言比较见 [markdown4cj comparison](reports/markdown4cj-comparison.md)。该报告固定旧
-commit 和 SDK，只证明冻结的 CommonMark parse-only 子集；它不是当前端到端 canonical
-结果。
+当前同语言比较见 [markdown4cj comparison](reports/markdown4cj-comparison.md)。该报告绑定
+当前产品 tree、固定的 `markdown4cj`/`commonmark4cj` commits、SDK、语料和 harness，只
+证明共同的 CommonMark parse-only 子集。GitHub Actions 会在每个 PR 上重新运行这项比较，
+但它不替代 cmark/cmark-gfm 的端到端 canonical release evidence。
 
 ## 测量协议
 
@@ -75,3 +76,15 @@ scripts/release_gate.sh
 
 完整远端 canonical benchmark 需要固定 reference host 和依赖。运行后必须先更新
 `release-evidence.json`，再由生成脚本同步 README 和报告；不要手工维护另一套“当前数字”。
+
+同语言 gate 使用独立 raw report。验证仓库中的结果：
+
+```sh
+python3 benchmarks/compare_markdown4cj.py \
+  --verify-report docs/reports/markdown4cj-comparison-raw.json \
+  --markdown-report docs/reports/markdown4cj-comparison.md \
+  --require-current-product
+```
+
+`Same-language benchmark (current-1.1.3)` 还会在 PR merge commit 上重新构建两侧 driver，
+执行固定 CPU 的交替测量，并上传 raw samples。该 check 是 `main` 的 required check。
