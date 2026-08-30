@@ -2,21 +2,21 @@
 
 Status: **PASS**
 
-Evidence status: `current`. Canonical 2026-08-30 latest-complete fixed-Server run for product commit 6a75709dfcc5510139395fe63fa69b64554718f5. The 234-entry tracked-source archive excluded .agent, .agents, .codex and every build product. Xeon Gold 6248R CPU 24, Cangjie 1.1.0-alpha.20260803040049, root -O2, benchmark consumer -O2 --lto thin, 2 GiB heap, cjGCInterval=500ms and seven alternating paired samples measured CommonMark 2.368184x and GFM 2.367749x. Ordinary ratios were 3.432042x/1.619950x, scaling slope/max-adjacent 0.379262/1.682972, pathological 0.582071/2.046359 and extra RSS 30176 KiB; all raw gates are true. Independent local recomputation returned no derivation errors.
+Evidence status: `current`. Canonical 2026-08-30 latest-complete fixed-Server run for product commit ebf445cf66311fb2253ab7be0ec5517c79f0205d. The exact Git archive excludes untracked caches and build products. Xeon Gold 6248R CPU 24, official Cangjie 1.1.3, root -O2, benchmark consumer -O2 --lto thin, 2 GiB heap, cjGCInterval=500ms and seven alternating paired samples measured CommonMark 2.415830x and GFM 2.345149x. Ordinary ratios were 3.497505x/1.930463x, scaling slope/max-adjacent 0.430979/1.822906, pathological 0.588456/1.940353 and extra RSS 31132 KiB; all raw gates are true. Independent recomputation returned no derivation errors.
 
-- CommonMark parse-only geometric mean ratio vs cmark: `2.37x` (limit `2.5x`).
-- GFM parse+HTML geometric mean ratio vs cmark-gfm: `2.37x` (limit `2.5x`).
+- CommonMark parse-only geometric mean ratio vs cmark: `2.42x` (limit `2.5x`).
+- GFM parse+HTML geometric mean ratio vs cmark-gfm: `2.35x` (limit `2.5x`).
 - Raw report: `docs/reports/benchmark-raw.json`.
-- Raw SHA-256: `43ce60a42d590daa807f69377405538693f6aba70bbc12b782b32eb2e0f7c4ca`.
-- Tested source commit: `6a75709dfcc5510139395fe63fa69b64554718f5`.
-- Tested source Git tree: `1bad9f8124c68585ab4f2a8aa44a71e54056818d`.
-- Benchmark Cangjie SDK: `1.1.0-alpha.20260803040049`.
-- Product source archive SHA-256: `69cf9392a7c1cf7d4790edc201b86a4e9c88e89b5a033732679941e90fa5d0e3`.
+- Raw SHA-256: `2f4bd94efd0d486ccbdb301e8cc9f67b7a1684bd1c81d8b1d788c8bc72245f9e`.
+- Tested source commit: `ebf445cf66311fb2253ab7be0ec5517c79f0205d`.
+- Tested source Git tree: `a87795fe167ff1660f0f22f9330ce9b0014e2aef`.
+- Benchmark Cangjie SDK: `Cangjie Compiler: 1.1.3 (cjnative)`.
+- Product source archive SHA-256: `d15bee327d7e095a8addcc207fb28918b695fec567f0c25b1e356675c839c4fd`.
 - Product source tree SHA-256: `7af14d294c9aef023be4353d1bb1fdf985b7d836171dad4e07f4e08467535aff`.
 - Benchmark harness SHA-256: `b61a4b8e0204662a3242d61b191582a82fdb222084907ef3f358e9932f209073`.
-- markdown driver SHA-256: `c5d07c593d0f40d7026e184045c047976203aaee1a858e97c40a0163eea30dad`.
+- markdown driver SHA-256: `b42438f293d766d06ce8438270c848a3297ed77a016a3824a033f9248456d497`.
 - cmark driver SHA-256: `385d4f1842b2a85211de914a5e6600ba195e3203bd4f3e91531cbed216d7a95e`.
-- cmark-gfm driver SHA-256: `6f8ad2cf959ce26f8b9331c62beea9ff1ea116d4a66b9bae033d6138d362e0b4`.
+- cmark-gfm driver SHA-256: `74ac2c94e6207ec61cfe6f63b7edca2e9f138aba38886a7c6c95a24e62578f67`.
 - cmark: `0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8`.
 - cmark-gfm: `0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b`.
 

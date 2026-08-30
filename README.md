@@ -171,9 +171,10 @@ let engine = MarkdownEngine.builder().dialect(dialect).build()
 | cmark-gfm 0.29 | GFM 完整 AST + HTML | [Canonical benchmark](docs/reports/benchmark.md) |
 | markdown4cj | 同语言 CommonMark parse-only | [同语言对比](docs/reports/markdown4cj-comparison.md) |
 
-markdown4cj 数据来自固定旧提交和 SDK，只证明报告中冻结的共同 parse subset，不代表当前
-两库所有功能的端到端比较。cmark/cmark-gfm 数据来自当前唯一 canonical release
-evidence。测量边界和输入 API 见[性能说明](docs/performance.md)。
+markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、语料和 harness，只证明
+共同的 CommonMark parse-only subset，不代表两库所有功能的端到端比较。每个 PR 都会重新
+运行这项同语言 benchmark；cmark/cmark-gfm 仍是唯一 canonical release evidence。
+测量边界和输入 API 见[性能说明](docs/performance.md)。
 
 > [!IMPORTANT]
 > 性能数字只以 `release-evidence.json` 绑定的 commit、SDK、语料和 raw report 为准；
@@ -214,12 +215,12 @@ evidence。测量边界和输入 API 见[性能说明](docs/performance.md)。
 | CommonMark conformance | `652/652` |
 | GFM conformance | `671/671` |
 | Public API snapshot | `1323` declarations |
-| Artifact commit | `6a75709dfcc5510139395fe63fa69b64554718f5` |
-| Evidence subject commit | `6a75709dfcc5510139395fe63fa69b64554718f5` |
+| Artifact commit | `ebf445cf66311fb2253ab7be0ec5517c79f0205d` |
+| Evidence subject commit | `ebf445cf66311fb2253ab7be0ec5517c79f0205d` |
 | Execution identity | `target/release-evidence/manifest.json` records and verifies the clean gate commit/tree |
-| CommonMark / cmark | `2.37x` / limit `2.5x` |
-| GFM HTML / cmark-gfm | `2.37x` / limit `2.5x` |
-| Benchmark identity | `current`; commit `6a75709dfcc5510139395fe63fa69b64554718f5`; SDK `1.1.0-alpha.20260803040049` |
+| CommonMark / cmark | `2.42x` / limit `2.5x` |
+| GFM HTML / cmark-gfm | `2.35x` / limit `2.5x` |
+| Benchmark identity | `current`; commit `ebf445cf66311fb2253ab7be0ec5517c79f0205d`; SDK `Cangjie Compiler: 1.1.3 (cjnative)` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
 `evidenceReady` describes reproducible offline artifacts and gates only. It does not claim that

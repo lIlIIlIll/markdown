@@ -31,16 +31,24 @@ whenever any GA gate fails.
 platform-neutral `markdown4cj` parser core, applies a fail-closed current-SDK
 collection-API adapter, and excludes OHOS UI, DevEco, prism4cj, and formula-ffi.
 
-Prepare the selected SDK first, then audit an exact checkout:
+Prepare the current SDK, build the two product drivers, and let the harness
+create exact comparator checkouts:
 
 ```sh
 cangjie_env
+CC=clang AR=ar python3 scripts/build_native_scanner.py --enable
+python3 scripts/build_benchmark_driver.py --mode canonical
+(cd tools/markdown && cjpm build)
 python3 benchmarks/compare_markdown4cj.py \
-  --source /path/to/markdown4cj \
-  --commonmark4cj-source /path/to/commonmark4cj \
+  --tools-root /tmp/markdown-same-language-tools \
   --workspace /tmp/fresh-markdown4cj-adapter \
-  --output /tmp/markdown4cj-comparison.json
+  --output /tmp/markdown4cj-comparison.json \
+  --markdown-report /tmp/markdown4cj-comparison.md
 ```
+
+The destination passed to `--workspace` must not exist. The harness refuses to
+replace a comparator checkout whose commit or working tree differs from the
+pinned identity.
 
 The comparison is intentionally parse-only: `markdown4cj` renders HarmonyOS
 `NodeView`, not an HTML string equivalent to this repository's renderer. A
@@ -49,3 +57,18 @@ valid result requires 12 shared CommonMark HTML behavior cases, 11 deterministic
 per side, at least 20% geomean speedup, no per-corpus regression beyond 10%, and
 peak RSS no more than 120% of the comparator. See
 `docs/reports/markdown4cj-comparison.md` for the current result.
+
+Verify the committed raw samples, all derived statistics, the generated report,
+the product tree, the corpus, and the harness with:
+
+```sh
+python3 benchmarks/compare_markdown4cj.py \
+  --verify-report docs/reports/markdown4cj-comparison-raw.json \
+  --markdown-report docs/reports/markdown4cj-comparison.md \
+  --require-current-product
+```
+
+GitHub Actions runs that verification and a fresh paired measurement in
+`Same-language benchmark (current-1.1.3)`. The check is required before a pull
+request can merge into `main`; its raw samples and generated report are uploaded
+even when the job fails.

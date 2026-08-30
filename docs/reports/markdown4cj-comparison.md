@@ -1,78 +1,66 @@
 # markdown4cj 同语言解析性能对比
 
-状态：**PASS（仅限 CommonMark parse-only workload）**
+状态：**PASS（CommonMark parse-only）**
 
 ## 对比边界
 
-- `markdown4cj`：[`develop`](https://gitcode.com/Cangjie-TPC/markdown4cj/tree/develop)
-  固定提交 `f43cfb3ae1cd3092d9a8a94332c64815fc4572f9`。
-- `commonmark4cj`：固定提交
-  `41499e6d6e50efac71db3bba64d5300d251d9c90`，用于让纯解析核心在当前 SDK
-  下构建。
-- SDK：Cangjie `1.1.0-alpha.20260817040003`，CJNative
-  `x86_64-unknown-linux-gnu`。
-- 只抽取 `markdown4cj` 的 `src/core/**`；排除 `components/**`、`plugin/**`、
-  `cj_res/**`、DevEco、OHOS UI、prism4cj 和 formula-ffi。
-- 兼容层只迁移旧集合 API，并让 `ParserBuilder` 使用当前
-  `commonmark4cj` 的默认 inline parser；不改变 `Markdown.create().parse()` 数据流。
+- 产品提交：`71bb7d46d396ad49fcb34c56542219d787759b7e`，Git tree `c374bdbd198ed4ee0145937b2b9eec08cede64b4`。
+- `markdown4cj` 固定提交 `f43cfb3ae1cd3092d9a8a94332c64815fc4572f9`。
+- `commonmark4cj` 固定提交 `41499e6d6e50efac71db3bba64d5300d251d9c90`，用于当前 SDK adapter。
+- SDK：`Cangjie Compiler: 1.1.3 (cjnative)`。
+- 只构建 `markdown4cj/src/core/**`。不构建 OHOS UI、DevEco、prism4cj 或 formula-ffi。
+- 两侧都生成 AST；本报告不把 event parser 或 fused renderer 当作 `parse()`。
 
-这不是 HAR/UI renderer 对比。`markdown4cj` 的公开渲染结果是 HarmonyOS
-`NodeView`，没有与本库 `HtmlRenderer` 等价的 HTML 字符串性能入口，因此本报告只对
-parse-only 作性能结论。
+这不是 HTML renderer 对比。`markdown4cj` 没有与本库 `HtmlRenderer` 等价的 HTML
+字符串入口，因此性能结论只适用于共同的 CommonMark parse-only 子集。
 
-## 协议
+## 测量协议
 
-- 同一主机、同一 SDK、release `-O2`、CPU 2。
-- 11 个非自定义语料，每个 256 KiB；每进程解析 3 次。
-- 每侧先 warmup 1 次，再各取 7 个样本；奇数轮反转执行顺序。
-- 另用 12 个共享 CommonMark 用例比较逐字一致的 HTML，结果 `12/12`。
-- 推广门槛：几何平均至少快 20%，任一语料不得慢于 10%，峰值 RSS 不高于
-  comparator 的 120%。
+- 同一主机、同一 SDK、release `-O2`、固定 CPU 24。
+- 11 个确定性语料，每个 256 KiB；每进程解析 3 次。
+- 每侧预热 1 次，再取 7 个交替样本；奇数轮反转顺序。
+- 12 个共享 CommonMark 用例的 HTML 必须逐字一致。
+- 门槛：几何平均至少 `1.20×`，单语料不得回退超过
+  `10%`，峰值 RSS 不得超过 comparator 的
+  `1.20×`。
 
-## 结果
+## 当前结果
 
-`markdown` 相对 `markdown4cj` 纯解析核心的 parse-only 加速如下；大于 `1×`
-表示本库更快。
+大于 `1×` 表示 `markdown` 更快。
 
-| 语料 | 加速 |
-| --- | ---: |
-| official-spec | 8.53× |
-| readme-api | 9.66× |
-| large-code | 4.15× |
-| large-table | 50.27× |
-| many-references | 8.60× |
-| CJK | 6.55× |
-| emoji | 14.78× |
-| deep-list | 10.77× |
-| pathological-delimiters | 13.78× |
-| long-line | 11.42× |
-| ordinary | 11.70× |
-| **几何平均** | **11.00×** |
+| 语料 | parse 加速 | 峰值 RSS 比值 |
+| --- | ---: | ---: |
+| official-spec | 7.33× | 0.400× |
+| readme-api | 8.97× | 0.353× |
+| large-code | 3.60× | 0.332× |
+| large-table | 140.97× | 0.064× |
+| many-references | 18.60× | 0.280× |
+| cjk | 16.93× | 0.219× |
+| emoji | 14.88× | 0.390× |
+| deep-list | 17.15× | 0.429× |
+| pathological-delimiters | 18.88× | 0.448× |
+| long-line | 9.64× | 0.282× |
+| ordinary | 8.26× | 0.292× |
+| **几何平均** | **13.99×** | — |
 
-11 个语料全部更快；最小加速 `4.15×`。本库的逐语料峰值 RSS 比值最大约
-`0.66×`，通过 `1.20×` 上限。
+11 个语料的最小加速为 `3.60×`。最大峰值 RSS 比值为
+`0.448×`。共享行为用例为
+`12/12`。
 
-`many-references` 的顶层 AST 节点计数不同（`3856` 与 `7711`）；该差异作为
-AST 表达诊断保留，不用于伪造相同内部结构。独立 reference 行为用例的最终 HTML
-逐字一致，且完整共享行为矩阵为 `12/12`。
+## 合入门禁
 
-## 复现
+GitHub Actions 的 `Same-language benchmark (current-1.1.3)` job 对每个 push 和 PR
+重新构建两侧 driver，并重新计算全部统计量。`main` 将该 job 设为 required check。
 
-准备两个精确、干净的 checkout，并先构建本仓库 benchmark driver 与 CLI：
+运行以下命令可以复现同一 harness：
 
 ```sh
 cangjie_env
-(cd benchmarks/driver && cjpm build -V)
-(cd tools/markdown && cjpm build -V)
-
 python3 benchmarks/compare_markdown4cj.py \
-  --source /path/to/markdown4cj \
-  --commonmark4cj-source /path/to/commonmark4cj \
+  --tools-root /tmp/markdown-same-language-tools \
   --workspace /tmp/fresh-markdown4cj-adapter \
-  --cpu 2 \
   --output /tmp/markdown4cj-comparison.json
 ```
 
-runner 会验证两个提交、复制纯核心、逐项执行 fail-closed 兼容迁移、检查零
-`ohos.*` 导入、构建 adapter、运行共享行为门槛，再进行配对测量。原始样本和二进制
-SHA-256 见 [`markdown4cj-comparison-raw.json`](markdown4cj-comparison-raw.json)。
+原始样本、身份和派生统计见
+[`markdown4cj-comparison-raw.json`](markdown4cj-comparison-raw.json)。

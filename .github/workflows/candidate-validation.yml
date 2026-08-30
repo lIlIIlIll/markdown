@@ -62,3 +62,63 @@ jobs:
           path: target/release-evidence
           if-no-files-found: error
           retention-days: 90
+
+  same-language-benchmark:
+    name: Same-language benchmark (current-1.1.3)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      # actions/checkout v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+
+      - name: Install Cangjie SDK 1.1.3
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 \
+            'https://cangjie-lang.cn/v1/files/auth/downLoad?nsId=142267&fileName=cangjie-sdk-linux-x64-1.1.3.tar.gz&objectKey=6a19349d21f5a8178d6fd22b' \
+            --output /tmp/cangjie-sdk.tar.gz
+          echo '2b68905afc466e665ae181595c63f96c18d75fd2c1fb6c6f0cb64e179c28d61a  /tmp/cangjie-sdk.tar.gz' | \
+            sha256sum --check --strict
+          mkdir -p /tmp/cangjie-sdk
+          tar -xf /tmp/cangjie-sdk.tar.gz -C /tmp/cangjie-sdk
+          env_file="$(find /tmp/cangjie-sdk -name envsetup.sh -type f -print -quit)"
+          test -n "${env_file}"
+          echo "CANGJIE_ENV_FILE=${env_file}" >> "${GITHUB_ENV}"
+
+      - name: Run same-language benchmark gate
+        shell: bash
+        run: |
+          set -eo pipefail
+          source "${CANGJIE_ENV_FILE}"
+          set -u
+          python3 benchmarks/test_compare_markdown4cj.py
+          python3 benchmarks/compare_markdown4cj.py \
+            --verify-report docs/reports/markdown4cj-comparison-raw.json \
+            --markdown-report docs/reports/markdown4cj-comparison.md \
+            --require-current-product
+          CC=clang AR=ar python3 scripts/build_native_scanner.py --enable
+          python3 scripts/build_benchmark_driver.py --mode canonical
+          (cd tools/markdown && cjpm build)
+          mkdir -p target/same-language-benchmark
+          python3 benchmarks/compare_markdown4cj.py \
+            --tools-root "${RUNNER_TEMP}/markdown-same-language-tools" \
+            --workspace "${RUNNER_TEMP}/markdown4cj-adapter" \
+            --output target/same-language-benchmark/markdown4cj-comparison-raw.json \
+            --markdown-report target/same-language-benchmark/markdown4cj-comparison.md
+          python3 benchmarks/compare_markdown4cj.py \
+            --verify-report target/same-language-benchmark/markdown4cj-comparison-raw.json \
+            --markdown-report target/same-language-benchmark/markdown4cj-comparison.md \
+            --require-current-product
+
+      - name: Upload same-language benchmark evidence
+        if: always()
+        # actions/upload-artifact v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: same-language-benchmark-current-1.1.3
+          path: target/same-language-benchmark
+          if-no-files-found: error
+          retention-days: 90

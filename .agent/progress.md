@@ -1,8 +1,16 @@
 # markdown 当前进度
 
 更新时间：2026-08-30
-当前阶段：发布证据文档、固定 Server canonical 和 branch-tip-bound release gate 均已通过。
+当前阶段：发布证据、固定 Server canonical 和同语言 merge gate 均已刷新。
 整体结论：**COMPLETE**。需求账本当前为 125 pass、0 pending、0 implemented_unverified、0 blocked。
+
+## 2026-08-30 同语言 required benchmark 刷新（当前）
+
+- `benchmarks/compare_markdown4cj.py` 升级为 schema v3：绑定 product commit/tree、product tree、11 项 corpus inventory、harness 文件、官方 SDK 和两套固定 comparator commits；verifier 从 7 轮 raw samples 独立重算中位数、几何平均、RSS、protocol 和最终 gate。
+- 新增 8 项 Python 回归，覆盖伪造派生值、弱化门槛、缩短 protocol、非 canonical 迭代次数的 fail-fast、跨样本不稳定输出和 CPU affinity。GitHub Actions 的稳定 job 名为 `Same-language benchmark (current-1.1.3)`；它先验证 committed raw/report，再从干净 checkout 重建双方并实跑，结果无论成功或失败都上传。
+- 固定 Server CPU 24、官方 Cangjie 1.1.3、`markdown4cj` `f43cfb3a`、`commonmark4cj` `41499e6d` 的最新完整结果为 PASS：共享行为 `12/12`，CommonMark parse-only 几何平均加速 `13.993600x`，最小单语料 `3.597641x`，最大峰值 RSS 比值 `0.448361x`。raw SHA-256 为 `459f086b5978851bebcc0bceceb3a0f66b78238297086003cca79c56a0d7af81`。
+- README 文案属于 canonical `readme-api` corpus，因此同时刷新了 cmark/cmark-gfm 唯一 release evidence。精确提交 `ebf445cf` 的 Server raw SHA-256 为 `2f4bd94efd0d486ccbdb301e8cc9f67b7a1684bd1c81d8b1d788c8bc72245f9e`；CommonMark `2.415830x`、GFM `2.345149x`，ordinary、scaling、pathological 和 RSS gate 全部通过，独立派生误差为空。
+- 同语言比较仍只代表双方共同的完整 AST CommonMark parse-only 子集；cmark/cmark-gfm 继续作为 release canonical，不以同语言结果替换。
 
 ## 2026-08-30 发布证据文档漂移修复（当前）
 

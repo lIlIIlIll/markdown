@@ -8,19 +8,41 @@
 ## Generated Release Evidence
 
 - Version/status: `0.9.0` / `evidence-ready`.
-- Artifact commit: `6a75709dfcc5510139395fe63fa69b64554718f5`.
-- Evidence subject commit: `6a75709dfcc5510139395fe63fa69b64554718f5`; the retained execution manifest binds the clean gate commit and Git tree.
+- Artifact commit: `ebf445cf66311fb2253ab7be0ec5517c79f0205d`.
+- Evidence subject commit: `ebf445cf66311fb2253ab7be0ec5517c79f0205d`; the retained execution manifest binds the clean gate commit and Git tree.
 - Hosted CI verified at that HEAD: `False`; published: `False`.
 - Tests: `1457/1457` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `2.37x`, GFM `2.37x`, status `current`.
-- Raw digest: `43ce60a42d590daa807f69377405538693f6aba70bbc12b782b32eb2e0f7c4ca`.
+- Benchmark: CommonMark `2.42x`, GFM `2.35x`, status `current`.
+- Raw digest: `2f4bd94efd0d486ccbdb301e8cc9f67b7a1684bd1c81d8b1d788c8bc72245f9e`.
 
 All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->
 
+## 2026-08-30 Same-language Merge Gate
+
+同语言 benchmark 已绑定当前产品与可复核协议。固定 Server CPU 24、官方 Cangjie 1.1.3、
+`markdown4cj` `f43cfb3a` 和 `commonmark4cj` `41499e6d` 的完整结果为 PASS：共享行为
+`12/12`，CommonMark parse-only 几何平均加速 `13.993600x`，最小单语料
+`3.597641x`，最大峰值 RSS 比值 `0.448361x`。schema-v3 raw SHA-256 为
+`459f086b5978851bebcc0bceceb3a0f66b78238297086003cca79c56a0d7af81`；verifier
+从底层 samples 独立重算全部统计与 gate，无派生错误。
+
+审阅发现的非 canonical `--iterations` 延迟失败问题已修复；当前入口在下载、构建或测量前即拒绝非 `3` 值，8/8 verifier/protocol 回归通过。
+
+GitHub Actions 的 `Same-language benchmark (current-1.1.3)` 对 committed evidence
+执行 product/corpus/harness 漂移检查，并对 PR merge commit 重新构建双方、固定单个 CPU、
+交替及反序测量。该稳定 context 用作 `main` required status check，不能以手工报告或本地
+smoke 代替。
+
+README 的非生成内容属于 canonical `readme-api` corpus，因此 cmark/cmark-gfm evidence
+也按同一产品提交刷新：raw SHA-256
+`2f4bd94efd0d486ccbdb301e8cc9f67b7a1684bd1c81d8b1d788c8bc72245f9e`，
+CommonMark `2.415830x`、GFM `2.345149x`，全部 ratio、ordinary、scaling、
+pathological 与 RSS gate 为 true，独立派生误差为空。
+
 ## 2026-08-30 Current Documentation Evidence Repair
 
-README、CHANGELOG 和性能页的当前测试、API 与 benchmark 数字已由 `release-evidence.json` 统一生成。固定 Server CPU 24 的 canonical raw `43ce60a...f7c4ca` 已通过全部 ratio、ordinary、scaling、pathological 和 RSS gate。完整 release gate 使用 `MARKDOWN_RELEASE_COMMIT` 绑定可推送分支 tip，同时验证该 commit tree 与干净 workspace tree 完全相同；26 个记录步骤全部通过。`MD-PERF-002`、`MD-REL-001` 和 `MD-QUAL-001` 均已恢复为 `pass`。
+README、CHANGELOG 和性能页的当前测试、API 与 benchmark 数字已由 `release-evidence.json` 统一生成。固定 Server CPU 24 的 canonical raw `2f4bd94...245f9e` 已通过全部 ratio、ordinary、scaling、pathological 和 RSS gate。完整 release gate 使用 `MARKDOWN_RELEASE_COMMIT` 绑定可推送分支 tip，同时验证该 commit tree 与干净 workspace tree 完全相同；26 个记录步骤全部通过。`MD-PERF-002`、`MD-REL-001` 和 `MD-QUAL-001` 均为 `pass`。
 
 本报告后续按时间保留历史失败、候选淘汰和当时的完成记录；这些历史段落不覆盖上述当前状态。R139/R140 仅作为历史证据保留。
 
