@@ -218,6 +218,14 @@ class ParserBehaviorTest {
     }
 
     @TestCase
+    func referenceNormalizationKeepsAsciiAndUnicodeCaseFoldingEquivalent(): Unit {
+        let input = "[Foo \t Bar]: /ascii\n[Straße]: /unicode\n\n[foo bar] and [STRASSE]\n"
+        @Expect(
+            unsafe { Markdown.toSpecHtml(input) },
+            "<p><a href=\"/ascii\">foo bar</a> and <a href=\"/unicode\">STRASSE</a></p>\n")
+    }
+
+    @TestCase
     func parsesFencesListsQuotesAndGfmTableWithoutLosingMetadata(): Unit {
         let input = "> quoted\n\n- [x] done\n- plain\n\n```cj\nmain()\n```\n\n| a | b |\n| :- | -: |\n| c | d |"
         let result = MarkdownEngine.builder().profile(MarkdownProfile.gfmModernV1()).build().parse(input)

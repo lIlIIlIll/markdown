@@ -3865,10 +3865,16 @@ private func findReferenceLabelClose(text: String): Int64 {
 private func normalizeReferenceLabel(label: String): String {
     let text = trimAscii(label)
     var needsNormalization = false
+    var hasNonAscii = false
     var index: Int64 = 0
     while (index < text.size) {
         let byte = text[index]
-        if (byte == b' ' || byte == b'\t' || byte == 10 || byte == 13 || (byte >= b'A' && byte <= b'Z') || byte >= 0x80) {
+        if (byte >= 0x80) {
+            hasNonAscii = true
+            needsNormalization = true
+            break
+        }
+        if (byte == b' ' || byte == b'\t' || byte == 10 || byte == 13 || (byte >= b'A' && byte <= b'Z')) {
             needsNormalization = true
             break
         }
@@ -3894,13 +3900,21 @@ private func normalizeReferenceLabel(label: String): String {
                 out.appendFromUtf8([byte + 32])
                 index++
             } else {
+                if (byte >= 0x80) {
+                    hasNonAscii = true
+                }
                 let next = nextRuneOffset(text, index)
                 out.append(text[index..next])
                 index = next
             }
         }
     }
-    out.toString().toLower().replace("ß", "ss")
+    let normalized = out.toString()
+    if (hasNonAscii) {
+        normalized.toLower().replace("ß", "ss")
+    } else {
+        normalized
+    }
 }
 
 private func isBlank(text: String): Bool {
