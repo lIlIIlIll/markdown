@@ -84,12 +84,11 @@ per-corpus regression beyond 10%, and peak RSS no more than 120% of the
 comparator. See
 `docs/reports/markdown4cj-comparison.md` for the current result.
 
-Both measured processes use `cjHeapSize=2GB` and `cjGCInterval=500ms`. The raw
-report records every variable passed to each process and its digest. The only
-permitted difference is `LD_LIBRARY_PATH`: the `markdown4cj` process adds the
-retained binary root's `libraries/commonmark4cj` directory. The verifier derives both process
-environments from the SDK and adapter identities and rejects extra variables,
-changed locale values, or an unrecorded loader-path difference.
+Both measured processes use `cjHeapSize=2GB`, `cjGCInterval=500ms`, and the same
+execution environment. The comparator dependency is statically linked into the
+adapter, so it needs no extra `LD_LIBRARY_PATH`. The verifier derives both process
+environments from the SDK identity and rejects any per-side difference, extra
+variable, or changed locale value.
 
 Schema v5 binds the SDK archive, fresh extraction, absolute compiler/package
 manager commands and binary digests, target triple, native scanner manifest and
@@ -104,11 +103,13 @@ environment attestation separately binds `PATH`, `LD_LIBRARY_PATH`, `HOME`,
 reports and older build identities instead of upgrading them without a new
 measurement.
 
-Fresh product, CLI, comparator, and comparator-dependency manifests add a
-build-root-specific `--trimpath`. The identity records both the canonical
-manifest and effective trimmed manifest. This removes absolute temporary source
-roots from Cangjie outputs; the gate includes a real two-root compiler probe and
-the verifier requires byte-identical fresh outputs.
+Fresh product, CLI, comparator, and comparator-dependency manifests use a
+build-root-specific `--trimpath`, fixed `--obf-seed 0`, and one `cjpm` build job.
+The comparator's pinned dependency manifest is normalized to a non-incremental
+static build. The identity records both canonical and effective manifests. These
+settings remove temporary source roots and nondeterministic dynamic-library
+layout; the gate includes real independent rebuilds and requires byte-identical
+fresh outputs.
 
 Comparator provenance is independently reconstructed from explicit local Git
 inputs. The verifier resolves the fixed `markdown4cj` and `commonmark4cj`
@@ -118,26 +119,18 @@ adapter driver and path-stable manifest. It does not accept reported preflight
 booleans as evidence. A checkout, bare object store, or Git bundle can provide
 the objects; missing objects fail closed.
 
-The measurement copies the exact product driver, CLI, comparator driver, and
-adapter-owned recursive ELF `PT_DYNAMIC`/`DT_NEEDED` closure into the dedicated
-`--binary-root`. The pinned adapter currently needs only
-`libraries/commonmark4cj/libcommonmark4cj.commonmark.so`; the generated base,
-table, and strikethrough DSOs are not retained because the measured executable
-does not link them. Reports bind each retained DSO's canonical relative path,
-length, SHA-256, and mode. The comparator `LD_LIBRARY_PATH` points at that
-retained directory, so timing loads the recorded bytes rather than the temporary
-build output. It rejects comparator `DT_RPATH`/`DT_RUNPATH`, so an embedded search
-path cannot precede or bypass the retained root. Offline verification reparses
-the loader-authoritative program headers (not optional section metadata) and
-checks them against the retained, adapter-build, and build-output identities. Missing,
-extra, swapped, symlinked, path-escaping, mode-changed, or modified artifacts
-fail closed. Verification then rebuilds the native scanner, product driver,
-CLI, comparator adapter, and adapter-owned DSO closure in fresh directories
+The measurement copies the exact product driver, CLI, and statically linked
+comparator driver into the dedicated `--binary-root`. The report requires an
+empty comparator-owned runtime-library closure; an injected DSO, search-path
+difference, extra artifact, symlink, or path escape fails closed. Offline
+verification reparses loader-authoritative program headers rather than optional
+section metadata, then rebuilds the native scanner, product driver, CLI, and
+comparator adapter in fresh directories
 from the retained product/comparator Git objects, retained SDK archive, retained
 native compiler/archiver executables, retained Clang resource archive, and the
 native tools' retained ELF loader plus recursive DSO closure. Rebuild commands
 invoke those tools only through the retained loader and library root. Every
-rebuilt byte must equal the retained measured byte;
+rebuilt executable byte must equal the retained measured byte;
 synchronized edits to both a binary and its report digest therefore fail.
 
 Repository provenance is derived from Git objects, not trusted report strings.
@@ -168,7 +161,7 @@ GitHub Actions runs that verification and a fresh paired measurement in
 `Same-language benchmark (current-1.1.3)`. The check is required before a pull
 request can merge into `main`; its raw samples, generated report, retained product
 Git bundle, minimal bundles for both pinned comparator commits, retained SDK
-archive, native tool/resource inputs, measured executables, and runtime DSO closure are uploaded even when
+archive, native tool/resource inputs, measured executables, and empty comparator runtime-closure identity are uploaded even when
 the job fails. Verification can therefore run from relocated evidence without
 consulting the verifier checkout's `.git` directory or the network. Directory
 Git inputs must be the exact worktree or bare-repository root; nested paths,

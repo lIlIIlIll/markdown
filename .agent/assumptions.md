@@ -446,9 +446,9 @@
 - 决策日期：2026-08-31
 - 涉及：`MD-PERF-001`、`MD-REL-001`、`MD-QUAL-001`
 - 歧义：PRD 要求 benchmark source/driver identity 可复核，但只固定 markdown4cj/commonmark4cj commit 字符串和报告内 tree hash，不能证明实际 adapter 构建使用了这些对象；path dependency 还会把完整 commonmark4cj tree 纳入执行输入。
-- 决定：schema v5 要求 verifier 从显式 checkout、bare object store 或 Git bundle 解析两个固定 commit/tree/blob，独立重算 markdown4cj core、完整 commonmark4cj dependency、ordered migrations、path-stable manifest、driver、adapted files 和 comparator binary source identity；同时从显式 retained binary root 读取实际执行的 markdown driver、CLI、comparator 与 comparator-owned runtime DSO closure，重算路径、长度、SHA-256 和 mode 并与 driver/build/adapter 三方绑定。DSO closure 以 loader-authoritative ELF64 PT_DYNAMIC/PT_LOAD 递归解析，拒绝 RPATH/RUNPATH、缺失对象/binary/library、额外条目、symlink、路径逃逸或任一重算不一致；required CI 将 bundles、executables、libraries、raw/report 一同上传，并用 retained inputs 而非工作树复验。
+- 决定：schema v5 要求 verifier 从显式 checkout、bare object store 或 Git bundle 解析两个固定 commit/tree/blob，独立重算 markdown4cj core、完整 commonmark4cj dependency、ordered migrations、path-stable manifest、driver、adapted files 和 comparator binary source identity；同时从显式 retained binary root 读取实际执行的 markdown driver、CLI 与 comparator，重算路径、长度、SHA-256 和 mode 并与 driver/build/adapter 三方绑定。固定 adapter 把 commonmark4cj 规范化为非增量 static package，因此 comparator-owned runtime closure 必须为空；ELF 校验仍从 loader-authoritative PT_DYNAMIC/PT_LOAD 读取依赖并拒绝 RPATH/RUNPATH、注入 DSO、额外条目、symlink、路径逃逸或任一不一致。required CI 将 bundles、executables、raw/report 一同上传，并用 retained inputs 而非工作树复验。
 - 理由：报告字段的内部自洽不能替代源码对象证明；保留 Git objects 才能让下载后的 benchmark evidence 在无网络环境独立重放。
-- 影响 requirements：旧 schema v4 same-language raw 全部成为历史证据；只有带两套可复验 comparator object inputs、三份实际执行 binary 和完整 runtime DSO closure 的 schema v5 raw 才能满足当前 canonical/release gate。
+- 影响 requirements：旧 schema v4 same-language raw 全部成为历史证据；只有带两套可复验 comparator object inputs、三份实际执行 binary、静态 adapter identity 和空 comparator runtime closure 的 schema v5 raw 才能满足当前 canonical/release gate。
 
 ## A-050：受测产品身份也必须由 retained Git objects 离线证明
 
@@ -476,8 +476,8 @@
 - 决策日期：2026-08-31
 - 涉及：`MD-PERF-001`、`MD-REL-001`、`MD-QUAL-001`
 - 歧义：分别验证 Git objects、build command 字段和 retained binary digest，仍允许攻击者同步替换 binary bytes 与报告 digest；报告内的 source identity 不是编译产物证明。
-- 决定：schema v5 离线 verifier 必须从精确 retained product/comparator/commonmark Git roots、verified SDK archive、native compiler/archiver bytes、Clang resource archive、retained ELF loader 和递归 library closure，在新目录以 attested `--trimpath` 命令重建 product driver、CLI、comparator 和 DSO，并逐字节比较 retained outputs。目录 Git input 只接受 exact worktree top-level 或 bare root，所有 Git subprocess 设置 `GIT_NO_REPLACE_OBJECTS=1`，并拒绝 nested/symlink/external `.git`、grafts、shallow 和 alternates。
-- 理由：只有可执行的 deterministic rebuild 或可信外部签名 attestation 才能把 source/toolchain/command 与 output bytes 连接；本项目选择可离线重建，避免引入外部信任根。
+- 决定：schema v5 离线 verifier 必须从精确 retained product/comparator/commonmark Git roots、verified SDK archive、native compiler/archiver bytes、Clang resource archive、retained ELF loader 和递归 library closure，在新目录以 attested `--trimpath`、`--obf-seed 0` 和单 `cjpm` job 重建 product driver、CLI 与 comparator，并逐字节比较 retained outputs。commonmark4cj dependency 强制非增量 static build，使两侧执行环境相同且消除 comparator DSO。目录 Git input 只接受 exact worktree top-level 或 bare root，所有 Git subprocess 设置 `GIT_NO_REPLACE_OBJECTS=1`，并拒绝 nested/symlink/external `.git`、grafts、shallow 和 alternates。
+- 理由：实际固定 SDK 实验发现动态 commonmark4cj 即使使用 `--trimpath`、单 job 和关闭 incremental，fresh builds 仍有代码区字节漂移；固定 seed 只稳定 product driver。将固定 comparator dependency 静态链接后，两次独立 executable build 得到相同 SHA-256 `70785dbed81846fa7ab737583b72d46b3d1015f819a422d642e4850c8ac55717`。只有这种可执行 deterministic rebuild 或可信外部签名 attestation 才能把 source/toolchain/command 与 output bytes 连接；本项目选择前者，避免引入外部信任根。
 - 影响 requirements：仅有自洽 digest、依赖 ambient object store/tool executable 或不能在 relocated fresh root 重建的 benchmark artifact 不具备 release provenance。
 
 ```text

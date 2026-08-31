@@ -106,7 +106,7 @@ MANIFEST = """[dependencies]
 
 [package]
   cjc-version = "1.0.0"
-  compile-option = "--trimpath {trimpath}"
+  compile-option = "--obf-seed 0 --trimpath {trimpath}"
   description = "Current-SDK benchmark adapter for markdown4cj parser core"
   link-option = ""
   name = "markdown"
@@ -354,7 +354,7 @@ def elf_interpreter(path: Path) -> Path:
 
 
 def adapter_runtime_library_sources(binary: Path,
-        library_root: Path) -> dict[str, Path]:
+        library_root: Path, *, allow_static: bool = False) -> dict[str, Path]:
     """Resolve the adapter-owned recursive DT_NEEDED closure."""
     candidates: dict[str, Path] = {}
     for path in library_root.glob("*.so"):
@@ -376,7 +376,7 @@ def adapter_runtime_library_sources(binary: Path,
             continue
         closure[name] = source
         pending.extend(elf_dynamic_dependencies(source))
-    if not closure:
+    if not closure and not allow_static:
         raise RuntimeError("adapter executable has no retained runtime library dependency")
     return dict(sorted(closure.items()))
 
@@ -809,11 +809,24 @@ def manifest_with_trimpath(content: bytes, trimpath: str) -> bytes:
         if text.count(marker) != 1:
             raise RuntimeError("comparator dependency manifest has no canonical package table")
         return text.replace(marker,
-            f'{marker}  compile-option = "--trimpath {trimpath}"\n', 1).encode("utf-8")
+            f'{marker}  compile-option = "--obf-seed 0 --trimpath {trimpath}"\n', 1).encode("utf-8")
     if "--trimpath" in match.group(2):
         raise RuntimeError("comparator dependency manifest compile-option is unsupported")
-    replacement = f'{match.group(1)}{match.group(2)} --trimpath {trimpath}{match.group(3)}'
+    replacement = f'{match.group(1)}{match.group(2)} --obf-seed 0 --trimpath {trimpath}{match.group(3)}'
     return (text[:match.start()] + replacement + text[match.end():]).encode("utf-8")
+
+
+def adapter_dependency_manifest(content: bytes, trimpath: str) -> bytes:
+    """Create the deterministic static dependency manifest used by the adapter."""
+    text = manifest_with_trimpath(content, trimpath).decode("utf-8")
+    for before, after, label in (
+            ('output-type = "dynamic"', 'output-type = "static"', "output type"),
+            ("incremental = true", "incremental = false", "incremental mode")):
+        if text.count(before) != 1:
+            raise RuntimeError(
+                f"comparator dependency manifest has no canonical {label}")
+        text = text.replace(before, after, 1)
+    return text.encode("utf-8")
 
 
 def adapter_source_inputs(comparator_source: Path,
@@ -829,7 +842,7 @@ def adapter_source_inputs(comparator_source: Path,
     dependency_manifest = commonmark_contents.get("cjpm.toml")
     if dependency_manifest is None:
         raise RuntimeError("commonmark4cj dependency manifest is missing")
-    normalized_dependency_manifest = manifest_with_trimpath(dependency_manifest,
+    normalized_dependency_manifest = adapter_dependency_manifest(dependency_manifest,
         "@BUILD_ROOT@")
     driver = DRIVER.encode("utf-8")
     provenance: dict[str, object] = {
@@ -1129,7 +1142,7 @@ def validate_retained_binaries(report: dict[str, object],
         return ["same-language retained binary root is unavailable or unsafe"]
     errors: list[str] = []
     runtime_report = report.get("runtimeLibraries")
-    if not isinstance(runtime_report, dict) or not runtime_report:
+    if not isinstance(runtime_report, dict):
         runtime_report = {}
         errors.append("same-language retained runtime library closure is missing")
     expected_library_paths: set[str] = set()
@@ -1339,7 +1352,7 @@ def validate_retained_binaries(report: dict[str, object],
     adapter_executable = root / BINARY_ARTIFACTS["markdown4cj"]
     try:
         closure = adapter_runtime_library_sources(adapter_executable,
-            root / RUNTIME_LIBRARY_ROOT)
+            root / RUNTIME_LIBRARY_ROOT, allow_static=True)
         if set(closure) != set(actual_libraries):
             errors.append(
                 "same-language retained runtime library closure is not derived from the adapter executable")
@@ -1568,7 +1581,7 @@ def reproducibly_rebuild_binaries(report: dict[str, object], product_source: Pat
         comparator, _ = build_adapter(comparator_source, commonmark_source,
             adapter_workspace, cjpm, sdk_environment)
         runtime = adapter_runtime_library_sources(comparator,
-            adapter_workspace / "target/release/commonmark4cj")
+            adapter_workspace / "target/release/commonmark4cj", allow_static=True)
         rebuilt = {
             "markdown": product / "benchmarks/driver/target/release/bin/main",
             "markdownCli": product / "tools/markdown/target/release/bin/main",
@@ -1887,9 +1900,9 @@ def validate_build_identity(value: object, drivers: object,
                 errors.append("same-language native scanner archive input is not bound")
     builds = value.get("builds")
     expected_builds = {
-        "markdownDriver": ("-O2 --lto thin", "-L ../../target/native -lmarkdown_scanner",
+        "markdownDriver": ("-O2 --lto thin --obf-seed 0", "-L ../../target/native -lmarkdown_scanner",
             "benchmarks/driver/cjpm.toml"),
-        "markdownCli": ("-O2", "", "tools/markdown/cjpm.toml"),
+        "markdownCli": ("-O2 --obf-seed 0", "", "tools/markdown/cjpm.toml"),
     }
     if not isinstance(builds, dict) or set(builds) != set(expected_builds):
         errors.append("same-language executable build records are incomplete")
@@ -1902,7 +1915,7 @@ def validate_build_identity(value: object, drivers: object,
                 errors.append(f"same-language {name} build record is missing")
                 continue
             errors.extend(validate_command_record(build.get("build"),
-                f"same-language {name} build", [cjpm_path, "build"]))
+                f"same-language {name} build", [cjpm_path, "build", "-j", "1"]))
             build_command = build.get("build")
             if isinstance(build_command, dict) and \
                     build_command.get("environment") != command_environment:
@@ -2002,7 +2015,7 @@ def validate_adapter_build(value: object, drivers: object,
     cjpm = tools.get("cjpm") if isinstance(tools, dict) else None
     cjpm_path = str(cjpm.get("path", "")) if isinstance(cjpm, dict) else ""
     errors = validate_command_record(value, "same-language comparator adapter build",
-        [cjpm_path, "build", "-V"])
+        [cjpm_path, "build", "-j", "1", "-V"])
     sdk = build_identity.get("sdk") if isinstance(build_identity, dict) else None
     identity_environment = sdk.get("environment") if isinstance(sdk, dict) else None
     command_environment = identity_environment.get("variables") \
@@ -2467,9 +2480,9 @@ def build_adapter(source: Path, commonmark: Path, workspace: Path, cjpm: Path,
         encoding="utf-8")
     (workspace / "src/main.cj").write_text(DRIVER, encoding="utf-8")
     dependency_manifest_path = workspace / ADAPTER_COMMONMARK_PATH / "cjpm.toml"
-    dependency_manifest_path.write_bytes(manifest_with_trimpath(
+    dependency_manifest_path.write_bytes(adapter_dependency_manifest(
         dependency_manifest_path.read_bytes(), str(workspace.resolve())))
-    build = command([str(cjpm), "build", "-V"], workspace, environment)
+    build = command([str(cjpm), "build", "-j", "1", "-V"], workspace, environment)
     build.update({key: value for key, value in provenance.items()
                   if key != "repositories"})
     build.update({"binarySourceIdentitySha256": provenance["adapterInputSha256"],
@@ -2486,7 +2499,7 @@ def build_adapter(source: Path, commonmark: Path, workspace: Path, cjpm: Path,
     build["binary"] = {"path": str(binary.resolve()), "bytes": binary.stat().st_size,
         "sha256": sha256(binary)}
     runtime_libraries = adapter_runtime_library_sources(binary,
-        workspace / "target/release/commonmark4cj")
+        workspace / "target/release/commonmark4cj", allow_static=True)
     for path in runtime_libraries.values():
         path.chmod(0o644)
     build["buildOutputRuntimeLibraries"] = {name: build_output_library_identity(path)
@@ -2735,7 +2748,8 @@ def main() -> int:
         return 2
     try:
         runtime_sources = adapter_runtime_library_sources(theirs,
-            args.workspace.resolve() / "target/release/commonmark4cj")
+            args.workspace.resolve() / "target/release/commonmark4cj",
+            allow_static=True)
         drivers, runtime_libraries = retain_execution_binaries(binary_root,
             {"markdown": ours, "markdownCli": cli, "markdown4cj": theirs},
             runtime_sources)

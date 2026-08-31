@@ -97,11 +97,6 @@ BLOCKED_AMBIENT_ENVIRONMENT_KEYS = (
     "cjGCInterval",
     "cjHeapSize",
 )
-COMPARATOR_LOADER_DIFFERENCE_REASON = (
-    "markdown4cj loads commonmark4cj from the fresh adapter target"
-)
-
-
 def benchmark_product_files(root: Path) -> list[Path]:
     files = [root / name for name in PRODUCT_FILES if (root / name).is_file()]
     for name in PRODUCT_ROOTS:
@@ -189,10 +184,7 @@ def canonical_execution_environments(build_environment: dict[str, str],
     markdown["cjHeapSize"] = CANGJIE_HEAP_SIZE
     markdown = exact_environment(markdown, EXECUTION_ENVIRONMENT_KEYS,
         "markdown execution")
-    comparator = dict(markdown)
-    comparator["LD_LIBRARY_PATH"] = os.pathsep.join((
-        str(comparator_library_path), markdown["LD_LIBRARY_PATH"]))
-    comparator = exact_environment(comparator, EXECUTION_ENVIRONMENT_KEYS,
+    comparator = exact_environment(dict(markdown), EXECUTION_ENVIRONMENT_KEYS,
         "markdown4cj execution")
     return markdown, comparator
 
@@ -222,9 +214,8 @@ def execution_environment_attestation(markdown: dict[str, str],
         name: {"markdown": left.get(name, ""), "markdown4cj": right.get(name, "")}
         for name in sorted(set(left) | set(right)) if left.get(name) != right.get(name)
     }
-    if set(differences) != {"LD_LIBRARY_PATH"}:
-        raise ValueError("benchmark sides may differ only in LD_LIBRARY_PATH")
-    differences["LD_LIBRARY_PATH"]["reason"] = COMPARATOR_LOADER_DIFFERENCE_REASON
+    if differences:
+        raise ValueError("benchmark sides must use identical execution environments")
     return {
         "schemaVersion": ENVIRONMENT_ATTESTATION_SCHEMA_VERSION,
         "allowlist": sorted(EXECUTION_ENVIRONMENT_KEYS),

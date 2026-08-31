@@ -52,17 +52,15 @@ identity；`--require-current-product` 要求该 tree 等于干净的当前 `HEA
 objects 独立重算两侧 tree、完整依赖内容、选择的 core blobs、迁移结果、driver 和
 path-stable manifest。checkout、bare object store 与 Git bundle 均可离线验证；缺失 objects
 时 fail closed，raw report 中的 preflight 布尔值不作为证据。
-测量还把实际执行的 product driver、CLI、comparator driver，以及 comparator 的
-adapter-owned 递归 ELF `PT_DYNAMIC`/`DT_NEEDED` 闭包复制到专用 binary root。当前固定 adapter 实际只
-链接 `libcommonmark4cj.commonmark.so`；未被 measured executable 链接的 base、table 与
-strikethrough DSO 不进入闭包。报告保存固定相对路径、长度、SHA-256 和 mode，comparator
-的 `LD_LIBRARY_PATH` 指向 retained library root；`DT_RPATH`/`DT_RUNPATH` 会被拒绝。
-离线 verifier 读取 loader 实际使用的 program headers，而不信任可分歧的 section table，
-重新解析 retained ELF 闭包，再与 retained、adapter build 和原始 build output 三方交叉绑定；缺失、额外、交换、
-symlink、路径逃逸、mode 或内容漂移均 fail closed。这证明实际执行 bytes 的身份，不宣称
-报告中的 digest 本身能证明来源。verifier 还会在全新目录中，使用 retained product/comparator
-Git objects、retained SDK archive 和已验证的 native tools，重新构建 native scanner、两份
-product executable、comparator executable 及其 DSO 闭包，并逐字节比较实际测量产物。
+测量把实际执行的 product driver、CLI 和静态链接 comparator driver 复制到专用 binary
+root。固定 adapter 将 `commonmark4cj` 以非增量 static package 构建，因此两侧使用完全
+相同的 `LD_LIBRARY_PATH`，报告要求 comparator-owned runtime closure 为空。注入 DSO、
+额外 artifact、symlink、路径逃逸或任一执行环境差异都会 fail closed。verifier 仍读取
+loader 实际使用的 program headers，而不信任可分歧的 section table。这证明实际执行
+bytes 的身份，不宣称报告中的 digest 本身能证明来源。verifier 还会在全新目录中，使用
+retained product/comparator Git objects、retained SDK archive 和已验证的 native tools，
+以固定 seed、单 job 和 `--trimpath` 重新构建 native scanner、两份 product executable 与
+comparator executable，并逐字节比较实际测量产物。
 因此同步篡改 retained binary 与报告 digest 也不能通过。
 所有 Cangjie package 的 effective manifest 使用各自 fresh root 的 `--trimpath`，避免绝对
 临时路径进入 executable。CI artifact 同时保留 native compiler、archiver 及 Clang resource

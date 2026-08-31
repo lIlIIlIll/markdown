@@ -166,7 +166,11 @@ def setUpModule() -> None:
 
     commonmark = Path(IDENTITY_REPOSITORY.name) / "commonmark4cj"
     (commonmark / "src").mkdir(parents=True)
-    (commonmark / "cjpm.toml").write_text("[package]\n  name = \"commonmark4cj\"\n",
+    (commonmark / "cjpm.toml").write_text(
+        "[package]\n  name = \"commonmark4cj\"\n"
+        "  output-type = \"dynamic\"\n"
+        "  compile-option = \"\"\n"
+        "\n[profile]\n  [profile.build]\n    incremental = true\n",
         encoding="utf-8")
     (commonmark / "src/commonmark.cj").write_text("package commonmark4cj\n",
         encoding="utf-8")
@@ -184,15 +188,10 @@ def setUpModule() -> None:
     for name, artifact_path in comparison.BINARY_ARTIFACTS.items():
         path = binary_root / artifact_path
         if name == "markdown4cj":
-            path.write_bytes(elf64_with_needed(("libcommonmark4cj.commonmark.so",)))
+            path.write_bytes(elf64_with_needed(()))
         else:
             path.write_bytes(f"{name}-retained-executable\n".encode("utf-8"))
         path.chmod(0o755)
-    library = binary_root / comparison.RUNTIME_LIBRARY_ROOT / \
-        "libcommonmark4cj.commonmark.so"
-    library.parent.mkdir(parents=True)
-    library.write_bytes(elf64_with_needed(()))
-    library.chmod(0o644)
     for name, artifact_path in comparison.NATIVE_TOOL_ARTIFACTS.items():
         tool = binary_root / artifact_path
         tool.parent.mkdir(parents=True, exist_ok=True)
@@ -280,11 +279,11 @@ def build_record(name: str, binary_identity: dict[str, object],
         source_snapshot: dict[str, object]) -> dict[str, object]:
     if name == "markdownDriver":
         manifest_relative = "benchmarks/driver/cjpm.toml"
-        compile_option = "-O2 --lto thin"
+        compile_option = "-O2 --lto thin --obf-seed 0"
         link_option = "-L ../../target/native -lmarkdown_scanner"
     else:
         manifest_relative = "tools/markdown/cjpm.toml"
-        compile_option = "-O2"
+        compile_option = "-O2 --obf-seed 0"
         link_option = ""
     manifest = comparison.ROOT / manifest_relative
     source_files = source_snapshot["productFiles"]
@@ -294,7 +293,7 @@ def build_record(name: str, binary_identity: dict[str, object],
     return {"mode": "canonical",
         "sourceProductTreeSha256": source_snapshot["productTreeSha256"],
         "trimPath": trim_path,
-        "build": {"command": ["/fresh/cangjie/tools/bin/cjpm", "build"],
+        "build": {"command": ["/fresh/cangjie/tools/bin/cjpm", "build", "-j", "1"],
             "cwd": str(manifest.parent),
             "exitCode": 0, "stdout": "build succeeded\n", "stderr": "",
             "environment": sdk_command_environment()},
@@ -436,7 +435,7 @@ def valid_report() -> dict[str, object]:
     }
     provenance, _, _ = comparison.adapter_source_inputs(COMPARATOR_ROOT,
         COMMONMARK_ROOT)
-    adapter_build = {"command": ["/fresh/cangjie/tools/bin/cjpm", "build", "-V"],
+    adapter_build = {"command": ["/fresh/cangjie/tools/bin/cjpm", "build", "-j", "1", "-V"],
         "cwd": "/tmp/adapter",
         "exitCode": 0, "stdout": "build succeeded\n", "stderr": "",
         "environment": sdk_command_environment(),
@@ -448,7 +447,7 @@ def valid_report() -> dict[str, object]:
         "manifestSha256": digest(comparison.MANIFEST.format(
             commonmark=comparison.ADAPTER_COMMONMARK_PATH,
             trimpath="/tmp/adapter").encode("utf-8")),
-        "dependencyManifestSha256": digest(comparison.manifest_with_trimpath(
+        "dependencyManifestSha256": digest(comparison.adapter_dependency_manifest(
             (COMMONMARK_ROOT / "cjpm.toml").read_bytes(),
             "/tmp/adapter")),
         "binarySourceIdentitySha256": provenance["adapterInputSha256"],
@@ -537,6 +536,35 @@ def bind_report_to_snapshot(report: dict[str, object], reference: str,
 
 
 class SameLanguageBenchmarkTest(unittest.TestCase):
+    def test_adapter_dependency_manifest_is_static_and_deterministic(self) -> None:
+        manifest = comparison.adapter_dependency_manifest(
+            b'[package]\n  compile-option = ""\n  output-type = "dynamic"\n'
+            b'\n[profile]\n  [profile.build]\n    incremental = true\n',
+            "/tmp/fresh-adapter")
+        self.assertIn(b'compile-option = " --obf-seed 0 --trimpath /tmp/fresh-adapter"',
+            manifest)
+        self.assertIn(b'output-type = "static"', manifest)
+        self.assertIn(b'incremental = false', manifest)
+
+    def test_adapter_dependency_manifest_rejects_unpinned_layout(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "canonical output type"):
+            comparison.adapter_dependency_manifest(
+                b'[package]\n  compile-option = ""\n'
+                b'\n[profile]\n  [profile.build]\n    incremental = true\n',
+                "/tmp/fresh-adapter")
+
+    def test_static_adapter_closure_requires_explicit_opt_in(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            binary = root / "main"
+            binary.write_bytes(elf64_with_needed(()))
+            libraries = root / "libraries"
+            libraries.mkdir()
+            with self.assertRaisesRegex(RuntimeError, "no retained runtime"):
+                comparison.adapter_runtime_library_sources(binary, libraries)
+            self.assertEqual(comparison.adapter_runtime_library_sources(
+                binary, libraries, allow_static=True), {})
+
     def test_elf_dependencies_use_loader_program_headers_not_sections(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             artifact = Path(temporary) / "adapter"
@@ -674,13 +702,12 @@ class SameLanguageBenchmarkTest(unittest.TestCase):
                 comparison.retain_execution_binaries(root / "retained", sources,
                     {library.name: library})
 
-    def test_comparator_environment_uses_retained_library_root(self) -> None:
-        assert BINARY_ROOT is not None
+    def test_static_comparator_uses_identical_execution_environment(self) -> None:
         report = valid_report()
-        loader = report["environment"]["processes"]["markdown4cj"][
-            "variables"]["LD_LIBRARY_PATH"].split(os.pathsep)[0]
-        self.assertEqual(loader,
-            str((BINARY_ROOT / comparison.RUNTIME_LIBRARY_ROOT).resolve()))
+        processes = report["environment"]["processes"]
+        self.assertEqual(processes["markdown"]["variables"],
+            processes["markdown4cj"]["variables"])
+        self.assertEqual(processes["differences"], {})
 
     def test_valid_report_rederives_every_gate(self) -> None:
         self.assertEqual(comparison.validate_report(valid_report(), True), [])
@@ -1034,18 +1061,22 @@ class SameLanguageBenchmarkTest(unittest.TestCase):
         self.assertIn(
             "same-language markdown retained binary bytes do not match the report", errors)
 
-    def test_missing_retained_runtime_library_fails_closed(self) -> None:
+    def test_static_adapter_rejects_declared_runtime_library(self) -> None:
         assert BINARY_ROOT is not None and COMPARATOR_ROOT is not None
         assert COMMONMARK_ROOT is not None
+        report = valid_report()
+        report["runtimeLibraries"] = {
+            "libcommonmark4cj.commonmark.so": {
+                "artifactPath": "libraries/commonmark4cj/libcommonmark4cj.commonmark.so",
+                "bytes": 128, "sha256": "0" * 64, "mode": 0o644}}
+        report["adapterBuild"]["runtimeLibraries"] = copy.deepcopy(
+            report["runtimeLibraries"])
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "binaries"
             shutil.copytree(BINARY_ROOT, root)
-            (root / comparison.RUNTIME_LIBRARY_ROOT /
-                "libcommonmark4cj.commonmark.so").unlink()
-            errors = comparison.validate_report(valid_report(), True,
+            errors = comparison.validate_report(report, True,
                 COMPARATOR_ROOT, COMMONMARK_ROOT, root)
-        self.assertTrue(any("retained binaries are missing" in error or
-            "runtime library" in error for error in errors), errors)
+        self.assertTrue(any("runtime library" in error for error in errors), errors)
 
     def test_retained_bundle_can_be_relocated_for_offline_verification(self) -> None:
         assert BINARY_ROOT is not None and COMPARATOR_ROOT is not None
@@ -1079,21 +1110,23 @@ class SameLanguageBenchmarkTest(unittest.TestCase):
             root = Path(temporary) / "binaries"
             shutil.copytree(BINARY_ROOT, root)
             extra = root / comparison.RUNTIME_LIBRARY_ROOT / "libunexpected.so"
+            extra.parent.mkdir(parents=True)
             extra.write_bytes(elf64_with_needed(()))
             extra.chmod(0o755)
             errors = comparison.validate_report(valid_report(), True,
                 COMPARATOR_ROOT, COMMONMARK_ROOT, root)
         self.assertTrue(any("unexpected entries" in error for error in errors), errors)
 
-    def test_retained_runtime_library_path_escape_is_rejected(self) -> None:
+    def test_static_adapter_runtime_library_path_escape_is_rejected(self) -> None:
         report = valid_report()
-        identity = report["runtimeLibraries"]["libcommonmark4cj.commonmark.so"]
-        identity["artifactPath"] = "../libcommonmark4cj.commonmark.so"
+        report["runtimeLibraries"] = {"libcommonmark4cj.commonmark.so": {
+            "artifactPath": "../libcommonmark4cj.commonmark.so", "bytes": 128,
+            "sha256": "0" * 64, "mode": 0o644}}
         errors = comparison.validate_report(report, True)
         self.assertTrue(any("runtime library identity is not canonical" in error
             for error in errors), errors)
 
-    def test_tampered_retained_runtime_library_fails_closed(self) -> None:
+    def test_static_adapter_rejects_unexpected_runtime_symlink(self) -> None:
         assert BINARY_ROOT is not None and COMPARATOR_ROOT is not None
         assert COMMONMARK_ROOT is not None
         with tempfile.TemporaryDirectory() as temporary:
@@ -1101,67 +1134,13 @@ class SameLanguageBenchmarkTest(unittest.TestCase):
             shutil.copytree(BINARY_ROOT, root)
             library = root / comparison.RUNTIME_LIBRARY_ROOT / \
                 "libcommonmark4cj.commonmark.so"
-            library.write_bytes(elf64_with_needed(("libchanged.so",)))
-            errors = comparison.validate_report(valid_report(), True,
-                COMPARATOR_ROOT, COMMONMARK_ROOT, root)
-        self.assertTrue(any("bytes or mode do not match" in error for error in errors),
-            errors)
-
-    def test_retained_runtime_library_mode_change_fails_closed(self) -> None:
-        assert BINARY_ROOT is not None and COMPARATOR_ROOT is not None
-        assert COMMONMARK_ROOT is not None
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary) / "binaries"
-            shutil.copytree(BINARY_ROOT, root)
-            library = root / comparison.RUNTIME_LIBRARY_ROOT / \
-                "libcommonmark4cj.commonmark.so"
-            library.chmod(0o755)
-            errors = comparison.validate_report(valid_report(), True,
-                COMPARATOR_ROOT, COMMONMARK_ROOT, root)
-        self.assertTrue(any("bytes or mode do not match" in error for error in errors),
-            errors)
-
-    def test_retained_runtime_library_symlink_fails_closed(self) -> None:
-        assert BINARY_ROOT is not None and COMPARATOR_ROOT is not None
-        assert COMMONMARK_ROOT is not None
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary) / "binaries"
-            shutil.copytree(BINARY_ROOT, root)
-            library = root / comparison.RUNTIME_LIBRARY_ROOT / \
-                "libcommonmark4cj.commonmark.so"
+            library.parent.mkdir(parents=True)
             replacement = root / "outside.so"
-            replacement.write_bytes(library.read_bytes())
-            library.unlink()
+            replacement.write_bytes(elf64_with_needed(()))
             library.symlink_to(replacement)
             errors = comparison.validate_report(valid_report(), True,
                 COMPARATOR_ROOT, COMMONMARK_ROOT, root)
         self.assertTrue(any("contains a symlink" in error for error in errors), errors)
-
-    def test_swapped_retained_runtime_library_name_fails_closed(self) -> None:
-        assert BINARY_ROOT is not None and COMPARATOR_ROOT is not None
-        assert COMMONMARK_ROOT is not None
-        report = valid_report()
-        old_name = "libcommonmark4cj.commonmark.so"
-        new_name = "libcommonmark4cj.table.so"
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary) / "binaries"
-            shutil.copytree(BINARY_ROOT, root)
-            old_path = root / comparison.RUNTIME_LIBRARY_ROOT / old_name
-            new_path = old_path.with_name(new_name)
-            old_path.rename(new_path)
-            identity = comparison.retained_library_identity(new_path,
-                (comparison.RUNTIME_LIBRARY_ROOT / new_name).as_posix())
-            report["runtimeLibraries"] = {new_name: identity}
-            report["adapterBuild"]["runtimeLibraries"] = copy.deepcopy(
-                report["runtimeLibraries"])
-            build_output = report["adapterBuild"]["buildOutputRuntimeLibraries"].pop(
-                old_name)
-            build_output["path"] = f"/tmp/adapter/target/release/commonmark4cj/{new_name}"
-            report["adapterBuild"]["buildOutputRuntimeLibraries"] = {
-                new_name: build_output}
-            errors = comparison.validate_report(report, True,
-                COMPARATOR_ROOT, COMMONMARK_ROOT, root)
-        self.assertTrue(any("runtime library closure" in error for error in errors), errors)
 
     def test_adapter_build_exports_pinned_objects_not_dirty_worktree_files(self) -> None:
         assert COMPARATOR_ROOT is not None and COMMONMARK_ROOT is not None
@@ -1202,7 +1181,7 @@ class SameLanguageBenchmarkTest(unittest.TestCase):
                 adapted["core_plugin.cj"])
             self.assertNotEqual(dirty.read_bytes(), adapted["core_plugin.cj"])
             self.assertEqual((workspace / "deps/commonmark4cj/cjpm.toml").read_bytes(),
-                comparison.manifest_with_trimpath(commonmark_contents["cjpm.toml"],
+                comparison.adapter_dependency_manifest(commonmark_contents["cjpm.toml"],
                     str(workspace.resolve())))
             self.assertEqual(build["adapterInputSha256"],
                 provenance["adapterInputSha256"])
@@ -1572,10 +1551,11 @@ class SameLanguageBenchmarkTest(unittest.TestCase):
                 self.assertIn(
                     "same-language process environments are not canonical or derived", errors)
 
-    def test_comparator_loader_difference_is_explicit_and_derived(self) -> None:
+    def test_static_comparator_loader_difference_is_rejected(self) -> None:
         report = valid_report()
         processes = report["environment"]["processes"]
-        processes["differences"]["LD_LIBRARY_PATH"]["reason"] = "unattested"
+        processes["differences"]["LD_LIBRARY_PATH"] = {
+            "markdown": "/sdk/runtime", "markdown4cj": "/forged/runtime"}
         errors = comparison.validate_report(report, True)
         self.assertIn("same-language process environments are not canonical or derived", errors)
 

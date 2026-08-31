@@ -104,7 +104,7 @@ class BenchmarkDriverBuildTest(unittest.TestCase):
     def test_compatibility_manifest_changes_only_build_paths_and_lto(self) -> None:
         root = Path("/workspace/markdown")
         source = """[package]
-  compile-option = "-O2 --lto thin"
+  compile-option = "-O2 --lto thin --obf-seed 0"
   link-option = "-L ../../target/native -lmarkdown_scanner"
 
 [dependencies]
@@ -113,7 +113,7 @@ class BenchmarkDriverBuildTest(unittest.TestCase):
         self.assertEqual(
             build_benchmark_driver.compatibility_manifest(source, root),
             """[package]
-  compile-option = "-O2"
+  compile-option = "-O2 --obf-seed 0"
   link-option = "-L /workspace/markdown/target/native -lmarkdown_scanner"
 
 [dependencies]
@@ -128,11 +128,11 @@ class BenchmarkDriverBuildTest(unittest.TestCase):
             )
 
     def test_trimpath_manifest_is_root_specific_and_preserves_other_options(self) -> None:
-        source = '[package]\n  compile-option = "-O2 --lto thin"\n'
+        source = '[package]\n  compile-option = "-O2 --lto thin --obf-seed 0"\n'
         actual = build_benchmark_driver.trimpath_manifest(source,
             Path("/tmp/fresh-product-a"))
         self.assertIn(
-            'compile-option = "-O2 --lto thin --trimpath /tmp/fresh-product-a"',
+            'compile-option = "-O2 --lto thin --obf-seed 0 --trimpath /tmp/fresh-product-a"',
             actual)
         with self.assertRaisesRegex(ValueError, "already contains --trimpath"):
             build_benchmark_driver.trimpath_manifest(actual,
@@ -150,7 +150,7 @@ class BenchmarkDriverBuildTest(unittest.TestCase):
                 source = root / "main.cj"
                 output = root / "main"
                 source.write_text("main(): Int64 { return 0 }\n", encoding="utf-8")
-                result = subprocess.run([cjc, "-O2", "--lto=thin", "--trimpath",
+                result = subprocess.run([cjc, "-O2", "--lto=thin", "--obf-seed", "0", "--trimpath",
                     str(root), str(source), "-o", str(output)], text=True,
                     capture_output=True, check=False)
                 self.assertEqual(result.returncode, 0, result.stderr)
@@ -360,8 +360,8 @@ class BenchmarkDriverBuildTest(unittest.TestCase):
                 build_benchmark_driver.build_canonical(sdk)
                 build_benchmark_driver.build_cli(sdk)
             self.assertEqual(observed, [
-                [str(sdk.cjpm), "build"],
-                [str(sdk.cjpm), "build"],
+                [str(sdk.cjpm), "build", "-j", "1"],
+                [str(sdk.cjpm), "build", "-j", "1"],
             ])
 
     def test_product_build_workspace_excludes_existing_package_targets(self) -> None:

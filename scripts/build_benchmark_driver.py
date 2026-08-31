@@ -25,9 +25,9 @@ DRIVER = ROOT / "benchmarks" / "driver"
 CLI = ROOT / "tools" / "markdown"
 NATIVE = ROOT / "target" / "native"
 NATIVE_MANIFEST = NATIVE / "markdown_scanner.cache.json"
-CANONICAL_OPTIMIZATION = "-O2 --lto thin"
-COMPATIBILITY_OPTIMIZATION = "-O2"
-IDENTITY_SCHEMA_VERSION = 4
+CANONICAL_OPTIMIZATION = "-O2 --lto thin --obf-seed 0"
+COMPATIBILITY_OPTIMIZATION = "-O2 --obf-seed 0"
+IDENTITY_SCHEMA_VERSION = 5
 NATIVE_CACHE_SCHEMA_VERSION = 3
 NATIVE_ENVIRONMENT_SCHEMA_VERSION = 1
 
@@ -340,12 +340,12 @@ def build_canonical(sdk: SdkToolchain | None = None,
         with reproducible_manifests(source_root, package):
             manifest = manifest_path.read_text(encoding="utf-8")
             root_manifest = (source_root / "cjpm.toml").read_text(encoding="utf-8")
-            build = command_record([cjpm, "build"], package, check=True,
+            build = command_record([cjpm, "build", "-j", "1"], package, check=True,
                 environment=sdk.environment if sdk is not None else None)
     else:
         manifest = canonical_manifest
         root_manifest = canonical_root_manifest
-        build = command_record([cjpm, "build"], package, check=True,
+        build = command_record([cjpm, "build", "-j", "1"], package, check=True,
             environment=sdk.environment if sdk is not None else None)
     built = package / "target" / "release" / "bin" / "main"
     destination = DRIVER / "target" / "release" / "bin" / "main"
@@ -405,12 +405,12 @@ def build_cli(sdk: SdkToolchain | None = None, source_root: Path = ROOT
         with reproducible_manifests(source_root, package):
             manifest = manifest_path.read_text(encoding="utf-8")
             root_manifest = (source_root / "cjpm.toml").read_text(encoding="utf-8")
-            build = command_record([cjpm, "build"], package, check=True,
+            build = command_record([cjpm, "build", "-j", "1"], package, check=True,
                 environment=sdk.environment if sdk is not None else None)
     else:
         manifest = canonical_manifest
         root_manifest = canonical_root_manifest
-        build = command_record([cjpm, "build"], package, check=True,
+        build = command_record([cjpm, "build", "-j", "1"], package, check=True,
             environment=sdk.environment if sdk is not None else None)
     built = package / "target" / "release" / "bin" / "main"
     destination = CLI / "target" / "release" / "bin" / "main"
