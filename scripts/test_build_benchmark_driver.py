@@ -46,6 +46,12 @@ def fake_sdk_archive(path: Path) -> str:
 
 
 class BenchmarkDriverBuildTest(unittest.TestCase):
+    def test_identity_schema_matches_same_language_gate(self) -> None:
+        import compare_markdown4cj
+
+        self.assertEqual(build_benchmark_driver.IDENTITY_SCHEMA_VERSION,
+            compare_markdown4cj.BUILD_IDENTITY_SCHEMA_VERSION)
+
     def write_native_identity_fixture(self, native: Path) -> tuple[Path, Path, Path]:
         native.mkdir(parents=True)
         tools = native.parent / "native-tools"
