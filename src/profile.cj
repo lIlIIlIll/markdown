@@ -7,6 +7,28 @@ public enum ProfileKind {
     | Custom
 }
 
+// ProfileKind is part of the parser semantics, so identity must use a stable
+// tag rather than an enum debug representation. In particular, a custom
+// profile is not an alias for a built-in profile merely because callers choose
+// the same id and version strings.
+internal func profileKindIdentityTag(kind: ProfileKind): String {
+    match (kind) {
+        case ProfileKind.CommonMark0312 => "commonmark-0312"
+        case ProfileKind.Gfm029 => "gfm-029"
+        case ProfileKind.GfmModernV1 => "gfm-modern-v1"
+        case ProfileKind.Custom => "custom"
+    }
+}
+
+internal func profileIdentityDescriptor(profile: MarkdownProfile): String {
+    let descriptor = CanonicalDescriptor()
+    descriptor.append("profile-identity-v1")
+    descriptor.append(profileKindIdentityTag(profile.kind))
+    descriptor.append(profile.id)
+    descriptor.append(profile.standardVersion)
+    descriptor.toString()
+}
+
 public class MarkdownProfile {
     public let kind: ProfileKind
     public let id: String
@@ -53,7 +75,8 @@ public class MarkdownProfile {
     }
 
     public func sameIdentity(other: MarkdownProfile): Bool {
-        id == other.id && standardVersion == other.standardVersion
+        profileKindIdentityTag(kind) == profileKindIdentityTag(other.kind) && id == other.id && standardVersion == other
+            .standardVersion
     }
 }
 

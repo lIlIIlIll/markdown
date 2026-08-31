@@ -1794,8 +1794,12 @@ private func canonicalDescriptor(
     out.append(dialect.id);
     out.append("@");
     out.append(dialect.version)
-    out.append("|base=");
+    out.append("|base-kind=");
+    out.append(profileKindIdentityTag(dialect.baseProfile.kind))
+    out.append("|base-id=");
     out.append(dialect.baseProfile.id)
+    out.append("|base-version=");
+    out.append(dialect.baseProfile.standardVersion)
     out.append("|options=extensions:");
     out.append(dialect.parserOptions.extensionsEnabled)
     out.append(",unclosed-diagnostics:");

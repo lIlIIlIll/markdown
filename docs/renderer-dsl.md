@@ -29,10 +29,12 @@ lowering。
 
 structured attribute 的值可来自固定配置、typed payload parameter 或 payload literal。
 自定义 HTML fallback 只能返回通过显式 unsafe factory 创建的 `TrustedHtml`。它仍受 output
-budget 和 cancellation 约束。
+budget 和 cancellation 约束。`ExtensionRendererFallback` 必须提供稳定的
+`extensionId` 和 `implementationVersion`，两者都进入 renderer fingerprint。
 
 raw HTML sanitization 是独立的 `HtmlSanitizerPort`。adapter 失败会向调用者传播，不会回退
-到未净化输出。
+到未净化输出。sanitizer 必须提供稳定且非空的 `identity`。自定义 raw HTML lowering 使用
+`RawHtmlHandlerPort`，并由 `RawHtmlPolicyKind.CustomHandler` 显式选择。
 
 ## 缺失 renderer
 
@@ -48,6 +50,13 @@ manifest 的 `missingRendererPolicy` 默认是 `Error`：
 
 如果 extension 声明某个 renderer capability，却没有 rule 或明确 fallback，dialect 编译
 直接失败。
+
+`missingRendererPolicy` 会改变缺失 rule 时的输出，因此进入 renderer fingerprint。
+manifest 集合按稳定身份规范化，注册顺序本身不改变 fingerprint；renderer rule 的声明
+顺序会影响冲突决策，所以仍按原顺序编码。
+
+一个 renderer 中的 manifest `extensionId` 必须唯一。重复 ID 会在构造阶段被拒绝，不会
+依赖 first-match 顺序产生无法由 fingerprint 区分的行为。
 
 ## Sink 与异步适配
 

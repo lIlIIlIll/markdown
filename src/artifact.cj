@@ -93,6 +93,7 @@ public class MarkdownParseArtifact {
     public let ast: Document
     public let references: ImmutableArray<ReferenceDefinition>
     public let diagnostics: ImmutableArray<Diagnostic>
+    internal let profileIdentity: String
 
     internal init(engine: MarkdownEngine, result: ParseResult) {
         schemaVersion = "2"
@@ -109,6 +110,7 @@ public class MarkdownParseArtifact {
         ast = result.ast
         references = result.ast.root().asDocument().getOrThrow().references
         diagnostics = result.diagnostics
+        profileIdentity = profileIdentityDescriptor(engine.profile)
     }
 
     public func debugJson(): String {
@@ -125,6 +127,23 @@ extend MarkdownEngine {
         if (!result.source.hasIdentityMapping()) {
             throw MarkdownException(MarkdownErrorCode.InvalidArtifact,
                 "artifacts require an identity-preserving UTF-8 source mapping", phase: "artifact_encode")
+        }
+        let originalBytes = result.source.originalBytesForArtifact()
+        match (artifactDocumentProvenanceFailure(
+            result.ast,
+            profile,
+            dialect.fingerprint,
+            Sha256.digestBytes(originalBytes),
+            Sha256.digest(result.source.text()),
+            artifactUtf8PolicyId(result.source.decodePolicy()),
+            originalBytes.size
+        )) {
+            case Some(reason) => throw MarkdownException(
+                MarkdownErrorCode.InvalidArtifact,
+                "parse result provenance does not match the artifact engine: ${reason}",
+                phase: "artifact_encode"
+            )
+            case None => ()
         }
         MarkdownParseArtifact(this, result)
     }
@@ -154,6 +173,9 @@ extend MarkdownEngine {
         if (artifact.profileId != profile.id) {
             return ArtifactLoadResult.CacheMiss("profile id")
         }
+        if (artifact.profileIdentity != profileIdentityDescriptor(profile)) {
+            return ArtifactLoadResult.CacheMiss("profile identity")
+        }
         if (artifact.dialectFingerprint != dialect.fingerprint) {
             return ArtifactLoadResult.CacheMiss("dialect fingerprint")
         }
@@ -172,6 +194,18 @@ extend MarkdownEngine {
         if (artifact.offsetMappingDigest != identityOffsetMappingDigest(originalBytes.size)) {
             return ArtifactLoadResult.CacheMiss("offset mapping digest")
         }
+        match (artifactDocumentProvenanceFailure(
+            artifact.ast,
+            profile,
+            dialect.fingerprint,
+            artifact.sourceDigest,
+            artifact.decodedTextDigest,
+            artifact.utf8PolicyId,
+            originalBytes.size
+        )) {
+            case Some(reason) => return ArtifactLoadResult.CacheMiss(reason)
+            case None => ()
+        }
         try {
             AstInvariantValidator().validate(artifact.ast, limits: limits)
         } catch (_: Exception) {
@@ -179,6 +213,47 @@ extend MarkdownEngine {
         }
         ArtifactLoadResult.Hit(artifact.ast)
     }
+}
+
+private func artifactDocumentProvenanceFailure(
+    document: Document,
+    expectedProfile: MarkdownProfile,
+    expectedDialectFingerprint: String,
+    expectedSourceDigest: String,
+    expectedDecodedTextDigest: String,
+    expectedUtf8PolicyId: String,
+    expectedByteLength: Int64
+): ?String {
+    let root = match (document.root().asDocument()) {
+        case Some(value) => value
+        case None => return Some("AST document root")
+    }
+    if (!root.profile.sameIdentity(expectedProfile)) {
+        return Some("AST profile")
+    }
+    if (root.dialectFingerprint != expectedDialectFingerprint) {
+        return Some("AST dialect fingerprint")
+    }
+    let documentSource = match (document.parserSourceBuffer()) {
+        case Some(value) => value
+        case None => return Some("AST source provenance")
+    }
+    if (!documentSource.hasIdentityMapping()) {
+        return Some("AST source mapping")
+    }
+    if (artifactUtf8PolicyId(documentSource.decodePolicy()) != expectedUtf8PolicyId) {
+        return Some("AST UTF-8 policy")
+    }
+    if (Sha256.digestBytes(documentSource.originalBytesForArtifact()) != expectedSourceDigest) {
+        return Some("AST source digest")
+    }
+    if (Sha256.digest(documentSource.text()) != expectedDecodedTextDigest) {
+        return Some("AST decoded text digest")
+    }
+    if (root.node.span != Some(SourceSpan(0, expectedByteLength))) {
+        return Some("AST source span")
+    }
+    None
 }
 
 private func artifactUtf8PolicyId(policy: Utf8Policy): String {

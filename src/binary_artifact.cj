@@ -35,7 +35,8 @@ public class BinaryArtifactCodec {
         binaryWriteString(out, binaryUtf8PolicyId(snapshot.result.source.decodePolicy()))
         binaryWriteString(out, Sha256.digestBytes(originalBytes))
         binaryWriteString(out, Sha256.digest(snapshot.result.source.text()))
-        binaryWriteString(out, binaryIdentityOffsetMappingDigest(originalBytes.size))
+        binaryWriteString(out,
+            binaryIdentityOffsetMappingDigest(originalBytes.size, snapshot.result.source.decodePolicy()))
         binaryWriteString(out, binaryAstDigest(snapshot.result.ast))
         binaryWriteString(out, Sha256.digest(snapshot.syntaxTree.losslessText()))
         binaryWriteString(out, snapshot.result.source.text())
@@ -74,8 +75,10 @@ public class BinaryArtifactCodec {
             if (engineFingerprint != binaryEngineFingerprint(engine)) {
                 return BinaryArtifactLoadResult.CacheMiss("engine fingerprint")
             }
-            if (utf8PolicyId != "strict" && utf8PolicyId != "replace-invalid") {
-                return BinaryArtifactLoadResult.CacheMiss("UTF-8 policy")
+            let utf8Policy = match (utf8PolicyId) {
+                case "strict" => Utf8Policy.Strict
+                case "replace-invalid" => Utf8Policy.ReplaceInvalid
+                case _ => return BinaryArtifactLoadResult.CacheMiss("UTF-8 policy")
             }
             let sourceBytes = source.toArray()
             if (originalBytesDigest != Sha256.digestBytes(sourceBytes)) {
@@ -84,10 +87,10 @@ public class BinaryArtifactCodec {
             if (decodedTextDigest != Sha256.digest(source)) {
                 return BinaryArtifactLoadResult.CacheMiss("decoded text digest")
             }
-            if (offsetMappingDigest != binaryIdentityOffsetMappingDigest(sourceBytes.size)) {
+            if (offsetMappingDigest != binaryIdentityOffsetMappingDigest(sourceBytes.size, utf8Policy)) {
                 return BinaryArtifactLoadResult.CacheMiss("offset mapping digest")
             }
-            let snapshot = engine.parseSnapshot(source)
+            let snapshot = DocumentSnapshot(engine, 1, engine.parse(sourceBytes, utf8Policy: utf8Policy))
             if (astDigest != binaryAstDigest(snapshot.result.ast)) {
                 return BinaryArtifactLoadResult.CacheMiss("AST digest")
             }
@@ -108,10 +111,11 @@ private func binaryUtf8PolicyId(policy: Utf8Policy): String {
     }
 }
 
-private func binaryIdentityOffsetMappingDigest(byteLength: Int64): String {
+private func binaryIdentityOffsetMappingDigest(byteLength: Int64, utf8Policy: Utf8Policy): String {
     let descriptor = CanonicalDescriptor()
     descriptor.append("identity-offset-mapping")
     descriptor.append(byteLength)
+    descriptor.append(binaryUtf8PolicyId(utf8Policy))
     Sha256.digest(descriptor.toString())
 }
 

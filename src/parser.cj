@@ -310,19 +310,35 @@ public class BufferedInputSession {
     }
 
     public func feed(chunk: Array<Byte>): Unit {
+        preflightFeed(chunk.size)
+        appendValidatedBytes(chunk)
+    }
+
+    public func feed(chunk: String): Unit {
+        // String.size is its UTF-8 byte length. Validate the session state and
+        // remaining input budget before materializing another byte array.
+        preflightFeed(chunk.size)
+        appendValidatedBytes(chunk.toArray())
+    }
+
+    private func preflightFeed(chunkBytes: Int64): Unit {
         if (finished) {
             throw IllegalStateException("buffered input session is already finished")
         }
         cancellation.throwIfCancelled(phase: "input")
-        if (bytes.size + chunk.size > engine.limits.maximumInputBytes) {
-            throw LimitExceededException("input_bytes", engine.limits.maximumInputBytes, bytes.size + chunk.size,
-                "input")
+        let maximumInputBytes = engine.limits.maximumInputBytes
+        if (chunkBytes > maximumInputBytes - bytes.size) {
+            let observed = if (chunkBytes > Int64.Max - bytes.size) {
+                Int64.Max
+            } else {
+                bytes.size + chunkBytes
+            }
+            throw LimitExceededException("input_bytes", maximumInputBytes, observed, "input")
         }
-        bytes.add(all: chunk)
     }
 
-    public func feed(chunk: String): Unit {
-        feed(chunk.toArray())
+    private func appendValidatedBytes(chunk: Array<Byte>): Unit {
+        bytes.add(all: chunk)
     }
 
     public func finish(): ParseResult {
@@ -569,6 +585,8 @@ internal class ParserSession {
     private var suppressedInlineRule = ""
     private var suppressedBlockRule = ""
     private var eventBlockCheckpoint: ?AstArenaCheckpoint = None
+    private var normalizedInlineOffsets: ?Array<Int64> = None
+    private var normalizedInlineBase: Int64 = 0
 
     init(profile: MarkdownProfile, limits: ParseLimits, cancellation: CancellationToken, budget: OperationBudget,
         source: SourceBuffer, dialect: CompiledMarkdownDialect, nativeScannerEnabled: Bool,
@@ -1301,8 +1319,7 @@ internal class ParserSession {
                     break
                 }
             }
-            let rawParagraph = source.text()[firstLine.startByte..last.endByte]
-            let children = parseInline(rawParagraph, firstLine.startByte, 0)
+            let children = parseCombinedInlineLines(lines, start, end)
             return (nodes.paragraph(children, mappedSpan(firstLine.startByte, last.endByte)), end)
         }
         let checkpoint = nodes.checkpoint()
@@ -1352,19 +1369,20 @@ internal class ParserSession {
             }
         }
         if (index - start > 1) {
-            let firstText = lines[start].text
             let sourceText = source.text()
             let paragraphStart = lines[start].startByte
             let paragraphEnd = last.endByte
             let needsCombinedInline = containsByteInRange(sourceText, b'`', paragraphStart, paragraphEnd) ||
-                firstText.contains("*") || firstText.contains("_") || (firstText.contains("[") && containsByteInRange(
-                sourceText, b')', paragraphStart, paragraphEnd)) || (firstText.contains("<") && containsByteInRange(
-                sourceText, b'>', paragraphStart, paragraphEnd))
+                containsByteInRange(sourceText, b'*', paragraphStart, paragraphEnd) || containsByteInRange(sourceText,
+                b'_', paragraphStart, paragraphEnd) || (containsByteInRange(sourceText, b'[', paragraphStart,
+                paragraphEnd) && containsByteInRange(sourceText, b')', paragraphStart, paragraphEnd)) || (containsByteInRange(
+                sourceText, b'<', paragraphStart, paragraphEnd) && containsByteInRange(sourceText, b'>', paragraphStart,
+                paragraphEnd))
             if (needsCombinedInline) {
-                let rawParagraph = sourceText[paragraphStart..paragraphEnd]
                 nodes.rollback(checkpoint)
                 children.clear()
-                for (child in parseInline(rawParagraph, lines[start].startByte, 0)) {
+                let combinedChildren = parseCombinedInlineLines(lines, start, index)
+                for (child in combinedChildren) {
                     children.add(child)
                 }
             }
@@ -1431,6 +1449,8 @@ internal class ParserSession {
             }
             if (contentStart < 0) {
                 contentStart = lines[index].startByte
+            } else if (lines[index].startByte != lines[index - 1].endWithNewline) {
+                literalCanUseSourceSlice = false
             }
             if (lines[index].endWithNewline > lines[index].endByte) {
                 if (source.text()[lines[index].endByte] != 10) {
@@ -1462,27 +1482,53 @@ internal class ParserSession {
     }
 
     private func parseIndentedCode(lines: Array<LineRecord>, start: Int64): (Int64, Int64) {
-        let parts = ArrayList<String>()
+        let literal = BoundedLiteralBuilder(limits.maximumLiteralBytes, budget, cancellation, "block_parse")
+        var literalBytes: Int64 = 0
+        var hasContent = false
+        var pendingEmptyLines: Int64 = 0
         var index = start
         var last = lines[start]
         while (index < lines.size && (isIndentedCode(lines[index].text) || isBlank(lines[index].text))) {
-            if (isIndentedCode(lines[index].text)) {
-                parts.add(stripIndentColumns(lines[index].text, 4)[0])
+            cancellation.throwIfCancelled(phase: "block_parse")
+            let line = lines[index].text
+            let (contentStart, syntheticSpaces) = if (isIndentedCode(line)) {
+                strippedIndentLayout(line, 4)
             } else {
-                parts.add("")
+                (line.size, 0)
+            }
+            let contentBytes = syntheticSpaces + line.size - contentStart
+            if (contentBytes == 0) {
+                if (hasContent) {
+                    pendingEmptyLines++
+                }
+            } else {
+                let separators = if (hasContent) {
+                    pendingEmptyLines + 1
+                } else {
+                    0
+                }
+                // Check the cumulative literal size before materializing a
+                // normalized line slice or synthetic indentation. The
+                // BoundedLiteralBuilder repeats this check while accounting
+                // for the operation budget as bytes are appended.
+                ensureLiteralAppendFits(literalBytes, separators + contentBytes, "block_parse")
+                for (_ in 0..separators) {
+                    literal.appendByte(b'\n')
+                }
+                if (syntheticSpaces > 0) {
+                    literal.append(repeatSpaces(syntheticSpaces))
+                }
+                if (contentStart < line.size) {
+                    literal.append(line[contentStart..])
+                }
+                literalBytes += separators + contentBytes
+                hasContent = true
+                pendingEmptyLines = 0
             }
             last = lines[index]
             index++
         }
-        while (!parts.isEmpty() && parts[0].isEmpty()) {
-            parts.remove(at: 0)
-        }
-        while (!parts.isEmpty() && parts[parts.size - 1].isEmpty()) {
-            parts.remove(at: parts.size - 1)
-        }
-        let literal = joinStrings(parts.toArray(), "\n")
-        ensureLiteralBytes(literal.size, "block_parse")
-        (nodes.codeBlock(CodeBlockKind.Indented, LiteralStorage.Copy(literal),
+        (nodes.codeBlock(CodeBlockKind.Indented, LiteralStorage.Copy(literal.finish()),
                 mappedSpan(lines[start].startByte, last.endByte)), index)
     }
 
@@ -3265,7 +3311,77 @@ internal class ParserSession {
     }
 
     private func mappedSpan(decodedStart: Int64, decodedEnd: Int64): SourceSpan {
+        if (let Some(offsets) <- normalizedInlineOffsets) {
+            let localStart = decodedStart - normalizedInlineBase
+            let localEnd = decodedEnd - normalizedInlineBase
+            if (localStart >= 0 && localEnd >= localStart && localEnd < offsets.size) {
+                return SourceSpan(source.originalOffset(offsets[localStart]), source.originalOffset(offsets[localEnd]))
+            }
+        }
         SourceSpan(source.originalOffset(decodedStart), source.originalOffset(decodedEnd))
+    }
+
+    private func inlineLinesAreContiguousSource(lines: Array<LineRecord>, start: Int64, end: Int64): Bool {
+        for (index in start..end) {
+            let contentStart = leadingWhitespace(lines[index].text)
+            if (index > start && lines[index].startByte + contentStart != lines[index - 1].endWithNewline) {
+                return false
+            }
+        }
+        true
+    }
+
+    private func parseCombinedInlineLines(lines: Array<LineRecord>, start: Int64, end: Int64): Array<Int64> {
+        if (!inlineLinesAreContiguousSource(lines, start, end)) {
+            return parseNormalizedInlineLines(lines, start, end)
+        }
+        let first = lines[start]
+        let last = lines[end - 1]
+        let contentStart = leadingWhitespace(first.text)
+        let trailingBytes = last.text.size - stripTrailingSpaces(last.text).size
+        let sourceStart = first.startByte + contentStart
+        let sourceEnd = last.endByte - trailingBytes
+        parseInline(source.text()[sourceStart..sourceEnd], sourceStart, 0)
+    }
+
+    private func parseNormalizedInlineLines(lines: Array<LineRecord>, start: Int64, end: Int64): Array<Int64> {
+        let combined = StringBuilder()
+        let offsets = ArrayList<Int64>()
+        for (index in start..end) {
+            let line = lines[index]
+            let contentStart = leadingWhitespace(line.text)
+            let sourceStart = line.startByte + contentStart
+            if (index == start) {
+                offsets.add(sourceStart)
+            } else {
+                combined.append("\n")
+                offsets.add(sourceStart)
+            }
+            let rawContent = line.text[contentStart..]
+            let content = if (index + 1 == end) {
+                stripTrailingSpaces(rawContent)
+            } else {
+                rawContent
+            }
+            combined.append(content)
+            for (offset in 1..content.size + 1) {
+                offsets.add(sourceStart + offset)
+            }
+        }
+        let previousOffsets = normalizedInlineOffsets
+        let previousBase = normalizedInlineBase
+        normalizedInlineOffsets = Some(offsets.toArray())
+        normalizedInlineBase = 0
+        try {
+            let parsed = parseInline(combined.toString(), 0, 0, sourceIdentity: false)
+            normalizedInlineOffsets = previousOffsets
+            normalizedInlineBase = previousBase
+            parsed
+        } catch (error: Exception) {
+            normalizedInlineOffsets = previousOffsets
+            normalizedInlineBase = previousBase
+            throw error
+        }
     }
 
     private func parsedText(raw: String, value: String, decodedStart: Int64, decodedEnd: Int64): Int64 {
@@ -3519,6 +3635,14 @@ internal class ParserSession {
         }
         if (consumeBudget) {
             budget.consumeScan(steps: observed)
+        }
+    }
+
+    private func ensureLiteralAppendFits(current: Int64, additional: Int64, phase: String): Unit {
+        cancellation.throwIfCancelled(phase: phase)
+        let observed = current + additional
+        if (observed > limits.maximumLiteralBytes) {
+            throw LimitExceededException("literal_bytes", limits.maximumLiteralBytes, observed, phase)
         }
     }
 
@@ -4169,6 +4293,18 @@ private func isHtmlBlock(text: String): Bool {
     htmlBlockType(text) > 0
 }
 
+internal func isHtmlTypeOneTagBoundary(byte: Byte): Bool {
+    byte == b' ' || byte == b'\t' || byte == b'>'
+}
+
+private func startsHtmlTypeOneTag(text: String, tag: String): Bool {
+    if (!text.startsWith(tag)) {
+        return false
+    }
+    let boundary = tag.size
+    boundary == text.size || isHtmlTypeOneTagBoundary(text[boundary])
+}
+
 private func htmlBlockType(text: String): Int64 {
     let leading = leadingSpaces(text)
     if (leading > 3 || leading >= text.size || text[leading] != b'<') {
@@ -4179,8 +4315,8 @@ private func htmlBlockType(text: String): Int64 {
         return 0
     }
     let lower = lowerAsciiValue(trimmed)
-    if (lower.startsWith("<script") || lower.startsWith("<pre") || lower.startsWith("<style") || lower.startsWith(
-        "<textarea")) {
+    if (startsHtmlTypeOneTag(lower, "<script") || startsHtmlTypeOneTag(lower, "<pre") || startsHtmlTypeOneTag(lower,
+        "<style") || startsHtmlTypeOneTag(lower, "<textarea")) {
         return 1
     }
     if (trimmed.startsWith("<!--")) {
@@ -4347,6 +4483,11 @@ private func visualColumnAt(text: String, end: Int64): Int64 {
 
 // Returns normalized text, consumed source bytes, and synthetic leading spaces.
 private func stripIndentColumns(text: String, target: Int64): (String, Int64, Int64) {
+    let (index, residual) = strippedIndentLayout(text, target)
+    (repeatSpaces(residual) + text[index..], index, residual)
+}
+
+private func strippedIndentLayout(text: String, target: Int64): (Int64, Int64) {
     var column: Int64 = 0
     var index: Int64 = 0
     while (index < text.size && (text[index] == b' ' || text[index] == b'\t')) {
@@ -4357,8 +4498,7 @@ private func stripIndentColumns(text: String, target: Int64): (String, Int64, In
         }
         index++
     }
-    let residual = max(0, column - target)
-    (repeatSpaces(residual) + text[index..], index, residual)
+    (index, max(0, column - target))
 }
 
 private func repeatSpaces(count: Int64): String {
@@ -4400,17 +4540,6 @@ private func joinLineRecords(lines: Array<LineRecord>, start: Int64, end: Int64)
             out.append("\n")
         }
         out.append(lines[index].text)
-    }
-    out.toString()
-}
-
-private func joinStrings(values: Array<String>, separator: String): String {
-    let out = StringBuilder()
-    for (index in 0..values.size) {
-        if (index > 0) {
-            out.append(separator)
-        }
-        out.append(values[index])
     }
     out.toString()
 }

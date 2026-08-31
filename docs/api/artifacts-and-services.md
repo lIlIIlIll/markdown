@@ -19,7 +19,7 @@ match (engine.loadArtifact(artifact, source)) {
 
 - schema 和 library version
 - parser plan version
-- profile ID
+- profile kind、ID 和标准版本
 - dialect 和 engine fingerprint
 - original bytes digest
 - decoded text digest
@@ -31,8 +31,17 @@ match (engine.loadArtifact(artifact, source)) {
 包含无效 UTF-8 并发生替换时，`ReplaceInvalid` 才产生非 identity mapping。有效 UTF-8
 bytes 即使使用 `ReplaceInvalid` 也能创建和加载 0.9 parse artifact。
 
-`loadArtifact` 接受 String 或 bytes。任何 schema、profile、fingerprint、digest、policy
-或 mapping 不匹配都返回 `CacheMiss(reason)`。
+`createArtifact` 还会交叉验证 `ParseResult.source`、AST root profile、dialect fingerprint、
+parser 保留的 `SourceBuffer`、UTF-8 policy、原始与解码 digest，以及根节点的完整源码
+范围。不能把一个 Document 与另一个 SourceBuffer 或 engine 拼接后创建 artifact。
+`TreeRewriter` 等保留 parser provenance 的变换结果仍可创建 artifact。
+
+`loadArtifact` 接受 String 或 bytes。任何 schema、profile kind/ID/version、fingerprint、digest、policy
+或 mapping 不匹配都返回 `CacheMiss(reason)`。加载时会再次检查 artifact 中 AST 的来源，
+避免已篡改的 AST 与正确 digest 组合命中 cache。
+
+0.9 pre-GA 中 profile identity 的修正会改变 dialect/engine fingerprint；旧 binary artifact
+因此安全地返回 cache miss，不会被猜测性迁移。
 
 ## Binary snapshot
 

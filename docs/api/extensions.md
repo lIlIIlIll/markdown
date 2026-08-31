@@ -158,6 +158,9 @@ let note = BlockSyntax
 `linePrefix(prefix)` 定义单行语法。`documentStartOnly()` 限制 rule 只在文档开头
 匹配。`kindFromFirstWord(false)` 让 local kind 固定为 rule ID。
 
+对 paired block，`maximumBlockBytes` 在普通 parse 与 RawBlock streaming feed 中均实时
+累计原始正文 bytes；嵌套边界和 CRLF 与最终 batch 解析使用同一规则。
+
 参数类型：
 
 - `StringValue`

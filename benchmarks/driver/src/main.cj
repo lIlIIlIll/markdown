@@ -73,7 +73,7 @@ private func accelerate(engine: MarkdownEngine): AcceleratedMarkdownEngine {
 main(args: Array<String>): Int64 {
     if (args.size < 2) {
         eprintln(
-            "usage: markdown_benchmark_driver <commonmark-parse|commonmark-parse-string|commonmark-parse-bytes|commonmark-parse-owned|commonmark-parse-stream|commonmark-html|commonmark-source-map|commonmark-cst|gfm-parse|gfm-html|extension-html> <iterations>")
+            "usage: markdown_benchmark_driver <commonmark-parse|commonmark-parse-string|commonmark-parse-bytes|commonmark-parse-owned|commonmark-parse-stream|commonmark-spec-html|commonmark-html|commonmark-source-map|commonmark-cst|gfm-parse|gfm-html|extension-html> <iterations>")
         return 2
     }
     let iterations = try {
@@ -129,10 +129,17 @@ main(args: Array<String>): Int64 {
         for (_ in 0..iterations) {
             observed += engine.parseSnapshot(sourceText).syntaxTree.root.tokens.size
         }
+    } else if (args[0] == "commonmark-spec-html") {
+        let engine = accelerate(
+            benchmarkEngineBuilder().profile(MarkdownProfile.commonMark0312()).limits(ParseLimits.trusted()).build())
+        let renderer = unsafe { HtmlRenderer(options: HtmlOptions.specCompatible()) }
+        let input = unsafe { ReusableUtf8Input.take(sourceBytes) }
+        print(renderer.render(engine.parse(input).ast))
+        return 0
     } else if (args[0] == "commonmark-html" || args[0] == "commonmark-source-map") {
         let engine = accelerate(
             benchmarkEngineBuilder().profile(MarkdownProfile.commonMark0312()).limits(ParseLimits.trusted()).build())
-        let renderer = HtmlRenderer(options: HtmlOptions.specCompatible())
+        let renderer = unsafe { HtmlRenderer(options: HtmlOptions.specCompatible()) }
         let input = unsafe { ReusableUtf8Input.take(sourceBytes) }
         for (_ in 0..iterations) {
             if (args[0] == "commonmark-html") {
@@ -150,7 +157,7 @@ main(args: Array<String>): Int64 {
                 observed += engine.parse(input).ast.root().children().size
             }
         } else {
-            let renderer = HtmlRenderer(options: HtmlOptions.gfmCompatible())
+            let renderer = unsafe { HtmlRenderer(options: HtmlOptions.gfmCompatible()) }
             for (_ in 0..iterations) {
                 observed += renderer.render(engine.parse(input).ast).size
             }

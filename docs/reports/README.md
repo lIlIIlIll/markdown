@@ -22,6 +22,16 @@
 2. 区分 `parse-only`、完整 AST、renderer-only 与 AST + HTML 工作负载。
 3. 使用 raw report 复核聚合值，不把单个语料或单轮结果当作发布结论。
 4. 只在能力边界一致时比较实现；event/pull parser 与完整 AST parser 应分组报告。
+5. 同语言报告必须是 schema v5，并包含每个 timed corpus 的 untimed spec-HTML digest、
+   SDK archive、target、完整 build identity、从声明 Git commit blobs 重算的产品/harness
+   identity、从显式本地 Git 输入重算的 comparator core/完整依赖/迁移身份，以及独立重算
+   的 gate。验证还必须取得专用 binary root，并从实际保留的三份执行文件和 comparator
+   adapter-owned ELF `PT_DYNAMIC`/`DT_NEEDED` 闭包重新计算路径、长度、SHA-256 与 mode；
+   verifier 不信任 section table，并拒绝 `DT_RPATH`/`DT_RUNPATH`；comparator loader 路径
+   必须指向 retained library root。复验还必须使用 retained SDK archive、native
+   compiler/archiver/resource inputs、native tools 的 retained ELF loader/递归 DSO 闭包和精确 Git roots
+   在全新目录重建 native scanner、product/comparator executables 与 DSO closure，并逐字节
+   比较 retained 产物。仅同步修改 binary 与 raw report digest 不能通过。
 
 > [!IMPORTANT]
 > 历史报告是不可变证据。更新当前结果时生成新的 canonical evidence，不要手工改写旧样本。

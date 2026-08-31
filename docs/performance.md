@@ -41,6 +41,35 @@ benchmark driver 使用显式 `ReusableUtf8Input` 和可选 native scanner，并
 证明共同的 CommonMark parse-only 子集。GitHub Actions 会在每个 PR 上重新运行这项比较，
 但它不替代 cmark/cmark-gfm 的端到端 canonical release evidence。
 
+同语言 schema v5 在计时外对每个 timed corpus 生成 CommonMark spec HTML，并要求两侧
+输出 byte length 和 SHA-256 完全一致。只有语义门禁通过的 corpus 才会进入计时。build
+identity 绑定 SDK archive、实际 compiler/archiver executable bytes 与 SHA-256、完整版本
+命令和输出、target triple、native scanner 最小 child environment、manifest 和命令、build
+flags、源码输入以及最终 binary digest。
+verifier 还会解析声明 ref 的真实 commit/tree，并从该 commit blobs 独立重算产品与 harness
+identity；`--require-current-product` 要求该 tree 等于干净的当前 `HEAD`。
+它还要求显式提供本地 `markdown4cj` 与 `commonmark4cj` Git 输入，从固定 commit 的
+objects 独立重算两侧 tree、完整依赖内容、选择的 core blobs、迁移结果、driver 和
+path-stable manifest。checkout、bare object store 与 Git bundle 均可离线验证；缺失 objects
+时 fail closed，raw report 中的 preflight 布尔值不作为证据。
+测量还把实际执行的 product driver、CLI、comparator driver，以及 comparator 的
+adapter-owned 递归 ELF `PT_DYNAMIC`/`DT_NEEDED` 闭包复制到专用 binary root。当前固定 adapter 实际只
+链接 `libcommonmark4cj.commonmark.so`；未被 measured executable 链接的 base、table 与
+strikethrough DSO 不进入闭包。报告保存固定相对路径、长度、SHA-256 和 mode，comparator
+的 `LD_LIBRARY_PATH` 指向 retained library root；`DT_RPATH`/`DT_RUNPATH` 会被拒绝。
+离线 verifier 读取 loader 实际使用的 program headers，而不信任可分歧的 section table，
+重新解析 retained ELF 闭包，再与 retained、adapter build 和原始 build output 三方交叉绑定；缺失、额外、交换、
+symlink、路径逃逸、mode 或内容漂移均 fail closed。这证明实际执行 bytes 的身份，不宣称
+报告中的 digest 本身能证明来源。verifier 还会在全新目录中，使用 retained product/comparator
+Git objects、retained SDK archive 和已验证的 native tools，重新构建 native scanner、两份
+product executable、comparator executable 及其 DSO 闭包，并逐字节比较实际测量产物。
+因此同步篡改 retained binary 与报告 digest 也不能通过。
+所有 Cangjie package 的 effective manifest 使用各自 fresh root 的 `--trimpath`，避免绝对
+临时路径进入 executable。CI artifact 同时保留 native compiler、archiver 及 Clang resource
+archive；rebuild 不再从 raw report 的原 runner 绝对路径读取工具。
+native tools 的 ELF loader 与递归 DSO 闭包也一并保留；复验命令仅通过这些 retained
+runtime bytes 启动 compiler/archiver，不解析或读取宿主机 PT_INTERP 对应文件。
+
 ## 测量协议
 
 - release 构建，固定 CPU、SDK、target、reference commit 和 corpus digest；根库使用
@@ -53,7 +82,8 @@ benchmark driver 使用显式 `ReusableUtf8Input` 和可选 native scanner，并
 - 1/2/4/8/16 MiB scaling 至少 7 个样本；log-log slope 超过 `1.35` 或相邻翻倍超过
   `3.0` 失败；
 - 同时记录 wall time、raw samples、geomean、峰值附加 RSS 和可选能力开销；
-- 输出 checksum 不同或受测 driver/source identity 不匹配时 fail closed。
+- 每个 timed corpus 的 spec-HTML checksum 不同，或受测 driver/source identity 不匹配时
+  fail closed；verifier 从 raw samples 独立重算统计和 gate。
 
 ## 输入和分配边界
 
@@ -80,11 +110,22 @@ scripts/release_gate.sh
 同语言 gate 使用独立 raw report。验证仓库中的结果：
 
 ```sh
+git bundle create /tmp/markdown-product.bundle HEAD
 python3 benchmarks/compare_markdown4cj.py \
+  --source /tmp/markdown-same-language-tools/markdown4cj \
+  --commonmark4cj-source /tmp/markdown-same-language-tools/commonmark4cj \
+  --product-source /tmp/markdown-product.bundle \
+  --binary-root target/same-language-benchmark/binaries \
+  --sdk-archive target/same-language-benchmark/toolchain/cangjie-sdk-linux-x64-1.1.3.tar.gz \
   --verify-report docs/reports/markdown4cj-comparison-raw.json \
   --markdown-report docs/reports/markdown4cj-comparison.md \
   --require-current-product
 ```
 
 `Same-language benchmark (current-1.1.3)` 还会在 PR merge commit 上重新构建两侧 driver，
-执行固定 CPU 的交替测量，并上传 raw samples。该 check 是 `main` 的 required check。
+执行固定 CPU 的交替测量，并上传 raw samples、生成报告、产品 commit bundle 和两套固定 comparator commit 的
+最小 Git bundle、SDK archive、native tool/resource inputs 和实际执行产物；复验直接从这些输入重算源码身份并重建产物。
+directory Git input 必须是精确 worktree/bare repository root，nested path、symlink root 与外部
+`.git` indirection 会 fail closed。该 check 是 `main` 的 required check。
+PR job 先测量当前 SHA，避免被上一提交的 committed report 阻断。`main` push 会额外要求
+仓库中的 schema-v5 raw 与当前产品 identity 一致。

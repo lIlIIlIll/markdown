@@ -68,6 +68,39 @@ class ParserBehaviorTest {
     }
 
     @TestCase
+    func stripsListContainerIndentWithoutBreakingMultilineInlineSpans(): Unit {
+        let source = "1.  first line with [a link\n    across lines](https://example.com) and `code`.\n"
+        @Expect(
+            unsafe { Markdown.toSpecHtml(source) },
+            "<ol>\n<li>first line with <a href=\"https://example.com\">a link\nacross lines</a> and <code>code</code>.</li>\n</ol>\n")
+        let paragraph = Markdown.parse(source).document.children()[0].children()[0].children()[0]
+        let link = paragraph.children()[1]
+        @Expect(link.span, Some(SourceSpan(20, 66)))
+        @Expect(link.children()[0].span, Some(SourceSpan(21, 27)))
+        @Expect(link.children()[1].span, Some(SourceSpan(27, 32)))
+        @Expect(link.children()[2].span, Some(SourceSpan(32, 44)))
+
+        @Expect(
+            unsafe {
+                Markdown.toSpecHtml(
+                    "1.  first line\n    then [a link starts\n    here](https://example.com).\n")
+            },
+            "<ol>\n<li>first line\nthen <a href=\"https://example.com\">a link starts\nhere</a>.</li>\n</ol>\n")
+        @Expect(
+            unsafe {
+                Markdown.toSpecHtml("1.  item\n\n    ``` markdown\n    paragraph\n        code?\n    ```\n")
+            },
+            "<ol>\n<li>\n<p>item</p>\n<pre><code class=\"language-markdown\">paragraph\n    code?\n</code></pre>\n</li>\n</ol>\n")
+        @Expect(
+            unsafe { Markdown.toSpecHtml("1.  *first line*\n    continuation\n") },
+            "<ol>\n<li><em>first line</em>\ncontinuation</li>\n</ol>\n")
+        @Expect(
+            unsafe { Markdown.toSpecHtml("> *first line*\n> continuation\n") },
+            "<blockquote>\n<p><em>first line</em>\ncontinuation</p>\n</blockquote>\n")
+        @Expect(unsafe { Markdown.toSpecHtml("`code` and trailing ") }, "<p><code>code</code> and trailing</p>\n")
+    }
+
+    @TestCase
     func decodesOnlyLinkTargetsThatContainEscapesOrEntities(): Unit {
         let result = Markdown.parse(
             "[plain](https://example.com/路径 \"title\") [entity](https://example.com/a&amp;b \"x &amp; y\") " +
@@ -116,6 +149,25 @@ class ParserBehaviorTest {
                 case _ => @Expect(false)
             }
             case _ => @Expect(false)
+        }
+    }
+
+    @TestCase
+    func htmlTypeOneOpenersRequireTagNameBoundary(): Unit {
+        for (tag in ["scripture", "prelude", "stylex", "textareax"]) {
+            let source = "<${tag}>\nraw *body*\n\n*after*\n"
+            @Expect(
+                unsafe { Markdown.toSpecHtml(source) },
+                "<${tag}>\nraw *body*\n<p><em>after</em></p>\n")
+        }
+
+        for (source in [
+            "<script >\nvalue\n</script>\n",
+            "<script>\nvalue\n</script>\n",
+            "<script\t>\nvalue\n</script>\n",
+            "<script\nvalue\n</script>\n"
+        ]) {
+            @Expect(unsafe { Markdown.toSpecHtml(source) }, source)
         }
     }
 
@@ -287,7 +339,7 @@ class ParserBehaviorTest {
         @Expect(paragraph.children()[2].span, Some(SourceSpan(6, 11)))
         @Expect(paragraph.children()[2].asText().getOrThrow().value, "| b |")
         AstInvariantValidator().validate(result.document)
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(result.document), "<p>| a |\n| b |</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(result.document), "<p>| a |\n| b |</p>\n")
     }
 
     @TestCase
@@ -355,6 +407,53 @@ class ParserBehaviorTest {
     }
 
     @TestCase
+    func enforcesIndentedCodeLiteralLimitIncrementally(): Unit {
+        let exact = MarkdownEngine.builder().limits(indentedLiteralLimits(5)).build()
+        let multiline = exact.parse("    ab\n    cd\n")
+        let multilineNode = multiline.document.children()[0]
+        let multilineCode = multilineNode.asCodeBlock().getOrThrow()
+        @Expect(multilineCode.literal, "ab\ncd")
+        @Expect(multilineNode.span, Some(SourceSpan(0, 14)))
+
+        let tabIndented = exact.parse("\tab\n\tcd")
+        let tabNode = tabIndented.document.children()[0]
+        let tabCode = tabNode.asCodeBlock().getOrThrow()
+        @Expect(tabCode.literal, "ab\ncd")
+        @Expect(tabNode.span, Some(SourceSpan(0, 7)))
+
+        let trimmedNode = MarkdownEngine
+            .builder()
+            .limits(indentedLiteralLimits(2))
+            .build()
+            .parse("    \n    ab\n\n    \n")
+            .document
+            .children()[0]
+        let trimmed = trimmedNode.asCodeBlock().getOrThrow()
+        @Expect(trimmed.literal, "ab")
+        @Expect(trimmedNode.span, Some(SourceSpan(5, 18)))
+
+        try {
+            MarkdownEngine.builder().limits(indentedLiteralLimits(4)).build().parse("    ab\n    cd\n")
+            @Expect(false)
+        } catch (error: LimitExceededException) {
+            @Expect(error.limitKind, "literal_bytes")
+            @Expect(error.configuredLimit, 4)
+            @Expect(error.observedValue, 5)
+            @Expect(error.phase, "block_parse")
+        }
+
+        try {
+            MarkdownEngine.builder().limits(indentedLiteralLimits(1)).build().parse("    ab")
+            @Expect(false)
+        } catch (error: LimitExceededException) {
+            @Expect(error.limitKind, "literal_bytes")
+            @Expect(error.configuredLimit, 1)
+            @Expect(error.observedValue, 2)
+            @Expect(error.phase, "block_parse")
+        }
+    }
+
+    @TestCase
     func distinguishesCommonMarkFromGfmExtensions(): Unit {
         let source = "~~gone~~\n\n| a |\n| --- |\n| b |"
         let common = MarkdownEngine.builder().build().parse(source)
@@ -408,5 +507,9 @@ class ParserBehaviorTest {
                 case _ => @Expect(false)
             }
         }
+    }
+
+    private func indentedLiteralLimits(maximumLiteralBytes: Int64): ParseLimits {
+        ParseLimits(1024, 1024, 16, 64, 16, 16, 1024, maximumLiteralBytes, 4096, 1024, 1024)
     }
 }

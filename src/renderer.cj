@@ -2,6 +2,8 @@ package markdown
 
 import std.collection.*
 
+private let RENDER_SCAN_CANCELLATION_BYTES: Int64 = 1024
+
 public class SinkError <: Exception {
     public init(message: String) {
         super(message)
@@ -88,6 +90,18 @@ public class StringTextSink <: TextSink {
         }
         if (let Some(entries) <- mappedEntries) {
             let end = outputOffset + size
+            if (entries.size > 0) {
+                let last = entries[entries.size - 1]
+                if (last.outputRange.endByte == outputOffset && last.sourceSpan == sourceSpan && last.nodeId == nodeId &&
+                    last.generated == generated) {
+                    entries.remove(at: entries.size - 1)
+                    entries.add(
+                        RenderedSourceMapEntry(SourceSpan(last.outputRange.startByte, end), sourceSpan, nodeId,
+                            generated))
+                    outputOffset = end
+                    return
+                }
+            }
             entries.add(RenderedSourceMapEntry(SourceSpan(outputOffset, end), sourceSpan, nodeId, generated))
             outputOffset = end
         }
@@ -156,11 +170,19 @@ public class ImageUriPolicy {
     }
 }
 
+/** Rewrites resolved HTTP(S) destinations before URI policy and escaping. */
+public interface ExternalLinkRewriterPort {
+    /** Stable semantic identity included in the renderer fingerprint. */
+    prop identity: String
+    func rewriteExternalLink(uri: String): String
+}
+
 public class HtmlOptions {
     public let policy: HtmlPolicy
     public let rawHtmlPolicy: RawHtmlPolicyKind
     public let linkUriPolicy: LinkUriPolicy
     public let imageUriPolicy: ImageUriPolicy
+    public let rewriteExternalLinks: ?ExternalLinkRewriterPort
     public let externalLinkRel: String
     public let externalLinkTarget: String
 
@@ -169,13 +191,41 @@ public class HtmlOptions {
         rawHtmlPolicy: RawHtmlPolicyKind,
         linkUriPolicy: LinkUriPolicy,
         imageUriPolicy: ImageUriPolicy,
+        rewriteExternalLinks!: ?ExternalLinkRewriterPort = None,
         externalLinkRel!: String = "",
         externalLinkTarget!: String = ""
     ) {
+        if (let RawHtmlPolicyKind.PassThrough <- rawHtmlPolicy) {
+            throw IllegalArgumentException(
+                "raw HTML pass-through requires HtmlOptions.passThrough(), specCompatible(), or gfmCompatible() in an unsafe context")
+        }
         this.policy = policy
         this.rawHtmlPolicy = rawHtmlPolicy
         this.linkUriPolicy = linkUriPolicy
         this.imageUriPolicy = imageUriPolicy
+        this.rewriteExternalLinks = rewriteExternalLinks
+        this.externalLinkRel = externalLinkRel
+        this.externalLinkTarget = externalLinkTarget
+    }
+
+    private init(
+        policy: HtmlPolicy,
+        rawHtmlPolicy: RawHtmlPolicyKind,
+        linkUriPolicy: LinkUriPolicy,
+        imageUriPolicy: ImageUriPolicy,
+        rewriteExternalLinks: ?ExternalLinkRewriterPort,
+        externalLinkRel: String,
+        externalLinkTarget: String,
+        allowRawHtmlPassThrough: Bool
+    ) {
+        if (!allowRawHtmlPassThrough) {
+            throw IllegalArgumentException("raw HTML pass-through capability was not enabled")
+        }
+        this.policy = policy
+        this.rawHtmlPolicy = rawHtmlPolicy
+        this.linkUriPolicy = linkUriPolicy
+        this.imageUriPolicy = imageUriPolicy
+        this.rewriteExternalLinks = rewriteExternalLinks
         this.externalLinkRel = externalLinkRel
         this.externalLinkTarget = externalLinkTarget
     }
@@ -184,13 +234,25 @@ public class HtmlOptions {
         HtmlOptions(HtmlPolicy.safe(), RawHtmlPolicyKind.Escape, LinkUriPolicy.safe(), ImageUriPolicy.safe())
     }
 
-    public static func specCompatible(): HtmlOptions {
-        HtmlOptions(HtmlPolicy.specCompatible(), RawHtmlPolicyKind.PassThrough, LinkUriPolicy(true, true, true, true),
+    public static unsafe func passThrough(
+        policy: HtmlPolicy,
+        linkUriPolicy: LinkUriPolicy,
+        imageUriPolicy: ImageUriPolicy,
+        rewriteExternalLinks!: ?ExternalLinkRewriterPort = None,
+        externalLinkRel!: String = "",
+        externalLinkTarget!: String = ""
+    ): HtmlOptions {
+        HtmlOptions(policy, RawHtmlPolicyKind.PassThrough, linkUriPolicy, imageUriPolicy, rewriteExternalLinks,
+            externalLinkRel, externalLinkTarget, true)
+    }
+
+    public static unsafe func specCompatible(): HtmlOptions {
+        HtmlOptions.passThrough(HtmlPolicy.specCompatible(), LinkUriPolicy(true, true, true, true),
             ImageUriPolicy(true, true, true))
     }
 
-    public static func gfmCompatible(): HtmlOptions {
-        HtmlOptions(HtmlPolicy.gfmCompatible(), RawHtmlPolicyKind.PassThrough, LinkUriPolicy(true, true, true, true),
+    public static unsafe func gfmCompatible(): HtmlOptions {
+        HtmlOptions.passThrough(HtmlPolicy.gfmCompatible(), LinkUriPolicy(true, true, true, true),
             ImageUriPolicy(true, true, true))
     }
 }
@@ -209,7 +271,15 @@ public class TrustedHtml {
 
 public interface ExtensionRendererFallback {
     prop extensionId: String
+    prop implementationVersion: String
     func renderHtml(node: NodeRef): TrustedHtml
+}
+
+/** Handles raw HTML explicitly and returns host-trusted output. */
+public interface RawHtmlHandlerPort {
+    /** Stable semantic identity included in the renderer fingerprint. */
+    prop identity: String
+    func renderRawHtml(literal: String, block: Bool): TrustedHtml
 }
 
 internal struct ArenaRenderFrame {
@@ -233,25 +303,56 @@ public class HtmlRenderer {
     public let options: HtmlOptions
     private let extensionRules: ImmutableArray<RendererRule>
     private let sanitizer: ?HtmlSanitizerPort
+    private let rawHtmlHandler: ?RawHtmlHandlerPort
     private let extensionManifests: ImmutableArray<ExtensionManifest>
     private let extensionFallbacks: ImmutableArray<ExtensionRendererFallback>
+    private let maximumOutputBytes: ?Int64
 
     public init(options!: HtmlOptions = HtmlOptions.safe(), extensionRules!: Array<RendererRule> = [],
         sanitizer!: ?HtmlSanitizerPort = None, extensionManifests!: Array<ExtensionManifest> = [],
-        extensionFallbacks!: Array<ExtensionRendererFallback> = []) {
+        extensionFallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None,
+        maximumOutputBytes!: ?Int64 = None) {
         for (rule in extensionRules) {
             validateRendererRuleForRuntime(rule)
+        }
+        if (let Some(port) <- sanitizer) {
+            if (port.identity.isEmpty()) {
+                throw IllegalArgumentException("sanitizer identity must not be empty")
+            }
+        }
+        if (let Some(port) <- rawHtmlHandler) {
+            if (port.identity.isEmpty()) {
+                throw IllegalArgumentException("raw HTML handler identity must not be empty")
+            }
+        }
+        if (let Some(port) <- options.rewriteExternalLinks) {
+            if (port.identity.isEmpty()) {
+                throw IllegalArgumentException("external link rewriter identity must not be empty")
+            }
+        }
+        let manifestIds = HashSet<String>()
+        for (manifest in extensionManifests) {
+            if (!manifestIds.add(manifest.extensionId)) {
+                throw IllegalArgumentException("duplicate extension id: ${manifest.extensionId}")
+            }
         }
         this.options = options
         this.extensionRules = ImmutableArray<RendererRule>(extensionRules)
         this.sanitizer = sanitizer
+        this.rawHtmlHandler = rawHtmlHandler
         this.extensionManifests = ImmutableArray<ExtensionManifest>(extensionManifests)
         this.extensionFallbacks = ImmutableArray<ExtensionRendererFallback>(extensionFallbacks)
+        if (let Some(value) <- maximumOutputBytes) {
+            if (value <= 0) {
+                throw IllegalArgumentException("maximum output bytes must be positive")
+            }
+        }
+        this.maximumOutputBytes = maximumOutputBytes
     }
 
     public func fingerprint(): String {
         let out = CanonicalDescriptor()
-        out.append("html-renderer-v1|")
+        out.append("html-renderer-v3|")
         match (options.policy.kind) {
             case HtmlPolicyKind.SpecCompatible => out.append("spec")
             case HtmlPolicyKind.GfmCompatible => out.append("gfm")
@@ -279,10 +380,59 @@ public class HtmlRenderer {
         out.append(options.imageUriPolicy.allowRemoteImages);
         out.append(":")
         out.append(options.imageUriPolicy.allowDataImages)
+        out.append("|data-mime=")
+        if (options.imageUriPolicy.allowDataImages) {
+            let normalizedMimeTypes = rendererNormalizedMimeTypes(options.imageUriPolicy.allowedDataMimeTypes)
+            for (mime in normalizedMimeTypes) {
+                out.append(mime)
+            }
+        } else {
+            out.append("inactive")
+        }
+        out.append("|rewrite=")
+        match (options.rewriteExternalLinks) {
+            case Some(port) => out.append(port.identity)
+            case None => out.append("none")
+        }
         out.append("|rel=");
         out.append(options.externalLinkRel);
         out.append("|target=")
         out.append(options.externalLinkTarget)
+        out.append("|sanitizer=")
+        if (let RawHtmlPolicyKind.Sanitize <- options.rawHtmlPolicy) {
+            match (sanitizer) {
+                case Some(port) => out.append(port.identity)
+                case None => out.append("none")
+            }
+        } else {
+            out.append("inactive")
+        }
+        out.append("|raw-handler=")
+        if (let RawHtmlPolicyKind.CustomHandler <- options.rawHtmlPolicy) {
+            match (rawHtmlHandler) {
+                case Some(port) => out.append(port.identity)
+                case None => out.append("none")
+            }
+        } else {
+            out.append("inactive")
+        }
+        out.append("|max-output=")
+        match (maximumOutputBytes) {
+            case Some(value) => out.append(value)
+            case None => out.append("none")
+        }
+        for (manifest in rendererCanonicalManifests(extensionManifests)) {
+            out.append("|manifest=")
+            out.append(manifest.extensionId)
+            out.append(manifest.semanticVersion)
+            out.append(manifest.implementationVersion)
+            out.append(rendererMissingPolicyName(manifest.missingRendererPolicy))
+        }
+        for (fallback in extensionFallbacks.toArray()) {
+            out.append("|fallback=")
+            out.append(fallback.extensionId)
+            out.append(fallback.implementationVersion)
+        }
         for (index in 0..extensionRules.size) {
             let rule = extensionRules[index]
             out.append("|ext=");
@@ -338,9 +488,12 @@ public class HtmlRenderer {
         cancellation!: CancellationToken = CancellationToken.none(),
         budget!: OperationBudget = OperationBudget.safe()
     ): String {
+        cancellation.throwIfCancelled(phase: "render")
         let sink = StringTextSink()
         renderArenaTo(ast, sink, cancellation, budget)
-        sink.content()
+        let content = sink.content()
+        cancellation.throwIfCancelled(phase: "render")
+        content
     }
 
     public func renderTo(
@@ -349,10 +502,13 @@ public class HtmlRenderer {
         cancellation!: CancellationToken = CancellationToken.none(),
         budget!: OperationBudget = OperationBudget.safe()
     ): Unit {
+        cancellation.throwIfCancelled(phase: "render")
         renderArenaTo(ast, sink, cancellation, budget)
+        cancellation.throwIfCancelled(phase: "render")
     }
 
     private func renderArenaTo(ast: Document, sink: TextSink, cancellation: CancellationToken, budget: OperationBudget): Unit {
+        cancellation.throwIfCancelled(phase: "render")
         let stack = ArrayList<ArenaRenderFrame>()
         stack.add(ArenaRenderFrame(ast.root(), false))
         var checkpoints: Int64 = 0
@@ -370,6 +526,7 @@ public class HtmlRenderer {
                 writeArenaEnter(frame, stack, sink, cancellation, budget)
             }
         }
+        cancellation.throwIfCancelled(phase: "render")
     }
 
     private func writeArenaEnter(frame: ArenaRenderFrame, stack: ArrayList<ArenaRenderFrame>, sink: TextSink,
@@ -438,18 +595,17 @@ public class HtmlRenderer {
             case NodeKind.ThematicBreak => write("<hr />\n", sink, cancellation, budget)
             case NodeKind.CodeBlock =>
                 let code = node.asCodeBlock().getOrThrow()
-                let classAttribute = if (code.language.isEmpty()) {
-                    ""
-                } else {
-                    " class=\"language-${escapeAttribute(code.language, safe: isSafePolicy())}\""
+                write("<pre><code", sink, cancellation, budget)
+                if (!code.language.isEmpty()) {
+                    write(" class=\"language-", sink, cancellation, budget)
+                    writeEscapedAttribute(code.language, sink, cancellation, budget)
+                    write("\"", sink, cancellation, budget)
                 }
-                let literal = if (code.literal.isEmpty() || code.literal.endsWith("\n")) {
-                    code.literal
-                } else {
-                    code.literal + "\n"
+                write(">", sink, cancellation, budget)
+                writeEscapedTextFromNode(code.literal, node, sink, cancellation, budget)
+                if (!code.literal.isEmpty() && !code.literal.endsWith("\n")) {
+                    writeFromNode("\n", node, sink, cancellation, budget)
                 }
-                write("<pre><code${classAttribute}>", sink, cancellation, budget)
-                writeFromNode(escapeText(literal), node, sink, cancellation, budget)
                 write("</code></pre>\n", sink, cancellation, budget)
             case NodeKind.HtmlBlock => writeArenaRawHtml(node.asHtmlBlock().getOrThrow().literal, true, node, sink,
                 cancellation, budget)
@@ -469,13 +625,13 @@ public class HtmlRenderer {
                 write("<${tag}${alignment}>", sink, cancellation, budget)
                 stack.add(ArenaRenderFrame(node, true, tableHeader: frame.tableHeader))
                 pushArenaChildren(node, stack, tableHeader: frame.tableHeader)
-            case NodeKind.Text => writeFromNode(escapeText(node.asText().getOrThrow().value), node, sink, cancellation,
+            case NodeKind.Text => writeEscapedTextFromNode(node.asText().getOrThrow().value, node, sink, cancellation,
                 budget)
             case NodeKind.SoftBreak => write("\n", sink, cancellation, budget)
             case NodeKind.HardBreak => write("<br />\n", sink, cancellation, budget)
             case NodeKind.CodeSpan =>
                 write("<code>", sink, cancellation, budget)
-                writeFromNode(escapeText(node.asCodeSpan().getOrThrow().literal), node, sink, cancellation, budget)
+                writeEscapedTextFromNode(node.asCodeSpan().getOrThrow().literal, node, sink, cancellation, budget)
                 write("</code>", sink, cancellation, budget)
             case NodeKind.Emphasis =>
                 write("<em>", sink, cancellation, budget)
@@ -488,32 +644,39 @@ public class HtmlRenderer {
                 pushArenaContainer(frame, stack)
             case NodeKind.Link =>
                 let link = node.asLink().getOrThrow()
-                let href = if (isAllowedLink(link.destination)) {
-                    " href=\"${escapeAttribute(encodeUri(link.destination), safe: isSafePolicy())}\""
-                } else {
-                    ""
+                let externalRewriteApplied = isExternalLinkRewriteApplied(link.destination, cancellation)
+                let destination = rewriteExternalLink(link.destination, externalRewriteApplied)
+                write("<a", sink, cancellation, budget)
+                if (isAllowedLink(destination, cancellation, rewrittenExternal: externalRewriteApplied)) {
+                    write(" href=\"", sink, cancellation, budget)
+                    writeEncodedUriAttribute(destination, sink, cancellation, budget)
+                    write("\"", sink, cancellation, budget)
                 }
-                let title = if (link.title.isEmpty()) {
-                    ""
-                } else {
-                    " title=\"${escapeAttribute(link.title, safe: isSafePolicy())}\""
+                if (!link.title.isEmpty()) {
+                    write(" title=\"", sink, cancellation, budget)
+                    writeEscapedAttribute(link.title, sink, cancellation, budget)
+                    write("\"", sink, cancellation, budget)
                 }
-                write("<a${href}${title}${externalAttributes(link.destination)}>", sink, cancellation, budget)
+                writeExternalAttributes(destination, sink, cancellation, budget)
+                write(">", sink, cancellation, budget)
                 pushArenaContainer(frame, stack)
             case NodeKind.Image =>
                 let image = node.asImage().getOrThrow()
-                let src = if (isAllowedImage(image.destination)) {
-                    " src=\"${escapeAttribute(encodeUri(image.destination), safe: isSafePolicy())}\""
-                } else {
-                    ""
+                write("<img", sink, cancellation, budget)
+                if (isAllowedImage(image.destination, cancellation)) {
+                    write(" src=\"", sink, cancellation, budget)
+                    writeEncodedUriAttribute(image.destination, sink, cancellation, budget)
+                    write("\"", sink, cancellation, budget)
                 }
-                let title = if (image.title.isEmpty()) {
-                    ""
-                } else {
-                    " title=\"${escapeAttribute(image.title, safe: isSafePolicy())}\""
+                write(" alt=\"", sink, cancellation, budget)
+                writeArenaPlainTextAttribute(node, sink, cancellation, budget)
+                write("\"", sink, cancellation, budget)
+                if (!image.title.isEmpty()) {
+                    write(" title=\"", sink, cancellation, budget)
+                    writeEscapedAttribute(image.title, sink, cancellation, budget)
+                    write("\"", sink, cancellation, budget)
                 }
-                write("<img${src} alt=\"${escapeAttribute(arenaPlainText(node), safe: isSafePolicy())}\"${title} />",
-                    sink, cancellation, budget)
+                write(" />", sink, cancellation, budget)
             case NodeKind.HtmlInline => writeArenaRawHtml(node.asHtmlInline().getOrThrow().literal, false, node, sink,
                 cancellation, budget)
             case NodeKind.CustomBlock => renderArenaCustomEnter(node, frame, stack, sink, cancellation, budget)
@@ -584,36 +747,33 @@ public class HtmlRenderer {
             case _ => throw IllegalStateException("arena custom renderer received a core node")
         }
         if (let Some(rule) <- findRendererRule(custom.extensionId, custom.localKindId)) {
-            let attributes = StringBuilder()
+            write("<${rule.htmlTag}", sink, cancellation, budget)
             if (!rule.classToken.isEmpty()) {
-                attributes.append(" class=\"")
-                attributes.append(escapeAttribute(rule.classToken, safe: isSafePolicy()))
-                attributes.append("\"")
+                write(" class=\"", sink, cancellation, budget)
+                writeEscapedAttribute(rule.classToken, sink, cancellation, budget)
+                write("\"", sink, cancellation, budget)
             }
             for (attribute in rule.attributes.toArray()) {
-                if (let Some(value) <- arenaStructuredAttributeValue(node, attribute.source)) {
+                if (let Some(value) <- arenaStructuredAttributeValue(node, attribute.source, cancellation)) {
                     var allowed = true
                     match (attribute.kind) {
                         case RendererAttributeKind.Text => ()
-                        case RendererAttributeKind.LinkUri => allowed = isAllowedLink(value)
-                        case RendererAttributeKind.ImageUri => allowed = isAllowedImage(value)
+                        case RendererAttributeKind.LinkUri => allowed = isAllowedLink(value, cancellation)
+                        case RendererAttributeKind.ImageUri => allowed = isAllowedImage(value, cancellation)
                     }
                     if (allowed) {
-                        attributes.append(" ")
-                        attributes.append(attribute.name)
-                        attributes.append("=\"")
-                        let encoded = match (attribute.kind) {
-                            case RendererAttributeKind.Text => value
-                            case _ => encodeUri(value)
+                        write(" ${attribute.name}=\"", sink, cancellation, budget)
+                        match (attribute.kind) {
+                            case RendererAttributeKind.Text => writeEscapedAttribute(value, sink, cancellation, budget)
+                            case _ => writeEncodedUriAttribute(value, sink, cancellation, budget)
                         }
-                        attributes.append(escapeAttribute(encoded, safe: isSafePolicy()))
-                        attributes.append("\"")
+                        write("\"", sink, cancellation, budget)
                     }
                 }
             }
-            write("<${rule.htmlTag}${attributes.toString()}>", sink, cancellation, budget)
+            write(">", sink, cancellation, budget)
             if (rule.renderPayloadLiteral) {
-                writeFromNode(escapeText(arenaCustomLiteral(node)), node, sink, cancellation, budget)
+                writeEscapedTextFromNode(arenaCustomLiteral(node, cancellation), node, sink, cancellation, budget)
             }
             pushArenaContainer(frame, stack)
             return
@@ -626,8 +786,8 @@ public class HtmlRenderer {
             case MissingRendererPolicy.Error => throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
                 "missing renderer for ${custom.extensionId}/${custom.localKindId}", phase: "render", span: node.span)
             case MissingRendererPolicy.RenderChildren => pushArenaChildren(node, stack)
-            case MissingRendererPolicy.RenderLiteral => writeFromNode(escapeText(arenaCustomLiteral(node)), node, sink,
-                cancellation, budget)
+            case MissingRendererPolicy.RenderLiteral => writeEscapedTextFromNode(arenaCustomLiteral(node, cancellation),
+                node, sink, cancellation, budget)
             case MissingRendererPolicy.Drop => ()
             case MissingRendererPolicy.CustomFallback => match (findExtensionFallback(custom.extensionId)) {
                 case Some(fallback) => writeFromNode(fallback.renderHtml(node).value, node, sink, cancellation, budget)
@@ -650,7 +810,7 @@ public class HtmlRenderer {
         }
     }
 
-    private func arenaCustomLiteral(node: NodeRef): String {
+    private func arenaCustomLiteral(node: NodeRef, cancellation: CancellationToken): String {
         let payload = match (node.kind) {
             case NodeKind.CustomBlock => node.asCustomBlock().getOrThrow().payload
             case NodeKind.CustomInline => node.asCustomInline().getOrThrow().payload
@@ -658,14 +818,15 @@ public class HtmlRenderer {
         }
         match (payload) {
             case syntax: SyntaxPayload => syntax.literal
-            case _ => arenaPlainText(node)
+            case _ => arenaPlainText(node, cancellation)
         }
     }
 
-    private func arenaStructuredAttributeValue(node: NodeRef, source: RendererAttributeSource): ?String {
+    private func arenaStructuredAttributeValue(node: NodeRef, source: RendererAttributeSource,
+        cancellation: CancellationToken): ?String {
         match (source) {
             case RendererAttributeSource.FixedValue(value) => Some(value)
-            case RendererAttributeSource.PayloadLiteral => Some(arenaCustomLiteral(node))
+            case RendererAttributeSource.PayloadLiteral => Some(arenaCustomLiteral(node, cancellation))
             case RendererAttributeSource.PayloadParameter(name) =>
                 let payload = match (node.kind) {
                     case NodeKind.CustomBlock => node.asCustomBlock().getOrThrow().payload
@@ -685,36 +846,33 @@ public class HtmlRenderer {
     private func writeArenaRawHtml(literal: String, block: Bool, node: NodeRef, sink: TextSink,
         cancellation: CancellationToken, budget: OperationBudget): Unit {
         match (options.rawHtmlPolicy) {
-            case RawHtmlPolicyKind.Escape => writeFromNode(
-                escapeText(literal) + if (block && !literal.endsWith("\n")) {
-                    "\n"
-                } else {
-                    ""
-                }, node, sink, cancellation, budget)
+            case RawHtmlPolicyKind.Escape =>
+                writeEscapedTextFromNode(literal, node, sink, cancellation, budget)
+                writeRawHtmlTerminatingNewline(literal, block, node, sink, cancellation, budget)
             case RawHtmlPolicyKind.Drop => ()
             case RawHtmlPolicyKind.PassThrough =>
-                let filtered = match (options.policy.kind) {
-                    case HtmlPolicyKind.GfmCompatible => applyGfmTagFilter(literal)
-                    case _ => literal
+                match (options.policy.kind) {
+                    case HtmlPolicyKind.GfmCompatible => writeGfmTagFilteredFromNode(literal, node, sink, cancellation,
+                        budget)
+                    case _ => writeFromNode(literal, node, sink, cancellation, budget)
                 }
-                writeFromNode(filtered + if (block && !filtered.endsWith("\n")) {
-                    "\n"
-                } else {
-                    ""
-                }, node, sink, cancellation, budget)
+                writeRawHtmlTerminatingNewline(literal, block, node, sink, cancellation, budget)
             case RawHtmlPolicyKind.Sanitize => match (sanitizer) {
                 case Some(port) =>
                     let sanitized = port.sanitize(literal)
-                    writeFromNode(sanitized + if (block && !sanitized.endsWith("\n")) {
-                        "\n"
-                    } else {
-                        ""
-                    }, node, sink, cancellation, budget)
+                    writeFromNode(sanitized, node, sink, cancellation, budget)
+                    writeRawHtmlTerminatingNewline(sanitized, block, node, sink, cancellation, budget)
                 case None => throw MarkdownException(MarkdownErrorCode.RenderFailure, "sanitizer adapter is required",
                     phase: "render", span: node.span)
             }
-            case RawHtmlPolicyKind.CustomHandler => throw MarkdownException(MarkdownErrorCode.RenderFailure,
-                "custom raw HTML handler is required", phase: "render", span: node.span)
+            case RawHtmlPolicyKind.CustomHandler => match (rawHtmlHandler) {
+                case Some(port) =>
+                    let rendered = port.renderRawHtml(literal, block).value
+                    writeFromNode(rendered, node, sink, cancellation, budget)
+                    writeRawHtmlTerminatingNewline(rendered, block, node, sink, cancellation, budget)
+                case None => throw MarkdownException(MarkdownErrorCode.RenderFailure,
+                    "custom raw HTML handler is required", phase: "render", span: node.span)
+            }
         }
     }
 
@@ -770,11 +928,12 @@ public class HtmlRenderer {
 
     private func renderArenaInlineSequence(nodes: NodeChildren, frames: ArrayList<ArenaRenderFrame>, sink: TextSink,
         cancellation: CancellationToken, budget: OperationBudget): Unit {
+        cancellation.throwIfCancelled(phase: "render")
         if (nodes.size == 1) {
             let node = nodes[0]
             if (let NodeKind.Text <- node.kind) {
                 budget.consumeRenderedNode()
-                writeFromNode(escapeText(node.asText().getOrThrow().value), node, sink, cancellation, budget)
+                writeEscapedTextFromNode(node.asText().getOrThrow().value, node, sink, cancellation, budget)
                 return
             }
         }
@@ -783,8 +942,14 @@ public class HtmlRenderer {
             frames.add(ArenaRenderFrame(nodes[index], false))
             index--
         }
+        var checkpoints: Int64 = 0
         while (!frames.isEmpty()) {
             let frame = frames.remove(at: frames.size - 1)
+            checkpoints++
+            if (checkpoints >= 256) {
+                cancellation.throwIfCancelled(phase: "render")
+                checkpoints = 0
+            }
             if (frame.exiting) {
                 writeArenaExit(frame, sink, cancellation, budget)
             } else {
@@ -792,14 +957,22 @@ public class HtmlRenderer {
                 writeArenaEnter(frame, frames, sink, cancellation, budget)
             }
         }
+        cancellation.throwIfCancelled(phase: "render")
     }
 
-    private func arenaPlainText(root: NodeRef): String {
+    private func arenaPlainText(root: NodeRef, cancellation: CancellationToken): String {
+        cancellation.throwIfCancelled(phase: "render")
         let out = StringBuilder()
         let stack = ArrayList<NodeRef>()
         stack.add(root)
+        var checkpoints: Int64 = 0
         while (!stack.isEmpty()) {
             let node = stack.remove(at: stack.size - 1)
+            checkpoints++
+            if (checkpoints >= 256) {
+                cancellation.throwIfCancelled(phase: "render")
+                checkpoints = 0
+            }
             match (node.kind) {
                 case NodeKind.Text => out.append(node.asText().getOrThrow().value)
                 case NodeKind.CodeSpan => out.append(node.asCodeSpan().getOrThrow().literal)
@@ -814,6 +987,7 @@ public class HtmlRenderer {
                     }
             }
         }
+        cancellation.throwIfCancelled(phase: "render")
         out.toString()
     }
 
@@ -832,7 +1006,7 @@ public class HtmlRenderer {
         budget: OperationBudget
     ): Unit {
         cancellation.throwIfCancelled(phase: "render")
-        budget.consumeOutput(bytes: value.size)
+        consumeOutput(value.size, budget)
         let result = match (sink) {
             case stringSink: StringTextSink => stringSink.write(value)
             case _ => sink.write(value)
@@ -852,7 +1026,7 @@ public class HtmlRenderer {
         budget: OperationBudget
     ): Unit {
         cancellation.throwIfCancelled(phase: "render")
-        budget.consumeOutput(bytes: value.size)
+        consumeOutput(value.size, budget)
         let result = match (sink) {
             case mapped: StringTextSink => mapped.writeFromNode(value, node)
             case _ => sink.write(value)
@@ -864,13 +1038,296 @@ public class HtmlRenderer {
         cancellation.throwIfCancelled(phase: "render")
     }
 
-    private func isAllowedLink(uri: String): Bool {
+    private func writeRangeFromNode(
+        value: String,
+        start: Int64,
+        end: Int64,
+        node: NodeRef,
+        sink: TextSink,
+        cancellation: CancellationToken,
+        budget: OperationBudget
+    ): Unit {
+        cancellation.throwIfCancelled(phase: "render")
+        consumeOutput(end - start, budget)
+        let slice = value[start..end]
+        let result = match (sink) {
+            case mapped: StringTextSink => mapped.writeFromNode(slice, node)
+            case _ => sink.write(slice)
+        }
+        match (result) {
+            case SinkWriteResult.Success => ()
+            case SinkWriteResult.Failure(error) => throw SinkFailureException(error)
+        }
+        cancellation.throwIfCancelled(phase: "render")
+    }
+
+    private func writeRange(
+        value: String,
+        start: Int64,
+        end: Int64,
+        sink: TextSink,
+        cancellation: CancellationToken,
+        budget: OperationBudget
+    ): Unit {
+        cancellation.throwIfCancelled(phase: "render")
+        consumeOutput(end - start, budget)
+        let slice = value[start..end]
+        let result = match (sink) {
+            case stringSink: StringTextSink => stringSink.write(slice)
+            case _ => sink.write(slice)
+        }
+        match (result) {
+            case SinkWriteResult.Success => ()
+            case SinkWriteResult.Failure(error) => throw SinkFailureException(error)
+        }
+        cancellation.throwIfCancelled(phase: "render")
+    }
+
+    private func consumeOutput(bytes: Int64, budget: OperationBudget): Unit {
+        if (let Some(limit) <- maximumOutputBytes) {
+            let observed = budget.usedOutputBytes() + bytes
+            if (observed > limit) {
+                throw LimitExceededException("output_bytes", limit, observed, "render")
+            }
+        }
+        budget.consumeOutput(bytes: bytes)
+    }
+
+    /** Writes escaped text without materializing a node-sized temporary String. */
+    private func writeEscapedTextFromNode(value: String, node: NodeRef, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        var segmentStart: Int64 = 0
+        var index: Int64 = 0
+        var nextCancellationCheck: Int64 = 0
+        while (index < value.size) {
+            if (index >= nextCancellationCheck) {
+                cancellation.throwIfCancelled(phase: "render")
+                nextCancellationCheck = index + RENDER_SCAN_CANCELLATION_BYTES
+            }
+            let replacement = match (value[index]) {
+                case b'&' => "&amp;"
+                case b'<' => "&lt;"
+                case b'>' => "&gt;"
+                case b'\"' => "&quot;"
+                case _ => ""
+            }
+            if (!replacement.isEmpty()) {
+                if (segmentStart < index) {
+                    writeRangeFromNode(value, segmentStart, index, node, sink, cancellation, budget)
+                }
+                writeFromNode(replacement, node, sink, cancellation, budget)
+                segmentStart = index + 1
+            }
+            index++
+        }
+        cancellation.throwIfCancelled(phase: "render")
+        if (segmentStart < value.size) {
+            writeRangeFromNode(value, segmentStart, value.size, node, sink, cancellation, budget)
+        }
+    }
+
+    private func writeEscapedAttribute(value: String, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        var segmentStart: Int64 = 0
+        var index: Int64 = 0
+        var nextCancellationCheck: Int64 = 0
+        while (index < value.size) {
+            if (index >= nextCancellationCheck) {
+                cancellation.throwIfCancelled(phase: "render")
+                nextCancellationCheck = index + RENDER_SCAN_CANCELLATION_BYTES
+            }
+            let byte = value[index]
+            let replacement = if (byte == b'&') {
+                "&amp;"
+            } else if (byte == b'<') {
+                "&lt;"
+            } else if (byte == b'>') {
+                "&gt;"
+            } else if (byte == b'\"') {
+                "&quot;"
+            } else if (byte == b'\'') {
+                "&#39;"
+            } else if (isSafePolicy() && (byte < 32 || byte == 127)) {
+                "&#xfffd;"
+            } else {
+                ""
+            }
+            if (!replacement.isEmpty()) {
+                if (segmentStart < index) {
+                    writeRange(value, segmentStart, index, sink, cancellation, budget)
+                }
+                write(replacement, sink, cancellation, budget)
+                index++
+                segmentStart = index
+            } else {
+                index = rendererNextRune(value, index)
+            }
+        }
+        cancellation.throwIfCancelled(phase: "render")
+        if (segmentStart < value.size) {
+            writeRange(value, segmentStart, value.size, sink, cancellation, budget)
+        }
+    }
+
+    private func writeEncodedUriAttribute(value: String, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        var segmentStart: Int64 = 0
+        var index: Int64 = 0
+        var nextCancellationCheck: Int64 = 0
+        while (index < value.size) {
+            if (index >= nextCancellationCheck) {
+                cancellation.throwIfCancelled(phase: "render")
+                nextCancellationCheck = index + RENDER_SCAN_CANCELLATION_BYTES
+            }
+            let byte = value[index]
+            let percentEncode = byte == b' ' || byte == b'`' || byte == b'\"' || byte == b'\\' || byte < 0x20 || byte >=
+                0x80 || byte == b'[' || byte == b']'
+            let htmlReplacement = if (!percentEncode && byte == b'&') {
+                "&amp;"
+            } else if (!percentEncode && byte == b'<') {
+                "&lt;"
+            } else if (!percentEncode && byte == b'>') {
+                "&gt;"
+            } else if (!percentEncode && byte == b'\'') {
+                "&#39;"
+            } else {
+                ""
+            }
+            if (percentEncode || !htmlReplacement.isEmpty()) {
+                if (segmentStart < index) {
+                    writeRange(value, segmentStart, index, sink, cancellation, budget)
+                }
+                if (percentEncode) {
+                    writePercentEncodedByte(byte, sink, cancellation, budget)
+                } else {
+                    write(htmlReplacement, sink, cancellation, budget)
+                }
+                index++
+                segmentStart = index
+            } else {
+                index++
+            }
+        }
+        cancellation.throwIfCancelled(phase: "render")
+        if (segmentStart < value.size) {
+            writeRange(value, segmentStart, value.size, sink, cancellation, budget)
+        }
+    }
+
+    private func writePercentEncodedByte(byte: Byte, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        let digits = "0123456789ABCDEF"
+        let high = Int64((byte >> 4) & 0x0F)
+        let low = Int64(byte & 0x0F)
+        write("%", sink, cancellation, budget)
+        write(digits[high..high + 1], sink, cancellation, budget)
+        write(digits[low..low + 1], sink, cancellation, budget)
+    }
+
+    private func writeArenaPlainTextAttribute(root: NodeRef, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        cancellation.throwIfCancelled(phase: "render")
+        let stack = ArrayList<NodeRef>()
+        stack.add(root)
+        var checkpoints: Int64 = 0
+        while (!stack.isEmpty()) {
+            let node = stack.remove(at: stack.size - 1)
+            checkpoints++
+            if (checkpoints >= 256) {
+                cancellation.throwIfCancelled(phase: "render")
+                checkpoints = 0
+            }
+            match (node.kind) {
+                case NodeKind.Text => writeEscapedAttribute(node.asText().getOrThrow().value, sink, cancellation, budget)
+                case NodeKind.CodeSpan => writeEscapedAttribute(node.asCodeSpan().getOrThrow().literal, sink,
+                    cancellation, budget)
+                case NodeKind.SoftBreak => writeEscapedAttribute("\n", sink, cancellation, budget)
+                case NodeKind.HardBreak => writeEscapedAttribute("\n", sink, cancellation, budget)
+                case _ =>
+                    let children = node.children()
+                    var index = children.size - 1
+                    while (index >= 0) {
+                        stack.add(children[index])
+                        index--
+                    }
+            }
+        }
+        cancellation.throwIfCancelled(phase: "render")
+    }
+
+    private func writeRawHtmlTerminatingNewline(value: String, block: Bool, node: NodeRef, sink: TextSink,
+        cancellation: CancellationToken, budget: OperationBudget): Unit {
+        if (block && !value.endsWith("\n")) {
+            writeFromNode("\n", node, sink, cancellation, budget)
+        }
+    }
+
+    /** Applies the GFM raw-tag filter while checking the output limit before every emitted segment. */
+    private func writeGfmTagFilteredFromNode(value: String, node: NodeRef, sink: TextSink,
+        cancellation: CancellationToken, budget: OperationBudget): Unit {
+        var segmentStart: Int64 = 0
+        var index: Int64 = 0
+        var nextCancellationCheck: Int64 = 0
+        while (index < value.size) {
+            if (index >= nextCancellationCheck) {
+                cancellation.throwIfCancelled(phase: "render")
+                nextCancellationCheck = index + RENDER_SCAN_CANCELLATION_BYTES
+            }
+            if (value[index] == b'<') {
+                var nameStart = index + 1
+                if (nameStart < value.size && value[nameStart] == b'/') {
+                    nameStart++
+                }
+                if (isGfmDisallowedTagAt(value, nameStart)) {
+                    if (segmentStart < index) {
+                        writeRangeFromNode(value, segmentStart, index, node, sink, cancellation, budget)
+                    }
+                    writeFromNode("&lt;", node, sink, cancellation, budget)
+                    index++
+                    segmentStart = index
+                    continue
+                }
+            }
+            index = rendererNextRune(value, index)
+        }
+        cancellation.throwIfCancelled(phase: "render")
+        if (segmentStart < value.size) {
+            writeRangeFromNode(value, segmentStart, value.size, node, sink, cancellation, budget)
+        }
+    }
+
+    private func rewriteExternalLink(uri: String, rewriteApplied: Bool): String {
+        if (!rewriteApplied) {
+            return uri
+        }
+        match (options.rewriteExternalLinks) {
+            case Some(port) => port.rewriteExternalLink(uri)
+            case None => uri
+        }
+    }
+
+    private func isExternalLinkRewriteApplied(uri: String, cancellation: CancellationToken): Bool {
+        if (options.rewriteExternalLinks.isNone()) {
+            return false
+        }
+        let scheme = uriScheme(uri, cancellation)
+        scheme == "http" || scheme == "https"
+    }
+
+    private func isAllowedLink(uri: String, cancellation: CancellationToken, rewrittenExternal!: Bool = false): Bool {
+        let scheme = uriScheme(uri, cancellation)
+        // Spec/GFM compatibility intentionally preserves their legacy URI
+        // behavior when no rewriter is installed. Once host code rewrites an
+        // external HTTP(S) link, however, the returned value crosses a trust
+        // boundary and must remain an absolute HTTP(S) destination.
+        if (rewrittenExternal && scheme != "http" && scheme != "https") {
+            return false
+        }
         match (options.policy.kind) {
             case HtmlPolicyKind.SpecCompatible => return true
             case HtmlPolicyKind.GfmCompatible => return true
             case _ => ()
         }
-        let scheme = uriScheme(uri)
         if (scheme.isEmpty()) {
             return options.linkUriPolicy.allowRelative
         }
@@ -886,8 +1343,8 @@ public class HtmlRenderer {
         false
     }
 
-    private func isAllowedImage(uri: String): Bool {
-        let scheme = uriScheme(uri)
+    private func isAllowedImage(uri: String, cancellation: CancellationToken): Bool {
+        let scheme = uriScheme(uri, cancellation)
         if (scheme.isEmpty()) {
             return options.imageUriPolicy.allowRelative
         }
@@ -898,19 +1355,21 @@ public class HtmlRenderer {
             if (!options.imageUriPolicy.allowDataImages) {
                 return false
             }
-            let comma = rendererFindByte(uri, b',', 5)
+            let comma = rendererFindByte(uri, b',', 5, cancellation)
             if (comma < 0) {
                 return false
             }
-            let metadata = rendererLowerAscii(uri[5..comma])
-            let semicolon = rendererFindByte(metadata, b';', 0)
+            cancellation.throwIfCancelled(phase: "render")
+            let metadata = rendererLowerAsciiCancellable(uri[5..comma], cancellation)
+            let semicolon = rendererFindByte(metadata, b';', 0, cancellation)
             let mediaType = if (semicolon < 0) {
                 metadata
             } else {
                 metadata[0..semicolon]
             }
             for (mime in options.imageUriPolicy.allowedDataMimeTypes.toArray()) {
-                if (mediaType == rendererLowerAscii(mime)) {
+                cancellation.throwIfCancelled(phase: "render")
+                if (rendererAsciiWholeEqualsIgnoreCaseCancellable(mediaType, mime, cancellation)) {
                     return true
                 }
             }
@@ -918,32 +1377,49 @@ public class HtmlRenderer {
         false
     }
 
-    private func externalAttributes(uri: String): String {
-        let scheme = uriScheme(uri)
+    private func writeExternalAttributes(uri: String, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        let scheme = uriScheme(uri, cancellation)
         if (scheme != "http" && scheme != "https") {
-            return ""
+            return
         }
-        let out = StringBuilder()
-        var rel = options.externalLinkRel
-        if (isSafePolicy() && rendererLowerAscii(options.externalLinkTarget) == "_blank") {
-            if (!containsAsciiWhitespaceToken(rel, "noopener")) {
-                rel = appendAsciiWhitespaceToken(rel, "noopener")
+        let rel = options.externalLinkRel
+        var addNoopener = false
+        var addNoreferrer = false
+        if (isSafePolicy() && rendererAsciiWholeEqualsIgnoreCase(options.externalLinkTarget, "_blank")) {
+            if (!containsAsciiWhitespaceToken(rel, "noopener", cancellation)) {
+                addNoopener = true
             }
-            if (!containsAsciiWhitespaceToken(rel, "noreferrer")) {
-                rel = appendAsciiWhitespaceToken(rel, "noreferrer")
+            if (!containsAsciiWhitespaceToken(rel, "noreferrer", cancellation)) {
+                addNoreferrer = true
             }
         }
-        if (!rel.isEmpty()) {
-            out.append(" rel=\"")
-            out.append(escapeAttribute(rel, safe: isSafePolicy()))
-            out.append("\"")
+        if (!rel.isEmpty() || addNoopener || addNoreferrer) {
+            write(" rel=\"", sink, cancellation, budget)
+            if (!rel.isEmpty()) {
+                writeEscapedAttribute(rel, sink, cancellation, budget)
+            }
+            if (addNoopener) {
+                write(if (rel.isEmpty()) {
+                    "noopener"
+                } else {
+                    " noopener"
+                }, sink, cancellation, budget)
+            }
+            if (addNoreferrer) {
+                write(if (rel.isEmpty() && !addNoopener) {
+                    "noreferrer"
+                } else {
+                    " noreferrer"
+                }, sink, cancellation, budget)
+            }
+            write("\"", sink, cancellation, budget)
         }
         if (!options.externalLinkTarget.isEmpty()) {
-            out.append(" target=\"")
-            out.append(escapeAttribute(options.externalLinkTarget, safe: isSafePolicy()))
-            out.append("\"")
+            write(" target=\"", sink, cancellation, budget)
+            writeEscapedAttribute(options.externalLinkTarget, sink, cancellation, budget)
+            write("\"", sink, cancellation, budget)
         }
-        out.toString()
     }
 
     private func findRendererRule(extensionId: String, localKindId: String): ?RendererRule {
@@ -982,35 +1458,30 @@ public class HtmlRenderer {
     }
 }
 
-private func appendAsciiWhitespaceToken(value: String, token: String): String {
-    if (value.isEmpty()) {
-        token
-    } else {
-        "${value} ${token}"
-    }
-}
-
-private func containsAsciiWhitespaceToken(value: String, expected: String): Bool {
-    let normalizedExpected = rendererLowerAscii(expected)
+private func containsAsciiWhitespaceToken(value: String, expected: String, cancellation: CancellationToken): Bool {
+    cancellation.throwIfCancelled(phase: "render")
     var start: Int64 = 0
     var index: Int64 = 0
+    var nextCancellationCheck: Int64 = RENDER_SCAN_CANCELLATION_BYTES
     while (index <= value.size) {
+        if (index >= nextCancellationCheck) {
+            cancellation.throwIfCancelled(phase: "render")
+            nextCancellationCheck = index + RENDER_SCAN_CANCELLATION_BYTES
+        }
         let separator = if (index == value.size) {
             true
         } else {
             rendererIsAsciiWhitespace(value[index])
         }
         if (separator) {
-            if (index > start) {
-                let token = rendererLowerAscii(value[start..index])
-                if (token == normalizedExpected) {
-                    return true
-                }
+            if (index > start && rendererAsciiRangeEqualsIgnoreCase(value, start, index, expected)) {
+                return true
             }
             start = index + 1
         }
         index++
     }
+    cancellation.throwIfCancelled(phase: "render")
     false
 }
 
@@ -1020,13 +1491,16 @@ private func rendererIsAsciiWhitespace(byte: Byte): Bool {
 
 extend MarkdownEngine {
     public func htmlRenderer(options!: HtmlOptions = HtmlOptions.safe(), sanitizer!: ?HtmlSanitizerPort = None,
-        fallbacks!: Array<ExtensionRendererFallback> = []): HtmlRenderer {
+        fallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None): HtmlRenderer {
         HtmlRenderer(options: options, extensionRules: dialect.rendererRules.toArray(), sanitizer: sanitizer,
-            extensionManifests: dialect.manifests.toArray(), extensionFallbacks: fallbacks)
+            extensionManifests: dialect.manifests.toArray(), extensionFallbacks: fallbacks,
+            rawHtmlHandler: rawHtmlHandler, maximumOutputBytes: Some(limits.maximumOutputBytes))
     }
 }
 
 public interface HtmlSanitizerPort {
+    /** Stable semantic identity included in the renderer fingerprint. */
+    prop identity: String
     // Implementations may throw; HtmlRenderer propagates the failure and never
     // falls back to the unsanitized literal.
     func sanitize(html: String): String
@@ -1241,46 +1715,6 @@ private func tableCellOpenTag(header: Bool, alignment: TableAlignment): String {
     }
 }
 
-private func escapeText(value: String): String {
-    var needsEscape = false
-    var scan: Int64 = 0
-    while (scan < value.size) {
-        let byte = value[scan]
-        if (byte == b'&' || byte == b'<' || byte == b'>' || byte == b'"') {
-            needsEscape = true
-            break
-        }
-        scan++
-    }
-    if (!needsEscape) {
-        return value
-    }
-    let out = StringBuilder()
-    var segmentStart: Int64 = 0
-    var index: Int64 = 0
-    while (index < value.size) {
-        let replacement = match (value[index]) {
-            case b'&' => "&amp;"
-            case b'<' => "&lt;"
-            case b'>' => "&gt;"
-            case b'"' => "&quot;"
-            case _ => ""
-        }
-        if (!replacement.isEmpty()) {
-            if (segmentStart < index) {
-                out.append(value[segmentStart..index])
-            }
-            out.append(replacement)
-            segmentStart = index + 1
-        }
-        index++
-    }
-    if (segmentStart < value.size) {
-        out.append(value[segmentStart..value.size])
-    }
-    out.toString()
-}
-
 private func validateRendererRuleForRuntime(rule: RendererRule): Unit {
     if (!rendererHtmlName(rule.htmlTag)) {
         throw IllegalArgumentException("invalid structured renderer tag")
@@ -1361,117 +1795,71 @@ private func rendererAttributeName(value: String): Bool {
     true
 }
 
-private func escapeAttribute(value: String, safe!: Bool = false): String {
-    var needsEscape = false
-    var scan: Int64 = 0
-    while (scan < value.size) {
-        let byte = value[scan]
-        if (byte == b'&' || byte == b'<' || byte == b'>' || byte == b'"' || byte == b'\'' || (safe && (byte < 32 ||
-            byte == 127))) {
-            needsEscape = true
-            break
-        }
-        scan++
-    }
-    if (!needsEscape) {
-        return value
-    }
-    let out = StringBuilder()
-    var index: Int64 = 0
-    while (index < value.size) {
-        let byte = value[index]
-        if (byte == b'&') {
-            out.append("&amp;");
-            index++
-        } else if (byte == b'<') {
-            out.append("&lt;");
-            index++
-        } else if (byte == b'>') {
-            out.append("&gt;");
-            index++
-        } else if (byte == b'"') {
-            out.append("&quot;");
-            index++
-        } else if (byte == b'\'') {
-            out.append("&#39;");
-            index++
-        } else if (safe && (byte < 32 || byte == 127)) {
-            out.append("&#xfffd;");
-            index++
-        } else {
-            let next = rendererNextRune(value, index);
-            out.append(value[index..next]);
-            index = next
-        }
-    }
-    out.toString()
-}
-
-private func uriScheme(uri: String): String {
+private func uriScheme(uri: String, cancellation: CancellationToken): String {
+    cancellation.throwIfCancelled(phase: "render")
     let normalized = StringBuilder()
     var index: Int64 = 0
+    var nextCancellationCheck: Int64 = RENDER_SCAN_CANCELLATION_BYTES
     while (index < uri.size) {
+        if (index >= nextCancellationCheck) {
+            cancellation.throwIfCancelled(phase: "render")
+            nextCancellationCheck = index + RENDER_SCAN_CANCELLATION_BYTES
+        }
         let byte = uri[index]
         if (byte <= 32 || byte == 127) {
             index++;
             continue
         }
         if (byte >= 0x80) {
+            cancellation.throwIfCancelled(phase: "render")
             return ""
         }
         if (byte == b':') {
-            return rendererLowerAscii(normalized.toString())
+            cancellation.throwIfCancelled(phase: "render")
+            return normalized.toString()
         }
         if (byte == b'/' || byte == b'#' || byte == b'?') {
+            cancellation.throwIfCancelled(phase: "render")
             return ""
         }
-        normalized.appendFromUtf8([byte])
+        normalized.appendFromUtf8([if (byte >= b'A' && byte <= b'Z') {
+            byte + 32
+        } else {
+            byte
+        }])
         index++
     }
+    cancellation.throwIfCancelled(phase: "render")
     ""
 }
 
-private func encodeUri(value: String): String {
-    var needsEncoding = false
-    var scan: Int64 = 0
-    while (scan < value.size) {
-        let byte = value[scan]
-        if (byte == b' ' || byte == b'`' || byte == b'"' || byte == b'\\' || byte < 0x20 || byte >= 0x80 || byte == b'[' ||
-            byte == b']') {
-            needsEncoding = true
-            break
+private func rendererNormalizedMimeTypes(values: ImmutableArray<String>): Array<String> {
+    let normalized = ArrayList<String>()
+    for (value in values.toArray()) {
+        let candidate = rendererLowerAscii(value)
+        var duplicate = false
+        for (existing in normalized) {
+            if (existing == candidate) {
+                duplicate = true
+                break
+            }
         }
-        scan++
-    }
-    if (!needsEncoding) {
-        return value
-    }
-    let out = StringBuilder()
-    for (byte in value.toArray()) {
-        if (byte == b' ') {
-            out.append("%20")
-        } else if (byte == b'`') {
-            out.append("%60")
-        } else if (byte == b'"') {
-            out.append("%22")
-        } else if (byte == b'\\') {
-            out.append("%5C")
-        } else if (byte < 0x20 || byte >= 0x80 || byte == b'[' || byte == b']') {
-            appendPercentByte(out, byte)
-        } else {
-            out.appendFromUtf8([byte])
+        if (!duplicate) {
+            normalized.add(candidate)
         }
     }
-    out.toString()
-}
-
-private func appendPercentByte(out: StringBuilder, byte: Byte): Unit {
-    let digits = "0123456789ABCDEF"
-    out.append("%")
-    let high = Int64((byte >> 4) & 0x0F)
-    let low = Int64(byte & 0x0F)
-    out.append(digits[high..high + 1])
-    out.append(digits[low..low + 1])
+    var index: Int64 = 1
+    while (index < normalized.size) {
+        var current = index
+        while (current > 0 && normalized[current] < normalized[current - 1]) {
+            let swap = normalized[current - 1]
+            normalized[current - 1] = normalized[current]
+            normalized[current] = swap
+            current--
+        }
+        index++
+    }
+    normalized.toArray()
 }
 
 private func rendererLowerAscii(value: String): String {
@@ -1488,6 +1876,30 @@ private func rendererLowerAscii(value: String): String {
             index = next
         }
     }
+    out.toString()
+}
+
+private func rendererLowerAsciiCancellable(value: String, cancellation: CancellationToken): String {
+    cancellation.throwIfCancelled(phase: "render")
+    let out = StringBuilder()
+    var index: Int64 = 0
+    var nextCancellationCheck: Int64 = RENDER_SCAN_CANCELLATION_BYTES
+    while (index < value.size) {
+        if (index >= nextCancellationCheck) {
+            cancellation.throwIfCancelled(phase: "render")
+            nextCancellationCheck = index + RENDER_SCAN_CANCELLATION_BYTES
+        }
+        let byte = value[index]
+        if (byte >= b'A' && byte <= b'Z') {
+            out.appendFromUtf8([byte + 32])
+            index++
+        } else {
+            let next = rendererNextRune(value, index)
+            out.append(value[index..next])
+            index = next
+        }
+    }
+    cancellation.throwIfCancelled(phase: "render")
     out.toString()
 }
 
@@ -1524,37 +1936,156 @@ private func stripHtmlTags(value: String): String {
     out.toString()
 }
 
-private func applyGfmTagFilter(value: String): String {
-    let out = StringBuilder()
-    var index: Int64 = 0
-    while (index < value.size) {
-        if (value[index] == b'<') {
-            var nameStart = index + 1
-            if (nameStart < value.size && value[nameStart] == b'/') {
-                nameStart++
-            }
-            var nameEnd = nameStart
-            while (nameEnd < value.size && ((value[nameEnd] >= b'A' && value[nameEnd] <= b'Z') || (value[nameEnd] >= b'a' &&
-                    value[nameEnd] <= b'z'))) {
-                nameEnd++
-            }
-            let name = rendererLowerAscii(value[nameStart..nameEnd])
-            if (isGfmDisallowedTag(name)) {
-                out.append("&lt;");
-                index++;
-                continue
-            }
+private func isGfmDisallowedTagAt(value: String, nameStart: Int64): Bool {
+    var nameEnd = nameStart
+    while (nameEnd < value.size && rendererIsAsciiLetter(value[nameEnd])) {
+        // "plaintext" is the longest GFM tagfilter name. Once a tenth
+        // alphabetic byte is observed, this tag cannot match, so avoid
+        // scanning, slicing, or lowercasing the rest of an attacker-sized
+        // name before the output budget is enforced.
+        if (nameEnd - nameStart >= 9) {
+            return false
         }
-        let next = rendererNextRune(value, index)
-        out.append(value[index..next])
-        index = next
+        nameEnd++
     }
-    out.toString()
+    let length = nameEnd - nameStart
+    if (!isGfmTagFilterBoundary(value, nameEnd)) {
+        return false
+    }
+    match (length) {
+        case 3 => rendererAsciiEqualsIgnoreCase(value, nameStart, "xmp")
+        case 5 => rendererAsciiEqualsIgnoreCase(value, nameStart, "title") || rendererAsciiEqualsIgnoreCase(value,
+            nameStart, "style")
+        case 6 => rendererAsciiEqualsIgnoreCase(value, nameStart, "iframe") || rendererAsciiEqualsIgnoreCase(value,
+            nameStart, "script")
+        case 7 => rendererAsciiEqualsIgnoreCase(value, nameStart, "noembed")
+        case 8 => rendererAsciiEqualsIgnoreCase(value, nameStart, "textarea") || rendererAsciiEqualsIgnoreCase(value,
+            nameStart, "noframes")
+        case 9 => rendererAsciiEqualsIgnoreCase(value, nameStart, "plaintext")
+        case _ => false
+    }
 }
 
-private func isGfmDisallowedTag(name: String): Bool {
-    name == "title" || name == "textarea" || name == "style" || name == "xmp" || name == "iframe" || name == "noembed" ||
-        name == "noframes" || name == "script" || name == "plaintext"
+private func isGfmTagFilterBoundary(value: String, index: Int64): Bool {
+    if (index == value.size) {
+        return true
+    }
+    let byte = value[index]
+    rendererIsAsciiWhitespace(byte) || byte == b'/' || byte == b'>'
+}
+
+private func rendererIsAsciiLetter(byte: Byte): Bool {
+    (byte >= b'A' && byte <= b'Z') || (byte >= b'a' && byte <= b'z')
+}
+
+private func rendererAsciiEqualsIgnoreCase(value: String, start: Int64, expected: String): Bool {
+    rendererAsciiRangeEqualsIgnoreCase(value, start, start + expected.size, expected)
+}
+
+private func rendererAsciiRangeEqualsIgnoreCase(value: String, start: Int64, end: Int64, expected: String): Bool {
+    if (end - start != expected.size) {
+        return false
+    }
+    var index: Int64 = 0
+    while (index < expected.size) {
+        var actual = value[start + index]
+        var wanted = expected[index]
+        if (actual >= b'A' && actual <= b'Z') {
+            actual += 32
+        }
+        if (wanted >= b'A' && wanted <= b'Z') {
+            wanted += 32
+        }
+        if (actual != wanted) {
+            return false
+        }
+        index++
+    }
+    true
+}
+
+private func rendererAsciiWholeEqualsIgnoreCase(value: String, expected: String): Bool {
+    rendererAsciiRangeEqualsIgnoreCase(value, 0, value.size, expected)
+}
+
+private func rendererAsciiWholeEqualsIgnoreCaseCancellable(value: String, expected: String,
+    cancellation: CancellationToken): Bool {
+    cancellation.throwIfCancelled(phase: "render")
+    if (value.size != expected.size) {
+        return false
+    }
+    var index: Int64 = 0
+    var nextCancellationCheck: Int64 = RENDER_SCAN_CANCELLATION_BYTES
+    while (index < value.size) {
+        if (index >= nextCancellationCheck) {
+            cancellation.throwIfCancelled(phase: "render")
+            nextCancellationCheck = index + RENDER_SCAN_CANCELLATION_BYTES
+        }
+        var actual = value[index]
+        var wanted = expected[index]
+        if (actual >= b'A' && actual <= b'Z') {
+            actual += 32
+        }
+        if (wanted >= b'A' && wanted <= b'Z') {
+            wanted += 32
+        }
+        if (actual != wanted) {
+            cancellation.throwIfCancelled(phase: "render")
+            return false
+        }
+        index++
+    }
+    cancellation.throwIfCancelled(phase: "render")
+    true
+}
+
+private func rendererCanonicalManifests(values: ImmutableArray<ExtensionManifest>): Array<ExtensionManifest> {
+    let manifests = values.toArray()
+    var index: Int64 = 1
+    while (index < manifests.size) {
+        var current = index
+        while (current > 0 && rendererManifestComesBefore(manifests[current], manifests[current - 1])) {
+            let swap = manifests[current - 1]
+            manifests[current - 1] = manifests[current]
+            manifests[current] = swap
+            current--
+        }
+        index++
+    }
+    manifests
+}
+
+private func rendererManifestComesBefore(left: ExtensionManifest, right: ExtensionManifest): Bool {
+    if (left.extensionId != right.extensionId) {
+        return left.extensionId < right.extensionId
+    }
+    if (left.semanticVersion != right.semanticVersion) {
+        return left.semanticVersion < right.semanticVersion
+    }
+    if (left.implementationVersion != right.implementationVersion) {
+        return left.implementationVersion < right.implementationVersion
+    }
+    rendererMissingPolicyRank(left.missingRendererPolicy) < rendererMissingPolicyRank(right.missingRendererPolicy)
+}
+
+private func rendererMissingPolicyName(policy: MissingRendererPolicy): String {
+    match (policy) {
+        case MissingRendererPolicy.Error => "error"
+        case MissingRendererPolicy.RenderChildren => "render-children"
+        case MissingRendererPolicy.RenderLiteral => "render-literal"
+        case MissingRendererPolicy.Drop => "drop"
+        case MissingRendererPolicy.CustomFallback => "custom-fallback"
+    }
+}
+
+private func rendererMissingPolicyRank(policy: MissingRendererPolicy): Int64 {
+    match (policy) {
+        case MissingRendererPolicy.Error => 0
+        case MissingRendererPolicy.RenderChildren => 1
+        case MissingRendererPolicy.RenderLiteral => 2
+        case MissingRendererPolicy.Drop => 3
+        case MissingRendererPolicy.CustomFallback => 4
+    }
 }
 
 private func trimTrailingNewlines(value: String): String {
@@ -1565,14 +2096,22 @@ private func trimTrailingNewlines(value: String): String {
     value[..end]
 }
 
-private func rendererFindByte(value: String, byte: Byte, start: Int64): Int64 {
+private func rendererFindByte(value: String, byte: Byte, start: Int64, cancellation: CancellationToken): Int64 {
+    cancellation.throwIfCancelled(phase: "render")
     var index = start
+    var nextCancellationCheck = start + RENDER_SCAN_CANCELLATION_BYTES
     while (index < value.size) {
+        if (index >= nextCancellationCheck) {
+            cancellation.throwIfCancelled(phase: "render")
+            nextCancellationCheck = index + RENDER_SCAN_CANCELLATION_BYTES
+        }
         if (value[index] == byte) {
+            cancellation.throwIfCancelled(phase: "render")
             return index
         };
         index++
     }
+    cancellation.throwIfCancelled(phase: "render")
     -1
 }
 

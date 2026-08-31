@@ -91,4 +91,70 @@ class ArtifactSourceMapTest {
             }
         }
     }
+
+    @TestCase
+    func artifactRejectsParseResultWithMismatchedSourceOrEngine(): Unit {
+        let commonmark = MarkdownEngine.builder().build()
+        let parsed = commonmark.parse("original")
+        let wrongSource = ParseResult(
+            parsed.document,
+            SourceBuffer("different"),
+            parsed.diagnostics.toArray()
+        )
+        expectInvalidArtifact(commonmark, wrongSource, "AST source digest")
+
+        let gfm = MarkdownEngine.builder().profile(MarkdownProfile.gfmModernV1()).build()
+        expectInvalidArtifact(gfm, parsed, "AST profile")
+
+        let gfmProfile = MarkdownProfile.gfmModernV1()
+        let customAlias = MarkdownProfile.custom(gfmProfile.id, gfmProfile.standardVersion)
+        let customProfileEngine = MarkdownEngine.builder().profile(customAlias).build()
+        let gfmParsed = gfm.parse("original")
+        expectInvalidArtifact(customProfileEngine, gfmParsed, "AST profile")
+
+        let gfmArtifact = gfm.createArtifact(gfmParsed)
+        match (customProfileEngine.loadArtifact(gfmArtifact, "original")) {
+            case ArtifactLoadResult.CacheMiss(reason) => @Expect(reason, "profile identity")
+            case _ => @Expect(false)
+        }
+
+        let customDialect = MarkdownDialect
+            .define("artifact-test", "1.0.0")
+            .base(MarkdownProfile.commonMark0312())
+            .build()
+        let custom = MarkdownEngine.builder().dialect(customDialect).build()
+        expectInvalidArtifact(custom, parsed, "AST dialect fingerprint")
+    }
+
+    @TestCase
+    func artifactAcceptsTransformedDocumentThatPreservesParserProvenance(): Unit {
+        let engine = MarkdownEngine.builder().build()
+        let parsed = engine.parse("before")
+        let rewritten = TreeRewriter.rewrite(parsed.document, {
+            node => match (node.kind) {
+                case NodeKind.Text => RewriteAction.MapText("after")
+                case _ => RewriteAction.Keep
+            }
+        })
+        let transformed = ParseResult(rewritten, parsed.source, parsed.diagnostics.toArray())
+        let artifact = engine.createArtifact(transformed)
+        match (engine.loadArtifact(artifact, "before")) {
+            case ArtifactLoadResult.Hit(document) => @Expect(HtmlRenderer().render(document), "<p>after</p>\n")
+            case _ => @Expect(false)
+        }
+    }
+
+    private func expectInvalidArtifact(engine: MarkdownEngine, result: ParseResult, detail: String): Unit {
+        try {
+            engine.createArtifact(result)
+            @Expect(false)
+        } catch (error: MarkdownException) {
+            match (error.code) {
+                case MarkdownErrorCode.InvalidArtifact =>
+                    @Expect(error.phase, "artifact_encode")
+                    @Expect(error.message.contains(detail), true)
+                case _ => @Expect(false)
+            }
+        }
+    }
 }

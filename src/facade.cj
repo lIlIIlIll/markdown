@@ -10,7 +10,7 @@ public class Markdown {
         HtmlRenderer().render(parse(source, profile: profile).ast)
     }
 
-    public static func toSpecHtml(source: String, profile!: MarkdownProfile = MarkdownProfile.commonMark0312()): String {
+    public static unsafe func toSpecHtml(source: String, profile!: MarkdownProfile = MarkdownProfile.commonMark0312()): String {
         HtmlRenderer(options: HtmlOptions.specCompatible()).render(parse(source, profile: profile).ast)
     }
 

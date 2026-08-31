@@ -136,6 +136,21 @@ def main() -> int:
         if current not in quick_reference:
             failures.append(f"current NodeRef API is missing from quick reference: {current}")
 
+    contributing = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
+    required_benchmark_arguments = (
+        "--source target/same-language-benchmark/comparator-sources/markdown4cj.bundle",
+        "--commonmark4cj-source target/same-language-benchmark/comparator-sources/commonmark4cj.bundle",
+        "--product-source target/same-language-benchmark/product-source/markdown.bundle",
+        "--binary-root target/same-language-benchmark/binaries",
+        "--sdk-archive target/same-language-benchmark/toolchain/cangjie-sdk-linux-x64-1.1.3.tar.gz",
+        "--verify-report docs/reports/markdown4cj-comparison-raw.json",
+    )
+    for argument in required_benchmark_arguments:
+        if argument not in contributing:
+            failures.append(f"CONTRIBUTING benchmark verifier is missing: {argument}")
+    if "schema v4" in contributing or "schema v5" not in contributing:
+        failures.append("CONTRIBUTING must document the current same-language schema v5")
+
     if failures:
         for failure in failures:
             print(f"docs check failed: {failure}", file=sys.stderr)
