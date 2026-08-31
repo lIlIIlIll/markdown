@@ -32,12 +32,13 @@ public class NativeLineScanner <: LineScannerAccelerator {
         if (capacity <= 0) {
             return None
         }
-        let records = Array<UInt64>(capacity, repeat: 0u64)
+        let effectiveCapacity = sparseLineRecordCapacity(input, capacity)
+        let records = Array<UInt64>(effectiveCapacity, repeat: 0u64)
         let scannedLines = unsafe {
             let inputHandle = acquireArrayRawData(input)
             let recordsHandle = acquireArrayRawData(records)
             try {
-                MD_Markdown_ScanLines(inputHandle.pointer, input.size, recordsHandle.pointer, capacity)
+                MD_Markdown_ScanLines(inputHandle.pointer, input.size, recordsHandle.pointer, effectiveCapacity)
             } finally {
                 releaseArrayRawData(recordsHandle)
                 releaseArrayRawData(inputHandle)
@@ -50,5 +51,19 @@ public class NativeLineScanner <: LineScannerAccelerator {
             throw IllegalStateException("native line scanner returned an invalid record count")
         }
         Some(LineScanRecords(records, scannedLines))
+    }
+
+    private func sparseLineRecordCapacity(input: Array<Byte>, upperBound: Int64): Int64 {
+        if (input.size < 4096) {
+            return upperBound
+        }
+        var index: Int64 = 0
+        while (index < 64) {
+            if (input[index] == b'\n' || input[index] == b'\r') {
+                return upperBound
+            }
+            index++
+        }
+        min(upperBound, max(16, input.size / 128 + 16))
     }
 }
