@@ -78,6 +78,12 @@ class BenchmarkInputProfilesTest(unittest.TestCase):
         self.assertIn('"benchmarkDriverOptimization": "-O2 --lto thin"', source)
         self.assertIn('"cangjieGcInterval": CANGJIE_GC_INTERVAL', source)
 
+    def test_canonical_matrix_amortizes_process_startup(self) -> None:
+        # The 256 KiB matrix is a library throughput comparison. Keep enough
+        # work inside each process that the fixed Cangjie launcher/runtime cost
+        # cannot dominate a median ratio.
+        self.assertEqual(measure.MATRIX_ITERATIONS, 12)
+
     def test_driver_profiles_produce_the_same_parse_checksum(self) -> None:
         self.assertTrue(DRIVER.exists(), f"benchmark driver is not built: {DRIVER}")
         source = "# heading\r\n\r\nText *em* 😀\n".encode()

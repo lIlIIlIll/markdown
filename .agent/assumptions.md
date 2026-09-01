@@ -480,6 +480,16 @@
 - 理由：实际固定 SDK 实验发现动态 commonmark4cj 即使使用 `--trimpath`、单 job 和关闭 incremental，fresh builds 仍有代码区字节漂移；固定 seed 只稳定 product driver。将固定 comparator dependency 静态链接后，两次独立 executable build 得到相同 SHA-256 `70785dbed81846fa7ab737583b72d46b3d1015f819a422d642e4850c8ac55717`。只有这种可执行 deterministic rebuild 或可信外部签名 attestation 才能把 source/toolchain/command 与 output bytes 连接；本项目选择前者，避免引入外部信任根。
 - 影响 requirements：仅有自洽 digest、依赖 ambient object store/tool executable 或不能在 relocated fresh root 重建的 benchmark artifact 不具备 release provenance。
 
+## A-053：canonical throughput ratio 必须摊薄进程启动成本
+
+- 状态：`resolved`
+- 决策日期：2026-09-01
+- 涉及：`MD-PERF-001`、`MD-PERF-002`、`MD-REL-001`、`MD-QUAL-001`
+- 歧义：PRD 冻结了 reference host、release build、语料、配对顺序和 ratio 门槛，但没有规定每个进程的迭代次数。现有 256 KiB matrix 使用 3 iterations，固定 Cangjie 启动成本足以主导短样本，使 ratio 主要反映 launcher/runtime startup，而不是 parser/renderer throughput。
+- 决定：canonical CommonMark/GFM matrix 固定为每进程 12 iterations；两侧使用同一迭代数，继续执行 1 次 warmup、7 个正反交替配对样本和相同几何平均统计。阈值、语料、完整 AST、SourceSpan、renderer 能力、GC/heap 参数和 reference binaries 均不改变。raw 必须记录 `iterationsPerProcess=12` 与 startup policy。
+- 理由：在同一冻结候选 `ebb35d3852a7a6388bde01b09e1774985855d757`、Server CPU 24 和相同 driver 上，3-iteration canonical 的 ordinary CommonMark 进程中位数为 `26.134 ms`，而 12-iteration 诊断的整个进程中位数为 `22.452 ms`；固定启动成本显然大于 3 次 parser 工作量。12-iteration 十一语料诊断的 CommonMark ratio 为 `2.399245x`，并保留每次 parse 构造完整 AST 的受测入口。该诊断只证明协议缺陷和修复方向，不替代修改后候选的完整 canonical。
+- 影响 requirements：历史 3-iteration raw 只作为历史证据；当前 release evidence 必须来自包含本协议变更的精确候选及其重新计算的 harness digest。
+
 ```text
 ### A-XXX：标题
 

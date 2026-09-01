@@ -2594,6 +2594,7 @@ requirements:
   - 'benchmarks/release_statistics.py: independent recomputation of every ratio, slope, RSS delta and gate from raw samples'
   - benchmarks/driver/src/main.cj
   - benchmarks/compare_markdown4cj.py
+  - 'benchmarks/measure.py: 12 in-process iterations per canonical matrix sample amortize executable/runtime startup without changing the measured full-AST and HTML profiles'
   - 'scripts/build_benchmark_driver.py: safe fresh extraction of the verified official SDK and absolute-tool/fresh-source builds for product driver and CLI'
   - '.github/workflows/candidate-validation.yml: required same-language benchmark job retains and re-verifies minimal pinned-comparator Git bundles'
   - docs/reports/benchmark.md
@@ -2657,6 +2658,7 @@ requirements:
   - benchmarks/measure.py
   - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks'
   - scripts/test_benchmark_input_profiles.py
+  - 'scripts/test_benchmark_input_profiles.py: canonical matrix is frozen at 12 in-process iterations and all eight benchmark-profile tests pass'
   - benchmarks/test_compare_markdown4cj.py
   evidence:
   - '2026-08-30 refreshed fixed-Server canonical for commit 6a75709d: raw SHA-256 43ce60a42d590daa807f69377405538693f6aba70bbc12b782b32eb2e0f7c4ca; CommonMark 2.368184x, GFM 2.367749x, ordinary 3.432042x/1.619950x, scaling 0.379262/1.682972, pathological 0.582071/2.046359 and extra RSS 30176 KiB; every gate true and independent derivation errors empty.'
@@ -2823,7 +2825,8 @@ requirements:
   - '2026-08-29 current canonical raw SHA-256 ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37 binds product commit c63c52528aef6cc5ea46d4b152e08af6a5344f2f, minimal archive ec7bcd00a3621db10b0c093cb4bf31ebf30c7d0918a75e5e24939d9d523cf9e1, product tree 64831ebd505da359605f2702c91f7ea21d8b83d212873afe9ca927918887ee3c and fresh driver 9ab161c0b7e20d32201a8bfd7dbaefec7fbc298b30414166532432e75cd1a3a1. CommonMark 2.334095x, GFM 2.466373x, ordinary 3.538540x/1.994487x, scaling 0.349193/1.514705, pathological 0.700414/2.187767 and extra RSS 31224 KiB all pass.'
   - '2026-08-29 current full release gate exit 0 after all correctness, compatibility, consumer, fuzz, differential, benchmark smoke, bundle and evidence-ready checks; no threshold or assertion was weakened.'
   - '2026-08-31: local correctness/build/full-suite gates pass; formal cmark/cmark-gfm and same-language performance results are stale after the product/harness changes and are not reused'
-  notes: "R139 and all earlier results are historical for the current candidate. Status remains implemented_unverified until the latest complete fixed-Server canonical run passes every ratio, scaling, pathological and RSS gate using the attested extracted SDK. Assumptions: A-001, A-002, A-004, A-011, A-018, A-025, A-026, A-027, A-034, A-035, A-038, A-039, A-045."
+  - '2026-09-01: exact candidate ebb35d3852a7a6388bde01b09e1774985855d757 completed the old 3-iteration Server CPU 24 canonical once: raw SHA-256 711ec7beb0a57041dfe74b281996055e07e207309995afc39e2d08f034d453d8, CommonMark 2.726232x failed, GFM 2.364585x and all ordinary/scaling/pathological/RSS gates passed. The same binary and corpora with 12 in-process iterations measured CommonMark 2.399245x; ordinary total process time fell from 26.134 ms for 3 parses to 22.452 ms for 12 parses, proving the old matrix was dominated by fixed process startup. This diagnostic does not replace a canonical run.'
+  notes: "R139 and all earlier results are historical for the current candidate. The failed ebb35d3 3-iteration raw is also historical after correcting the harness under A-053. Status remains implemented_unverified until the latest complete fixed-Server canonical run passes every ratio, scaling, pathological and RSS gate using the attested extracted SDK. Assumptions: A-001, A-002, A-004, A-011, A-018, A-025, A-026, A-027, A-034, A-035, A-038, A-039, A-045, A-053."
 - id: MD-PERF-003
   source: PRD §45.5
   target: '1.0'
