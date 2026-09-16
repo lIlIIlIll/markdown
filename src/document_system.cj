@@ -3,9 +3,17 @@ package markdown
 import std.collection.*
 import std.unicode.*
 
+/** DocumentGraph 使用的显式文档 ID 和 source 文本。 */
 public class DocumentInput {
+    /** 文档的唯一标识。 */
     public let id: String
+    /** 文档的 Markdown source 文本。 */
     public let source: String
+    /**
+     * 创建文档输入；`id` 为空时抛出 `IllegalArgumentException`。
+     * @param id 文档的唯一标识。
+     * @param source 文档的 Markdown source 文本。
+     */
     public init(id: String, source: String) {
         if (id.isEmpty()) {
             throw IllegalArgumentException("document id must not be empty")
@@ -15,10 +23,20 @@ public class DocumentInput {
     }
 }
 
+/** 从一个文档中的 link NodeId 指向 destination 的图边。 */
 public class DocumentGraphEdge {
+    /** link 所在文档的 ID。 */
     public let sourceDocumentId: String
+    /** link 目标文本。 */
     public let destination: String
+    /** link 节点的 id。 */
     public let nodeId: NodeId
+    /**
+     * 创建图边。
+     * @param sourceDocumentId link 所在文档的 ID。
+     * @param destination link 目标文本。
+     * @param nodeId link 节点的 id。
+     */
     public init(sourceDocumentId: String, destination: String, nodeId: NodeId) {
         this.sourceDocumentId = sourceDocumentId
         this.destination = destination
@@ -26,18 +44,34 @@ public class DocumentGraphEdge {
     }
 }
 
+/** 跨文档 reference definition 及其所属文档 ID。 */
 public class CrossDocumentReference {
+    /** definition 所属文档 ID。 */
     public let documentId: String
+    /** 引用定义。 */
     public let definition: ReferenceDefinition
+    /**
+     * 创建跨文档引用。
+     * @param documentId definition 所属文档 ID。
+     * @param definition 引用定义。
+     */
     public init(documentId: String, definition: ReferenceDefinition) {
         this.documentId = documentId
         this.definition = definition
     }
 }
 
+/**
+ * 对调用方提供的多个文档构建 snapshot 和 link edge 图。
+ *
+ * `build` 不读取文件或访问网络；`documentIds` 保留输入顺序，reference resolution
+ * 也按该顺序查找 effective definition。
+ */
 public class DocumentGraph {
     private let snapshots: HashMap<String, DocumentSnapshot>
+    /** 输入顺序的文档 ID 列表。 */
     public let documentIds: ImmutableArray<String>
+    /** 跨文档 link edges。 */
     public let edges: ImmutableArray<DocumentGraphEdge>
 
     private init(ids: Array<String>, snapshots: HashMap<String, DocumentSnapshot>, edges: Array<DocumentGraphEdge>) {
@@ -46,6 +80,13 @@ public class DocumentGraph {
         this.edges = ImmutableArray<DocumentGraphEdge>(edges)
     }
 
+    /** 解析所有 inputs 并建立文档快照与 link edges。
+     * @param engine 用于解析的 engine。
+     * @param inputs 文档输入列表；id 重复时抛出异常。
+     * @return 包含 snapshot 和 link edges 的 `DocumentGraph`。
+     * @throws IllegalArgumentException 文档 id 重复时。
+     * @throws MarkdownException 解析失败（含超限或取消）时。
+     */
     public static func build(engine: MarkdownEngine, inputs: Array<DocumentInput>): DocumentGraph {
         let ids = ArrayList<String>()
         let snapshots = HashMap<String, DocumentSnapshot>()
@@ -66,10 +107,18 @@ public class DocumentGraph {
         DocumentGraph(ids.toArray(), snapshots, edges.toArray())
     }
 
+    /** 按文档 ID 返回 snapshot。
+     * @param id 文档唯一标识。
+     * @return 对应 snapshot；不存在时为 `None`。
+     */
     public func snapshot(id: String): ?DocumentSnapshot {
         snapshots.get(id)
     }
 
+    /** 按输入顺序查找第一个 effective reference definition。
+     * @param label 引用 label。
+     * @return 第一个生效的跨文档引用；不存在时为 `None`。
+     */
     public func resolveReference(label: String): ?CrossDocumentReference {
         let normalized = normalizeGraphLabel(label)
         for (id in documentIds.toArray()) {
@@ -86,19 +135,33 @@ public class DocumentGraph {
     }
 }
 
+/** HTML 转 Markdown 的输入信任策略。 */
 public enum HtmlInputPolicy {
+    /** 拒绝包含 script、style 或事件处理的输入。 */
     | RejectDangerous
+    /** 信任输入，仅做结构转换。 */
     | Trusted
 }
 
+/** HTML 转 Markdown 对未知 tag 的保真策略。 */
 public enum HtmlFidelityPolicy {
+    /** 丢弃未知 tag，仅保留语义内容。 */
     | Semantic
+    /** 原样保留未知 tag 文本。 */
     | PreserveUnknownHtml
 }
 
+/** HTML 转 Markdown 的安全和保真选项。 */
 public class HtmlToMarkdownOptions {
+    /** 输入信任策略。 */
     public let inputPolicy: HtmlInputPolicy
+    /** 未知 tag 保真策略。 */
     public let fidelityPolicy: HtmlFidelityPolicy
+    /**
+     * 创建转换选项。
+     * @param inputPolicy 输入信任策略。
+     * @param fidelityPolicy 未知 tag 保真策略。
+     */
     public init(inputPolicy!: HtmlInputPolicy = HtmlInputPolicy.RejectDangerous,
         fidelityPolicy!: HtmlFidelityPolicy = HtmlFidelityPolicy.Semantic) {
         this.inputPolicy = inputPolicy
@@ -106,12 +169,24 @@ public class HtmlToMarkdownOptions {
     }
 }
 
+/** 将受限 HTML 结构转换为 Markdown 的 converter。 */
 public class HtmlToMarkdownConverter {
+    /** 转换选项。 */
     public let options: HtmlToMarkdownOptions
+    /**
+     * 创建 converter。
+     * @param options 转换选项。
+     */
     public init(options!: HtmlToMarkdownOptions = HtmlToMarkdownOptions()) {
         this.options = options
     }
 
+    /** 转换 HTML；`RejectDangerous` 遇到 script/style/event handler 等输入会失败。
+     * @param html 受限 HTML 输入。
+     * @return 转换得到的 Markdown 文本。
+     * @throws MarkdownException 输入被判定为危险 HTML 时。
+     * @throws IllegalArgumentException 出现未闭合的 HTML tag 时。
+     */
     public func convert(html: String): String {
         if (let HtmlInputPolicy.RejectDangerous <- options.inputPolicy) {
             let lower = html.toLower()
@@ -179,11 +254,23 @@ internal class ParsedDocumentTag {
     }
 }
 
+/** virtual syntax tree 的一页，包含源码范围、相交 tokens 和 NodeIds。 */
 public class VirtualTreePage {
+    /** 页序号，从 0 开始。 */
     public let index: Int64
+    /** 本页覆盖的 source span。 */
     public let sourceRange: SourceSpan
+    /** 与本页相交的 syntax tokens。 */
     public let tokens: ImmutableArray<SyntaxToken>
+    /** 与本页相交的节点 id。 */
     public let nodeIds: ImmutableArray<NodeId>
+    /**
+     * 创建虚拟树页。
+     * @param index 页序号。
+     * @param sourceRange 本页覆盖的 source span。
+     * @param tokens 与本页相交的 syntax tokens。
+     * @param nodeIds 与本页相交的节点 id。
+     */
     public init(index: Int64, sourceRange: SourceSpan, tokens: Array<SyntaxToken>, nodeIds: Array<NodeId>) {
         this.index = index
         this.sourceRange = sourceRange
@@ -192,10 +279,24 @@ public class VirtualTreePage {
     }
 }
 
+/**
+ * 将已完整解析 snapshot 按 byte 分页的虚拟 CST 视图。
+ *
+ * 它不会替代完整 AST/CST；page 访问按 `pageBytes` 扫描并受 cancellation 与 budget
+ * 约束。
+ */
 public class VirtualSyntaxTree {
+    /** 分页来源的 snapshot。 */
     public let snapshot: DocumentSnapshot
+    /** 每页的 byte 数。 */
     public let pageBytes: Int64
+    /** 总页数。 */
     public let pageCount: Int64
+    /**
+     * 创建虚拟 CST 视图。
+     * @param snapshot 已完整解析的 snapshot。
+     * @param pageBytes 每页 byte 数，必须为正。
+     */
     public init(snapshot: DocumentSnapshot, pageBytes!: Int64 = 65536) {
         if (pageBytes <= 0) {
             throw IllegalArgumentException("virtual page size must be positive")
@@ -205,6 +306,14 @@ public class VirtualSyntaxTree {
         pageCount = (snapshot.result.source.byteLength() + pageBytes - 1) / pageBytes
     }
 
+    /** 返回指定页；index 越界时失败。
+     * @param index 页序号。
+     * @param cancellation 协作式取消信号。
+     * @param budget 单次分页的操作预算。
+     * @return 对应页内容。
+     * @throws IllegalArgumentException index 越界时。
+     * @throws MarkdownException 取消或预算耗尽时。
+     */
     public func page(index: Int64, cancellation!: CancellationToken = CancellationToken.none(),
         budget!: OperationBudget = OperationBudget.safe()): VirtualTreePage {
         if (index < 0 || index >= pageCount) {

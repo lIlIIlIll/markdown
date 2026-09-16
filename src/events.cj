@@ -4,28 +4,49 @@ import std.collection.*
 
 private let RAW_BLOCK_INPUT_CANCELLATION_BYTES: Int64 = 1024
 
-/** Source-driven event semantics. Resolved mode performs a reference-index
- * pass before semantic lowering; raw block mode intentionally does not promise
- * reference resolution and is available incrementally through a session. */
+/**
+ * source event 的语义模式。
+ *
+ * `ResolvedEventMode` 先建立 reference index；`RawBlockEventMode` 不承诺全局
+ * reference resolution，并可通过 session 增量消费。
+ */
 public enum MarkdownEventMode {
+    /** 先建立 reference index 的完整语义模式。 */
     | ResolvedEventMode
+    /** 不承诺全局 reference resolution、可增量消费的 raw block 模式。 */
     | RawBlockEventMode
 }
 
+/** source event 的生命周期或节点事件类别。 */
 public enum MarkdownSourceEventKind {
+    /** 文档开始。 */
     | DocumentStart
+    /** 文档结束。 */
     | DocumentEnd
+    /** block 节点开始。 */
     | BlockStart
+    /** block 节点结束。 */
     | BlockEnd
+    /** inline 节点开始。 */
     | InlineStart
+    /** inline 节点结束。 */
     | InlineEnd
+    /** 文本叶子事件。 */
     | Text
 }
 
+/** 事件携带的稳定字符串属性。 */
 public struct MarkdownEventAttribute {
+    /** 属性名称，不能为空。 */
     public let name: String
+    /** 属性值。 */
     public let value: String
 
+    /**
+     * 创建事件属性。
+     * @param name 属性名称，不能为空。
+     * @param value 属性值。
+     */
     public init(name: String, value: String) {
         if (name.isEmpty()) {
             throw IllegalArgumentException("event attribute name must not be empty")
@@ -35,17 +56,38 @@ public struct MarkdownEventAttribute {
     }
 }
 
-/** Immutable event value. It contains source identity and semantic values but
- * deliberately cannot retain a Document, NodeRef, or parser-owned node. */
+/**
+ * 不持有 `Document` 或 `NodeRef` 的不可变 source event。
+ *
+ * `sourceRange` 和 `textSourceRange` 使用半开 UTF-8 byte range；在 raw mode 中
+ * `finalSemantics` 为 false。
+ */
 public class MarkdownSourceEvent {
+    /** 事件类别。 */
     public let kind: MarkdownSourceEventKind
+    /** 对应的 AST 节点类别；未知时为 `None`。 */
     public let nodeKind: ?NodeKind
+    /** 事件覆盖的 source span。 */
     public let sourceRange: ?SourceSpan
+    /** 事件文本覆盖的 source span。 */
     public let textSourceRange: ?SourceSpan
+    /** 文本事件的语义值。 */
     public let semanticValue: ?String
+    /** 稳定字符串属性列表。 */
     public let attributes: ImmutableArray<MarkdownEventAttribute>
+    /** 语义是否最终确定；raw mode 中为 `false`。 */
     public let finalSemantics: Bool
 
+    /**
+     * 创建 source event。
+     * @param kind 事件类别。
+     * @param nodeKind 对应的 AST 节点类别。
+     * @param sourceRange 事件覆盖的 source span。
+     * @param textSourceRange 事件文本覆盖的 source span。
+     * @param semanticValue 文本事件的语义值。
+     * @param attributes 稳定字符串属性列表。
+     * @param finalSemantics 语义是否最终确定。
+     */
     public init(kind: MarkdownSourceEventKind, nodeKind!: ?NodeKind = None, sourceRange!: ?SourceSpan = None,
         textSourceRange!: ?SourceSpan = None, semanticValue!: ?String = None,
         attributes!: Array<MarkdownEventAttribute> = [], finalSemantics!: Bool = true) {
@@ -59,17 +101,29 @@ public class MarkdownSourceEvent {
     }
 }
 
-/** Streaming consumer for source events. Implementations are called in source
- * order and may process each event without retaining the full event sequence. */
+/** 按 source 顺序消费事件的 sink；实现可以不保留完整事件序列。 */
 public interface MarkdownEventSink {
+    /** 处理一个 source event。
+     * @param event 按 source 顺序到来的事件。
+     */
     func onEvent(event: MarkdownSourceEvent): Unit
 }
 
+/** `emitEvents` 完成后的模式、诊断和事件计数。 */
 public class EventParseSummary {
+    /** 实际使用的解析模式。 */
     public let mode: MarkdownEventMode
+    /** 解析诊断。 */
     public let diagnostics: ImmutableArray<Diagnostic>
+    /** 发出的事件总数。 */
     public let emittedEvents: Int64
 
+    /**
+     * 创建解析摘要。
+     * @param mode 实际使用的解析模式。
+     * @param diagnostics 解析诊断。
+     * @param emittedEvents 发出的事件总数。
+     */
     public init(mode: MarkdownEventMode, diagnostics: Array<Diagnostic>, emittedEvents: Int64) {
         this.mode = mode
         this.diagnostics = ImmutableArray<Diagnostic>(diagnostics)
@@ -77,11 +131,21 @@ public class EventParseSummary {
     }
 }
 
+/** `parseEvents` 收集的事件数组及其诊断。 */
 public class EventParseResult {
+    /** 实际使用的解析模式。 */
     public let mode: MarkdownEventMode
+    /** 按 source 顺序收集的事件数组。 */
     public let events: ImmutableArray<MarkdownSourceEvent>
+    /** 解析诊断。 */
     public let diagnostics: ImmutableArray<Diagnostic>
 
+    /**
+     * 创建事件解析结果。
+     * @param mode 实际使用的解析模式。
+     * @param events 按 source 顺序收集的事件数组。
+     * @param diagnostics 解析诊断。
+     */
     public init(mode: MarkdownEventMode, events: Array<MarkdownSourceEvent>, diagnostics: Array<Diagnostic>) {
         this.mode = mode
         this.events = ImmutableArray<MarkdownSourceEvent>(events)
@@ -94,6 +158,10 @@ public class EventParseResult {
  * this observer only lets same-package tests trigger cancellation at an exact
  * byte checkpoint without relying on scheduler timing. */
 internal interface RawBlockScanCheckpointObserver {
+    /** 在 raw block 扫描 checkpoint 处回调，用于测试注入取消点。
+     * @param phase 当前扫描阶段名称。
+     * @param bytesProcessed 已处理的字节数。
+     */
     func onRawBlockScanCheckpoint(phase: String, bytesProcessed: Int64): Unit
 }
 
@@ -198,6 +266,9 @@ private class RawBlockScanState {
 internal class CollectingMarkdownEventSink <: MarkdownEventSink {
     private let values = ArrayList<MarkdownSourceEvent>()
 
+    /** 将事件追加到内部数组。
+     * @param event 到达的事件。
+     */
     public func onEvent(event: MarkdownSourceEvent): Unit {
         values.add(event)
     }
@@ -215,6 +286,9 @@ internal class CountingForwardEventSink <: MarkdownEventSink {
         this.target = target
     }
 
+    /** 计数并转发事件到目标 sink。
+     * @param event 到达的事件。
+     */
     public func onEvent(event: MarkdownSourceEvent): Unit {
         count++
         target.onEvent(event)
@@ -374,8 +448,15 @@ internal class ParserEventEmitter {
 }
 
 extend MarkdownEngine {
-    /** Convenience collector. Use emitEvents() when event-array retention is
-     * undesirable. Resolved mode is the default semantic contract. */
+    /** 收集 source events；需要降低事件数组保留时请使用 `emitEvents()`。
+     * @param source 待解析的 Markdown 文本。
+     * @param mode 事件语义模式。
+     * @param cancellation 协作式取消信号。
+     * @param budget 单次解析的操作预算。
+     * @return 收集的事件数组与诊断。
+     * @throws LimitExceededException 输入超过上限时。
+     * @throws MarkdownException 取消或预算耗尽时。
+     */
     public func parseEvents(source: String, mode!: MarkdownEventMode = MarkdownEventMode.ResolvedEventMode,
         cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): EventParseResult {
         let sink = CollectingMarkdownEventSink()
@@ -383,8 +464,16 @@ extend MarkdownEngine {
         EventParseResult(mode, sink.toArray(), summary.diagnostics.toArray())
     }
 
-    /** Emits events directly from transient parser blocks. Resolved mode first
-     * builds the reference index; raw mode intentionally skips that pass. */
+    /** 直接向 sink 发出 transient parser block 的事件，不构造完整 AST。
+     * @param source 待解析的 Markdown 文本。
+     * @param sink 事件接收 sink。
+     * @param mode 事件语义模式。
+     * @param cancellation 协作式取消信号。
+     * @param budget 单次解析的操作预算。
+     * @return 模式、诊断和事件计数摘要。
+     * @throws LimitExceededException 输入超过上限时。
+     * @throws MarkdownException 取消、预算耗尽或 dialect 含 document processors 时。
+     */
     public func emitEvents(source: String, sink: MarkdownEventSink,
         mode!: MarkdownEventMode = MarkdownEventMode.ResolvedEventMode,
         cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): EventParseSummary {
@@ -415,15 +504,26 @@ extend MarkdownEngine {
         EventParseSummary(mode, diagnostics, emitter.emittedEvents + 2)
     }
 
-    /** Starts true incremental raw-block execution. feed() may return events
-     * for blocks proven closed by subsequent source; finish() emits the final
-     * buffered block and DocumentEnd. */
+    /**
+     * 创建真正增量的 raw-block session。
+     *
+     * 后续输入证明 block 已闭合时，`feed` 可以返回该 block 的事件；`finish` 发出
+     * 最后的缓冲 block 和 `DocumentEnd`。
+     * @param utf8Policy 输入解码策略。
+     * @param cancellation 协作式取消信号。
+     * @param budget 会话操作预算。
+     * @return 新的 raw-block 事件 session。
+     */
     public func newRawBlockEventSession(utf8Policy!: Utf8Policy = Utf8Policy.Strict,
         cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): RawBlockEventSession {
         RawBlockEventSession(this, utf8Policy, cancellation, budget)
     }
 }
 
+/**
+ * 真正增量的 raw-block 事件 session；`feed` 返回已证明闭合 block 的事件，
+ * `finish` 发出剩余缓冲 block 和 `DocumentEnd`。
+ */
 public class RawBlockEventSession {
     private let engine: MarkdownEngine
     private let utf8Policy: Utf8Policy
@@ -510,6 +610,13 @@ public class RawBlockEventSession {
         this.scanCheckpointObserver = scanCheckpointObserver
     }
 
+    /** 追加 String chunk，并返回本次已证明闭合的 raw-block events。
+     * @param chunk 要追加的文本块。
+     * @return 本次已证明闭合 block 的事件数组。
+     * @throws IllegalStateException session 已 finish 后调用时。
+     * @throws LimitExceededException 输入总量超过上限时。
+     * @throws MarkdownException 取消时。
+     */
     public func feed(chunk: String): Array<MarkdownSourceEvent> {
         prepareFeed(chunk.size)
         // Lifecycle, cancellation, and input-limit failures must occur before
@@ -517,6 +624,13 @@ public class RawBlockEventSession {
         acceptPreparedChunk(chunk.toArray())
     }
 
+    /** 追加 UTF-8 byte chunk，并返回可安全发出的 raw-block events。
+     * @param chunk 要追加的字节块。
+     * @return 本次已证明闭合 block 的事件数组。
+     * @throws IllegalStateException session 已 finish 后调用时。
+     * @throws LimitExceededException 输入总量超过上限时。
+     * @throws MarkdownException 取消时。
+     */
     public func feed(chunk: Array<Byte>): Array<MarkdownSourceEvent> {
         acceptPreparedChunk(chunk)
     }
@@ -616,6 +730,12 @@ public class RawBlockEventSession {
         closureCandidate = state.closureCandidate
     }
 
+    /**
+     * 结束 session，发出剩余 block、DocumentEnd，并禁止后续 feed。
+     * @return 剩余 block 事件和 `DocumentEnd`。
+     * @throws IllegalStateException session 已 finish 后调用时。
+     * @throws MarkdownException 取消时。
+     */
     public func finish(): Array<MarkdownSourceEvent> {
         ensureOpen()
         cancellation.throwIfCancelled(phase: "input")

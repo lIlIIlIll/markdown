@@ -2,17 +2,34 @@ package markdown
 
 import std.collection.*
 
-/** Arena rewrite decisions. NodeRef operands must belong to the input
- * Document; inserted and replacement subtrees are cloned into the result. */
+/**
+ * arena rewrite 的动作集合。
+ *
+ * 作为参数的 `NodeRef` 必须属于输入 Document；插入和替换的 subtree 会复制到结果
+ * 中，`MapText` 和 `ReplaceText` 只适用于 Text 节点。
+ *
+ * `Keep`、`Replace`、`Remove`、`InsertBefore`、`InsertAfter`、`ReplaceChildren`、
+ * `MapText`、`ReplaceText` 和 `DetachLiteral` 分别表达保留、替换、删除、插入、
+ * 子树替换、文本映射和 literal ownership 转移。
+ */
 public enum RewriteAction {
+    /** 保留当前节点不变。 */
     | Keep
+    /** 用给定 subtree 副本替换当前节点。 */
     | Replace(NodeRef)
+    /** 删除当前节点。 */
     | Remove
+    /** 在当前节点之前插入给定 subtree 副本集合。 */
     | InsertBefore(Array<NodeRef>)
+    /** 在当前节点之后插入给定 subtree 副本集合。 */
     | InsertAfter(Array<NodeRef>)
+    /** 用给定 subtree 副本集合替换当前节点的全部子节点。 */
     | ReplaceChildren(Array<NodeRef>)
+    /** 以映射结果替换 Text 节点文本；仅适用于 Text 节点。 */
     | MapText(String)
+    /** 以（匹配文本，替换文本）对替换 Text 节点内容；仅适用于 Text 节点。 */
     | ReplaceText(String, String)
+    /** 解除节点的 literal ownership，使原始文本不再进入输出。 */
     | DetachLiteral
 }
 
@@ -25,7 +42,19 @@ private class ArenaRewriteFrame {
     }
 }
 
+/** 对 arena AST 执行后序、非递归 transform 并重新验证结果。 */
 public class TreeRewriter {
+    /**
+     * 按每个节点的 RewriteAction 生成新 Document。
+     *
+     * 没有变化时可以返回原 Document；结果会经过 `AstInvariantValidator` 验证，并受
+     * transform budget 与 cancellation 约束。
+     * @param document 输入 Document。
+     * @param transform 为每个节点返回 rewrite action 的 callback。
+     * @param budget 可选 transform budget。
+     * @param cancellation 可选取消 token。
+     * @return 重写后的 Document。
+     */
     public static func rewrite(
         document: Document,
         transform: (NodeRef) -> RewriteAction,

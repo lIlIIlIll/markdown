@@ -5,21 +5,46 @@ import std.convert.*
 import std.io.InputStream
 import std.unicode.*
 
+/** 将 byte 输入解码为文本时采用的 UTF-8 错误策略。 */
 public enum Utf8Policy {
+    /** 遇到无效 UTF-8 序列时解析失败。 */
     | Strict
+    /** 将无效 UTF-8 序列替换为 U+FFFD 后继续。 */
     | ReplaceInvalid
 }
 
+/**
+ * 一次完整解析的结果。
+ *
+ * `document` 为 arena AST，`source` 携带原始输入与位置映射，`diagnostics`
+ * 保留可恢复诊断。
+ */
 public class ParseResult {
-    /** Complete immutable arena Document produced by the parser. */
+    /** 完整且不可变的 arena AST；失败的 `tryParse` 结果包含空文档。 */
     public let document: Document
+    /** 与结果对应的原始文本、byte range 和位置映射。 */
     public let source: SourceBuffer
+    /** 解析过程中保留的可恢复诊断。 */
     public let diagnostics: ImmutableArray<Diagnostic>
+    /** 是否完成了完整解析；正常 `parse` 结果为 true。 */
     public let isComplete: Bool
+    /** `tryParse` 失败时可用的停止位置。 */
     public let stoppedAt: ?SourceSpan
+    /** `tryParse` 失败时记录的阶段名称。 */
     public let unfinishedPhase: String
+    /** `tryParse` 捕获的异常；正常结果为空。 */
     public let errors: ImmutableArray<MarkdownException>
 
+    /**
+     * 创建解析结果。
+     * @param document 完整且不可变的 arena AST。
+     * @param source 与结果对应的原始文本和位置映射。
+     * @param diagnostics 解析过程中保留的可恢复诊断。
+     * @param isComplete 是否完成了完整解析。
+     * @param stoppedAt `tryParse` 失败时的停止位置。
+     * @param unfinishedPhase `tryParse` 失败时记录的阶段名称。
+     * @param errors `tryParse` 捕获的异常。
+     */
     public init(document: Document, source: SourceBuffer, diagnostics: Array<Diagnostic>, isComplete!: Bool = true,
         stoppedAt!: ?SourceSpan = None, unfinishedPhase!: String = "", errors!: Array<MarkdownException> = []) {
         this.document = document
@@ -31,6 +56,7 @@ public class ParseResult {
         this.errors = ImmutableArray<MarkdownException>(errors)
     }
 
+    /** 兼容别名：返回解析得到的 `Document`。 */
     public prop ast: Document {
         get() {
             document
@@ -38,6 +64,13 @@ public class ParseResult {
     }
 }
 
+/**
+ * 构造不可变 `MarkdownEngine` 的 fluent builder。
+ *
+ * 默认 profile 是 CommonMark 0.31.2，默认限制是 `ParseLimits.safe()`。
+ * 设置 `dialect` 会采用其 base profile；只有调用方已经显式设置 limits 时才保留
+ * builder 中的 limits。
+ */
 public class MarkdownEngineBuilder {
     private var profileValue = MarkdownProfile.commonMark0312()
     private var limitsValue = ParseLimits.safe()
@@ -45,20 +78,33 @@ public class MarkdownEngineBuilder {
     private var limitsExplicit = false
     private var nativeScannerEnabledValue = true
 
+    /** 创建默认配置的 builder。 */
     public init() {}
 
+    /** 选择 profile，并清除之前设置的 dialect。
+     * @param profile 要使用的 profile。
+     * @return 同一 builder，支持链式调用。
+     */
     public func profile(profile: MarkdownProfile): MarkdownEngineBuilder {
         profileValue = profile
         dialectValue = None
         this
     }
 
+    /** 覆盖 parser 和 renderer 使用的结构限制。
+     * @param limits 要使用的结构限制。
+     * @return 同一 builder，支持链式调用。
+     */
     public func limits(limits: ParseLimits): MarkdownEngineBuilder {
         limitsValue = limits
         limitsExplicit = true
         this
     }
 
+    /** 安装待编译的 dialect；未显式设置 limits 时同步采用 dialect limits。
+     * @param dialect 要安装的 dialect 定义。
+     * @return 同一 builder，支持链式调用。
+     */
     public func dialect(dialect: MarkdownDialect): MarkdownEngineBuilder {
         dialectValue = Some(dialect)
         profileValue = dialect.baseProfile
@@ -68,11 +114,20 @@ public class MarkdownEngineBuilder {
         this
     }
 
+    /** 允许或禁止已经注入的 native scanner；不会自动链接 native library。
+     * @param enabled 是否启用 native scanner。
+     * @return 同一 builder，支持链式调用。
+     */
     public func nativeScannerEnabled(enabled: Bool): MarkdownEngineBuilder {
         nativeScannerEnabledValue = enabled
         this
     }
 
+    /**
+     * 编译 dialect 并返回不可变 engine。
+     * @return 编译完成的不可变 engine。
+     * @throws MarkdownException dialect 编译失败时。
+     */
     public func build(): MarkdownEngine {
         let compiled = match (dialectValue) {
             case Some(dialect) => DialectCompiler.compile(dialect)
@@ -82,9 +137,18 @@ public class MarkdownEngineBuilder {
     }
 }
 
+/**
+ * Markdown 解析 engine。
+ *
+ * engine 持有 profile、limits 和已编译 dialect，可重复用于多个操作；每个操作的
+ * cancellation token 与 `OperationBudget` 默认独立创建。
+ */
 public class MarkdownEngine {
+    /** engine 使用的 profile。 */
     public let profile: MarkdownProfile
+    /** engine 使用的结构限制。 */
     public let limits: ParseLimits
+    /** engine 的已编译 dialect。 */
     public let dialect: CompiledMarkdownDialect
     internal let nativeScannerEnabledValue: Bool
 
@@ -96,10 +160,23 @@ public class MarkdownEngine {
         this.nativeScannerEnabledValue = nativeScannerEnabled
     }
 
+    /**
+     * 返回新的 builder。
+     * @return 新的 builder。
+     */
     public static func builder(): MarkdownEngineBuilder {
         MarkdownEngineBuilder()
     }
 
+    /**
+     * 从 String 构造完整 AST；失败会抛出 `MarkdownException`。
+     * @param value 要解析的 Markdown 文本。
+     * @param cancellation 可选取消 token。
+     * @param budget 可选 operation budget。
+     * @return 完整的 `ParseResult`。
+     * @throws LimitExceededException 输入超过 `maximumInputBytes` 时。
+     * @throws MarkdownException 取消或预算耗尽时。
+     */
     public func parse(
         value: String,
         cancellation!: CancellationToken = CancellationToken.none(),
@@ -113,6 +190,13 @@ public class MarkdownEngine {
         parseSource(SourceBuffer(value), [], cancellation, budget, noAccelerator)
     }
 
+    /**
+     * `tryParse` 的兼容名称；失败时返回不完整结果和空文档。
+     * @param value 要解析的 Markdown 文本。
+     * @param cancellation 可选取消 token。
+     * @param budget 可选 operation budget。
+     * @return 完整或不完整的 `ParseResult`。
+     */
     public func parsePartial(
         value: String,
         cancellation!: CancellationToken = CancellationToken.none(),
@@ -122,8 +206,11 @@ public class MarkdownEngine {
     }
 
     /**
-     * Returns either a complete parse or a failure result with an empty
-     * document. It does not expose a completed AST prefix.
+     * 捕获 `MarkdownException` 并返回 `isComplete=false` 的结果，不暴露 AST 前缀。
+     * @param value 要解析的 Markdown 文本。
+     * @param cancellation 可选取消 token。
+     * @param budget 可选 operation budget。
+     * @return 成功结果或包含 `errors` 的不完整结果。
      */
     public func tryParse(
         value: String,
@@ -141,6 +228,16 @@ public class MarkdownEngine {
         }
     }
 
+    /**
+     * 从 UTF-8 bytes 解析；默认 `Utf8Policy.Strict`，保留原始 byte offset 语义。
+     * @param bytes 原始 UTF-8 bytes。
+     * @param utf8Policy 非法 UTF-8 的处理策略。
+     * @param cancellation 可选取消 token。
+     * @param budget 可选 operation budget。
+     * @return 完整的 `ParseResult`。
+     * @throws LimitExceededException 输入超过 `maximumInputBytes` 时。
+     * @throws MarkdownException 取消、预算耗尽或解码失败时。
+     */
     public func parse(
         bytes: Array<Byte>,
         utf8Policy!: Utf8Policy = Utf8Policy.Strict,
@@ -166,6 +263,15 @@ public class MarkdownEngine {
         parseSource(decoded.source, decoded.diagnostics, cancellation, budget, accelerator)
     }
 
+    /**
+     * 消费一次性 `OwnedUtf8Input`；输入所有权转移后不再复制或重复校验。
+     * @param input 已转移所有权的 UTF-8 输入。
+     * @param cancellation 可选取消 token。
+     * @param budget 可选 operation budget。
+     * @return 完整的 `ParseResult`。
+     * @throws LimitExceededException 输入超过 `maximumInputBytes` 时。
+     * @throws MarkdownException 取消、预算耗尽或解码失败时。
+     */
     public func parse(
         input: OwnedUtf8Input,
         cancellation!: CancellationToken = CancellationToken.none(),
@@ -175,6 +281,15 @@ public class MarkdownEngine {
         parseOwnedWithAccelerator(input, cancellation, budget, noAccelerator)
     }
 
+    /**
+     * 解析可重复使用的 `ReusableUtf8Input`。
+     * @param input 可重复使用的 UTF-8 输入。
+     * @param cancellation 可选取消 token。
+     * @param budget 可选 operation budget。
+     * @return 完整的 `ParseResult`。
+     * @throws LimitExceededException 输入超过 `maximumInputBytes` 时。
+     * @throws MarkdownException 取消、预算耗尽或解码失败时。
+     */
     public func parse(
         input: ReusableUtf8Input,
         cancellation!: CancellationToken = CancellationToken.none(),
@@ -215,6 +330,17 @@ public class MarkdownEngine {
         parseSource(SourceBuffer(value, bytes, true), [], cancellation, budget, accelerator)
     }
 
+    /**
+     * 全量读取 `InputStream` 后解析；stream 路径不会降低峰值内存。
+     * @param input 输入流。
+     * @param utf8Policy 非法 UTF-8 的处理策略。
+     * @param cancellation 可选取消 token。
+     * @param budget 可选 operation budget。
+     * @return 完整的 `ParseResult`。
+     * @throws InputReadFailureException 输入流抛出非 Markdown 异常时。
+     * @throws LimitExceededException 输入超过 `maximumInputBytes` 时。
+     * @throws MarkdownException 取消、预算耗尽或解码失败时。
+     */
     public func parse(
         input: InputStream,
         utf8Policy!: Utf8Policy = Utf8Policy.Strict,
@@ -259,6 +385,13 @@ public class MarkdownEngine {
         parseBytesWithAccelerator(bytes.toArray(), utf8Policy, cancellation, budget, accelerator)
     }
 
+    /**
+     * 创建只在 `finish()` 时解析的 buffered input session。
+     * @param utf8Policy 输入解码策略。
+     * @param cancellation 可选取消 token。
+     * @param budget 可选 operation budget。
+     * @return 新的 `BufferedInputSession`。
+     */
     public func newSession(
         utf8Policy!: Utf8Policy = Utf8Policy.Strict,
         cancellation!: CancellationToken = CancellationToken.none(),
@@ -267,7 +400,12 @@ public class MarkdownEngine {
         BufferedInputSession(this, utf8Policy, cancellation, budget)
     }
 
-    /** Creates a session that buffers all input and parses only at finish(). */
+    /** 创建 `feed` 只累计输入、`finish()` 才执行解析的 session。
+     * @param utf8Policy 输入解码策略。
+     * @param cancellation 协作式取消信号。
+     * @param budget 单次解析的操作预算。
+     * @return 新的 buffered input session。
+     */
     public func newBufferedInputSession(
         utf8Policy!: Utf8Policy = Utf8Policy.Strict,
         cancellation!: CancellationToken = CancellationToken.none(),
@@ -288,7 +426,11 @@ public class MarkdownEngine {
     }
 }
 
-/** Buffers all input and parses only when finish() is called. */
+/**
+ * 缓冲全部输入并在 `finish()` 时解析。
+ *
+ * `feed` 在完成前可接受 String 或 bytes；调用 `finish()` 后 session 不能再次使用。
+ */
 public class BufferedInputSession {
     private let engine: MarkdownEngine
     private let utf8Policy: Utf8Policy
@@ -309,11 +451,21 @@ public class BufferedInputSession {
         this.budget = budget
     }
 
+    /** 追加 UTF-8 bytes；只累计输入，不提前产生 AST。
+     * @param chunk 要追加的字节块。
+     * @throws IllegalStateException session 已 finish 后调用时。
+     * @throws LimitExceededException 输入超过上限时。
+     */
     public func feed(chunk: Array<Byte>): Unit {
         preflightFeed(chunk.size)
         appendValidatedBytes(chunk)
     }
 
+    /** 追加 String 的 UTF-8 bytes；只累计输入，不提前产生 AST。
+     * @param chunk 要追加的文本块。
+     * @throws IllegalStateException session 已 finish 后调用时。
+     * @throws LimitExceededException 输入超过上限时。
+     */
     public func feed(chunk: String): Unit {
         // String.size is its UTF-8 byte length. Validate the session state and
         // remaining input budget before materializing another byte array.
@@ -341,6 +493,11 @@ public class BufferedInputSession {
         bytes.add(all: chunk)
     }
 
+    /**
+     * 结束输入并执行一次完整解析；重复 finish 或后续 feed 会失败。
+     * @return 完整的解析结果。
+     * @throws IllegalStateException session 已 finish 后调用时。
+     */
     public func finish(): ParseResult {
         if (finished) {
             throw IllegalStateException("buffered input session is already finished")

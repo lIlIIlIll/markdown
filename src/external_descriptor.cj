@@ -140,13 +140,23 @@ internal class RestrictedJsonParser {
     }
 }
 
+/**
+ * 外部方言描述符：以受限 JSON/YAML 描述基于基础 profile 的 dialect 扩展。
+ */
 public class ExternalDialectDescriptor {
+    /** 描述符 schema 版本，当前固定为 `"1"`。 */
     public let schemaVersion: String
+    /** 方言的唯一标识。 */
     public let id: String
+    /** 方言的语义版本。 */
     public let version: String
+    /** 作为扩展基础的标准 profile id。 */
     public let baseProfileId: String
+    /** 启用的 inline 扩展规则 id 列表。 */
     public let inlineRules: ImmutableArray<String>
+    /** 启用的 block 扩展规则 id 列表。 */
     public let blockRules: ImmutableArray<String>
+    /** 启用的 renderer 扩展规则 id 列表。 */
     public let rendererRules: ImmutableArray<String>
 
     private init(data: ExternalDataObject) {
@@ -163,10 +173,22 @@ public class ExternalDialectDescriptor {
         rendererRules = ImmutableArray<String>(externalArray(data, "rendererRules"))
     }
 
+    /**
+     * 从受限 JSON 文本解析描述符。
+     * @param source JSON 编码的描述符文本。
+     * @return 解析出的描述符。
+     * @throws IllegalArgumentException JSON 非法或 schema 不符时。
+     */
     public static func fromJson(source: String): ExternalDialectDescriptor {
         ExternalDialectDescriptor(RestrictedJsonParser(source).parse())
     }
 
+    /**
+     * 从受限 YAML 文本解析描述符；输入不得超过 1 MiB。
+     * @param source YAML 编码的描述符文本。
+     * @return 解析出的描述符。
+     * @throws IllegalArgumentException YAML 非法、超过 1 MiB 或 schema 不符时。
+     */
     public static func fromYaml(source: String): ExternalDialectDescriptor {
         if (source.size > 1024 * 1024) {
             throw IllegalArgumentException("external descriptor exceeds 1 MiB")
@@ -174,10 +196,19 @@ public class ExternalDialectDescriptor {
         ExternalDialectDescriptor(parseRestrictedYaml(source))
     }
 
+    /**
+     * 将描述符编译为可执行的 `CompiledMarkdownDialect`。
+     * @return 可执行的 `CompiledMarkdownDialect`。
+     * @throws MarkdownException dialect 校验失败时。
+     */
     public func compile(): CompiledMarkdownDialect {
         DialectCompiler.compile(toDialect())
     }
 
+    /**
+     * 将描述符转换为 `MarkdownDialect` 定义。
+     * @return 组装完成的 `MarkdownDialect`。
+     */
     public func toDialect(): MarkdownDialect {
         let profile = externalProfile(baseProfileId)
         let canonical = externalCanonicalDescriptor(this)

@@ -41,10 +41,20 @@ internal class CanonicalDescriptor {
 }
 
 internal class Sha256 {
+    /**
+     * 计算字符串（按 UTF-8 字节）的 SHA-256 摘要，返回小写十六进制字符串。
+     * @param value 待摘要的字符串。
+     * @return 64 位小写十六进制摘要。
+     */
     public static func digest(value: String): String {
         digestBytes(value.toArray())
     }
 
+    /**
+     * 计算字节序列的 SHA-256 摘要，返回小写十六进制字符串。
+     * @param input 待摘要的字节数组。
+     * @return 64 位小写十六进制摘要。
+     */
     public static func digestBytes(input: Array<Byte>): String {
         let data = ArrayList<Byte>()
         data.add(all: input)

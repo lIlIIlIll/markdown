@@ -5,26 +5,43 @@ private let FUSED_SCAN_CANCELLATION_BYTES: Int64 = 1024
 /** Internal deterministic observation point for bounded fused execution scans.
  * Production cancellation remains owned by the CancellationToken. */
 internal interface FusedScanCheckpointObserver {
+    /** 在 fused scan checkpoint 处回调，用于测试注入观察点。
+     * @param phase 当前扫描阶段名称。
+     * @param bytesProcessed 已处理的字节数。
+     */
     func onFusedScanCheckpoint(phase: String, bytesProcessed: Int64): Unit
 }
 
-/** Caller-selected execution policy for the Markdown-to-HTML convenience path. */
+/** Markdown source 到 HTML convenience path 的调用方执行策略。 */
 public enum HtmlExecutionMode {
+    /** 总是构建完整 AST 后渲染。 */
     | FullAst
+    /** 保守 preflight 通过时优先 fused path，否则回退完整 AST。 */
     | PreferFused
+    /** 只接受 fused path；无法证明等价时抛出 `RenderFailure`。 */
     | RequireFused
 }
 
-/** Execution path that actually produced an HtmlExecutionResult. */
+/** 实际生成 `HtmlExecutionResult` 的执行路径。 */
 public enum HtmlExecutionPath {
+    /** 完整 AST 渲染路径。 */
     | FullAst
+    /** fused scan 直接 lowering 路径。 */
     | Fused
 }
 
+/** 包含 HTML 文本和实际执行路径的结果。 */
 public class HtmlExecutionResult {
+    /** 渲染得到的 HTML 文本。 */
     public let html: String
+    /** 实际采用的执行路径。 */
     public let path: HtmlExecutionPath
 
+    /**
+     * 创建执行结果。
+     * @param html 渲染得到的 HTML 文本。
+     * @param path 实际采用的执行路径。
+     */
     public init(html: String, path: HtmlExecutionPath) {
         this.html = html
         this.path = path
@@ -33,9 +50,19 @@ public class HtmlExecutionResult {
 
 extend MarkdownEngine {
     /**
-     * Renders source with an explicit execution policy. The fused path is used
-     * only when a conservative preflight proves that direct lowering is
-     * semantically identical. It never silently disables processors or syntax.
+     * 按显式策略将 source 渲染为 HTML。
+     *
+     * `PreferFused` 只有在保守 preflight 证明直接 lowering 与完整 AST 路径等价时才
+     * 使用 fused path；否则回退 `FullAst`。`RequireFused` 在无法证明等价时抛出
+     * `RenderFailure`，不会静默禁用 syntax 或 document processor。
+     * @param source 待渲染的 Markdown 文本。
+     * @param mode 执行策略，默认完整 AST。
+     * @param options HTML 渲染选项，默认安全策略。
+     * @param cancellation 协作式取消信号。
+     * @param budget 单次渲染的操作预算。
+     * @return 包含 HTML 与实际执行路径的结果。
+     * @throws LimitExceededException 输入或输出超过上限时。
+     * @throws MarkdownException 取消、预算耗尽，或 `RequireFused` 无法证明等价时。
      */
     public func renderHtml(source: String, mode!: HtmlExecutionMode = HtmlExecutionMode.FullAst,
         options!: HtmlOptions = HtmlOptions.safe(), cancellation!: CancellationToken = CancellationToken.none(),
