@@ -142,7 +142,7 @@ def main() -> int:
         "--commonmark4cj-source target/same-language-benchmark/comparator-sources/commonmark4cj.bundle",
         "--product-source target/same-language-benchmark/product-source/markdown.bundle",
         "--binary-root target/same-language-benchmark/binaries",
-        "--sdk-archive target/same-language-benchmark/toolchain/cangjie-sdk-linux-x64-1.1.3.tar.gz",
+        "--sdk-archive target/same-language-benchmark/toolchain/cangjie-sdk-linux-x64-1.2.0.tar.gz",
         "--verify-report docs/reports/markdown4cj-comparison-raw.json",
     )
     for argument in required_benchmark_arguments:

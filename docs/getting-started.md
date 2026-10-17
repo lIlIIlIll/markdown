@@ -11,7 +11,7 @@
 
 ## 前置条件
 
-- Cangjie SDK `1.1.0`
+- 官方 Cangjie STS SDK `1.2.0`
 - `cjpm`
 - 当前仓库的绝对路径
 
@@ -26,7 +26,7 @@ cd markdown_demo
 
 ```toml
 [package]
-  cjc-version = "1.1.0"
+  cjc-version = "1.2.0"
   name = "markdown_demo"
   version = "0.1.0"
   output-type = "executable"

@@ -1,10 +1,10 @@
 # Benchmark harness
 
-Run the release benchmark smoke suite with the pinned Cangjie environment:
+Activate the official Cangjie STS 1.2.0 SDK, then run the release benchmark smoke suite:
 
 ```sh
-/home/elliot/.codex/scripts/codex_cangjie_env cjpm bench --no-color \
-  --report-path /tmp/markdown-bench --report-format csv
+cjpm bench --no-color \
+  --report-path target/benchmark-smoke --report-format csv
 ```
 
 The suite covers CommonMark parse-only, GFM parse plus HTML, CJK/emoji,
@@ -31,7 +31,9 @@ whenever any GA gate fails.
 platform-neutral `markdown4cj` parser core, applies a fail-closed current-SDK
 collection-API adapter, and excludes OHOS UI, DevEco, prism4cj, and formula-ffi.
 
-Download the pinned official SDK archive to `/tmp/cangjie-sdk.tar.gz`. The
+Create a private, disk-backed task directory and download the pinned official
+SDK archive there. The examples below use `$TMPDIR`; set `TMP` and `TEMP` to
+the same directory. The
 build helper verifies the digest before any Cangjie build, safely extracts it
 into a fresh non-existing directory, and invokes the extracted `cjpm` by its
 absolute path for the product driver, CLI, and comparator adapter. Product
@@ -40,6 +42,13 @@ An active daily SDK on `PATH` is not used. Run these commands from the
 repository root:
 
 ```sh
+umask 077
+mkdir -p "$HOME/.cache/agent-tmp"
+export TMPDIR="$(mktemp -d -p "$HOME/.cache/agent-tmp" markdown-benchmark.XXXXXXXX)"
+export TMP="$TMPDIR" TEMP="$TMPDIR"
+curl --fail --location --retry 3 \
+  'https://cangjie-lang.cn/v1/files/auth/downLoad?nsId=142267&fileName=cangjie-sdk-linux-x64-1.2.0.tar.gz&objectKey=6ab1e26eece1f87ff5befa73' \
+  --output "$TMPDIR/cangjie-sdk.tar.gz"
 unset LD_PRELOAD LD_LIBRARY_PATH LIBRARY_PATH
 unset MARKDOWN_NATIVE_ARFLAGS MARKDOWN_NATIVE_CFLAGS TARGET
 unset cjHeapSize cjGCInterval
@@ -49,18 +58,18 @@ python3 scripts/build_benchmark_driver.py \
   --mode canonical \
   --build-cli \
   --identity-output target/same-language-benchmark/build-identity.json \
-  --sdk-url 'https://cangjie-lang.cn/v1/files/auth/downLoad?nsId=142267&fileName=cangjie-sdk-linux-x64-1.1.3.tar.gz&objectKey=6a19349d21f5a8178d6fd22b' \
-  --sdk-sha256 2b68905afc466e665ae181595c63f96c18d75fd2c1fb6c6f0cb64e179c28d61a \
-  --sdk-archive /tmp/cangjie-sdk.tar.gz \
-  --sdk-extract-dir /tmp/fresh-cangjie-sdk-verified \
+  --sdk-url 'https://cangjie-lang.cn/v1/files/auth/downLoad?nsId=142267&fileName=cangjie-sdk-linux-x64-1.2.0.tar.gz&objectKey=6ab1e26eece1f87ff5befa73' \
+  --sdk-sha256 8c5fd944cd9cc51ee63d4a240e3ecc4f540345dae1468e8b47c927ecf2ba998f \
+  --sdk-archive "$TMPDIR/cangjie-sdk.tar.gz" \
+  --sdk-extract-dir "$TMPDIR/fresh-cangjie-sdk-verified" \
   --target x86_64-unknown-linux-gnu
 python3 benchmarks/compare_markdown4cj.py \
-  --tools-root /tmp/markdown-same-language-tools \
-  --workspace /tmp/fresh-markdown4cj-adapter \
+  --tools-root "$TMPDIR/markdown-same-language-tools" \
+  --workspace "$TMPDIR/fresh-markdown4cj-adapter" \
   --binary-root target/same-language-benchmark/binaries \
   --build-identity target/same-language-benchmark/build-identity.json \
-  --output /tmp/markdown4cj-comparison.json \
-  --markdown-report /tmp/markdown4cj-comparison.md
+  --output "$TMPDIR/markdown4cj-comparison.json" \
+  --markdown-report "$TMPDIR/markdown4cj-comparison.md"
 ```
 
 The canonical command rejects non-empty loader, compiler-search, allocator,
@@ -151,14 +160,14 @@ python3 benchmarks/compare_markdown4cj.py \
   --commonmark4cj-source /tmp/markdown-same-language-tools/commonmark4cj \
   --product-source /tmp/markdown-product.bundle \
   --binary-root target/same-language-benchmark/binaries \
-  --sdk-archive target/same-language-benchmark/toolchain/cangjie-sdk-linux-x64-1.1.3.tar.gz \
+  --sdk-archive target/same-language-benchmark/toolchain/cangjie-sdk-linux-x64-1.2.0.tar.gz \
   --verify-report docs/reports/markdown4cj-comparison-raw.json \
   --markdown-report docs/reports/markdown4cj-comparison.md \
   --require-current-product
 ```
 
 GitHub Actions runs that verification and a fresh paired measurement in
-`Same-language benchmark (current-1.1.3)`. The check is required before a pull
+`Same-language benchmark (sts-1.2.0)`. The check is required before a pull
 request can merge into `main`; its raw samples, generated report, retained product
 Git bundle, minimal bundles for both pinned comparator commits, retained SDK
 archive, native tool/resource inputs, measured executables, and empty comparator runtime-closure identity are uploaded even when

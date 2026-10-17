@@ -114,13 +114,13 @@ python3 benchmarks/compare_markdown4cj.py \
   --commonmark4cj-source /tmp/markdown-same-language-tools/commonmark4cj \
   --product-source /tmp/markdown-product.bundle \
   --binary-root target/same-language-benchmark/binaries \
-  --sdk-archive target/same-language-benchmark/toolchain/cangjie-sdk-linux-x64-1.1.3.tar.gz \
+  --sdk-archive target/same-language-benchmark/toolchain/cangjie-sdk-linux-x64-1.2.0.tar.gz \
   --verify-report docs/reports/markdown4cj-comparison-raw.json \
   --markdown-report docs/reports/markdown4cj-comparison.md \
   --require-current-product
 ```
 
-`Same-language benchmark (current-1.1.3)` 还会在 PR merge commit 上重新构建两侧 driver，
+`Same-language benchmark (sts-1.2.0)` 还会在 PR merge commit 上重新构建两侧 driver，
 执行固定 CPU 的交替测量，并上传 raw samples、生成报告、产品 commit bundle 和两套固定 comparator commit 的
 最小 Git bundle、SDK archive、native tool/resource inputs 和实际执行产物；复验直接从这些输入重算源码身份并重建产物。
 directory Git input 必须是精确 worktree/bare repository root，nested path、symlink root 与外部

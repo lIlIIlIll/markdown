@@ -69,8 +69,8 @@ BUILD_IDENTITY_SCHEMA_VERSION = 5
 NATIVE_CACHE_SCHEMA_VERSION = 3
 NATIVE_ENVIRONMENT_SCHEMA_VERSION = 1
 RUN_TIMEOUT_SECONDS = 600.0
-SDK_URL = "https://cangjie-lang.cn/v1/files/auth/downLoad?nsId=142267&fileName=cangjie-sdk-linux-x64-1.1.3.tar.gz&objectKey=6a19349d21f5a8178d6fd22b"
-SDK_SHA256 = "2b68905afc466e665ae181595c63f96c18d75fd2c1fb6c6f0cb64e179c28d61a"
+SDK_URL = "https://cangjie-lang.cn/v1/files/auth/downLoad?nsId=142267&fileName=cangjie-sdk-linux-x64-1.2.0.tar.gz&objectKey=6ab1e26eece1f87ff5befa73"
+SDK_SHA256 = "8c5fd944cd9cc51ee63d4a240e3ecc4f540345dae1468e8b47c927ecf2ba998f"
 TARGET_TRIPLE = "x86_64-unknown-linux-gnu"
 COMPARATOR_CORE_PATH = "markdown/src/main/cangjie/src/core"
 ADAPTER_COMMONMARK_PATH = "deps/commonmark4cj"
@@ -2364,7 +2364,7 @@ def render_markdown(report: dict[str, object]) -> str:
 
 ## 合入门禁
 
-GitHub Actions 的 `Same-language benchmark (current-1.1.3)` job 对每个 push 和 PR
+GitHub Actions 的 `Same-language benchmark (sts-1.2.0)` job 对每个 push 和 PR
 重新构建两侧 driver，并重新计算全部统计量。`main` 将该 job 设为 required check。
 
 运行以下命令可以复现同一 harness：

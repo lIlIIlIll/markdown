@@ -1651,7 +1651,7 @@ class SameLanguageBenchmarkTest(unittest.TestCase):
         rendered = comparison.render_markdown(valid_report())
         self.assertIn("**2.00×**", rendered)
         self.assertIn("12/12", rendered)
-        self.assertIn("Same-language benchmark (current-1.1.3)", rendered)
+        self.assertIn("Same-language benchmark (sts-1.2.0)", rendered)
         self.assertIn("语义检查在计时区间外执行", rendered)
 
     def test_default_cpu_uses_affinity_set(self) -> None:
@@ -1716,9 +1716,9 @@ class SameLanguageBenchmarkTest(unittest.TestCase):
         self.assertIn(
             '"${RUNNER_TEMP}/markdown-same-language-offline/benchmarks/compare_markdown4cj.py"',
             workflow)
-        self.assertIn("toolchain/cangjie-sdk-linux-x64-1.1.3.tar.gz", workflow)
+        self.assertIn("toolchain/cangjie-sdk-linux-x64-1.2.0.tar.gz", workflow)
         self.assertEqual(workflow.count(
-            "--sdk-archive target/same-language-benchmark/toolchain/cangjie-sdk-linux-x64-1.1.3.tar.gz"),
+            "--sdk-archive target/same-language-benchmark/toolchain/cangjie-sdk-linux-x64-1.2.0.tar.gz"),
             2)
 
     def test_verify_mode_requires_retained_sdk_archive(self) -> None:

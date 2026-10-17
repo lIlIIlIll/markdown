@@ -6,7 +6,7 @@
 
 从安全 HTML 和完整 AST，到精确源码位置、扩展 DSL、格式化与编辑器工具。
 
-[![Cangjie 1.1.0](https://img.shields.io/badge/Cangjie-1.1.0-7B61FF?style=for-the-badge)](cjpm.toml)
+[![Cangjie 1.2.0](https://img.shields.io/badge/Cangjie-1.2.0-7B61FF?style=for-the-badge)](cjpm.toml)
 [![CommonMark 0.31.2](https://img.shields.io/badge/CommonMark-0.31.2-2F6F9F?style=for-the-badge)](docs/profiles.md)
 [![GFM 0.29](https://img.shields.io/badge/GFM-0.29-24292F?style=for-the-badge)](docs/profiles.md)
 [![Status pre-GA](https://img.shields.io/badge/Status-0.9_preview-F59E0B?style=for-the-badge)](docs/versioning-and-compatibility.md)

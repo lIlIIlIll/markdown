@@ -5,10 +5,12 @@
 
 ## 准备环境
 
-仓库使用仓颉 1.1 SDK。进入仓库后启用环境：
+仓库使用官方仓颉 STS 1.2.0 SDK。将 SDK 安装到下面的目录，或按实际安装目录调整变量，再启用环境：
 
 ```sh
+export CANGJIE_SDK_ROOT="$HOME/cangjie_sdk/sts1.2.0"
 cangjie_env
+cjc -v
 cjpm check
 ```
 
@@ -58,7 +60,7 @@ python3 benchmarks/compare_markdown4cj.py \
   --commonmark4cj-source target/same-language-benchmark/comparator-sources/commonmark4cj.bundle \
   --product-source target/same-language-benchmark/product-source/markdown.bundle \
   --binary-root target/same-language-benchmark/binaries \
-  --sdk-archive target/same-language-benchmark/toolchain/cangjie-sdk-linux-x64-1.1.3.tar.gz \
+  --sdk-archive target/same-language-benchmark/toolchain/cangjie-sdk-linux-x64-1.2.0.tar.gz \
   --verify-report docs/reports/markdown4cj-comparison-raw.json \
   --markdown-report docs/reports/markdown4cj-comparison.md \
   --require-current-product
@@ -68,7 +70,7 @@ python3 benchmarks/compare_markdown4cj.py \
 [`benchmarks/README.md`](benchmarks/README.md) 的 canonical measurement 流程构建，不能用
 当前 checkout、`PATH` 工具或手写 digest 代替 retained input。
 
-`Same-language benchmark (current-1.1.3)` 会在每个 PR 上重新测量固定的
+`Same-language benchmark (sts-1.2.0)` 会在每个 PR 上重新测量固定的
 `markdown4cj` CommonMark parse-only 子集。计时前，每个语料还必须通过 exact spec-HTML
 byte length 和 SHA-256 对比。门禁要求共享行为 `12/12`、几何平均加速至少 `1.20×`、
 任何单语料回退不超过 `10%`，并且最大峰值 RSS 不超过 comparator 的 `1.20×`。
