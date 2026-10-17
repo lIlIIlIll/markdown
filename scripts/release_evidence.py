@@ -149,7 +149,7 @@ def performance_block(data: dict[str, object]) -> str:
         )
         gfm_status = "pass" if benchmark["gfmRatio"] <= benchmark["ratioLimit"] else "fail"
     return f"""<!-- release-evidence:start -->
-当前 release benchmark 使用固定 Server CPU、Cangjie SDK
+当前 release benchmark 使用固定 CPU、Cangjie SDK
 `{benchmark['sdkVersion']}` 和 release 构建。
 
 | Profile | 对比对象 | 当前 ratio | 门槛 | 状态 |
