@@ -17,7 +17,7 @@
 Validation command:
 
 ```text
-/home/elliot/.codex/scripts/codex_cangjie_env cjpm test --skip-build --filter CommonMark0312ConformanceTest --no-color --no-progress --report-path /tmp/markdown-commonmark-report --report-format xml
+cjpm test --skip-build --filter CommonMark0312ConformanceTest --no-color --no-progress --report-path /tmp/markdown-commonmark-report --report-format xml
 ```
 
 The conformance cases and final unfiltered package run exited 0 on 2026-08-18; the latter passed all 1410 tests with no skips.

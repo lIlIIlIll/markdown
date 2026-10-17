@@ -22,10 +22,9 @@ rather than opening a public issue. Include the affected version/profile,
 minimal input, configuration, observed resource use or output, and reproduction
 steps.
 
-If the GitHub form is unavailable, email `chenqian169@huawei.com` with the
-subject `markdown security report`. Send only contact details and a brief
-impact summary in the first message. Wait for agreement on a private channel
-before sending exploit details or sensitive attachments.
+If the GitHub form is unavailable, retry when the service is available. Keep
+exploit details and sensitive attachments private until maintainers coordinate
+disclosure.
 
 Maintainers will acknowledge, reproduce against supported releases, identify affected versions, prepare a minimized regression corpus and compatibility assessment, coordinate an advisory and patched release, and publish migration guidance. High-risk unsafe APIs may be removed before the normal deprecation window when accompanied by an advisory.
 
@@ -34,7 +33,7 @@ remain private to repository maintainers until an advisory is published.
 
 ## Response targets
 
-These targets start when a report reaches either private channel. They are
+These targets start when a report reaches the private reporting form. They are
 service objectives, not guarantees.
 
 | Stage | Target |

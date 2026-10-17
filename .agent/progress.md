@@ -90,7 +90,7 @@
 
 ## 2026-08-29 历史发布审计修复
 
-- 逐项复核 `/home/elliot/Downloads/markdown-audit-package.zip` 后，确认九项报告均对应当时的真实仓库状态；当前切片修复代码、文档和本地发布证据问题，并保留 hosted repository 状态作为独立验收层。
+- 逐项复核 `$HOME/Downloads/markdown-audit-package.zip` 后，确认九项报告均对应当时的真实仓库状态；当前切片修复代码、文档和本地发布证据问题，并保留 hosted repository 状态作为独立验收层。
 - CI 不再依赖空仓库变量：minimum SDK `1.1.0` 与 current SDK `1.1.3` 使用官方固定 URL/SHA-256，`actions/checkout` 固定到 commit，两个矩阵任务均执行完整 `scripts/release_gate.sh`。
 - release gate 现在自动准备 pinned cmark、cmark-gfm 和 commonmark.js 差分工具；归档和新 runner 不再依赖开发机 `/tmp` 中的预装 reference checkout。
 - 删除会夸大执行模型的 `ChunkedParseSession` 与 `AsyncHtmlRenderSession`；`newSession` 返回 `BufferedInputSession`，异步 sink 只公开 `BufferedAsyncHtmlOutputSession`。迁移文档与 1309-declaration API snapshot 已同步。
@@ -377,7 +377,7 @@ GA 门槛。
 
 ## 2026-08-19 性能复核（本轮）
 
-- 固定环境：授权 SSH `Server`、CPU 24、Linux 5.15、Xeon Gold 6248R、Cangjie SDK `/home/chenqian/fastjson-bench-sdk-20260803/cangjie`（`1.1.0-alpha.20260803040049`）、`-O2`、`cjHeapSize=2GB`。该 SDK 与 2026-08-18 的远端快照不同，因此只做同一 SDK 内的配对比较，不把绝对比率跨 SDK 直接合并。
+- 固定环境：授权 SSH `Server`、CPU 24、Linux 5.15、Xeon Gold 6248R、Cangjie SDK `<sdk>/cangjie`（`1.1.0-alpha.20260803040049`）、`-O2`、`cjHeapSize=2GB`。该 SDK 与 2026-08-18 的远端快照不同，因此只做同一 SDK 内的配对比较，不把绝对比率跨 SDK 直接合并。
 - PMU 仍不可用：服务器 `perf_event_paranoid=4`，`perf stat` 明确拒绝；没有伪造 cycles/instructions 证据。分析使用固定 CPU、12 轮交替测量、RSS 和完整 release harness。
 - 保留的候选位于 `src/parser.cj`：解析会话为有效 reference definition 建立 `HashMap<String, ReferenceDefinition>`；reference lookup 和 delimiter 中的 reference 判断均复用 O(1) 索引；ASCII 小写且无空白/非 ASCII 标签走无分配规范化快路径。重复标签仍只索引首个 effective definition。
 - 候选源码归档 SHA-256：`1162a0350b22efbeb969279ad89d2b4898b3a8612cbcb5aedbdf26abfd072845`（cjfmt 后最终工作树）；交替 A/B JSON SHA-256：`4df43fc1dba76d6189bd690252e65fbd08b0aea05110501bb75734a1331682f8`。12 轮、CPU 24 的 1 MiB 语料结果：CommonMark ordinary `1.162x`、many-references `1.268x`、large-table `1.035x`、pathological `1.010x`、CJK `1.016x`；GFM ordinary `1.032x`、many-references `1.157x`、large-table `0.996x`、pathological `1.017x`、CJK `1.002x`（candidate speedup）。所有 stdout checksums 相同。
