@@ -1,12 +1,12 @@
 {
   "schemaVersion": 5,
   "status": "PASS",
-  "generatedAtUtc": "2026-10-17T21:44:33.467871+00:00",
+  "generatedAtUtc": "2026-10-17T22:09:40.104169+00:00",
   "identity": {
     "gitObjectFormat": "sha1",
-    "repositoryRef": "908a1af7ad53a591a4ebcb70602c1eea2c3dc0e9",
-    "repositoryCommit": "908a1af7ad53a591a4ebcb70602c1eea2c3dc0e9",
-    "gitTree": "d87deff836912e05074d20eb647200e23372597f",
+    "repositoryRef": "94a74f534abb064643b8a6fda22137c167fe5a22",
+    "repositoryCommit": "94a74f534abb064643b8a6fda22137c167fe5a22",
+    "gitTree": "5b38f2dff4234f75ac2bd60b9df8fc4c93d61a69",
     "productTreeSha256": "f90c43999d42ff5f8c27690c88e95373c2e1ed049c14e87d6c5010ad70109e54",
     "harnessFiles": {
       ".github/workflows/candidate-validation.yml": "691fbd7e73c862223226bbea9a0aa2273353489d2e21fcbe33c850a7eb158927",
@@ -17,7 +17,7 @@
       "benchmarks/test_compare_markdown4cj.py": "94df70a788d7186a5aa65066c8b863689ff22f1f454c217f73f72d25d418ba9a",
       "scripts/build_benchmark_driver.py": "707d7d3519d940f7a2142c730671789f8d440cb74b171354a4aaaf2fd68f5991",
       "scripts/build_native_scanner.py": "b8aa4de21afa02e0e987e8cbf885183c038946a76793ff94da44f73953bb551c",
-      "scripts/test_build_benchmark_driver.py": "20ba340e4cacd3287338c054ee338bd84433817ffa73a8b057c1ed36d04a4f54",
+      "scripts/test_build_benchmark_driver.py": "7f8b5b60a0b8db7807964b140b37ad9730ca0e282e75a2d2abd1c674c263122b",
       "scripts/test_build_native_scanner.py": "0634aecba01b2cb0f71c234ed29c61014ae9216cba1338c60bcef319c07d81e3"
     },
     "corpora": [
@@ -561,7 +561,7 @@
     "commonmark4cj": "/workspace/comparator-sources/commonmark4cj"
   },
   "binaryInputs": {
-    "root": "/workspace/final-same-language/binaries"
+    "root": "/workspace/validated-same-language/binaries"
   },
   "sourceRepositories": {
     "markdown4cj": {
@@ -917,10 +917,10 @@
       "1",
       "-V"
     ],
-    "cwd": "/workspace/final-adapter",
+    "cwd": "/workspace/validated-adapter",
     "exitCode": 0,
-    "stdout": "Compiling package `commonmark4cj.commonmark`: cjc -p /workspace/final-adapter/deps/commonmark4cj/src/commonmark --import-path=/workspace/final-adapter/target/release --no-sub-pkg --output-dir=/workspace/final-adapter/target/release/commonmark4cj/ --obf-seed 0 --trimpath /workspace/final-adapter --output-type=staticlib -o=libcommonmark4cj.commonmark.a\nCompiling package `commonmark4cj.table`: cjc -p /workspace/final-adapter/deps/commonmark4cj/src/table --import-path=/workspace/final-adapter/target/release --no-sub-pkg --output-dir=/workspace/final-adapter/target/release/commonmark4cj/ --obf-seed 0 --trimpath /workspace/final-adapter --output-type=staticlib -o=libcommonmark4cj.table.a\nCompiling package `commonmark4cj`: cjc -p /workspace/final-adapter/deps/commonmark4cj/src --import-path=/workspace/final-adapter/target/release --output-dir=/workspace/final-adapter/target/release/commonmark4cj/ --obf-seed 0 --trimpath /workspace/final-adapter --output-type=staticlib -o=libcommonmark4cj.a\nCompiling package `commonmark4cj.strikethrough`: cjc -p /workspace/final-adapter/deps/commonmark4cj/src/strikethrough --import-path=/workspace/final-adapter/target/release --no-sub-pkg --output-dir=/workspace/final-adapter/target/release/commonmark4cj/ --obf-seed 0 --trimpath /workspace/final-adapter --output-type=staticlib -o=libcommonmark4cj.strikethrough.a\nCompiling package `markdown.core`: cjc -p /workspace/final-adapter/src/core --import-path=/workspace/final-adapter/target/release --no-sub-pkg --output-dir=/workspace/final-adapter/target/release/markdown/ --obf-seed 0 --trimpath /workspace/final-adapter --output-type=staticlib -o=libmarkdown.core.a\nCompiling package `markdown`: cjc -p /workspace/final-adapter/src --import-path=/workspace/final-adapter/target/release --output-dir=/workspace/final-adapter/target/release/bin/ -L /workspace/final-adapter/target/release/markdown/ -lmarkdown.core -L /workspace/final-adapter/target/release/commonmark4cj/ -lcommonmark4cj.commonmark --obf-seed 0 --trimpath /workspace/final-adapter --output-type=exe -o=main\n   Finished `build` profile compilation\n   Executable files at `/workspace/final-adapter/target/release/bin`\ncjpm build success\n",
-    "stderr": "\u001b[33mwarning\u001b[0m: unused function:'getStackTrace'\n  \u001b[36m==>\u001b[0m /workspace/final-adapter/deps/commonmark4cj/src/commonmark/package.cj:29:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m29\u001b[0m \u001b[36m| \u001b[0m  func getStackTrace(thrown: ?Exception): String {\u001b[0m\n   \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m^\u001b[0m\n\u001b[36m30\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     var res: String = \"\"\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m41\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m }\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m^ unused function\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'char'\n   \u001b[36m==>\u001b[0m /workspace/final-adapter/deps/commonmark4cj/src/commonmark/link_scanner.cj:133:25:\n    \u001b[36m| \u001b[0m\n\u001b[36m133\u001b[0m \u001b[36m| \u001b[0m                    let char = scanner.peek()\u001b[0m\n    \u001b[36m| \u001b[0m                        \u001b[33m^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n2 warnings generated, 2 warnings printed.\n\u001b[33mwarning\u001b[0m: unused import 'std.regex.Matcher'\n  \u001b[36m==>\u001b[0m /workspace/final-adapter/src/core/package.cj:16:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m16\u001b[0m \u001b[36m| \u001b[0minternal import std.regex.Matcher\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unused import\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused import 'std.regex.Regex'\n  \u001b[36m==>\u001b[0m /workspace/final-adapter/src/core/package.cj:17:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m17\u001b[0m \u001b[36m| \u001b[0minternal import std.regex.Regex\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unused import\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'NULL_CHAR'\n  \u001b[36m==>\u001b[0m /workspace/final-adapter/src/core/package.cj:47:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m47\u001b[0m \u001b[36m| \u001b[0mlet NULL_CHAR: Rune = '\\u{0}'\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'EMPTY_STRING'\n  \u001b[36m==>\u001b[0m /workspace/final-adapter/src/core/package.cj:48:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m48\u001b[0m \u001b[36m| \u001b[0mlet EMPTY_STRING: String = \"\"\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'EMPTY_MAP'\n  \u001b[36m==>\u001b[0m /workspace/final-adapter/src/core/package.cj:49:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m49\u001b[0m \u001b[36m| \u001b[0mlet EMPTY_MAP: Map<String, String> = HashMap()\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'appends'\n  \u001b[36m==>\u001b[0m /workspace/final-adapter/src/core/package.cj:54:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m54\u001b[0m \u001b[36m| \u001b[0m      func appends(str: ToString): StringBuilder {\u001b[0m\n   \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m55\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         this.append(str)\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m57\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n  \u001b[36m==>\u001b[0m /workspace/final-adapter/src/core/core_plugin.cj:79:17:\n   \u001b[36m| \u001b[0m\n\u001b[36m79\u001b[0m \u001b[36m| \u001b[0m                visitor, text => buildView(text, true)\u001b[0m\n   \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /workspace/final-adapter/src/core/core_plugin.cj:121:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m121\u001b[0m \u001b[36m| \u001b[0m                visitor, code => buildView(code, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'isListNode'\n   \u001b[36m==>\u001b[0m /workspace/final-adapter/src/core/node_view.cj:153:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m153\u001b[0m \u001b[36m| \u001b[0m      private func isListNode(n: Node): Bool {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m154\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         n is BlockQuote || n is OrderedList || n is BulletList\u001b[0m\n\u001b[36m155\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'listLevel'\n   \u001b[36m==>\u001b[0m /workspace/final-adapter/src/core/core_plugin.cj:200:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m200\u001b[0m \u001b[36m| \u001b[0m      private static func listLevel(node: Node): Int {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m201\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         var level: Int = 0\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m210\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /workspace/final-adapter/src/core/core_plugin.cj:216:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m216\u001b[0m \u001b[36m| \u001b[0m                visitor, thematicBreak => buildView(thematicBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /workspace/final-adapter/src/core/core_plugin.cj:236:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m236\u001b[0m \u001b[36m| \u001b[0m                visitor, softLineBreak => buildView(softLineBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /workspace/final-adapter/src/core/core_plugin.cj:245:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m245\u001b[0m \u001b[36m| \u001b[0m                visitor, hardLineBreak => buildView(hardLineBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'isInTightList'\n   \u001b[36m==>\u001b[0m /workspace/final-adapter/src/core/core_plugin.cj:261:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m261\u001b[0m \u001b[36m| \u001b[0m      private static func isInTightList(paragraph: Paragraph): Bool {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m262\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         if (let Some(Some(list: ListBlock)) <- paragraph.getParent()?.getParent()) {\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m266\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n14 warnings generated, 14 warnings printed.\n",
+    "stdout": "Compiling package `commonmark4cj`: cjc -p /workspace/validated-adapter/deps/commonmark4cj/src --import-path=/workspace/validated-adapter/target/release --output-dir=/workspace/validated-adapter/target/release/commonmark4cj/ --obf-seed 0 --trimpath /workspace/validated-adapter --output-type=staticlib -o=libcommonmark4cj.a\nCompiling package `commonmark4cj.commonmark`: cjc -p /workspace/validated-adapter/deps/commonmark4cj/src/commonmark --import-path=/workspace/validated-adapter/target/release --no-sub-pkg --output-dir=/workspace/validated-adapter/target/release/commonmark4cj/ --obf-seed 0 --trimpath /workspace/validated-adapter --output-type=staticlib -o=libcommonmark4cj.commonmark.a\nCompiling package `markdown.core`: cjc -p /workspace/validated-adapter/src/core --import-path=/workspace/validated-adapter/target/release --no-sub-pkg --output-dir=/workspace/validated-adapter/target/release/markdown/ --obf-seed 0 --trimpath /workspace/validated-adapter --output-type=staticlib -o=libmarkdown.core.a\nCompiling package `markdown`: cjc -p /workspace/validated-adapter/src --import-path=/workspace/validated-adapter/target/release --output-dir=/workspace/validated-adapter/target/release/bin/ -L /workspace/validated-adapter/target/release/markdown/ -lmarkdown.core -L /workspace/validated-adapter/target/release/commonmark4cj/ -lcommonmark4cj.commonmark --obf-seed 0 --trimpath /workspace/validated-adapter --output-type=exe -o=main\nCompiling package `commonmark4cj.table`: cjc -p /workspace/validated-adapter/deps/commonmark4cj/src/table --import-path=/workspace/validated-adapter/target/release --no-sub-pkg --output-dir=/workspace/validated-adapter/target/release/commonmark4cj/ --obf-seed 0 --trimpath /workspace/validated-adapter --output-type=staticlib -o=libcommonmark4cj.table.a\nCompiling package `commonmark4cj.strikethrough`: cjc -p /workspace/validated-adapter/deps/commonmark4cj/src/strikethrough --import-path=/workspace/validated-adapter/target/release --no-sub-pkg --output-dir=/workspace/validated-adapter/target/release/commonmark4cj/ --obf-seed 0 --trimpath /workspace/validated-adapter --output-type=staticlib -o=libcommonmark4cj.strikethrough.a\n   Finished `build` profile compilation\n   Executable files at `/workspace/validated-adapter/target/release/bin`\ncjpm build success\n",
+    "stderr": "\u001b[33mwarning\u001b[0m: unused function:'getStackTrace'\n  \u001b[36m==>\u001b[0m /workspace/validated-adapter/deps/commonmark4cj/src/commonmark/package.cj:29:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m29\u001b[0m \u001b[36m| \u001b[0m  func getStackTrace(thrown: ?Exception): String {\u001b[0m\n   \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m^\u001b[0m\n\u001b[36m30\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     var res: String = \"\"\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m41\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m }\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m^ unused function\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'char'\n   \u001b[36m==>\u001b[0m /workspace/validated-adapter/deps/commonmark4cj/src/commonmark/link_scanner.cj:133:25:\n    \u001b[36m| \u001b[0m\n\u001b[36m133\u001b[0m \u001b[36m| \u001b[0m                    let char = scanner.peek()\u001b[0m\n    \u001b[36m| \u001b[0m                        \u001b[33m^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n2 warnings generated, 2 warnings printed.\n\u001b[33mwarning\u001b[0m: unused import 'std.regex.Matcher'\n  \u001b[36m==>\u001b[0m /workspace/validated-adapter/src/core/package.cj:16:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m16\u001b[0m \u001b[36m| \u001b[0minternal import std.regex.Matcher\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unused import\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused import 'std.regex.Regex'\n  \u001b[36m==>\u001b[0m /workspace/validated-adapter/src/core/package.cj:17:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m17\u001b[0m \u001b[36m| \u001b[0minternal import std.regex.Regex\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unused import\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'NULL_CHAR'\n  \u001b[36m==>\u001b[0m /workspace/validated-adapter/src/core/package.cj:47:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m47\u001b[0m \u001b[36m| \u001b[0mlet NULL_CHAR: Rune = '\\u{0}'\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'EMPTY_STRING'\n  \u001b[36m==>\u001b[0m /workspace/validated-adapter/src/core/package.cj:48:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m48\u001b[0m \u001b[36m| \u001b[0mlet EMPTY_STRING: String = \"\"\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'EMPTY_MAP'\n  \u001b[36m==>\u001b[0m /workspace/validated-adapter/src/core/package.cj:49:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m49\u001b[0m \u001b[36m| \u001b[0mlet EMPTY_MAP: Map<String, String> = HashMap()\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'appends'\n  \u001b[36m==>\u001b[0m /workspace/validated-adapter/src/core/package.cj:54:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m54\u001b[0m \u001b[36m| \u001b[0m      func appends(str: ToString): StringBuilder {\u001b[0m\n   \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m55\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         this.append(str)\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m57\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n  \u001b[36m==>\u001b[0m /workspace/validated-adapter/src/core/core_plugin.cj:79:17:\n   \u001b[36m| \u001b[0m\n\u001b[36m79\u001b[0m \u001b[36m| \u001b[0m                visitor, text => buildView(text, true)\u001b[0m\n   \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /workspace/validated-adapter/src/core/core_plugin.cj:121:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m121\u001b[0m \u001b[36m| \u001b[0m                visitor, code => buildView(code, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'isListNode'\n   \u001b[36m==>\u001b[0m /workspace/validated-adapter/src/core/node_view.cj:153:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m153\u001b[0m \u001b[36m| \u001b[0m      private func isListNode(n: Node): Bool {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m154\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         n is BlockQuote || n is OrderedList || n is BulletList\u001b[0m\n\u001b[36m155\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'listLevel'\n   \u001b[36m==>\u001b[0m /workspace/validated-adapter/src/core/core_plugin.cj:200:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m200\u001b[0m \u001b[36m| \u001b[0m      private static func listLevel(node: Node): Int {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m201\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         var level: Int = 0\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m210\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /workspace/validated-adapter/src/core/core_plugin.cj:216:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m216\u001b[0m \u001b[36m| \u001b[0m                visitor, thematicBreak => buildView(thematicBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /workspace/validated-adapter/src/core/core_plugin.cj:236:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m236\u001b[0m \u001b[36m| \u001b[0m                visitor, softLineBreak => buildView(softLineBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /workspace/validated-adapter/src/core/core_plugin.cj:245:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m245\u001b[0m \u001b[36m| \u001b[0m                visitor, hardLineBreak => buildView(hardLineBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'isInTightList'\n   \u001b[36m==>\u001b[0m /workspace/validated-adapter/src/core/core_plugin.cj:261:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m261\u001b[0m \u001b[36m| \u001b[0m      private static func isInTightList(paragraph: Paragraph): Bool {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m262\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         if (let Some(Some(list: ListBlock)) <- paragraph.getParent()?.getParent()) {\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m266\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n14 warnings generated, 14 warnings printed.\n",
     "environment": {
       "CANGJIE_HOME": "/workspace/baseline-sdk/cangjie",
       "CANGJIE_SDK_ROOT": "/workspace/baseline-sdk/cangjie",
@@ -1066,9 +1066,9 @@
       "cj_res/**"
     ],
     "ohosImportCount": 0,
-    "trimPath": "/workspace/final-adapter",
-    "manifestSha256": "d61b3487f11ee9f6c70e439e0b4135caf2b0a94379b1268e2f471b4fa6b3c630",
-    "dependencyManifestSha256": "eb984ba32143a21a29305e92fc6f10aa8382ad391a7e5a759975a29f9340d380",
+    "trimPath": "/workspace/validated-adapter",
+    "manifestSha256": "6d5414f66086ba393e9305a3474fa41bb0b0dfd8d09e983e637856c70156851b",
+    "dependencyManifestSha256": "5ba83faa5925bd66537b2c6c2a2cc0b4bca9d8e2db697df77c13c7680713c972",
     "binary": {
       "artifactPath": "markdown4cj-driver",
       "bytes": 6775664,
@@ -1076,7 +1076,7 @@
     },
     "buildOutputRuntimeLibraries": {},
     "buildOutputBinary": {
-      "path": "/workspace/final-adapter/target/release/bin/main",
+      "path": "/workspace/validated-adapter/target/release/bin/main",
       "bytes": 6775664,
       "sha256": "66c38b7fb64dae989071267598036911ffebdce535fd67236770ecc5ad2563aa"
     },
@@ -1590,50 +1590,50 @@
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.051047927,
+          "seconds": 0.092998664,
+          "peakRssKiB": 24876,
+          "stdout": "5358\n",
+          "stdoutBytes": 5,
+          "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
+        },
+        {
+          "seconds": 0.07206754,
+          "peakRssKiB": 24752,
+          "stdout": "5358\n",
+          "stdoutBytes": 5,
+          "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
+        },
+        {
+          "seconds": 0.071783998,
+          "peakRssKiB": 24840,
+          "stdout": "5358\n",
+          "stdoutBytes": 5,
+          "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
+        },
+        {
+          "seconds": 0.094778809,
+          "peakRssKiB": 24852,
+          "stdout": "5358\n",
+          "stdoutBytes": 5,
+          "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
+        },
+        {
+          "seconds": 0.116365057,
+          "peakRssKiB": 24764,
+          "stdout": "5358\n",
+          "stdoutBytes": 5,
+          "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
+        },
+        {
+          "seconds": 0.083796676,
           "peakRssKiB": 24768,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.037634571,
-          "peakRssKiB": 24916,
-          "stdout": "5358\n",
-          "stdoutBytes": 5,
-          "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
-        },
-        {
-          "seconds": 0.037411289,
-          "peakRssKiB": 24888,
-          "stdout": "5358\n",
-          "stdoutBytes": 5,
-          "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
-        },
-        {
-          "seconds": 0.037934103,
-          "peakRssKiB": 24844,
-          "stdout": "5358\n",
-          "stdoutBytes": 5,
-          "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
-        },
-        {
-          "seconds": 0.027188213,
-          "peakRssKiB": 24828,
-          "stdout": "5358\n",
-          "stdoutBytes": 5,
-          "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
-        },
-        {
-          "seconds": 0.027132938,
-          "peakRssKiB": 24824,
-          "stdout": "5358\n",
-          "stdoutBytes": 5,
-          "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
-        },
-        {
-          "seconds": 0.027397364,
-          "peakRssKiB": 24712,
+          "seconds": 0.073178897,
+          "peakRssKiB": 24652,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
@@ -1641,108 +1641,108 @@
       ],
       "markdown4cj": [
         {
-          "seconds": 0.332565061,
-          "peakRssKiB": 57988,
+          "seconds": 1.103554387,
+          "peakRssKiB": 50656,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.264273551,
-          "peakRssKiB": 57988,
+          "seconds": 1.123646086,
+          "peakRssKiB": 53728,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.275420201,
-          "peakRssKiB": 58084,
+          "seconds": 1.052582339,
+          "peakRssKiB": 53940,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.274233793,
-          "peakRssKiB": 58112,
+          "seconds": 1.202911931,
+          "peakRssKiB": 47964,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.266894364,
-          "peakRssKiB": 58132,
+          "seconds": 1.116819617,
+          "peakRssKiB": 52296,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.275937168,
-          "peakRssKiB": 57760,
+          "seconds": 0.979802698,
+          "peakRssKiB": 58204,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.274215985,
-          "peakRssKiB": 57748,
+          "seconds": 0.978534308,
+          "peakRssKiB": 55084,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         }
       ],
-      "markdownMedianSeconds": 0.037411289,
-      "markdown4cjMedianSeconds": 0.274233793,
-      "markdownSpeedup": 7.330241762052091,
-      "peakRssRatio": 0.4286107479529347
+      "markdownMedianSeconds": 0.083796676,
+      "markdown4cjMedianSeconds": 1.103554387,
+      "markdownSpeedup": 13.169429142988918,
+      "peakRssRatio": 0.42739330630197236
     },
     "readme-api": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.050448396,
-          "peakRssKiB": 32016,
+          "seconds": 0.139462294,
+          "peakRssKiB": 31424,
           "stdout": "4860\n",
           "stdoutBytes": 5,
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.05959063,
-          "peakRssKiB": 32140,
+          "seconds": 0.128825162,
+          "peakRssKiB": 32196,
           "stdout": "4860\n",
           "stdoutBytes": 5,
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.047760764,
-          "peakRssKiB": 32100,
+          "seconds": 0.129553279,
+          "peakRssKiB": 31584,
           "stdout": "4860\n",
           "stdoutBytes": 5,
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.061573016,
-          "peakRssKiB": 32268,
+          "seconds": 0.149358977,
+          "peakRssKiB": 32068,
           "stdout": "4860\n",
           "stdoutBytes": 5,
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.047611605,
-          "peakRssKiB": 31880,
+          "seconds": 0.14236166,
+          "peakRssKiB": 31928,
           "stdout": "4860\n",
           "stdoutBytes": 5,
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.048620972,
-          "peakRssKiB": 31940,
+          "seconds": 0.178958288,
+          "peakRssKiB": 32076,
           "stdout": "4860\n",
           "stdoutBytes": 5,
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.047570056,
-          "peakRssKiB": 32116,
+          "seconds": 0.160492928,
+          "peakRssKiB": 32220,
           "stdout": "4860\n",
           "stdoutBytes": 5,
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
@@ -1750,871 +1750,108 @@
       ],
       "markdown4cj": [
         {
-          "seconds": 0.317686293,
-          "peakRssKiB": 79376,
+          "seconds": 1.218487513,
+          "peakRssKiB": 58156,
           "stdout": "4860\n",
           "stdoutBytes": 5,
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.303523574,
-          "peakRssKiB": 79888,
+          "seconds": 1.167711372,
+          "peakRssKiB": 61932,
           "stdout": "4860\n",
           "stdoutBytes": 5,
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.35635139,
-          "peakRssKiB": 79752,
+          "seconds": 1.087415876,
+          "peakRssKiB": 62684,
           "stdout": "4860\n",
           "stdoutBytes": 5,
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.326814518,
-          "peakRssKiB": 79768,
+          "seconds": 1.116881445,
+          "peakRssKiB": 60624,
           "stdout": "4860\n",
           "stdoutBytes": 5,
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.28545983,
-          "peakRssKiB": 79868,
+          "seconds": 1.319354397,
+          "peakRssKiB": 57120,
           "stdout": "4860\n",
           "stdoutBytes": 5,
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.297057956,
-          "peakRssKiB": 79644,
+          "seconds": 1.134113927,
+          "peakRssKiB": 66272,
           "stdout": "4860\n",
           "stdoutBytes": 5,
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         },
         {
-          "seconds": 0.306710926,
-          "peakRssKiB": 80064,
+          "seconds": 1.079141763,
+          "peakRssKiB": 66944,
           "stdout": "4860\n",
           "stdoutBytes": 5,
           "stdoutSha256": "c3cca48c0ed475653d62c71b98716c7bba98252c753acecf05522deea2c346e8"
         }
       ],
-      "markdownMedianSeconds": 0.048620972,
-      "markdown4cjMedianSeconds": 0.306710926,
-      "markdownSpeedup": 6.308202271233903,
-      "peakRssRatio": 0.4030275779376499
+      "markdownMedianSeconds": 0.14236166,
+      "markdown4cjMedianSeconds": 1.134113927,
+      "markdownSpeedup": 7.966428088854823,
+      "peakRssRatio": 0.48129780114722753
     },
     "large-code": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.01681631,
-          "peakRssKiB": 12888,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.017933635,
-          "peakRssKiB": 12868,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.029630696,
-          "peakRssKiB": 12924,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.017399061,
-          "peakRssKiB": 12824,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.016806951,
-          "peakRssKiB": 12808,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.016589605,
-          "peakRssKiB": 12820,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.016819702,
-          "peakRssKiB": 12920,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        }
-      ],
-      "markdown4cj": [
-        {
-          "seconds": 0.058793354,
-          "peakRssKiB": 30740,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.069045514,
-          "peakRssKiB": 30644,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.083135146,
-          "peakRssKiB": 30660,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.070596799,
-          "peakRssKiB": 30644,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.079242514,
-          "peakRssKiB": 30692,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.062246178,
-          "peakRssKiB": 30668,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.081047169,
-          "peakRssKiB": 30504,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        }
-      ],
-      "markdownMedianSeconds": 0.016819702,
-      "markdown4cjMedianSeconds": 0.070596799,
-      "markdownSpeedup": 4.197268120445892,
-      "peakRssRatio": 0.4204294079375407
-    },
-    "large-table": {
-      "bytes": 262144,
-      "markdown": [
-        {
-          "seconds": 0.016941358,
-          "peakRssKiB": 21524,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.028543959,
-          "peakRssKiB": 21936,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.017099004,
-          "peakRssKiB": 21488,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.02849456,
-          "peakRssKiB": 21968,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.027137805,
-          "peakRssKiB": 21960,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.016970239,
-          "peakRssKiB": 21988,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.027415937,
-          "peakRssKiB": 22112,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        }
-      ],
-      "markdown4cj": [
-        {
-          "seconds": 1.93289943,
-          "peakRssKiB": 660660,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 2.273076893,
-          "peakRssKiB": 718584,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 2.003376632,
-          "peakRssKiB": 700540,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 2.342618923,
-          "peakRssKiB": 581160,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 1.987644399,
-          "peakRssKiB": 695032,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 2.004613552,
-          "peakRssKiB": 725060,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 2.252421572,
-          "peakRssKiB": 686148,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        }
-      ],
-      "markdownMedianSeconds": 0.027137805,
-      "markdown4cjMedianSeconds": 2.004613552,
-      "markdownSpeedup": 73.8679326496745,
-      "peakRssRatio": 0.030496786472843627
-    },
-    "many-references": {
-      "bytes": 262144,
-      "markdown": [
-        {
-          "seconds": 0.037409458,
-          "peakRssKiB": 30280,
-          "stdout": "11568\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
-        },
-        {
-          "seconds": 0.027290006,
-          "peakRssKiB": 30056,
-          "stdout": "11568\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
-        },
-        {
-          "seconds": 0.027527647,
-          "peakRssKiB": 28300,
-          "stdout": "11568\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
-        },
-        {
-          "seconds": 0.037627613,
-          "peakRssKiB": 30204,
-          "stdout": "11568\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
-        },
-        {
-          "seconds": 0.038259621,
-          "peakRssKiB": 30268,
-          "stdout": "11568\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
-        },
-        {
-          "seconds": 0.037381416,
-          "peakRssKiB": 30404,
-          "stdout": "11568\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
-        },
-        {
-          "seconds": 0.037319962,
-          "peakRssKiB": 30260,
-          "stdout": "11568\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
-        }
-      ],
-      "markdown4cj": [
-        {
-          "seconds": 0.755021314,
-          "peakRssKiB": 190224,
-          "stdout": "23133\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
-        },
-        {
-          "seconds": 0.56201688,
-          "peakRssKiB": 188668,
-          "stdout": "23133\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
-        },
-        {
-          "seconds": 0.770083226,
-          "peakRssKiB": 190784,
-          "stdout": "23133\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
-        },
-        {
-          "seconds": 0.801455958,
-          "peakRssKiB": 164120,
-          "stdout": "23133\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
-        },
-        {
-          "seconds": 0.642863307,
-          "peakRssKiB": 189172,
-          "stdout": "23133\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
-        },
-        {
-          "seconds": 0.605442035,
-          "peakRssKiB": 188952,
-          "stdout": "23133\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
-        },
-        {
-          "seconds": 0.600199024,
-          "peakRssKiB": 189188,
-          "stdout": "23133\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
-        }
-      ],
-      "markdownMedianSeconds": 0.037381416,
-      "markdown4cjMedianSeconds": 0.642863307,
-      "markdownSpeedup": 17.19740383831367,
-      "peakRssRatio": 0.15936346863468634
-    },
-    "cjk": {
-      "bytes": 262144,
-      "markdown": [
-        {
-          "seconds": 0.027104748,
-          "peakRssKiB": 25868,
-          "stdout": "12483\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
-        },
-        {
-          "seconds": 0.027308736,
-          "peakRssKiB": 25900,
-          "stdout": "12483\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
-        },
-        {
-          "seconds": 0.027352221,
-          "peakRssKiB": 25848,
-          "stdout": "12483\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
-        },
-        {
-          "seconds": 0.02747179,
-          "peakRssKiB": 25912,
-          "stdout": "12483\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
-        },
-        {
-          "seconds": 0.03848492,
-          "peakRssKiB": 25916,
-          "stdout": "12483\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
-        },
-        {
-          "seconds": 0.027954716,
-          "peakRssKiB": 25540,
-          "stdout": "12483\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
-        },
-        {
-          "seconds": 0.027963206,
-          "peakRssKiB": 25844,
-          "stdout": "12483\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
-        }
-      ],
-      "markdown4cj": [
-        {
-          "seconds": 0.400666366,
-          "peakRssKiB": 143784,
-          "stdout": "12483\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
-        },
-        {
-          "seconds": 0.407710825,
-          "peakRssKiB": 143888,
-          "stdout": "12483\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
-        },
-        {
-          "seconds": 0.391229453,
-          "peakRssKiB": 142868,
-          "stdout": "12483\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
-        },
-        {
-          "seconds": 0.398669877,
-          "peakRssKiB": 143876,
-          "stdout": "12483\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
-        },
-        {
-          "seconds": 0.502543464,
-          "peakRssKiB": 143572,
-          "stdout": "12483\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
-        },
-        {
-          "seconds": 0.469359792,
-          "peakRssKiB": 143776,
-          "stdout": "12483\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
-        },
-        {
-          "seconds": 0.558062271,
-          "peakRssKiB": 143840,
-          "stdout": "12483\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
-        }
-      ],
-      "markdownMedianSeconds": 0.02747179,
-      "markdown4cjMedianSeconds": 0.407710825,
-      "markdownSpeedup": 14.841072423748143,
-      "peakRssRatio": 0.1801123095741132
-    },
-    "emoji": {
-      "bytes": 262144,
-      "markdown": [
-        {
-          "seconds": 0.079072791,
-          "peakRssKiB": 43492,
-          "stdout": "17097\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
-        },
-        {
-          "seconds": 0.070293438,
-          "peakRssKiB": 42624,
-          "stdout": "17097\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
-        },
-        {
-          "seconds": 0.074233675,
-          "peakRssKiB": 42736,
-          "stdout": "17097\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
-        },
-        {
-          "seconds": 0.072535335,
-          "peakRssKiB": 43788,
-          "stdout": "17097\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
-        },
-        {
-          "seconds": 0.073295153,
-          "peakRssKiB": 42640,
-          "stdout": "17097\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
-        },
-        {
-          "seconds": 0.071125043,
-          "peakRssKiB": 42508,
-          "stdout": "17097\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
-        },
-        {
-          "seconds": 0.08164045,
-          "peakRssKiB": 42704,
-          "stdout": "17097\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
-        }
-      ],
-      "markdown4cj": [
-        {
-          "seconds": 1.06331881,
-          "peakRssKiB": 187612,
-          "stdout": "17097\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
-        },
-        {
-          "seconds": 0.99869525,
-          "peakRssKiB": 212936,
-          "stdout": "17097\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
-        },
-        {
-          "seconds": 1.139528729,
-          "peakRssKiB": 173204,
-          "stdout": "17097\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
-        },
-        {
-          "seconds": 1.061402706,
-          "peakRssKiB": 199828,
-          "stdout": "17097\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
-        },
-        {
-          "seconds": 1.040109137,
-          "peakRssKiB": 200248,
-          "stdout": "17097\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
-        },
-        {
-          "seconds": 1.03269059,
-          "peakRssKiB": 200660,
-          "stdout": "17097\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
-        },
-        {
-          "seconds": 1.040732682,
-          "peakRssKiB": 198232,
-          "stdout": "17097\n",
-          "stdoutBytes": 6,
-          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
-        }
-      ],
-      "markdownMedianSeconds": 0.073295153,
-      "markdown4cjMedianSeconds": 1.040732682,
-      "markdownSpeedup": 14.19920198543006,
-      "peakRssRatio": 0.20563925310891534
-    },
-    "deep-list": {
-      "bytes": 262144,
-      "markdown": [
-        {
-          "seconds": 0.02761761,
-          "peakRssKiB": 25784,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.027246455,
-          "peakRssKiB": 25880,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.029046734,
-          "peakRssKiB": 25880,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.027195559,
-          "peakRssKiB": 25612,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.027405028,
-          "peakRssKiB": 25868,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.027472781,
-          "peakRssKiB": 25880,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.027181954,
-          "peakRssKiB": 25932,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        }
-      ],
-      "markdown4cj": [
-        {
-          "seconds": 0.337791538,
-          "peakRssKiB": 53100,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.345344194,
-          "peakRssKiB": 53544,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.357494563,
-          "peakRssKiB": 53500,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.311284661,
-          "peakRssKiB": 52832,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.285802697,
-          "peakRssKiB": 53628,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.292103201,
-          "peakRssKiB": 53232,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.28529853,
-          "peakRssKiB": 53512,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        }
-      ],
-      "markdownMedianSeconds": 0.027405028,
-      "markdown4cjMedianSeconds": 0.311284661,
-      "markdownSpeedup": 11.358669693751088,
-      "peakRssRatio": 0.48355336764376816
-    },
-    "pathological-delimiters": {
-      "bytes": 262144,
-      "markdown": [
-        {
-          "seconds": 0.079059038,
-          "peakRssKiB": 47216,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.081277624,
-          "peakRssKiB": 45448,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.083538861,
-          "peakRssKiB": 52828,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.080116412,
-          "peakRssKiB": 51644,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.086629628,
-          "peakRssKiB": 48488,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.071872942,
-          "peakRssKiB": 46416,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.081757516,
-          "peakRssKiB": 48472,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        }
-      ],
-      "markdown4cj": [
-        {
-          "seconds": 1.548962783,
-          "peakRssKiB": 198744,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 1.222315604,
-          "peakRssKiB": 211368,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 1.270438134,
-          "peakRssKiB": 210264,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 1.258748492,
-          "peakRssKiB": 218604,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 1.684267908,
-          "peakRssKiB": 186320,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 1.231946215,
-          "peakRssKiB": 222096,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 1.218233488,
-          "peakRssKiB": 210944,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        }
-      ],
-      "markdownMedianSeconds": 0.081277624,
-      "markdown4cjMedianSeconds": 1.258748492,
-      "markdownSpeedup": 15.487023734847366,
-      "peakRssRatio": 0.23786110510770117
-    },
-    "long-line": {
-      "bytes": 262144,
-      "markdown": [
-        {
-          "seconds": 0.016668741,
-          "peakRssKiB": 12704,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.018606137,
-          "peakRssKiB": 12816,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.018506322,
-          "peakRssKiB": 12996,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.021355894,
-          "peakRssKiB": 12804,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.018612763,
-          "peakRssKiB": 12792,
-          "stdout": "3\n",
-          "stdoutBytes": 2,
-          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
-        },
-        {
-          "seconds": 0.016577767,
+          "seconds": 0.024905571,
           "peakRssKiB": 12736,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.016777307,
-          "peakRssKiB": 12716,
+          "seconds": 0.029079524,
+          "peakRssKiB": 13008,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.039731465,
+          "peakRssKiB": 12844,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.029602556,
+          "peakRssKiB": 12904,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.037142033,
+          "peakRssKiB": 12972,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.029788486,
+          "peakRssKiB": 12908,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.033343641,
+          "peakRssKiB": 12784,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
@@ -2622,108 +1859,871 @@
       ],
       "markdown4cj": [
         {
-          "seconds": 0.225125223,
-          "peakRssKiB": 36604,
+          "seconds": 0.21783816,
+          "peakRssKiB": 30684,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.236266769,
-          "peakRssKiB": 36284,
+          "seconds": 0.183763252,
+          "peakRssKiB": 30676,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.252204264,
-          "peakRssKiB": 36184,
+          "seconds": 0.154606416,
+          "peakRssKiB": 30196,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.171784988,
-          "peakRssKiB": 36372,
+          "seconds": 0.2072654,
+          "peakRssKiB": 30340,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.176593789,
-          "peakRssKiB": 36544,
+          "seconds": 0.1747105,
+          "peakRssKiB": 30704,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.231274351,
-          "peakRssKiB": 36616,
+          "seconds": 0.175999253,
+          "peakRssKiB": 30696,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.224531412,
-          "peakRssKiB": 36492,
+          "seconds": 0.193106091,
+          "peakRssKiB": 30696,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
-      "markdownMedianSeconds": 0.018506322,
-      "markdown4cjMedianSeconds": 0.225125223,
-      "markdownSpeedup": 12.164773908073146,
-      "peakRssRatio": 0.3549268079528075
+      "markdownMedianSeconds": 0.029788486,
+      "markdown4cjMedianSeconds": 0.183763252,
+      "markdownSpeedup": 6.168935608207815,
+      "peakRssRatio": 0.42365815528921313
+    },
+    "large-table": {
+      "bytes": 262144,
+      "markdown": [
+        {
+          "seconds": 0.04420781,
+          "peakRssKiB": 21960,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.03487699,
+          "peakRssKiB": 21588,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.052591892,
+          "peakRssKiB": 21972,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.061705707,
+          "peakRssKiB": 21920,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.080753158,
+          "peakRssKiB": 21960,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.062449079,
+          "peakRssKiB": 21764,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.071597441,
+          "peakRssKiB": 21936,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        }
+      ],
+      "markdown4cj": [
+        {
+          "seconds": 7.592790432,
+          "peakRssKiB": 293592,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 6.732653282,
+          "peakRssKiB": 389616,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 5.443480791,
+          "peakRssKiB": 480508,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 6.99943317,
+          "peakRssKiB": 383576,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 7.149313017,
+          "peakRssKiB": 376480,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 6.411168242,
+          "peakRssKiB": 330040,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 6.212647069,
+          "peakRssKiB": 382072,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        }
+      ],
+      "markdownMedianSeconds": 0.061705707,
+      "markdown4cjMedianSeconds": 6.732653282,
+      "markdownSpeedup": 109.10908584193032,
+      "peakRssRatio": 0.045726606008640855
+    },
+    "many-references": {
+      "bytes": 262144,
+      "markdown": [
+        {
+          "seconds": 0.069554694,
+          "peakRssKiB": 30256,
+          "stdout": "11568\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
+        },
+        {
+          "seconds": 0.072723757,
+          "peakRssKiB": 30168,
+          "stdout": "11568\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
+        },
+        {
+          "seconds": 0.079070634,
+          "peakRssKiB": 30180,
+          "stdout": "11568\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
+        },
+        {
+          "seconds": 0.078291842,
+          "peakRssKiB": 30100,
+          "stdout": "11568\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
+        },
+        {
+          "seconds": 0.063726331,
+          "peakRssKiB": 30204,
+          "stdout": "11568\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
+        },
+        {
+          "seconds": 0.078093986,
+          "peakRssKiB": 29988,
+          "stdout": "11568\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
+        },
+        {
+          "seconds": 0.066565651,
+          "peakRssKiB": 30128,
+          "stdout": "11568\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
+        }
+      ],
+      "markdown4cj": [
+        {
+          "seconds": 1.318037524,
+          "peakRssKiB": 114084,
+          "stdout": "23133\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
+        },
+        {
+          "seconds": 1.643512646,
+          "peakRssKiB": 110760,
+          "stdout": "23133\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
+        },
+        {
+          "seconds": 1.464585139,
+          "peakRssKiB": 119096,
+          "stdout": "23133\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
+        },
+        {
+          "seconds": 1.297268276,
+          "peakRssKiB": 115000,
+          "stdout": "23133\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
+        },
+        {
+          "seconds": 1.684877539,
+          "peakRssKiB": 112044,
+          "stdout": "23133\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
+        },
+        {
+          "seconds": 1.823932816,
+          "peakRssKiB": 90116,
+          "stdout": "23133\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
+        },
+        {
+          "seconds": 1.619239961,
+          "peakRssKiB": 120460,
+          "stdout": "23133\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
+        }
+      ],
+      "markdownMedianSeconds": 0.072723757,
+      "markdown4cjMedianSeconds": 1.619239961,
+      "markdownSpeedup": 22.26562581193378,
+      "peakRssRatio": 0.25117051303337207
+    },
+    "cjk": {
+      "bytes": 262144,
+      "markdown": [
+        {
+          "seconds": 0.06586451,
+          "peakRssKiB": 25892,
+          "stdout": "12483\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
+        },
+        {
+          "seconds": 0.052212309,
+          "peakRssKiB": 25552,
+          "stdout": "12483\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
+        },
+        {
+          "seconds": 0.054661358,
+          "peakRssKiB": 25792,
+          "stdout": "12483\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
+        },
+        {
+          "seconds": 0.053251488,
+          "peakRssKiB": 25860,
+          "stdout": "12483\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
+        },
+        {
+          "seconds": 0.091805485,
+          "peakRssKiB": 25892,
+          "stdout": "12483\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
+        },
+        {
+          "seconds": 0.027510103,
+          "peakRssKiB": 25928,
+          "stdout": "12483\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
+        },
+        {
+          "seconds": 0.037578467,
+          "peakRssKiB": 25796,
+          "stdout": "12483\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
+        }
+      ],
+      "markdown4cj": [
+        {
+          "seconds": 1.027378278,
+          "peakRssKiB": 116800,
+          "stdout": "12483\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
+        },
+        {
+          "seconds": 1.132315661,
+          "peakRssKiB": 111824,
+          "stdout": "12483\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
+        },
+        {
+          "seconds": 0.988193755,
+          "peakRssKiB": 114440,
+          "stdout": "12483\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
+        },
+        {
+          "seconds": 1.04545517,
+          "peakRssKiB": 107124,
+          "stdout": "12483\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
+        },
+        {
+          "seconds": 0.957291595,
+          "peakRssKiB": 115476,
+          "stdout": "12483\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
+        },
+        {
+          "seconds": 0.503606115,
+          "peakRssKiB": 143916,
+          "stdout": "12483\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
+        },
+        {
+          "seconds": 0.477003896,
+          "peakRssKiB": 143108,
+          "stdout": "12483\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
+        }
+      ],
+      "markdownMedianSeconds": 0.053251488,
+      "markdown4cjMedianSeconds": 0.988193755,
+      "markdownSpeedup": 18.557110648250806,
+      "peakRssRatio": 0.18016064926762834
+    },
+    "emoji": {
+      "bytes": 262144,
+      "markdown": [
+        {
+          "seconds": 0.082134484,
+          "peakRssKiB": 42512,
+          "stdout": "17097\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
+        },
+        {
+          "seconds": 0.086335143,
+          "peakRssKiB": 42208,
+          "stdout": "17097\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
+        },
+        {
+          "seconds": 0.083624972,
+          "peakRssKiB": 42384,
+          "stdout": "17097\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
+        },
+        {
+          "seconds": 0.120757006,
+          "peakRssKiB": 39080,
+          "stdout": "17097\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
+        },
+        {
+          "seconds": 0.118763242,
+          "peakRssKiB": 38180,
+          "stdout": "17097\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
+        },
+        {
+          "seconds": 0.104255477,
+          "peakRssKiB": 40348,
+          "stdout": "17097\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
+        },
+        {
+          "seconds": 0.100652779,
+          "peakRssKiB": 41488,
+          "stdout": "17097\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
+        }
+      ],
+      "markdown4cj": [
+        {
+          "seconds": 1.410438456,
+          "peakRssKiB": 194288,
+          "stdout": "17097\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
+        },
+        {
+          "seconds": 1.231095043,
+          "peakRssKiB": 176388,
+          "stdout": "17097\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
+        },
+        {
+          "seconds": 1.636255092,
+          "peakRssKiB": 155212,
+          "stdout": "17097\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
+        },
+        {
+          "seconds": 1.905934554,
+          "peakRssKiB": 142028,
+          "stdout": "17097\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
+        },
+        {
+          "seconds": 1.520575379,
+          "peakRssKiB": 164064,
+          "stdout": "17097\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
+        },
+        {
+          "seconds": 1.271634123,
+          "peakRssKiB": 180164,
+          "stdout": "17097\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
+        },
+        {
+          "seconds": 2.991995995,
+          "peakRssKiB": 124712,
+          "stdout": "17097\n",
+          "stdoutBytes": 6,
+          "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
+        }
+      ],
+      "markdownMedianSeconds": 0.100652779,
+      "markdown4cjMedianSeconds": 1.520575379,
+      "markdownSpeedup": 15.107137568452035,
+      "peakRssRatio": 0.218809190480112
+    },
+    "deep-list": {
+      "bytes": 262144,
+      "markdown": [
+        {
+          "seconds": 0.060935165,
+          "peakRssKiB": 25628,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.057090147,
+          "peakRssKiB": 25720,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.037200249,
+          "peakRssKiB": 25032,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.051288379,
+          "peakRssKiB": 25868,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.073175291,
+          "peakRssKiB": 25556,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.040025798,
+          "peakRssKiB": 25720,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.027034511,
+          "peakRssKiB": 25712,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        }
+      ],
+      "markdown4cj": [
+        {
+          "seconds": 0.910952792,
+          "peakRssKiB": 53936,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.995279528,
+          "peakRssKiB": 49248,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.915413163,
+          "peakRssKiB": 53488,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.963998136,
+          "peakRssKiB": 52172,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.679721895,
+          "peakRssKiB": 53576,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.624807139,
+          "peakRssKiB": 53488,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.708152809,
+          "peakRssKiB": 52704,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        }
+      ],
+      "markdownMedianSeconds": 0.051288379,
+      "markdown4cjMedianSeconds": 0.910952792,
+      "markdownSpeedup": 17.761387857471572,
+      "peakRssRatio": 0.479605458320973
+    },
+    "pathological-delimiters": {
+      "bytes": 262144,
+      "markdown": [
+        {
+          "seconds": 0.146047822,
+          "peakRssKiB": 47352,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.127718464,
+          "peakRssKiB": 54776,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.159190162,
+          "peakRssKiB": 47116,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.155709608,
+          "peakRssKiB": 54876,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.1557637,
+          "peakRssKiB": 48096,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.241533964,
+          "peakRssKiB": 45336,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.116224554,
+          "peakRssKiB": 44776,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        }
+      ],
+      "markdown4cj": [
+        {
+          "seconds": 2.955912833,
+          "peakRssKiB": 148500,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 2.976339059,
+          "peakRssKiB": 135044,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 3.387150359,
+          "peakRssKiB": 120544,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 3.456614213,
+          "peakRssKiB": 143992,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 2.961426036,
+          "peakRssKiB": 152144,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 4.327801706,
+          "peakRssKiB": 126440,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 3.352187755,
+          "peakRssKiB": 143484,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        }
+      ],
+      "markdownMedianSeconds": 0.155709608,
+      "markdown4cjMedianSeconds": 3.352187755,
+      "markdownSpeedup": 21.528457993420677,
+      "peakRssRatio": 0.36068461457566514
+    },
+    "long-line": {
+      "bytes": 262144,
+      "markdown": [
+        {
+          "seconds": 0.02759137,
+          "peakRssKiB": 12844,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.036588843,
+          "peakRssKiB": 12912,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.030991431,
+          "peakRssKiB": 12840,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.041290052,
+          "peakRssKiB": 12736,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.028376479,
+          "peakRssKiB": 12916,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.028729417,
+          "peakRssKiB": 12972,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.028373783,
+          "peakRssKiB": 12892,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        }
+      ],
+      "markdown4cj": [
+        {
+          "seconds": 0.541018389,
+          "peakRssKiB": 36132,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.59821961,
+          "peakRssKiB": 35804,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.665248517,
+          "peakRssKiB": 36000,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.554128211,
+          "peakRssKiB": 36360,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.611739807,
+          "peakRssKiB": 36200,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.534574627,
+          "peakRssKiB": 36416,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        },
+        {
+          "seconds": 0.509271159,
+          "peakRssKiB": 36328,
+          "stdout": "3\n",
+          "stdoutBytes": 2,
+          "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+        }
+      ],
+      "markdownMedianSeconds": 0.028729417,
+      "markdown4cjMedianSeconds": 0.554128211,
+      "markdownSpeedup": 19.2878334774423,
+      "peakRssRatio": 0.3562170474516696
     },
     "ordinary": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.016969536,
-          "peakRssKiB": 12916,
+          "seconds": 0.025162688,
+          "peakRssKiB": 12908,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.018575828,
-          "peakRssKiB": 13044,
+          "seconds": 0.02761685,
+          "peakRssKiB": 13016,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.017673953,
-          "peakRssKiB": 12932,
+          "seconds": 0.022649126,
+          "peakRssKiB": 12996,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.016940439,
-          "peakRssKiB": 13104,
+          "seconds": 0.02830868,
+          "peakRssKiB": 13136,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.016147258,
-          "peakRssKiB": 13072,
+          "seconds": 0.043036282,
+          "peakRssKiB": 12972,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.016607787,
-          "peakRssKiB": 13144,
+          "seconds": 0.04242897,
+          "peakRssKiB": 12944,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.016603378,
-          "peakRssKiB": 13056,
+          "seconds": 0.051186876,
+          "peakRssKiB": 12960,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
@@ -2731,62 +2731,62 @@
       ],
       "markdown4cj": [
         {
-          "seconds": 0.15997443,
-          "peakRssKiB": 36584,
+          "seconds": 0.438292431,
+          "peakRssKiB": 36536,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.203061655,
-          "peakRssKiB": 36552,
+          "seconds": 0.383205641,
+          "peakRssKiB": 36932,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.202588775,
-          "peakRssKiB": 37028,
+          "seconds": 0.340896866,
+          "peakRssKiB": 35964,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.165042939,
-          "peakRssKiB": 36676,
+          "seconds": 0.360766911,
+          "peakRssKiB": 36576,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.150494073,
-          "peakRssKiB": 36696,
+          "seconds": 0.47480872,
+          "peakRssKiB": 36544,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.161236387,
-          "peakRssKiB": 36204,
+          "seconds": 0.364758334,
+          "peakRssKiB": 36092,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.161923629,
-          "peakRssKiB": 36996,
+          "seconds": 0.320001011,
+          "peakRssKiB": 36716,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         }
       ],
-      "markdownMedianSeconds": 0.016940439,
-      "markdown4cjMedianSeconds": 0.161923629,
-      "markdownSpeedup": 9.558408079035024,
-      "peakRssRatio": 0.3549746138057686
+      "markdownMedianSeconds": 0.02830868,
+      "markdown4cjMedianSeconds": 0.364758334,
+      "markdownSpeedup": 12.885035049320562,
+      "peakRssRatio": 0.3556807104949637
     }
   },
-  "geomeanMarkdownSpeedup": 12.396847176527311,
+  "geomeanMarkdownSpeedup": 17.312972626396235,
   "promotionPassed": true,
   "derivationErrors": []
 }
