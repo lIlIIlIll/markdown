@@ -143,12 +143,14 @@ rebuilt executable byte must equal the retained measured byte;
 synchronized edits to both a binary and its report digest therefore fail.
 
 Repository provenance is derived from Git objects, not trusted report strings.
-The verifier resolves the declared ref to its commit and tree, reads the declared
-commit's product and harness blobs, recomputes their digests, and binds both build
-identities to that snapshot. `--require-current-product` additionally requires the
-declared commit and tree to equal the retained product source's `HEAD`; a checkout
-must also be clean. Missing Git objects, historical ancestor substitution, ambient
-`GIT_*` redirection, or a missing product source fail closed.
+The report records the measured commit as an immutable full object ID. The verifier
+resolves that ID to its commit and tree, reads every product and harness blob,
+recomputes their digests, and binds both build identities to that snapshot.
+`--require-current-product` additionally compares all product/build inputs and
+harness blobs with the retained product source's `HEAD`; a checkout must also be
+clean. A later commit that only retains reports remains verifiable. Changes to
+product or harness inputs, missing Git objects, ambient `GIT_*` redirection, or a
+missing product source fail closed.
 
 Verify the committed raw samples, all derived statistics, the generated report,
 the product tree, the corpus, and the harness with:

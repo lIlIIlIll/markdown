@@ -1193,6 +1193,50 @@ class SameLanguageBenchmarkTest(unittest.TestCase):
         self.assertEqual(snapshot["productFiles"],
             benchmark_product_file_sha256s(comparison.ROOT))
 
+    def test_repository_identity_records_an_immutable_commit(self) -> None:
+        identity = comparison.repository_identity()
+        self.assertEqual(identity["repositoryRef"], identity["repositoryCommit"])
+
+    def test_evidence_only_commit_preserves_current_product_verification(self) -> None:
+        assert IDENTITY_ROOT is not None
+        report = valid_report()
+        with tempfile.TemporaryDirectory() as temporary:
+            product = Path(temporary) / "product"
+            test_git(Path(temporary), "clone", "--quiet", str(IDENTITY_ROOT), str(product))
+            test_git(product, "config", "user.name", "Benchmark Identity Test")
+            test_git(product, "config", "user.email", "benchmark@example.test")
+            test_git(product, "config", "core.hooksPath", os.devnull)
+            (product / "evidence.md").write_text('Measured evidence.\n')
+            test_git(product, "add", "evidence.md")
+            test_git(product, "commit", "--quiet", "-m", "docs: retain measured evidence")
+            errors = comparison.validate_report(report, True,
+                COMPARATOR_ROOT, COMMONMARK_ROOT, BINARY_ROOT, product)
+        self.assertEqual(errors, [])
+
+    def test_movable_repository_ref_is_rejected(self) -> None:
+        report = valid_report()
+        report["identity"]["repositoryRef"] = "HEAD"
+        self.assertIn("same-language repository ref must be an immutable canonical object ID",
+            comparison.validate_report(report, True))
+
+    def test_harness_change_invalidates_measured_product(self) -> None:
+        assert IDENTITY_ROOT is not None
+        report = valid_report()
+        with tempfile.TemporaryDirectory() as temporary:
+            product = Path(temporary) / "product"
+            test_git(Path(temporary), "clone", "--quiet", str(IDENTITY_ROOT), str(product))
+            test_git(product, "config", "user.name", "Benchmark Identity Test")
+            test_git(product, "config", "user.email", "benchmark@example.test")
+            test_git(product, "config", "core.hooksPath", os.devnull)
+            harness = product / comparison.HARNESS_FILES[0]
+            harness.write_bytes(harness.read_bytes() + b"\n# Changed harness.\n")
+            test_git(product, "add", comparison.HARNESS_FILES[0])
+            test_git(product, "commit", "--quiet", "-m", "test: change harness")
+            errors = comparison.validate_report(report, True,
+                COMPARATOR_ROOT, COMMONMARK_ROOT, BINARY_ROOT, product)
+        self.assertIn(
+            "same-language declared Git source is not the retained product source HEAD", errors)
+
     def test_empty_repository_ref_is_rejected(self) -> None:
         report = valid_report()
         report["identity"]["repositoryRef"] = ""

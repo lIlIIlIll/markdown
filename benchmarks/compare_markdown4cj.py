@@ -935,10 +935,12 @@ def retained_product_snapshot(source: Path, reference: object,
     with local_git_repository(resolved) as repository:
         snapshot = git_repository_snapshot(repository, reference)
         object_format = str(snapshot["gitObjectFormat"])
-        head_commit = resolve_git_commit(repository, "HEAD", object_format)
-        head_tree = resolve_git_tree(repository, head_commit, object_format)
-        matches_head = head_commit == snapshot["repositoryCommit"] and \
-            head_tree == snapshot["gitTree"]
+        head = git_repository_snapshot(repository, "HEAD")
+        # Retaining reports creates a new commit without changing the measured
+        # product. Compare every product/build input and harness blob while
+        # keeping the measured commit/tree independently bound to an immutable ref.
+        matches_head = head["productFiles"] == snapshot["productFiles"] and \
+            head["harnessFiles"] == snapshot["harnessFiles"]
         if require_source_head and resolved.is_dir() and \
                 git_text(repository, "rev-parse", "--is-bare-repository") == "false":
             matches_head = matches_head and not git_bytes(repository, "status",
@@ -959,6 +961,7 @@ def repository_identity() -> dict[str, object]:
     snapshot = git_repository_snapshot(ROOT, reference)
     if not current_tree_is_snapshot(ROOT, snapshot):
         raise RuntimeError("benchmark subject must match a clean publishable Git tree")
+    snapshot["repositoryRef"] = snapshot["repositoryCommit"]
     return {key: snapshot[key] for key in ("gitObjectFormat", "repositoryRef",
         "repositoryCommit", "gitTree", "productTreeSha256", "harnessFiles")}
 
@@ -1706,6 +1709,8 @@ def validate_repository_identity(value: object, require_current_product: bool,
     object_format = str(snapshot["gitObjectFormat"])
     if value.get("gitObjectFormat") != object_format:
         errors.append("same-language Git object format is not derived")
+    if not is_canonical_git_oid(value.get("repositoryRef"), object_format):
+        errors.append("same-language repository ref must be an immutable canonical object ID")
     for field, label in (("repositoryCommit", "commit"), ("gitTree", "tree")):
         if not is_canonical_git_oid(value.get(field), object_format):
             errors.append(f"same-language repository {label} is not a canonical object ID")

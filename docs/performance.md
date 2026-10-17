@@ -46,8 +46,9 @@ benchmark driver 使用显式 `ReusableUtf8Input` 和可选 native scanner，并
 identity 绑定 SDK archive、实际 compiler/archiver executable bytes 与 SHA-256、完整版本
 命令和输出、target triple、native scanner 最小 child environment、manifest 和命令、build
 flags、源码输入以及最终 binary digest。
-verifier 还会解析声明 ref 的真实 commit/tree，并从该 commit blobs 独立重算产品与 harness
-identity；`--require-current-product` 要求该 tree 等于干净的当前 `HEAD`。
+报告以完整 SHA 固定实测 commit。verifier 解析该 SHA 的真实 commit/tree，并从 commit
+blobs 独立重算产品与 harness identity；`--require-current-product` 要求这些输入与干净的
+当前 `HEAD` 一致。只提交生成报告可以保留证据；产品、构建输入或 harness 变化会使旧证据失效。
 它还要求显式提供本地 `markdown4cj` 与 `commonmark4cj` Git 输入，从固定 commit 的
 objects 独立重算两侧 tree、完整依赖内容、选择的 core blobs、迁移结果、driver 和
 path-stable manifest。checkout、bare object store 与 Git bundle 均可离线验证；缺失 objects

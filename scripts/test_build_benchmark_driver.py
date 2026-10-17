@@ -372,11 +372,14 @@ class BenchmarkDriverBuildTest(unittest.TestCase):
 
     def test_product_build_workspace_excludes_existing_package_targets(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            workspace = build_benchmark_driver.prepare_build_workspace(
-                Path(temporary) / "markdown")
+            native = Path(temporary) / "native"
+            self.write_native_identity_fixture(native)
+            with patch.object(build_benchmark_driver, "NATIVE", native):
+                workspace = build_benchmark_driver.prepare_build_workspace(
+                    Path(temporary) / "markdown")
             self.assertTrue((workspace / "src/parser.cj").is_file())
-            self.assertTrue(any((workspace / "target/native" / name).is_file()
-                for name in ("libmarkdown_scanner.a", "markdown_scanner.lib")))
+            self.assertEqual((workspace / "target/native/libmarkdown_scanner.a").read_bytes(),
+                b"native-archive")
             self.assertFalse((workspace / "benchmarks/driver/target").exists())
             self.assertFalse((workspace / "tools/markdown/target").exists())
 
