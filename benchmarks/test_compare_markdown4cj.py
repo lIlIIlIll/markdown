@@ -1754,16 +1754,18 @@ class SameLanguageBenchmarkTest(unittest.TestCase):
         self.assertIn("product-source/markdown.bundle HEAD", workflow)
         self.assertEqual(workflow.count(
             "--product-source target/same-language-benchmark/product-source/markdown.bundle"),
-            2)
+            1)
         self.assertIn("git archive HEAD | tar -x", workflow)
         self.assertIn('"${offline_root}/benchmarks/compare_markdown4cj.py"', workflow)
-        self.assertIn(
-            '"${RUNNER_TEMP}/markdown-same-language-offline/benchmarks/compare_markdown4cj.py"',
-            workflow)
+        committed = workflow.split("- name: Verify committed canonical same-language evidence", 1)[1]
+        committed = committed.split("- name: Preserve evidence executable modes", 1)[0]
+        self.assertIn("scripts/verify_committed_benchmark.py --download", committed)
+        self.assertNotIn("target/same-language-benchmark/binaries", committed)
+        self.assertIn("same-language-benchmark.tar", workflow)
         self.assertIn("toolchain/cangjie-sdk-linux-x64-1.2.0.tar.gz", workflow)
         self.assertEqual(workflow.count(
             "--sdk-archive target/same-language-benchmark/toolchain/cangjie-sdk-linux-x64-1.2.0.tar.gz"),
-            2)
+            1)
 
     def test_verify_mode_requires_retained_sdk_archive(self) -> None:
         assert COMPARATOR_ROOT is not None and COMMONMARK_ROOT is not None

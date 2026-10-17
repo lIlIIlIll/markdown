@@ -97,6 +97,8 @@ HARNESS_FILES = (
     "scripts/build_native_scanner.py",
     "scripts/test_build_benchmark_driver.py",
     "scripts/test_build_native_scanner.py",
+    "scripts/verify_committed_benchmark.py",
+    "scripts/test_verify_committed_benchmark.py",
     ".github/workflows/candidate-validation.yml",
 )
 

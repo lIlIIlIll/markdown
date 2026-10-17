@@ -126,5 +126,10 @@ python3 benchmarks/compare_markdown4cj.py \
 最小 Git bundle、SDK archive、native tool/resource inputs 和实际执行产物；复验直接从这些输入重算源码身份并重建产物。
 directory Git input 必须是精确 worktree/bare repository root，nested path、symlink root 与外部
 `.git` indirection 会 fail closed。该 check 是 `main` 的 required check。
-PR job 先测量当前 SHA，避免被上一提交的 committed report 阻断。`main` push 会额外要求
-仓库中的 schema-v5 raw 与当前产品 identity 一致。
+PR job 先测量当前 SHA，避免被上一提交的 committed report 阻断。归档中的
+`same-language-benchmark.tar` 保留可执行权限。`.github/benchmark-evidence.json` 固定已提交
+报告对应的 CI run、artifact ID、归档摘要和 raw 摘要。`main` push 下载该归档，使用该次实测的
+retained binaries/SDK/native tools 完整重建，并验证源码与当前产品及 harness 一致；不混用新
+runner 的产物。归档缺失、过期或摘要不匹配均失败。CI 保留 90 天，应提前保留离线副本；离线使用
+`python3 scripts/verify_committed_benchmark.py --artifact-archive <evidence.zip> --work-dir "$TMPDIR/committed-evidence"`，
+其中工作目录必须尚不存在。

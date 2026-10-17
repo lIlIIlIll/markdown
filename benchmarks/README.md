@@ -173,7 +173,24 @@ GitHub Actions runs that verification and a fresh paired measurement in
 request can merge into `main`; its raw samples, generated report, retained product
 Git bundle, minimal bundles for both pinned comparator commits, retained SDK
 archive, native tool/resource inputs, measured executables, and empty comparator runtime-closure identity are uploaded even when
-the job fails. Verification can therefore run from relocated evidence without
+the job fails. The artifact contains `same-language-benchmark.tar` to preserve
+executable permissions. Verification can therefore run from relocated evidence without
 consulting the verifier checkout's `.git` directory or the network. Directory
 Git inputs must be the exact worktree or bare-repository root; nested paths,
 symlinked roots, and external `.git` indirection fail closed.
+
+The committed report uses its own measured inputs. `.github/benchmark-evidence.json`
+pins the CI run, artifact ID, archive digest and raw-report digest. A `main` push
+downloads that artifact and verifies the committed report against those retained
+binaries and the current product and harness. It never substitutes the new
+runner's binaries for the committed measurement. Missing, expired or mismatched
+artifacts fail verification. Retain the downloaded archive for offline checks:
+
+```sh
+python3 scripts/verify_committed_benchmark.py \
+  --artifact-archive <evidence.zip> --work-dir "$TMPDIR/committed-evidence"
+```
+
+This performs the same complete source-to-binary rebuild. The work directory
+must not already exist. The CI archive is retained for 90 days; keep an offline
+copy before it expires.
