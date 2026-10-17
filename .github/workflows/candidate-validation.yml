@@ -55,15 +55,30 @@ jobs:
         shell: bash
         run: |
           set -eo pipefail
-          printf 'Initial compiler stack limit (KiB): '
-          ulimit -s
-          ulimit -s 16384
           source "${CANGJIE_ENV_FILE}"
           set -u
           CC=clang AR=ar \
             MARKDOWN_SDK_ARCHIVE_SHA256='${{ matrix.sha256 }}' \
             MARKDOWN_BENCHMARK_DRIVER_MODE='${{ matrix.benchmark-driver-mode }}' \
             scripts/release_gate.sh
+
+      - name: Diagnose compiler backend failure
+        if: failure()
+        shell: bash
+        run: |
+          set -eo pipefail
+          source "${CANGJIE_ENV_FILE}"
+          bash scripts/diagnose_cangjie_backend.sh
+
+      - name: Upload compiler diagnostics
+        if: failure()
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: compiler-diagnostics-${{ matrix.sdk }}
+          path: target/compiler-diagnostics
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Upload release evidence
         if: always()
@@ -110,9 +125,6 @@ jobs:
         shell: bash
         run: |
           set -eo pipefail
-          printf 'Initial compiler stack limit (KiB): '
-          ulimit -s
-          ulimit -s 16384
           unset CPLUS_INCLUDE_PATH C_INCLUDE_PATH COMPILER_PATH CPATH
           unset DYLD_INSERT_LIBRARIES DYLD_LIBRARY_PATH GLIBC_TUNABLES LD_AUDIT
           unset LD_LIBRARY_PATH LD_PRELOAD LIBRARY_PATH MALLOC_ARENA_MAX MALLOC_CONF
@@ -170,7 +182,6 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         shell: bash
         run: |
-          ulimit -s 16384
           python3 "${RUNNER_TEMP}/markdown-same-language-offline/benchmarks/compare_markdown4cj.py" \
             --source target/same-language-benchmark/comparator-sources/markdown4cj.bundle \
             --commonmark4cj-source target/same-language-benchmark/comparator-sources/commonmark4cj.bundle \
