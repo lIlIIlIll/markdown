@@ -1671,6 +1671,7 @@ extend MarkdownEngine {
     public func htmlRenderer(options!: HtmlOptions = HtmlOptions.safe(), sanitizer!: ?HtmlSanitizerPort = None,
         fallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None): HtmlRenderer {
         HtmlRenderer(options: options, extensionRules: dialect.rendererRules.toArray(), sanitizer: sanitizer,
+            extensionManifests: dialect.manifests.toArray(), extensionFallbacks: fallbacks,
             rawHtmlHandler: rawHtmlHandler, maximumOutputBytes: Some(limits.maximumOutputBytes))
     }
 }
