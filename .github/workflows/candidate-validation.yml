@@ -8,12 +8,6 @@ on:
 permissions:
   contents: read
 
-env:
-  TMPDIR: ${{ runner.temp }}
-  TMP: ${{ runner.temp }}
-  TEMP: ${{ runner.temp }}
-  CANGJIE_SDK_ARCHIVE: ${{ runner.temp }}/cangjie-sdk-linux-x64-1.2.0.tar.gz
-
 jobs:
   linux-sdk-matrix:
     name: Candidate validation (${{ matrix.sdk }})
@@ -32,6 +26,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
+
+      - name: Configure temporary paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            printf 'TMPDIR=%s\n' "${RUNNER_TEMP}"
+            printf 'TMP=%s\n' "${RUNNER_TEMP}"
+            printf 'TEMP=%s\n' "${RUNNER_TEMP}"
+            printf 'CANGJIE_SDK_ARCHIVE=%s/cangjie-sdk-linux-x64-1.2.0.tar.gz\n' "${RUNNER_TEMP}"
+          } >> "${GITHUB_ENV}"
 
       - name: Install declared Cangjie SDK
         shell: bash
@@ -76,6 +81,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
+
+      - name: Configure temporary paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            printf 'TMPDIR=%s\n' "${RUNNER_TEMP}"
+            printf 'TMP=%s\n' "${RUNNER_TEMP}"
+            printf 'TEMP=%s\n' "${RUNNER_TEMP}"
+            printf 'CANGJIE_SDK_ARCHIVE=%s/cangjie-sdk-linux-x64-1.2.0.tar.gz\n' "${RUNNER_TEMP}"
+          } >> "${GITHUB_ENV}"
 
       - name: Download pinned Cangjie SDK 1.2.0
         shell: bash
