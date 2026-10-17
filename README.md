@@ -36,7 +36,7 @@
 
 ## 两分钟运行
 
-你需要 Cangjie SDK 1.1 和当前仓库的本地路径。基础包不要求 C 编译器。
+你需要 Cangjie STS SDK 1.2.0 和当前仓库的本地路径。基础包不要求 C 编译器。
 
 在消费工程的 `cjpm.toml` 中添加依赖：
 
@@ -211,16 +211,16 @@ markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、�
 | Offline evidence ready | `ready` |
 | CI verified at evidence repository HEAD | `no` |
 | Published release | `no` |
-| Tests | `1510/1510` passed; `0` skipped; `0` failed |
+| Tests | `1511/1511` passed; `0` skipped; `0` failed |
 | CommonMark conformance | `652/652` |
 | GFM conformance | `671/671` |
 | Public API snapshot | `1436` declarations |
-| Artifact commit | `17286cf3cefbddb716a973040a309a23935802ff` |
-| Evidence subject commit | `17286cf3cefbddb716a973040a309a23935802ff` |
+| Artifact commit | `44c1888c5da2688ebf4b8115e3a3f718782d20ae` |
+| Evidence subject commit | `44c1888c5da2688ebf4b8115e3a3f718782d20ae` |
 | Execution identity | `target/release-evidence/manifest.json` records and verifies the clean gate commit/tree |
-| CommonMark / cmark | `2.08x` / limit `2.5x` |
-| GFM HTML / cmark-gfm | `1.76x` / limit `2.5x` |
-| Benchmark identity | `current`; commit `17286cf3cefbddb716a973040a309a23935802ff`; SDK `Cangjie Compiler: 1.2.0 (cjnative)` |
+| CommonMark / cmark | `2.33x` / limit `2.5x` |
+| GFM HTML / cmark-gfm | `1.83x` / limit `2.5x` |
+| Benchmark identity | `current`; commit `44c1888c5da2688ebf4b8115e3a3f718782d20ae`; SDK `Cangjie Compiler: 1.2.0 (cjnative)` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
 `evidenceReady` describes reproducible offline artifacts and gates only. It does not claim that

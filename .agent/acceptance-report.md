@@ -14,12 +14,12 @@
 ## Generated Release Evidence
 
 - Version/status: `0.9.0` / `evidence-ready`.
-- Artifact commit: `17286cf3cefbddb716a973040a309a23935802ff`.
-- Evidence subject commit: `17286cf3cefbddb716a973040a309a23935802ff`; the retained execution manifest binds the clean gate commit and Git tree.
+- Artifact commit: `44c1888c5da2688ebf4b8115e3a3f718782d20ae`.
+- Evidence subject commit: `44c1888c5da2688ebf4b8115e3a3f718782d20ae`; the retained execution manifest binds the clean gate commit and Git tree.
 - Hosted CI verified at that HEAD: `False`; published: `False`.
-- Tests: `1510/1510` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `2.08x`, GFM `1.76x`, status `current`.
-- Raw digest: `8eef38383d5f9c67e24e0632876f75056f5c49afed08a675395da6bbdd31240b`.
+- Tests: `1511/1511` passed, `0` skipped, `0` failed.
+- Benchmark: CommonMark `2.33x`, GFM `1.83x`, status `current`.
+- Raw digest: `6d98e6841d8ddd705f99657baa54b1c42152aac640670e9065c128f50c031003`.
 
 All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->
