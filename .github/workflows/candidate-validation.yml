@@ -135,6 +135,16 @@ jobs:
           unset MARKDOWN_NATIVE_ARFLAGS MARKDOWN_NATIVE_CFLAGS TARGET
           unset cjGCInterval cjHeapSize
           set -u
+          # Use a fixed, generic measurement prefix in retained public reports.
+          test ! -e /workspace
+          sudo install -d -m 0700 -o "$(id -u)" -g "$(id -g)" /workspace
+          git clone --quiet --no-local "${GITHUB_WORKSPACE}" /workspace/product
+          benchmark_root=/workspace/product
+          cp "${CANGJIE_SDK_ARCHIVE}" /workspace/cangjie-sdk-linux-x64-1.2.0.tar.gz
+          export CANGJIE_SDK_ARCHIVE=/workspace/cangjie-sdk-linux-x64-1.2.0.tar.gz
+          mkdir /workspace/tmp
+          export TMPDIR=/workspace/tmp TMP=/workspace/tmp TEMP=/workspace/tmp
+          cd "${benchmark_root}"
           python3 scripts/test_verify_committed_benchmark.py
           python3 benchmarks/test_compare_markdown4cj.py
           mkdir -p target/same-language-benchmark
@@ -147,29 +157,29 @@ jobs:
             --sdk-sha256 \
               '8c5fd944cd9cc51ee63d4a240e3ecc4f540345dae1468e8b47c927ecf2ba998f' \
             --sdk-archive "${CANGJIE_SDK_ARCHIVE}" \
-            --sdk-extract-dir "${RUNNER_TEMP}/cangjie-sdk-verified" \
+            --sdk-extract-dir /workspace/cangjie-sdk-verified \
             --target x86_64-unknown-linux-gnu
           mkdir -p target/same-language-benchmark/toolchain
           cp "${CANGJIE_SDK_ARCHIVE}" \
             target/same-language-benchmark/toolchain/cangjie-sdk-linux-x64-1.2.0.tar.gz
           python3 benchmarks/compare_markdown4cj.py \
-            --tools-root "${RUNNER_TEMP}/markdown-same-language-tools" \
-            --workspace "${RUNNER_TEMP}/markdown4cj-adapter" \
+            --tools-root /workspace/markdown-same-language-tools \
+            --workspace /workspace/markdown4cj-adapter \
             --binary-root target/same-language-benchmark/binaries \
             --build-identity target/same-language-benchmark/build-identity.json \
             --output target/same-language-benchmark/markdown4cj-comparison-raw.json \
             --markdown-report target/same-language-benchmark/markdown4cj-comparison.md
           mkdir -p target/same-language-benchmark/comparator-sources
-          git -C "${RUNNER_TEMP}/markdown-same-language-tools/markdown4cj" bundle create \
-            "${GITHUB_WORKSPACE}/target/same-language-benchmark/comparator-sources/markdown4cj.bundle" \
+          git -C /workspace/markdown-same-language-tools/markdown4cj bundle create \
+            "${benchmark_root}/target/same-language-benchmark/comparator-sources/markdown4cj.bundle" \
             HEAD
-          git -C "${RUNNER_TEMP}/markdown-same-language-tools/commonmark4cj" bundle create \
-            "${GITHUB_WORKSPACE}/target/same-language-benchmark/comparator-sources/commonmark4cj.bundle" \
+          git -C /workspace/markdown-same-language-tools/commonmark4cj bundle create \
+            "${benchmark_root}/target/same-language-benchmark/comparator-sources/commonmark4cj.bundle" \
             HEAD
           mkdir -p target/same-language-benchmark/product-source
           git bundle create \
             target/same-language-benchmark/product-source/markdown.bundle HEAD
-          offline_root="${RUNNER_TEMP}/markdown-same-language-offline"
+          offline_root=/workspace/markdown-same-language-offline
           mkdir -p "${offline_root}"
           git archive HEAD | tar -x -C "${offline_root}"
           python3 "${offline_root}/benchmarks/compare_markdown4cj.py" \
@@ -195,8 +205,10 @@ jobs:
         if: always()
         shell: bash
         run: |
-          if test -d target/same-language-benchmark; then
-            tar -cf target/same-language-benchmark.tar -C target/same-language-benchmark .
+          if test -d /workspace/product/target/same-language-benchmark; then
+            mkdir -p target
+            tar -cf target/same-language-benchmark.tar \
+              -C /workspace/product/target/same-language-benchmark .
           fi
 
       - name: Upload same-language benchmark evidence
