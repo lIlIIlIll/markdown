@@ -1555,17 +1555,17 @@ internal class AstArenaBuilder {
             retainedChildChunks) {
             let retainedNodeTail = checkpoint.nodeCount % AST_NODE_CHUNK_SIZE
             let retainedChildTail = checkpoint.childCount % AST_CHILD_CHUNK_SIZE
-            while (nodeTail.size > retainedNodeTail) {
-                nodeTail.remove(at: nodeTail.size - 1)
+            if (nodeTail.size > retainedNodeTail) {
+                nodeTail.remove(retainedNodeTail..nodeTail.size)
             }
-            while (childTail.size > retainedChildTail) {
-                childTail.remove(at: childTail.size - 1)
+            if (childTail.size > retainedChildTail) {
+                childTail.remove(retainedChildTail..childTail.size)
             }
-            while (payloads.size > checkpoint.payloadCount) {
-                payloads.remove(at: payloads.size - 1)
+            if (payloads.size > checkpoint.payloadCount) {
+                payloads.remove(checkpoint.payloadCount..payloads.size)
             }
-            while (originMetadata.size > checkpoint.originMetadataCount) {
-                originMetadata.remove(at: originMetadata.size - 1)
+            if (originMetadata.size > checkpoint.originMetadataCount) {
+                originMetadata.remove(checkpoint.originMetadataCount..originMetadata.size)
             }
             nodeCountValue = checkpoint.nodeCount
             childCountValue = checkpoint.childCount
@@ -1595,25 +1595,25 @@ internal class AstArenaBuilder {
         }
 
         let fullNodeChunks = checkpoint.nodeCount / AST_NODE_CHUNK_SIZE
-        while (frozenNodeChunks.size > fullNodeChunks) {
-            frozenNodeChunks.remove(at: frozenNodeChunks.size - 1)
+        if (frozenNodeChunks.size > fullNodeChunks) {
+            frozenNodeChunks.remove(fullNodeChunks..frozenNodeChunks.size)
         }
         nodeTail = retainedNodes
         let fullChildChunks = checkpoint.childCount / AST_CHILD_CHUNK_SIZE
-        while (frozenChildChunks.size > fullChildChunks) {
-            frozenChildChunks.remove(at: frozenChildChunks.size - 1)
+        if (frozenChildChunks.size > fullChildChunks) {
+            frozenChildChunks.remove(fullChildChunks..frozenChildChunks.size)
         }
         childTail = retainedChildren
 
-        while (payloads.size > checkpoint.payloadCount) {
-            payloads.remove(at: payloads.size - 1)
+        if (payloads.size > checkpoint.payloadCount) {
+            payloads.remove(checkpoint.payloadCount..payloads.size)
         }
-        while (originMetadata.size > checkpoint.originMetadataCount) {
-            originMetadata.remove(at: originMetadata.size - 1)
+        if (originMetadata.size > checkpoint.originMetadataCount) {
+            originMetadata.remove(checkpoint.originMetadataCount..originMetadata.size)
         }
         if (!trustedParserConstruction) {
-            while (parentIndexes.size > checkpoint.nodeCount) {
-                parentIndexes.remove(at: parentIndexes.size - 1)
+            if (parentIndexes.size > checkpoint.nodeCount) {
+                parentIndexes.remove(checkpoint.nodeCount..parentIndexes.size)
             }
             // A surviving node may have been attached to a speculative parent.
             // Reconstruct only the retained parent relation instead of walking

@@ -147,6 +147,52 @@ public class AstArenaTests {
     }
 
     @TestCase
+    public func rollbackRestoresRetainedOwnershipAcrossStorageBoundaries(): Unit {
+        for (bulkCount in [AST_NODE_CHUNK_SIZE - 4, AST_CHILD_CHUNK_SIZE - 1, AST_CHILD_CHUNK_SIZE]) {
+            let builder = AstArenaBuilder()
+            let prefix = builder.append(NodeKind.Text, NodeCategory.Inline, Some(SourceSpan(0, 1)),
+                NodeOriginKind.Parsed, [],
+                payload: ArenaNodePayload.TextValue(LiteralStorage.Copy("x"), LiteralStorage.Copy("x"), None))
+            let prefixParent = builder.append(NodeKind.Paragraph, NodeCategory.Block, Some(SourceSpan(0, 1)),
+                NodeOriginKind.Parsed, [prefix])
+            let bulk = ArrayList<Int64>()
+            for (index in 0..bulkCount) {
+                bulk.add(
+                    builder.append(NodeKind.Text, NodeCategory.Inline, Some(SourceSpan(index + 1, index + 2)),
+                        NodeOriginKind.Parsed, [],
+                        payload: ArenaNodePayload.TextValue(LiteralStorage.Copy("b"), LiteralStorage.Copy("b"), None)))
+            }
+            let bulkParent = builder.append(NodeKind.Paragraph, NodeCategory.Block, Some(SourceSpan(1, bulkCount + 1)),
+                NodeOriginKind.Parsed, bulk.toArray())
+            let loose = builder.append(NodeKind.Text, NodeCategory.Inline, Some(SourceSpan(bulkCount + 1, bulkCount + 2)),
+                NodeOriginKind.Parsed, [],
+                payload: ArenaNodePayload.TextValue(LiteralStorage.Copy("l"), LiteralStorage.Copy("l"), None))
+            let checkpoint = builder.checkpoint()
+            let _ = builder.append(NodeKind.Paragraph, NodeCategory.Block, Some(SourceSpan(bulkCount + 1, bulkCount + 2)),
+                NodeOriginKind.Parsed, [loose])
+            for (index in 0..AST_NODE_CHUNK_SIZE + 3) {
+                let _ = builder.append(NodeKind.Text, NodeCategory.Inline,
+                    Some(SourceSpan(bulkCount + index + 2, bulkCount + index + 3)), NodeOriginKind.Parsed, [])
+            }
+            builder.rollback(checkpoint)
+            @ExpectThrows[IllegalArgumentException](builder.append(NodeKind.Paragraph, NodeCategory.Block,
+                Some(SourceSpan(0, 1)), NodeOriginKind.Parsed, [prefix]))
+            let looseParent = builder.append(NodeKind.Paragraph, NodeCategory.Block,
+                Some(SourceSpan(bulkCount + 1, bulkCount + 2)), NodeOriginKind.Parsed, [loose])
+            let _ = builder.append(NodeKind.DocumentNode, NodeCategory.Block, Some(SourceSpan(0, bulkCount + 2)),
+                NodeOriginKind.Parsed, [prefixParent, bulkParent, looseParent])
+            let document = builder.freeze()
+            let children = document.root().children()
+            @Expect(document.nodeCount, bulkCount + 6)
+            @Expect(children.size, 3)
+            @Expect(children[0].children()[0].nodeId, document.nodeAt(prefix).nodeId)
+            @Expect(children[1].children().size, bulkCount)
+            @Expect(children[1].children()[bulkCount - 1].asText().getOrThrow().value, "b")
+            @Expect(children[2].children()[0].nodeId, document.nodeAt(loose).nodeId)
+        }
+    }
+
+    @TestCase
     public func trustedRollbackTruncatesSpeculationInsideCurrentChunk(): Unit {
         let builder = AstArenaBuilder(trustedParserConstruction: true)
         let retained = builder.appendParserOwned(NodeKind.Text, NodeCategory.Inline, Some(SourceSpan(0, 1)),
