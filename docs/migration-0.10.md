@@ -55,3 +55,10 @@ sink、取消、预算和 renderer 错误。Complete/Failed 后不允许 resume�
 List/Entry/Term/Definition roles，定义正文包含普通块。格式化可以规范化缩进和文本转义；
 原始拼写使用 SourceBuffer、lossless CST 或 preserving formatter。现有 consumer 应按
 角色和 children 读取归属，不按旧 dd 节点猜测 term。见[定义列表](definition-lists.md)。
+
+## Math 2.0
+
+Math 不再返回通用 `SyntaxPayload`。使用 `MathPayload.expression` 读取不执行的 TeX，
+`display` 区分行内与块，`expressionSource` 保存表达式的精确来源片段，
+`openerSpan` / `closerSpan` 保存 delimiter。容器中的表达式可以有多个不连续来源片段。
+默认输出继续显示转义后的 TeX；可选后端结果不写入 AST。语法见[公式模型](math.md)。

@@ -51,7 +51,7 @@ batch 与 append 共用这条完整管线。append 在 finish 时执行整文阶
 | Definition Lists | 2.0.0 | 结构化语义 | List/Entry/Term/Definition、多段普通块正文、各输出 |
 | Heading IDs | 2.0.0 | 结构化语义 | 标题尾部显式 ID、自动 ID、TOC 和 fragment 共享绑定 |
 | Front Matter | 1.0.0 | 仅 literal | 绝对文档起点的可选 block；保留来源和 lossless CST，不解释或执行配置 |
-| Math | 1.0.0 | 仅 literal | 行内/块原文、源范围和可读输出，尚未接入公式排版 |
+| Math | 2.0.0 | 结构化语义 | TeX、delimiter 和精确来源片段；默认可读输出，见[公式模型](math.md) |
 | Smart Punctuation | 2.0.0 | 文本转换 | 确定性的 Text transform，无引号或语言排版引擎；见[规则](#智能标点) |
 
 CommonMark 0.31.2 和 GFM modern 可组合这六项扩展；GFM 0.29 未列在其 supportedProfiles

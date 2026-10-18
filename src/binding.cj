@@ -367,6 +367,7 @@ internal class DocumentBinder {
                 case NodeRefWalkEvent.Enter(node) =>
                     validateSemanticPayload(document, node, parents, work)
                     validateDefinitionListNode(document, node, parents, budget, cancellation)
+                    validateMathNode(document, node, limits, budget, cancellation)
                     if (let NodeKind.Link <- node.kind) {
                         linkNodes.add(node)
                         if (!contexts.isEmpty()) {

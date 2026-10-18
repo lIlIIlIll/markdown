@@ -293,14 +293,14 @@ cjpm run --skip-build
 Definition Lists、Heading IDs 和 Smart Punctuation。使用 `catalog()` 查询 enablement
 信息，或用 `p1Dialect()` 创建组合方言。
 
-Front Matter 和 Math 只保留 literal，不执行配置或数学引擎。
+Front Matter 只保留 literal，不执行配置。Math 2.0 使用 `MathPayload` 保存 TeX 与精确来源，默认渲染不调用数学引擎。
 
 脚注和标题 ID 使用 2.0 语义与 typed payload；编号、目标和目录来自
 `Document.bindings`。定义列表 2.0 使用 List/Entry/Term/Definition typed 结构，支持多 term、
 多定义和普通 Markdown 块正文。规则见[结构化定义列表](../definition-lists.md)；脚注和标题
 见[文档绑定](../semantic-binding.md)。不能从 p1Dialect 的名字推断全部 issue #10 目标已验收。
 Smart Punctuation 2.0 仅声明 transform，不声明 parser rule；Front Matter 与 Math 的
-当前 literal 实现版本为 1.0.0。边界见[官方能力矩阵](../extensions.md#官方扩展能力矩阵)。
+当前版本分别为 1.0.0 与 2.0.0。边界见[官方能力矩阵](../extensions.md#官方扩展能力矩阵)。
 
 ## External descriptor
 

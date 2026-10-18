@@ -677,6 +677,12 @@ public class HtmlRenderer {
         cancellation.throwIfCancelled(phase: "render")
     }
 
+    internal func requireCursorCustomContract(node: NodeRef): Unit {
+        if (let NodeKind.CustomInline <- node.kind) {
+            requireSemanticRendererContract(node.asCustomInline().getOrThrow(), extensionRules)
+        }
+    }
+
     internal func expandCursorNode(frame: ArenaRenderFrame, frames: ArrayList<ArenaRenderFrame>, sink: HtmlPlanSink,
         cancellation: CancellationToken, budget: OperationBudget): Unit {
         cancellation.throwIfCancelled(phase: "render")
@@ -1040,6 +1046,22 @@ public class HtmlRenderer {
             case _ => throw IllegalStateException("arena custom renderer received a core node")
         }
         requireSemanticRendererContract(custom, extensionRules)
+        if (let value: MathPayload <- custom.payload) {
+            let tag = if (value.display) {
+                "div"
+            } else {
+                "span"
+            }
+            let kind = if (value.display) {
+                "block"
+            } else {
+                "inline"
+            }
+            write("<${tag} class=\"math-${kind}\">", sink, cancellation, budget)
+            writeEscapedTextFromNode(value.expression, node, sink, cancellation, budget)
+            write("</${tag}>", sink, cancellation, budget)
+            return
+        }
         if (let value: DefinitionListPayload <- custom.payload) {
             requireDefinitionListBinding(node)
             match (value.role) {
@@ -1161,6 +1183,7 @@ public class HtmlRenderer {
             case _ => return ""
         }
         match (payload) {
+            case value: MathPayload => value.expression
             case syntax: SyntaxPayload => syntax.literal
             case _ => arenaPlainText(node, cancellation)
         }
@@ -1324,6 +1347,17 @@ public class HtmlRenderer {
             match (node.kind) {
                 case NodeKind.Text => out.append(node.asText().getOrThrow().value)
                 case NodeKind.CodeSpan => out.append(node.asCodeSpan().getOrThrow().literal)
+                case NodeKind.CustomInline =>
+                    if (let Some(value) <- mathPayload(node)) {
+                        out.append(value.expression)
+                    } else {
+                        let children = node.children()
+                        var index = children.size - 1
+                        while (index >= 0) {
+                            stack.add(children[index])
+                            index--
+                        }
+                    }
                 case NodeKind.SoftBreak => out.append("\n")
                 case NodeKind.HardBreak => out.append("\n")
                 case _ =>
@@ -1621,6 +1655,19 @@ public class HtmlRenderer {
                 case NodeKind.Text => writeEscapedAttribute(node.asText().getOrThrow().value, sink, cancellation, budget)
                 case NodeKind.CodeSpan => writeEscapedAttribute(node.asCodeSpan().getOrThrow().literal, sink,
                     cancellation, budget)
+                case NodeKind.CustomInline =>
+                    let custom = node.asCustomInline().getOrThrow()
+                    requireSemanticRendererContract(custom, extensionRules)
+                    if (let value: MathPayload <- custom.payload) {
+                        writeEscapedAttribute(value.expression, sink, cancellation, budget)
+                    } else {
+                        let children = node.children()
+                        var index = children.size - 1
+                        while (index >= 0) {
+                            stack.add(children[index])
+                            index--
+                        }
+                    }
                 case NodeKind.SoftBreak => writeEscapedAttribute("\n", sink, cancellation, budget)
                 case NodeKind.HardBreak => writeEscapedAttribute("\n", sink, cancellation, budget)
                 case _ =>
@@ -2015,6 +2062,11 @@ public class PlainTextRenderer {
                 case NodeKind.CustomBlock =>
                     let custom = frame.node.asCustomBlock().getOrThrow()
                     requireSemanticRendererContract(custom, extensionRules)
+                    if (let value: MathPayload <- custom.payload) {
+                        out.append(value.expression)
+                        stack.add(ArenaRenderFrame(frame.node, true))
+                        continue
+                    }
                     if (custom.payload is DefinitionListPayload) {
                         requireDefinitionListBinding(frame.node)
                         pushPlainContainer(frame, stack)
@@ -2028,6 +2080,10 @@ public class PlainTextRenderer {
                 case NodeKind.CustomInline =>
                     let custom = frame.node.asCustomInline().getOrThrow()
                     requireSemanticRendererContract(custom, extensionRules)
+                    if (let value: MathPayload <- custom.payload) {
+                        out.append(value.expression)
+                        continue
+                    }
                     if (custom.payload is HeadingIdPayload) {
                         continue
                     }
@@ -2088,6 +2144,17 @@ private func arenaPlainTextValue(root: NodeRef): String {
         match (node.kind) {
             case NodeKind.Text => out.append(node.asText().getOrThrow().value)
             case NodeKind.CodeSpan => out.append(node.asCodeSpan().getOrThrow().literal)
+            case NodeKind.CustomInline =>
+                if (let Some(value) <- mathPayload(node)) {
+                    out.append(value.expression)
+                } else {
+                    let children = node.children()
+                    var index = children.size - 1
+                    while (index >= 0) {
+                        stack.add(children[index])
+                        index--
+                    }
+                }
             case NodeKind.SoftBreak => out.append("\n")
             case NodeKind.HardBreak => out.append("\n")
             case _ =>
@@ -2105,7 +2172,7 @@ private func arenaPlainTextValue(root: NodeRef): String {
 internal func requireSemanticRendererContract(custom: CustomNodeView, rules: ImmutableArray<RendererRule>,
     phase!: String = "render"): Unit {
     if (!(custom.payload is FootnoteReferencePayload || custom.payload is FootnoteDefinitionPayload ||
-        custom.payload is HeadingIdPayload || custom.payload is DefinitionListPayload)) {
+        custom.payload is HeadingIdPayload || custom.payload is DefinitionListPayload || custom.payload is MathPayload)) {
         return
     }
     for (index in 0..rules.size) {
@@ -2125,6 +2192,7 @@ private func arenaCustomLiteralValue(node: NodeRef): String {
         case _ => return ""
     }
     match (payload) {
+        case value: MathPayload => value.expression
         case syntax: SyntaxPayload => syntax.literal
         case _ => arenaPlainTextValue(node)
     }

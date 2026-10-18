@@ -163,6 +163,17 @@ internal func headingDisplayText(node: NodeRef, consume: (Int64) -> Unit, maximu
         match (current.kind) {
             case NodeKind.Text => text = current.asText().getOrThrow().value
             case NodeKind.CodeSpan => text = current.asCodeSpan().getOrThrow().literal
+            case NodeKind.CustomInline =>
+                if (let Some(value) <- mathPayload(current)) {
+                    text = value.expression
+                } else {
+                    let children = current.children()
+                    var index = children.size - 1
+                    while (index >= 0) {
+                        stack.add(children[index])
+                        index--
+                    }
+                }
             case NodeKind.SoftBreak | NodeKind.HardBreak => text = " "
             case _ =>
                 let children = current.children()

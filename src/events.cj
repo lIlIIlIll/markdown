@@ -1392,7 +1392,7 @@ public class RawBlockEventSession {
                 case BlockSyntaxKind.SingleLine =>
                     indentedCodeMayStart = true
                     return true
-                case BlockSyntaxKind.PairedContainer =>
+                case BlockSyntaxKind.PairedContainer | BlockSyntaxKind.DisplayMath =>
                     openBlockDslRule = Some(rule)
                     openBlockDslDepth = 0
                     openBlockDslStart = lineStart
@@ -1542,6 +1542,28 @@ public class RawBlockEventSession {
             let rule = rules[index]
             if (rule.documentStartOnly && !(absoluteStart == 0 || (absoluteStart == 3 && leadingBom))) {
                 continue
+            }
+            if (let BlockSyntaxKind.DisplayMath <- rule.syntaxKind) {
+                if (contentEnd - contentStart != 2 || contentStart - lineStart - (if (leadingBom) {
+                    3
+                } else {
+                    0
+                }) > 3) {
+                    continue
+                }
+                var tab = false
+                for (prefix in (lineStart + (if (leadingBom) {
+                    3
+                } else {
+                    0
+                }))..contentStart) {
+                    if (pending[prefix] == b'\t') {
+                        tab = true
+                    }
+                }
+                if (tab) {
+                    continue
+                }
             }
             if (rawListStartsWith(pending, contentStart, contentEnd, rule.openerPrefix, false)) {
                 return Some(rule)

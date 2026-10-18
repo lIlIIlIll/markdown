@@ -224,6 +224,11 @@ internal class HtmlOutputCursor {
     }
 
     private func expandImageAlt(node: NodeRef): Unit {
+        renderer.requireCursorCustomContract(node)
+        if (let Some(value) <- mathPayload(node)) {
+            planner.output(2, value.expression)
+            return
+        }
         match (node.kind) {
             case NodeKind.Text => planner.output(2, node.asText().getOrThrow().value)
             case NodeKind.CodeSpan => planner.output(2, node.asCodeSpan().getOrThrow().literal)

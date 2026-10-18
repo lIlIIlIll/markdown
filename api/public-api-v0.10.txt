@@ -669,6 +669,7 @@ extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func closer(
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func conflictGroup(value: String): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func content(mode: BlockContentMode): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func definitionList(): BlockSyntaxBuilder {
+extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func displayMath(): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func documentStartOnly(enabled!: Bool = true): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func emit(emitter: BlockPayloadEmitter): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func footnoteDefinition(): BlockSyntaxBuilder {
@@ -881,6 +882,7 @@ extension.cj:package=markdown:owner=class/SyntaxResourceCost:public let perByteC
 extension.cj:package=markdown:owner=enum/BlockContentMode:enum-variant | Literal
 extension.cj:package=markdown:owner=enum/BlockContentMode:enum-variant | Markdown
 extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | DefinitionList
+extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | DisplayMath
 extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | FootnoteDefinition
 extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | PairedContainer
 extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | SingleLine
@@ -990,7 +992,7 @@ extension_stages.cj:package=markdown:owner=interface/ExtensionDocumentAnalysis:i
 extension_stages.cj:package=markdown:owner=interface/ExtensionDocumentAnalysis:interface-member prop version: String
 extension_stages.cj:package=markdown:public interface ExtensionAstTransform {
 extension_stages.cj:package=markdown:public interface ExtensionDocumentAnalysis {
-extensions/extensions.cj:package=markdown.extensions:public import markdown.{BlockContentMode, BlockPayloadEmitter, BlockSyntax, BlockSyntaxBuilder, BlockSyntaxKind, BlockSyntaxMatch, BlockSyntaxRule, CompiledDialectExplanation, CompiledMarkdownDialect, DialectCompiler, DialectParserOptions, DefinitionListPayload, DefinitionListRole, ExtensionCapabilities, ExtensionCapabilityReport, ExtensionDependency, ExtensionAstTransform, ExtensionDocumentAnalysis, ExtensionFailureException, ExtensionLintProvider, ExtensionManifest, FootnoteDefinitionBinding, FootnoteDefinitionPayload, FootnoteReferenceBinding, FootnoteReferencePayload, HeadingBinding, HeadingIdPayload, TocEntry, ExternalDialectDescriptor, InlineFlankingRule, InlineParserSpi, InlineParserSpiContext, InlineParserSpiResult, InlinePayloadEmitter, InlineSyntax, InlineSyntaxBuilder, InlineSyntaxKind, InlineSyntaxMatch, InlineSyntaxRule, MarkdownBlockLowering, MarkdownDialect, MarkdownDialectBuilder, OfficialExtensionDescriptor, OfficialExtensions, RendererAttributeKind, RendererAttributeSource, RendererAttributeSpec, RendererRule, SyntaxBacktrackingPolicy, SyntaxParameterSpec, SyntaxParameterType, SyntaxParameterValue, SyntaxPayload, SyntaxPhase, SyntaxResourceCost}
+extensions/extensions.cj:package=markdown.extensions:public import markdown.{BlockContentMode, BlockPayloadEmitter, BlockSyntax, BlockSyntaxBuilder, BlockSyntaxKind, BlockSyntaxMatch, BlockSyntaxRule, MathPayload, MathSourcePart, CompiledDialectExplanation, CompiledMarkdownDialect, DialectCompiler, DialectParserOptions, DefinitionListPayload, DefinitionListRole, ExtensionCapabilities, ExtensionCapabilityReport, ExtensionDependency, ExtensionAstTransform, ExtensionDocumentAnalysis, ExtensionFailureException, ExtensionLintProvider, ExtensionManifest, FootnoteDefinitionBinding, FootnoteDefinitionPayload, FootnoteReferenceBinding, FootnoteReferencePayload, HeadingBinding, HeadingIdPayload, TocEntry, ExternalDialectDescriptor, InlineFlankingRule, InlineParserSpi, InlineParserSpiContext, InlineParserSpiResult, InlinePayloadEmitter, InlineSyntax, InlineSyntaxBuilder, InlineSyntaxKind, InlineSyntaxMatch, InlineSyntaxRule, MarkdownBlockLowering, MarkdownDialect, MarkdownDialectBuilder, OfficialExtensionDescriptor, OfficialExtensions, RendererAttributeKind, RendererAttributeSource, RendererAttributeSpec, RendererRule, SyntaxBacktrackingPolicy, SyntaxParameterSpec, SyntaxParameterType, SyntaxParameterValue, SyntaxPayload, SyntaxPhase, SyntaxResourceCost}
 external_descriptor.cj:package=markdown:owner=class/ExternalDialectDescriptor:public func compile(): CompiledMarkdownDialect {
 external_descriptor.cj:package=markdown:owner=class/ExternalDialectDescriptor:public func toDialect(): MarkdownDialect {
 external_descriptor.cj:package=markdown:owner=class/ExternalDialectDescriptor:public let baseProfileId: String
@@ -1199,6 +1201,19 @@ lint.cj:package=markdown:public class LintDiagnostic {
 lint.cj:package=markdown:public class MarkdownLinter {
 lint.cj:package=markdown:public enum FixApplicability {
 lint.cj:package=markdown:public enum LintCategory {
+math.cj:package=markdown:owner=class/MathPayload:public func payloadTypeId(): String {
+math.cj:package=markdown:owner=class/MathPayload:public init(display: Bool, expression: String, expressionSource: Array<MathSourcePart>, openerSpan: SourceSpan, closerSpan: SourceSpan) {
+math.cj:package=markdown:owner=class/MathPayload:public let closerSpan: SourceSpan
+math.cj:package=markdown:owner=class/MathPayload:public let display: Bool
+math.cj:package=markdown:owner=class/MathPayload:public let expression: String
+math.cj:package=markdown:owner=class/MathPayload:public let expressionSource: ImmutableArray<MathSourcePart>
+math.cj:package=markdown:owner=class/MathPayload:public let openerSpan: SourceSpan
+math.cj:package=markdown:owner=class/MathSourcePart:public init(span: SourceSpan, expandedPrefixBytes!: Int64 = 0, expandedPrefixSpaces!: Int64 = 0) {
+math.cj:package=markdown:owner=class/MathSourcePart:public let expandedPrefixBytes: Int64
+math.cj:package=markdown:owner=class/MathSourcePart:public let expandedPrefixSpaces: Int64
+math.cj:package=markdown:owner=class/MathSourcePart:public let span: SourceSpan
+math.cj:package=markdown:public class MathPayload <: CustomPayload {
+math.cj:package=markdown:public class MathSourcePart {
 native/accelerator.cj:package=markdown.native:owner=class/NativeLineScanner:public func implementationId(): String {
 native/accelerator.cj:package=markdown.native:owner=class/NativeLineScanner:public func recordFormatVersion(): Int64 {
 native/accelerator.cj:package=markdown.native:owner=class/NativeLineScanner:public func scanLineRecords(input: Array<Byte>, capacity: Int64): ?LineScanRecords {

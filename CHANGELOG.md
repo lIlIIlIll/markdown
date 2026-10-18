@@ -9,6 +9,8 @@
 
 ### Changed
 
+- Math 2.0 typed payload：TeX、精确来源片段与 delimiter 分离，默认可读输出。
+
 - 节点身份使用 lineage 与不回收编号，NodeRef 和 lint fix 绑定不可变 revision。
 - 共享 lineage 的短片段按构造规模预留编号，避免过早耗尽身份空间；改善稀疏编号的哈希分布。
 - ParseResult 只表示成功；tryParse 返回独立的成功/失败枚举。
@@ -33,8 +35,8 @@
 - benchmark evidence status `stale`；
 - CommonMark `652/652`；
 - GFM `671/671`；
-- 测试 `1585/1585`，`0` skipped，`0` failed；
-- public API snapshot `1578` declarations；
+- 测试 `1590/1590`，`0` skipped，`0` failed；
+- public API snapshot `1593` declarations；
 - last complete CommonMark ratio `2.361586x`；
 - last complete GFM ratio `1.788010x`。
 

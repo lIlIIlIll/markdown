@@ -4,7 +4,7 @@ import std.collection.ArrayList
 import markdown.core.{AppendReplica, AppendState, CancellationToken, Diagnostic, DiagnosticSeverity, Document, Markdown, 
     MarkdownEngine, MarkdownProfile, OperationBudget, ParseLimits, SourceBuffer}
 import markdown.editor.AstQuery
-import markdown.extensions.{DefinitionListPayload, DefinitionListRole, BlockSyntax, ExtensionCapabilities, 
+import markdown.extensions.{DefinitionListPayload, DefinitionListRole, MathPayload, BlockSyntax, ExtensionCapabilities, 
     ExtensionDocumentAnalysis, ExtensionManifest, MarkdownDialect, OfficialExtensions, RendererRule}
 import markdown.render.{AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, HtmlOptions, HtmlRenderer}
 
@@ -100,6 +100,22 @@ main(): Int64 {
     let extensionEngine = MarkdownEngine.builder().dialect(dialect).build()
     let custom = extensionEngine.parse(":::note\n**important**\n:::").document
     println(extensionEngine.htmlRenderer(options: HtmlOptions.safe()).render(custom))
+
+    println("== math-source ==")
+    let mathEngine = MarkdownEngine
+        .builder()
+        .dialect(OfficialExtensions.math(MarkdownDialect.define("cookbook-math", "2")).build())
+        .build()
+    let formula = mathEngine.parse("$x + y$")
+    for (node in AstQuery.customNodes(formula.document)) {
+        if (let Some(custom) <- node.asCustomInline()) {
+            if (let value: MathPayload <- custom.payload) {
+                println(
+                    "expression=${value.expression}, source=${formula.source.slice(value.expressionSource[0].span)}")
+            }
+        }
+    }
+    println(mathEngine.htmlRenderer().render(formula.document))
 
     println("== append ==")
     let appendEngine = MarkdownEngine.builder().build()

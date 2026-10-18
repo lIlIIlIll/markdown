@@ -329,6 +329,7 @@ internal class ParserHotPlan {
     internal let hasInlineSpi: Bool
     internal let hasDocumentStages: Bool
     internal let hasFootnotes: Bool
+    internal let hasMath: Bool
     internal let definitionListRule: ?BlockSyntaxRule
     internal let headingIdRule: ?InlineSyntaxRule
     private let inlineDslByFirstByte: Array<ImmutableArray<InlineSyntaxRule>>
@@ -346,6 +347,7 @@ internal class ParserHotPlan {
         let blockBuckets = Array<ArrayList<BlockSyntaxRule>>(256) {_ => ArrayList<BlockSyntaxRule>()}
         let spiBuckets = Array<ArrayList<InlineParserSpi>>(256) {_ => ArrayList<InlineParserSpi>()}
         var footnotes = false
+        var math = false
         var headingRule: ?InlineSyntaxRule = None
         var definitionRule: ?BlockSyntaxRule = None
         for (rule in inlineRules) {
@@ -357,10 +359,16 @@ internal class ParserHotPlan {
                 if (emitter is FootnoteReferenceEmitter) {
                     footnotes = true
                 }
+                if (emitter is MathInlineEmitter) {
+                    math = true
+                }
             }
         }
         for (rule in blockRules) {
             blockBuckets[Int64(rule.openerPrefix[0])].add(rule)
+            if (let BlockSyntaxKind.DisplayMath <- rule.syntaxKind) {
+                math = true
+            }
             if (let BlockSyntaxKind.FootnoteDefinition <- rule.syntaxKind) {
                 footnotes = true
             }
@@ -369,6 +377,7 @@ internal class ParserHotPlan {
             }
         }
         hasFootnotes = footnotes
+        hasMath = math
         definitionListRule = definitionRule
         headingIdRule = headingRule
         for (spi in parserSpis) {
@@ -850,6 +859,8 @@ public enum BlockSyntaxKind {
     | FootnoteDefinition
     /** 术语行和冒号定义，包含普通 Markdown 正文。 */
     | DefinitionList
+    /** 独占一行的 `$$` 边界和不解析 Markdown 的公式正文。 */
+    | DisplayMath
 }
 
 // cjlint-ignore -end Public BlockContentMode.Markdown is the frozen DSL spelling.
@@ -1106,6 +1117,16 @@ public class BlockSyntaxBuilder {
         contentModeValue = BlockContentMode.Markdown
         kindFromFirstWordValue = false
         allowNestingValue = true
+        this
+    }
+    /** 定义独占一行的 `$$` display math；正文只保存 TeX 和来源。 */
+    public func displayMath(): BlockSyntaxBuilder {
+        syntaxKindValue = BlockSyntaxKind.DisplayMath
+        openerPrefixValue = "$$"
+        closerValue = "$$"
+        contentModeValue = BlockContentMode.Literal
+        kindFromFirstWordValue = false
+        allowNestingValue = false
         this
     }
     /** 设置 paired block 的精确 closer。
@@ -1599,7 +1620,7 @@ public class CompiledMarkdownDialect {
 
     internal func requiresFullAst(): Bool {
         parserHotPlan.hasDocumentStages || (parserOptions.extensionsEnabled && (parserHotPlan.hasFootnotes ||
-            parserHotPlan.headingIdRule.isSome() || parserHotPlan.definitionListRule.isSome()))
+            parserHotPlan.headingIdRule.isSome() || parserHotPlan.definitionListRule.isSome() || parserHotPlan.hasMath))
     }
 
     internal init(
@@ -1974,8 +1995,18 @@ public class DialectCompiler {
             return true
         }
         for (rule in dialect.blockBuilders) {
+            if (rule.extensionId == extensionId && let BlockSyntaxKind.DisplayMath <- rule.syntaxKindValue) {
+                return true
+            }
             if (rule.extensionId == extensionId && let BlockSyntaxKind.DefinitionList <- rule.syntaxKindValue) {
                 return true
+            }
+        }
+        for (rule in dialect.inlineBuilders) {
+            if (rule.extensionId == extensionId && let Some(emitter) <- rule.emitterValue) {
+                if (emitter is MathInlineEmitter) {
+                    return true
+                }
             }
         }
         if (extensionId == "heading-ids") {
@@ -2007,6 +2038,21 @@ public class DialectCompiler {
         validateIdentifier("rule id", rule.ruleId)
         if (rule.openerValue.isEmpty()) {
             fail("inline opener/token must not be empty")
+        }
+        if (let Some(emitter) <- rule.emitterValue) {
+            if (emitter is MathInlineEmitter) {
+                if (rule.openerValue != "$" || rule.closerValue != "$" || rule.parseChildrenValue || rule
+                    .emitContentValue || rule.allowLineBreaksValue || rule.allowNestingValue) {
+                    fail("inline math requires the fixed literal grammar and payload")
+                }
+                if (let InlineEscapePolicy.LiteralBackslash <- rule.escapePolicyValue) {
+                    fail("inline math requires backslash-protected delimiters")
+                }
+                match (rule.flankingRuleValue) {
+                    case InlineFlankingRule.CommonMark => ()
+                    case _ => fail("inline math requires CommonMark flanking")
+                }
+            }
         }
         match (rule.syntaxKindValue) {
             case InlineSyntaxKind.HeadingIdSuffix =>
@@ -2052,6 +2098,15 @@ public class DialectCompiler {
             case BlockSyntaxKind.SingleLine =>
                 if (!rule.closerValue.isEmpty()) {
                     fail("single-line block must not have a closer")
+                }
+            case BlockSyntaxKind.DisplayMath =>
+                if (rule.openerPrefixValue != "$$" || rule.closerValue != "$$" || rule.kindFromFirstWordValue ||
+                    rule.emitterValue.isSome() || !rule.parameterValues.isEmpty() || rule.allowNestingValue || rule
+                    .documentStartOnlyValue) {
+                    fail("display math requires the fixed structured grammar and payload")
+                }
+                if (let BlockContentMode.Markdown <- rule.contentModeValue) {
+                    fail("display math content must be literal")
                 }
             case BlockSyntaxKind.DefinitionList =>
                 if (rule.openerPrefixValue != ":" || !rule.closerValue.isEmpty() || rule.kindFromFirstWordValue ||
@@ -2169,7 +2224,7 @@ public class DialectCompiler {
                     return true
                 }
                 if (let Some(emitter) <- rule.emitterValue) {
-                    if (emitter is FootnoteReferenceEmitter) {
+                    if (emitter is FootnoteReferenceEmitter || emitter is MathInlineEmitter) {
                         return true
                     }
                 }
@@ -2180,6 +2235,10 @@ public class DialectCompiler {
                 continue
             }
             match (rule.syntaxKindValue) {
+                case BlockSyntaxKind.DisplayMath =>
+                    if (renderer.localKindId == rule.ruleId) {
+                        return true
+                    }
                 case BlockSyntaxKind.FootnoteDefinition =>
                     if (renderer.localKindId == "footnote-definition") {
                         return true
@@ -2834,6 +2893,7 @@ private func canonicalDescriptor(
             case BlockSyntaxKind.SingleLine => out.append("line")
             case BlockSyntaxKind.FootnoteDefinition => out.append("footnote")
             case BlockSyntaxKind.DefinitionList => out.append("definition-list/2")
+            case BlockSyntaxKind.DisplayMath => out.append("display-math/2")
         }
         out.append(":dynamic-kind=");
         out.append(rule.kindFromFirstWord)

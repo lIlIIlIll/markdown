@@ -180,6 +180,15 @@ internal class AppendTreeAssembler {
 
     private func shiftedCustom(payload: CustomPayload, offset: Int64): CustomPayload {
         match (payload) {
+            case value: MathPayload =>
+                let parts = Array<MathSourcePart>(value.expressionSource.size) {
+                    index =>
+                        let part = value.expressionSource[index]
+                        MathSourcePart(shiftSpan(part.span, offset), expandedPrefixBytes: part.expandedPrefixBytes,
+                            expandedPrefixSpaces: part.expandedPrefixSpaces)
+                }
+                MathPayload(value.display, value.expression, parts, shiftSpan(value.openerSpan, offset),
+                    shiftSpan(value.closerSpan, offset))
             case value: DefinitionListPayload => DefinitionListPayload(value.role,
                 markerSpan: shifted(value.markerSpan, offset))
             case value: FootnoteReferencePayload =>

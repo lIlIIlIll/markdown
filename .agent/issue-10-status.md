@@ -19,7 +19,7 @@ for automatic merge or publication.
 | MD-06.8 | Public append scaling tests for long loose lists, deferred-reference paragraphs, unclosed fences and many closed blocks; real scan/node-construction/patch counters | Correctness and work growth PASS; latency, peak RSS and release performance qualification pending |
 | MD-04 / EXT-T05..06 | Versioned official capability matrix, exact enable/disable/profile output, literal Front Matter boundaries and bounded deterministic smart punctuation | Correctness verified; final release gates pending |
 | MD-00.6 | Actual AST transform → binding → read-only analysis, shared batch/append pipeline, early whole-document execution gates and meaningful capability validation | Implemented; 1585-case run, consumers and API/evidence gates PASS |
-| MD-05 | Structured rich-content preparation and real optional backends | Pending; actual private capability probes retained |
+| MD-05 | Math 2.0 typed TeX/provenance and safe literal fallback implemented; source tab expansion regression fixed | Formula model PASS; code groups, preparation boundary and real optional backends pending |
 | MD-07..08 | Existing editor/artifact phase baseline and real process/backend capability probes retained privately; no optimization verdict yet | Pending |
 | DONE-02..06 | Complete task-to-test ledger, new performance qualification, docs/consumer gates and core hosted evidence | Pending |
 
@@ -163,3 +163,25 @@ current SPI and tests default/3 success plus obsolete 1/2 rejection. Format, doc
 public API (1578 declarations), evidence consistency, 70 API/evidence Python tests
 and privacy checks PASS. Real rich backends, measured edit/cache decisions and
 frozen release/performance/hosted core evidence remain pending. Core stays local.
+
+The Math 2.0 checkpoint uses official STS 1.2.0 and product tree
+`21b6fd28f1150949f5c8a3fd032d489876d1916ca94b491fd9145e4406d029b5`
+(workspace and disk-backed test tree verified equal). Full tests: 1590/1590 PASS,
+zero skips/errors/failures. API: 1593 declarations. MathPayload separates TeX,
+inline/display mode, exact delimiter ranges and immutable MathSourcePart records
+from any backend output. The actual first full run found a four-column opener
+incorrectly taking indented code; the actual container probe found partial tab
+expansion could not be validated as a contiguous raw string. Both regressions now
+pass. Prefix layout preserves the physical tab span and normalized spaces without
+changing the shared parser's line storage. Validation compares bounded source
+bytes without materializing a second full normalized expression.
+
+Cases cover quote/list, multiple tabs, empty/multiline formulas, CRLF/BOM, Chinese
+and emoji, invalid-byte replacement, canonical/lossless Markdown, source maps,
+snapshot identity, single-byte/mixed/whole append and resumable output including
+image alternatives. Fixed grammar options and renderer overrides reject explicitly;
+limits, cumulative scan and cancellation are exercised. All nine normal consumer
+steps PASS; cookbook imports the public MathPayload and emits
+`expression=x + y, source=x + y`. Format/docs/API/evidence consistency and 70
+API/evidence Python tests PASS. This checkpoint is not real formula typesetting,
+code groups, rich-output preparation, frozen performance or hosted core proof.

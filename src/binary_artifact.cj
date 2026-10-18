@@ -313,6 +313,21 @@ private func appendBinarySemantic(out: CanonicalDescriptor, node: NodeRef): Unit
 private func appendBinaryCustomPayload(out: CanonicalDescriptor, payload: CustomPayload): Unit {
     out.append(payload.payloadTypeId())
     match (payload) {
+        case value: MathPayload =>
+            out.append(value.display)
+            out.append(value.expression)
+            out.append(value.openerSpan.startByte)
+            out.append(value.openerSpan.endByte)
+            out.append(value.closerSpan.startByte)
+            out.append(value.closerSpan.endByte)
+            out.append(value.expressionSource.size)
+            for (index in 0..value.expressionSource.size) {
+                let part = value.expressionSource[index]
+                out.append(part.span.startByte)
+                out.append(part.span.endByte)
+                out.append(part.expandedPrefixBytes)
+                out.append(part.expandedPrefixSpaces)
+            }
         case value: DefinitionListPayload =>
             out.append(definitionListKind(value.role))
             match (value.markerSpan) {

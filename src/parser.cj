@@ -3534,6 +3534,11 @@ internal class ParserSession {
                     "extension_parse", span: Some(mappedSpan(lines[start].startByte, lines[start].endByte)),
                     extensionId: Some(rule.extensionId))
             }
+            if (let BlockSyntaxKind.DisplayMath <- rule.syntaxKind) {
+                if (trimmed != "$$" || leadingIndentColumns(lines[start].text) > 3) {
+                    continue
+                }
+            }
             let captured = trimAscii(trimmed[rule.openerPrefix.size..])
             if (captured.size > rule.maximumCaptureLength) {
                 throw LimitExceededException("extension_capture", rule.maximumCaptureLength, captured.size,
@@ -3634,6 +3639,14 @@ internal class ParserSession {
                 budget.consumeExtensionCallback()
             }
             budget.consumeScan(steps: syntaxRuleCost(rule.resourceCost, lines[index].endByte - lines[start].startByte))
+            if (let BlockSyntaxKind.DisplayMath <- rule.syntaxKind) {
+                let maximum = min(rule.maximumCaptureLength, limits.maximumExtensionCaptureBytes)
+                if (totalBytes > maximum) {
+                    throw LimitExceededException("extension_capture", maximum, totalBytes, "extension_parse",
+                        span: Some(mappedSpan(lines[start].startByte, lines[index].endByte)),
+                        extensionId: Some(rule.extensionId))
+                }
+            }
             let literal = joinLineRecords(lines, start + 1, index)
             ensureLiteralBytes(literal.size, "extension_parse")
             let span = mappedSpan(lines[start].startByte, lines[index].endByte)
@@ -3662,7 +3675,18 @@ internal class ParserSession {
                                     childSuppression, index + 1)), index + 1))
                 case BlockContentMode.Literal =>
                     let children: Array<Int64> = []
-                    let payload = emitBlockPayload(rule, kindId, parameters, literal, span, children, values)
+                    let payload = if (let BlockSyntaxKind.DisplayMath <- rule.syntaxKind) {
+                        let parts = ArrayList<MathSourcePart>()
+                        for (bodyIndex in start + 1..index) {
+                            parts.add(mathSourcePart(lines[bodyIndex], bodyIndex + 1 < index))
+                        }
+                        let openerStart = lines[start].startByte + leadingWhitespace(lines[start].text)
+                        let closerStart = lines[index].startByte + leadingWhitespace(lines[index].text)
+                        MathPayload(true, literal, parts.toArray(), mappedSpan(openerStart, openerStart + 2),
+                            mappedSpan(closerStart, closerStart + 2))
+                    } else {
+                        emitBlockPayload(rule, kindId, parameters, literal, span, children, values)
+                    }
                     let origin = NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: Some(span),
                         extensionId: Some(rule.extensionId))
                     let noPending: ?PendingExtensionState = None
@@ -3674,6 +3698,42 @@ internal class ParserSession {
             }
         }
         None
+    }
+
+    private func mathSourcePart(line: LineRecord, includeNewline: Bool): MathSourcePart {
+        let original = source.text()
+        budget.consumeScan(steps: line.text.size)
+        var raw = line.endByte
+        var normalized = line.text.size
+        while (normalized > 0 && raw > 0 && original[raw - 1] == line.text[normalized - 1]) {
+            normalized--
+            raw--
+            if (raw % 256 == 0) {
+                cancellation.throwIfCancelled(phase: "extension_parse")
+            }
+        }
+        var prefix = raw
+        if (normalized > 0) {
+            for (index in 0..normalized) {
+                if (line.text[index] != b' ') {
+                    throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation,
+                        "math line has a non-whitespace synthetic prefix", phase: "extension_parse")
+                }
+            }
+            while (prefix > 0 && (original[prefix - 1] == b' ' || original[prefix - 1] == b'\t')) {
+                budget.consumeScan()
+                prefix--
+                if (prefix % 256 == 0) {
+                    cancellation.throwIfCancelled(phase: "extension_parse")
+                }
+            }
+        }
+        let span = mappedSpan(prefix, if (includeNewline) {
+            line.endWithNewline
+        } else {
+            line.endByte
+        })
+        MathSourcePart(span, expandedPrefixBytes: mappedSpan(prefix, raw).length(), expandedPrefixSpaces: normalized)
     }
 
     private func isAnyBlockStart(lines: Array<LineRecord>, index: Int64): Bool {
@@ -3697,6 +3757,11 @@ internal class ParserSession {
                 if (rule.documentStartOnly &&
                     !isDocumentStart(lines[index].startByte + leadingWhitespace(lines[index].text))) {
                     continue
+                }
+                if (let BlockSyntaxKind.DisplayMath <- rule.syntaxKind) {
+                    if (trimmed != "$$" || leadingIndentColumns(lines[index].text) > 3) {
+                        continue
+                    }
                 }
                 let identity = "${rule.extensionId}/${rule.ruleId}"
                 if (identity != suppressedBlockRule && trimmed.startsWith(rule.openerPrefix)) {

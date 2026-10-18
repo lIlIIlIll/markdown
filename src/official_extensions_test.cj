@@ -86,7 +86,7 @@ class OfficialExtensionsTest {
             {builder => OfficialExtensions.smartPunctuation(builder)}
         ]
         let ids = ["footnotes", "front-matter", "math", "definition-lists", "heading-ids", "smart-punctuation"]
-        let versions = ["2.0.0", "1.0.0", "1.0.0", "2.0.0", "2.0.0", "2.0.0"]
+        let versions = ["2.0.0", "1.0.0", "2.0.0", "2.0.0", "2.0.0", "2.0.0"]
         let samples = ["A [^missing].", "---\nx: y\n---", "$x--...$", "Term\n: body", "# Head {#id}", "A -- ..."]
         let html = ["<p>A [^missing].</p>\n", "<pre class=\"front-matter\">x: y</pre>",
             "<p><span class=\"math-inline\">x--...</span></p>\n",
@@ -127,7 +127,7 @@ class OfficialExtensionsTest {
             }
         }
         @Expect(findOfficial(OfficialExtensions.catalog(), "front-matter").targetVersion, "1.0")
-        @Expect(findOfficial(OfficialExtensions.catalog(), "math").targetVersion, "1.0")
+        @Expect(findOfficial(OfficialExtensions.catalog(), "math").targetVersion, "2.0")
         @Expect(findOfficial(OfficialExtensions.catalog(), "smart-punctuation").targetVersion, "2.0")
     }
 
@@ -155,7 +155,7 @@ class OfficialExtensionsTest {
                     let value = node.asCustomBlock().getOrThrow()
                     if (value.localKindId == "math-block") {
                         match (value.payload) {
-                            case syntax: SyntaxPayload => @Expect(syntax.literal, "a + b")
+                            case value: MathPayload => @Expect(value.expression, "a + b")
                             case _ => @Expect(false)
                         }
                     }

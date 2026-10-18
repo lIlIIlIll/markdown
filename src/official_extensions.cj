@@ -51,7 +51,7 @@ public class OfficialExtensions {
             OfficialExtensionDescriptor("gfm-autolink", "1.0", true, defaultProfiles: ["gfm-0.29", "gfm-modern-v1"]),
             OfficialExtensionDescriptor("footnotes", "2.0", false),
             OfficialExtensionDescriptor("front-matter", "1.0", false),
-            OfficialExtensionDescriptor("math", "1.0", false),
+            OfficialExtensionDescriptor("math", "2.0", false),
             OfficialExtensionDescriptor("definition-lists", "2.0", false),
             OfficialExtensionDescriptor("heading-ids", "2.0", false),
             OfficialExtensionDescriptor("smart-punctuation", "2.0", false),
@@ -119,13 +119,10 @@ public class OfficialExtensions {
                     markdownCloser: "---", renderPayloadLiteral: true))
     }
 
-    /** 向 builder 添加仅保留 literal 的 math syntax。
-     * @param builder 目标 dialect builder。
-     * @return 已启用对应扩展的 builder。
-     */
+    /** 添加结构化 Math 2.0；默认输出可读 TeX，不调用外部后端。 */
     public static func math(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
         builder
-            .enable(ExtensionManifest("math", "1.0.0", "builtin-1", capabilities: renderCapabilities()))
+            .enable(ExtensionManifest("math", "2.0.0", "builtin-2", capabilities: renderCapabilities()))
             .inline(
                 InlineSyntax
                     .define("math", "math-inline")
@@ -133,21 +130,10 @@ public class OfficialExtensions {
                     .content(false)
                     .emitContent(false)
                     .nesting(false)
+                    .lineBreaks(false)
+                    .emit(MathInlineEmitter())
                     .flanking(InlineFlankingRule.CommonMark))
-            .block(
-                BlockSyntax
-                    .define("math", "math-block")
-                    .opener("$$")
-                    .closer("$$")
-                    .content(BlockContentMode.Literal)
-                    .nesting(false)
-                    .kindFromFirstWord(false))
-            .renderer(
-                RendererRule("math", "math-inline", "span", classToken: "math-inline", markdownOpener: "$",
-                    markdownCloser: "$", renderPayloadLiteral: true))
-            .renderer(
-                RendererRule("math", "math-block", "div", classToken: "math-block", markdownOpener: "$$",
-                    markdownCloser: "$$", renderPayloadLiteral: true))
+            .block(BlockSyntax.define("math", "math-block").displayMath())
     }
 
     /** 向 builder 添加 definition-list block syntax。

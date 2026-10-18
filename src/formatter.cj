@@ -272,6 +272,10 @@ public class CanonicalMarkdownRenderer {
             case NodeKind.CustomBlock =>
                 let custom = node.asCustomBlock().getOrThrow()
                 requireSemanticRendererContract(custom, extensionRules, phase: "format")
+                if (let value: MathPayload <- custom.payload) {
+                    out.append("$$\n${value.expression}\n$$")
+                    return
+                }
                 if (let value: DefinitionListPayload <- custom.payload) {
                     requireDefinitionListBinding(node)
                     match (value.role) {
@@ -296,6 +300,10 @@ public class CanonicalMarkdownRenderer {
             case NodeKind.CustomInline =>
                 let custom = node.asCustomInline().getOrThrow()
                 requireSemanticRendererContract(custom, extensionRules, phase: "format")
+                if (let value: MathPayload <- custom.payload) {
+                    out.append("$${value.expression}$")
+                    return
+                }
                 if (let metadata: HeadingIdPayload <- custom.payload) {
                     out.append(" {#${metadata.rawId}}")
                     return
@@ -603,6 +611,17 @@ private func plainTextOfFormatter(node: NodeRef): String {
         match (current.kind) {
             case NodeKind.Text => out.append(current.asText().getOrThrow().value)
             case NodeKind.CodeSpan => out.append(current.asCodeSpan().getOrThrow().literal)
+            case NodeKind.CustomInline =>
+                if (let Some(value) <- mathPayload(current)) {
+                    out.append(value.expression)
+                } else {
+                    let children = current.children()
+                    var index = children.size - 1
+                    while (index >= 0) {
+                        stack.add(children[index])
+                        index--
+                    }
+                }
             case NodeKind.SoftBreak => out.append(" ")
             case NodeKind.HardBreak => out.append(" ")
             case _ =>
