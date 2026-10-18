@@ -104,11 +104,11 @@ public class OfficialExtensions {
             OfficialExtensionDescriptor("gfm-task-lists", "1.0", true, defaultProfiles: ["gfm-0.29", "gfm-modern-v1"]),
             OfficialExtensionDescriptor("gfm-strikethrough", "1.0", true, defaultProfiles: ["gfm-0.29", "gfm-modern-v1"]),
             OfficialExtensionDescriptor("gfm-autolink", "1.0", true, defaultProfiles: ["gfm-0.29", "gfm-modern-v1"]),
-            OfficialExtensionDescriptor("footnotes", "1.1", false),
+            OfficialExtensionDescriptor("footnotes", "2.0", false),
             OfficialExtensionDescriptor("front-matter", "1.1", false),
             OfficialExtensionDescriptor("math", "1.1", false),
             OfficialExtensionDescriptor("definition-lists", "1.1", false),
-            OfficialExtensionDescriptor("heading-ids", "1.1", false),
+            OfficialExtensionDescriptor("heading-ids", "2.0", false),
             OfficialExtensionDescriptor("smart-punctuation", "1.1", false),
             OfficialExtensionDescriptor("github-alerts", "future", false),
             OfficialExtensionDescriptor("wikilinks", "future", false)
@@ -136,26 +136,21 @@ public class OfficialExtensions {
      */
     public static func footnotes(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
         builder
-            .enable(ExtensionManifest("footnotes", "1.0.0", "builtin-1", capabilities: renderCapabilities()))
+            .enable(
+                ExtensionManifest("footnotes", "2.0.0", "builtin-2",
+                    capabilities: ExtensionCapabilities(specHtml: true, safeHtml: true, plainText: true, markdown: true,
+                        cst: true, format: true, serialize: true, lint: true)))
             .inline(
                 InlineSyntax
                     .define("footnotes", "footnote-reference")
                     .delimiter("[^", closer: "]")
                     .content(false)
+                    .emitContent(false)
                     .nesting(false)
-                    .flanking(InlineFlankingRule.WordBoundary))
-            .block(
-                BlockSyntax
-                    .define("footnotes", "footnote-definition")
-                    .linePrefix("[^")
-                    .content(BlockContentMode.Markdown)
-                    .kindFromFirstWord(false))
-            .renderer(
-                RendererRule("footnotes", "footnote-reference", "sup", classToken: "footnote-ref", markdownOpener: "[^",
-                    markdownCloser: "]"))
-            .renderer(
-                RendererRule("footnotes", "footnote-definition", "aside", classToken: "footnote-definition",
-                    markdownOpener: "[^", markdownBlockLowering: MarkdownBlockLowering.Line))
+                    .lineBreaks(false)
+                    .emit(FootnoteReferenceEmitter())
+                    .flanking(InlineFlankingRule.Any))
+            .block(BlockSyntax.define("footnotes", "footnote-definition").footnoteDefinition())
     }
 
     /** 向 builder 添加仅保留 literal 的 front matter。
@@ -234,18 +229,11 @@ public class OfficialExtensions {
      */
     public static func headingIds(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
         builder
-            .enable(ExtensionManifest("heading-ids", "1.0.0", "builtin-1", capabilities: renderCapabilities()))
-            .inline(
-                InlineSyntax
-                    .define("heading-ids", "heading-id")
-                    .metadataSuffix("{#", "}")
-                    .emitContent(false)
-                    .flanking(InlineFlankingRule.WordBoundary))
-            .renderer(
-                RendererRule("heading-ids", "heading-id", "span", classToken: "heading-id", markdownOpener: "{#",
-                    markdownCloser: "}",
-                    attributes: [RendererAttributeSpec("id", RendererAttributeKind.Text,
-                        RendererAttributeSource.PayloadLiteral)]))
+            .enable(
+                ExtensionManifest("heading-ids", "2.0.0", "builtin-2",
+                    capabilities: ExtensionCapabilities(specHtml: true, safeHtml: true, plainText: true, markdown: true,
+                        cst: true, format: true, serialize: true, lint: true)))
+            .inline(InlineSyntax.define("heading-ids", "heading-id").headingIdSuffix())
     }
 
     /** 向 builder 添加确定性的 smart punctuation transform。

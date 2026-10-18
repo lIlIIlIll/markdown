@@ -105,6 +105,20 @@ public class MarkdownLinter {
      */
     public static func lint(snapshot: DocumentSnapshot): Array<LintDiagnostic> {
         let out = ArrayList<LintDiagnostic>()
+        for (diagnostic in snapshot.result.diagnostics.toArray()) {
+            let fixes = ArrayList<Fix>()
+            for (fix in diagnostic.fixes.toArray()) {
+                fixes.add(
+                    Fix(fix.title, [SourceEdit(fix.span, fix.replacement)], FixApplicability.MaybeIncorrect,
+                        snapshot.sourceDigest, snapshot.result.document.revision))
+            }
+            out.add(
+                LintDiagnostic(diagnostic.code, if (diagnostic.extensionId.isSome()) {
+                    LintCategory.Extension
+                } else {
+                    LintCategory.Syntax
+                }, diagnostic.severity, diagnostic.message, diagnostic.span, fixes: fixes.toArray()))
+        }
         var previousHeading: Int64 = 0
         let usedReferenceDestinations = HashSet<String>()
         for (event in snapshot.result.document.walk()) {
@@ -121,6 +135,14 @@ public class MarkdownLinter {
                         previousHeading = heading.level
                     case NodeKind.Link =>
                         let link = node.asLink().getOrThrow()
+                        if (let Some(binding) <- snapshot.result.document.bindings.linkForNode(node.nodeId)) {
+                            if (binding.isLocalFragment && binding.destination.size > 1 && binding.target.isNone()) {
+                                out.add(
+                                    LintDiagnostic("MDL1005_MISSING_FRAGMENT", LintCategory.DocumentStructure,
+                                        DiagnosticSeverity.Warning, "local fragment has no rendered target",
+                                        requiredLintSpan(node)))
+                            }
+                        }
                         match (link.syntaxKind) {
                             case LinkSyntaxKind.FullReference => usedReferenceDestinations.add(link.destination)
                             case LinkSyntaxKind.CollapsedReference => usedReferenceDestinations.add(link.destination)

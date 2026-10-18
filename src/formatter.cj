@@ -94,6 +94,8 @@ public class MarkdownFormatOptions {
 internal enum FormatAction {
     | TextValue(String)
     | NodeValue(NodeRef)
+    | FootnoteBodyStart
+    | FootnoteBodyEnd(String)
 }
 
 /** 将 AST 输出为确定性的 canonical Markdown。 */
@@ -118,17 +120,9 @@ public class CanonicalMarkdownRenderer {
      * @return canonical Markdown 文本。
      */
     public func render(document: Document): String {
-        let out = StringBuilder()
         let stack = ArrayList<FormatAction>()
         stack.add(FormatAction.NodeValue(document.root()))
-        while (!stack.isEmpty()) {
-            let action = stack.remove(at: stack.size - 1)
-            match (action) {
-                case FormatAction.TextValue(value) => out.append(value)
-                case FormatAction.NodeValue(node) => formatNode(node, stack, out)
-            }
-        }
-        var value = trimFormatEnd(out.toString())
+        var value = trimFormatEnd(formatActions(stack))
         if (options.finalNewline) {
             value += "\n"
         }
@@ -136,6 +130,40 @@ public class CanonicalMarkdownRenderer {
             value = replaceLfWithCrlf(value)
         }
         value
+    }
+
+    private func formatActions(stack: ArrayList<FormatAction>): String {
+        var out = StringBuilder()
+        let outputStack = ArrayList<StringBuilder>()
+        while (!stack.isEmpty()) {
+            let action = stack.remove(at: stack.size - 1)
+            match (action) {
+                case FormatAction.TextValue(value) => out.append(value)
+                case FormatAction.NodeValue(node) => formatNode(node, stack, out)
+                case FormatAction.FootnoteBodyStart =>
+                    outputStack.add(out)
+                    out = StringBuilder()
+                case FormatAction.FootnoteBodyEnd(label) =>
+                    let body = trimFormatEnd(out.toString())
+                    out = outputStack.remove(at: outputStack.size - 1)
+                    out.append("[^${label}]:")
+                    if (!body.isEmpty()) {
+                        out.append(" ")
+                        var start: Int64 = 0
+                        var index: Int64 = 0
+                        while (index < body.size) {
+                            if (body[index] == b'\n') {
+                                out.append(body[start..index + 1])
+                                out.append("    ")
+                                start = index + 1
+                            }
+                            index++
+                        }
+                        out.append(body[start..])
+                    }
+            }
+        }
+        out.toString()
     }
 
     private func formatNode(node: NodeRef, stack: ArrayList<FormatAction>, out: StringBuilder): Unit {
@@ -199,10 +227,29 @@ public class CanonicalMarkdownRenderer {
             case NodeKind.HtmlInline => out.append(node.asHtmlInline().getOrThrow().literal)
             case NodeKind.CustomBlock =>
                 let custom = node.asCustomBlock().getOrThrow()
+                if (let note: FootnoteDefinitionPayload <- custom.payload) {
+                    stack.add(FormatAction.FootnoteBodyEnd(escapeMarkdownText(note.labelNormalized)))
+                    pushSeparated(node.children(), "\n\n", stack)
+                    stack.add(FormatAction.FootnoteBodyStart)
+                    return
+                }
                 formatCustom(custom.extensionId, custom.localKindId, custom.payload, node.children(), node.span, true,
                     stack)
             case NodeKind.CustomInline =>
                 let custom = node.asCustomInline().getOrThrow()
+                if (let metadata: HeadingIdPayload <- custom.payload) {
+                    out.append(" {#${metadata.rawId}}")
+                    return
+                }
+                if (let note: FootnoteReferencePayload <- custom.payload) {
+                    let label = if (node.documentBindings.footnoteReference(node.nodeId).isSome()) {
+                        escapeMarkdownText(note.labelNormalized)
+                    } else {
+                        note.labelRaw
+                    }
+                    out.append("[^${label}]")
+                    return
+                }
                 formatCustom(custom.extensionId, custom.localKindId, custom.payload, node.children(), node.span, false,
                     stack)
         }
@@ -448,7 +495,9 @@ public class CanonicalMarkdownRenderer {
             case NodeKind.TableRow =>
                 out.append("|")
                 for (cell in node.children().toArray()) {
-                    let text = escapeTableCell(plainTextOfFormatter(cell))
+                    let actions = ArrayList<FormatAction>()
+                    pushNodes(cell.children(), actions)
+                    let text = escapeTableCell(formatActions(actions))
                     if (options.tablePadding) {
                         out.append(" ${text} |")
                     } else {
@@ -515,11 +564,21 @@ private func isMarkdownAsciiPunctuation(byte: Byte): Bool {
 private func escapeTableCell(value: String): String {
     let out = StringBuilder()
     var index: Int64 = 0
+    var backslashes: Int64 = 0
     while (index < value.size) {
         if (value[index] == b'|') {
-            out.append("\\|");
+            if (backslashes % 2 == 0) {
+                out.append("\\")
+            }
+            out.append("|");
+            backslashes = 0
             index++
         } else {
+            backslashes = if (value[index] == b'\\') {
+                backslashes + 1
+            } else {
+                0
+            }
             let next = formatterNextRune(value, index);
             out.append(value[index..next]);
             index = next

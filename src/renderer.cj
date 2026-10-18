@@ -678,9 +678,15 @@ public class HtmlRenderer {
     }
 
     private func renderArenaTo(ast: Document, sink: TextSink, cancellation: CancellationToken, budget: OperationBudget): Unit {
+        renderArenaSubtree(ast.root(), sink, cancellation, budget)
+        renderFootnoteSection(ast, sink, cancellation, budget)
+    }
+
+    private func renderArenaSubtree(root: NodeRef, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
         cancellation.throwIfCancelled(phase: "render")
         let stack = ArrayList<ArenaRenderFrame>()
-        stack.add(ArenaRenderFrame(ast.root(), false))
+        stack.add(ArenaRenderFrame(root, false))
         var checkpoints: Int64 = 0
         while (!stack.isEmpty()) {
             let frame = stack.remove(at: stack.size - 1)
@@ -699,6 +705,40 @@ public class HtmlRenderer {
         cancellation.throwIfCancelled(phase: "render")
     }
 
+    private func renderFootnoteSection(document: Document, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        let notes = document.bindings.footnotes
+        if (notes.isEmpty()) {
+            return
+        }
+        write("<section class=\"footnotes\" aria-label=\"Footnotes\">\n<ol>\n", sink, cancellation, budget)
+        for (note in notes.toArray()) {
+            let node = document.nodeRefAtPhysical(note.definitionIndex)
+            write("<li id=\"", sink, cancellation, budget)
+            writeEscapedAttribute(note.definitionId, sink, cancellation, budget)
+            write("\">\n", sink, cancellation, budget)
+            let children = node.children()
+            for (index in 0..children.size) {
+                renderArenaSubtree(children[index], sink, cancellation, budget)
+            }
+            write("<p class=\"footnote-backlinks\">", sink, cancellation, budget)
+            for (index in 0..note.references.size) {
+                let reference = note.references[index]
+                if (index > 0) {
+                    write(" ", sink, cancellation, budget)
+                }
+                write("<a href=\"#", sink, cancellation, budget)
+                writeEncodedUriAttribute(reference.referenceId, sink, cancellation, budget)
+                write("\" aria-label=\"Back to reference ${index + 1} for footnote ${note.number}\">", sink,
+                    cancellation, budget)
+                writeFromNode("↩", node, sink, cancellation, budget)
+                write("</a>", sink, cancellation, budget)
+            }
+            write("</p>\n</li>\n", sink, cancellation, budget)
+        }
+        write("</ol>\n</section>\n", sink, cancellation, budget)
+    }
+
     private func writeArenaEnter(frame: ArenaRenderFrame, stack: ArrayList<ArenaRenderFrame>, sink: TextSink,
         cancellation: CancellationToken, budget: OperationBudget): Unit {
         let node = frame.node
@@ -706,7 +746,13 @@ public class HtmlRenderer {
             case NodeKind.DocumentNode => pushArenaContainer(frame, stack)
             case NodeKind.Heading =>
                 let level = node.asHeading().getOrThrow().level
-                write("<h${level}>", sink, cancellation, budget)
+                write("<h${level}", sink, cancellation, budget)
+                if (let Some(binding) <- node.documentBindings.headingForNode(node.nodeId)) {
+                    write(" id=\"", sink, cancellation, budget)
+                    writeEscapedAttribute(binding.id, sink, cancellation, budget)
+                    write("\"", sink, cancellation, budget)
+                }
+                write(">", sink, cancellation, budget)
                 pushArenaContainer(frame, stack)
             case NodeKind.Paragraph =>
                 if (!frame.suppressParagraph) {
@@ -814,8 +860,12 @@ public class HtmlRenderer {
                 pushArenaContainer(frame, stack)
             case NodeKind.Link =>
                 let link = node.asLink().getOrThrow()
-                let externalRewriteApplied = isExternalLinkRewriteApplied(link.destination, cancellation)
-                let destination = rewriteExternalLink(link.destination, externalRewriteApplied)
+                let boundDestination = match (node.documentBindings.linkForNode(node.nodeId)) {
+                    case Some(value) => value.renderedDestination
+                    case None => link.destination
+                }
+                let externalRewriteApplied = isExternalLinkRewriteApplied(boundDestination, cancellation)
+                let destination = rewriteExternalLink(boundDestination, externalRewriteApplied)
                 write("<a", sink, cancellation, budget)
                 if (isAllowedLink(destination, cancellation, rewrittenExternal: externalRewriteApplied)) {
                     write(" href=\"", sink, cancellation, budget)
@@ -916,6 +966,29 @@ public class HtmlRenderer {
             case NodeKind.CustomInline => node.asCustomInline().getOrThrow()
             case _ => throw IllegalStateException("arena custom renderer received a core node")
         }
+        if (custom.payload is FootnoteReferencePayload || custom.payload is FootnoteDefinitionPayload) {
+            if (!node.documentBindings.footnotesEnabled) {
+                throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
+                    "footnote rendering requires a bound document", phase: "render", span: node.span)
+            }
+        }
+        if (custom.payload is FootnoteDefinitionPayload || custom.payload is HeadingIdPayload) {
+            return
+        }
+        if (let payload: FootnoteReferencePayload <- custom.payload) {
+            match (node.documentBindings.footnoteReference(node.nodeId)) {
+                case Some(binding) =>
+                    write("<sup class=\"footnote-ref\" id=\"", sink, cancellation, budget)
+                    writeEscapedAttribute(binding.referenceId, sink, cancellation, budget)
+                    write("\"><a href=\"#", sink, cancellation, budget)
+                    writeEncodedUriAttribute(binding.definitionId, sink, cancellation, budget)
+                    write("\" aria-label=\"Footnote ${binding.number}\">", sink, cancellation, budget)
+                    writeFromNode("${binding.number}", node, sink, cancellation, budget)
+                    write("</a></sup>", sink, cancellation, budget)
+                case None => writeEscapedTextFromNode("[^${payload.labelRaw}]", node, sink, cancellation, budget)
+            }
+            return
+        }
         if (let Some(rule) <- findRendererRule(custom.extensionId, custom.localKindId)) {
             write("<${rule.htmlTag}", sink, cancellation, budget)
             if (!rule.classToken.isEmpty()) {
@@ -974,6 +1047,10 @@ public class HtmlRenderer {
             case NodeKind.CustomBlock => node.asCustomBlock().getOrThrow()
             case NodeKind.CustomInline => node.asCustomInline().getOrThrow()
             case _ => throw IllegalStateException("arena custom renderer received a core node")
+        }
+        if (custom.payload is FootnoteReferencePayload || custom.payload is FootnoteDefinitionPayload ||
+            custom.payload is HeadingIdPayload) {
+            return
         }
         if (let Some(rule) <- findRendererRule(custom.extensionId, custom.localKindId)) {
             write("</${rule.htmlTag}>", sink, cancellation, budget)
@@ -1783,8 +1860,21 @@ public class PlainTextRenderer {
      */
     public func render(document: Document): String {
         let out = StringBuilder()
+        appendPlainSubtree(document.root(), out)
+        for (note in document.bindings.footnotes.toArray()) {
+            out.append("\n\n[${note.number}] ")
+            let definition = document.nodeRefAtPhysical(note.definitionIndex)
+            let children = definition.children()
+            for (index in 0..children.size) {
+                appendPlainSubtree(children[index], out)
+            }
+        }
+        trimTrailingNewlines(out.toString())
+    }
+
+    private func appendPlainSubtree(root: NodeRef, out: StringBuilder): Unit {
         let stack = ArrayList<ArenaRenderFrame>()
-        stack.add(ArenaRenderFrame(document.root(), false))
+        stack.add(ArenaRenderFrame(root, false))
         while (!stack.isEmpty()) {
             let frame = stack.remove(at: stack.size - 1)
             if (frame.exiting) {
@@ -1798,7 +1888,10 @@ public class PlainTextRenderer {
                     case NodeKind.Link =>
                         if (options.includeLinkDestinations) {
                             out.append(" (");
-                            out.append(frame.node.asLink().getOrThrow().destination);
+                            out.append(match (frame.node.documentBindings.linkForNode(frame.node.nodeId)) {
+                                case Some(value) => value.renderedDestination
+                                case None => frame.node.asLink().getOrThrow().destination
+                            });
                             out.append(")")
                         }
                     case NodeKind.CustomBlock =>
@@ -1827,16 +1920,28 @@ public class PlainTextRenderer {
                 case NodeKind.ThematicBreak => out.append("\n")
                 case NodeKind.CustomBlock =>
                     let custom = frame.node.asCustomBlock().getOrThrow()
+                    if (custom.payload is FootnoteDefinitionPayload) {
+                        continue
+                    }
                     appendCustomTextPrefix(custom.extensionId, custom.localKindId, frame.node, out)
                     pushPlainContainer(frame, stack)
                 case NodeKind.CustomInline =>
                     let custom = frame.node.asCustomInline().getOrThrow()
+                    if (custom.payload is HeadingIdPayload) {
+                        continue
+                    }
+                    if (let payload: FootnoteReferencePayload <- custom.payload) {
+                        match (frame.node.documentBindings.footnoteReference(frame.node.nodeId)) {
+                            case Some(value) => out.append("[${value.number}]")
+                            case None => out.append("[^${payload.labelRaw}]")
+                        }
+                        continue
+                    }
                     appendCustomTextPrefix(custom.extensionId, custom.localKindId, frame.node, out)
                     pushPlainContainer(frame, stack)
                 case _ => pushPlainContainer(frame, stack)
             }
         }
-        trimTrailingNewlines(out.toString())
     }
 
     private func pushPlainContainer(frame: ArenaRenderFrame, stack: ArrayList<ArenaRenderFrame>): Unit {

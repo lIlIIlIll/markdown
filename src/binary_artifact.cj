@@ -72,7 +72,9 @@ public class BinaryArtifactCodec {
         let root = snapshot.result.document.root().asDocument().getOrThrow()
         binaryWriteString(out, root.profile.id)
         binaryWriteString(out, root.dialectFingerprint)
-        binaryWriteString(out, binaryEngineFingerprint(snapshot.engine))
+        binaryWriteString(out,
+            parserConfigurationFingerprint(snapshot.engine.dialect.fingerprint, snapshot.engine.limits,
+                snapshot.engine.bindingOptions))
         binaryWriteString(out, binaryUtf8PolicyId(snapshot.result.source.decodePolicy()))
         binaryWriteString(out, Sha256.digestBytes(originalBytes))
         binaryWriteString(out, Sha256.digest(snapshot.result.source.text()))
@@ -118,7 +120,8 @@ public class BinaryArtifactCodec {
             if (dialect != engine.dialect.fingerprint) {
                 return BinaryArtifactLoadResult.CacheMiss("dialect fingerprint")
             }
-            if (engineFingerprint != binaryEngineFingerprint(engine)) {
+            if (engineFingerprint != parserConfigurationFingerprint(engine.dialect.fingerprint, engine.limits,
+                engine.bindingOptions)) {
                 return BinaryArtifactLoadResult.CacheMiss("engine fingerprint")
             }
             let utf8Policy = match (utf8PolicyId) {
@@ -214,25 +217,6 @@ private func binaryWriteU64(out: ArrayList<Byte>, value: UInt64): Unit {
     }
 }
 
-private func binaryEngineFingerprint(engine: MarkdownEngine): String {
-    let limits = engine.limits
-    let out = CanonicalDescriptor()
-    out.append("engine-0.10-plan-3")
-    out.append(engine.dialect.fingerprint)
-    out.append(limits.maximumInputBytes)
-    out.append(limits.maximumLineBytes)
-    out.append(limits.maximumNestingDepth)
-    out.append(limits.maximumAstNodes)
-    out.append(limits.maximumReferences)
-    out.append(limits.maximumTableColumns)
-    out.append(limits.maximumUrlBytes)
-    out.append(limits.maximumLiteralBytes)
-    out.append(limits.maximumOutputBytes)
-    out.append(limits.maximumExtensionCaptureBytes)
-    out.append(limits.maximumExtensionLookaheadBytes)
-    Sha256.digest(out.toString())
-}
-
 private func binaryAstDigest(document: Document): String {
     let out = CanonicalDescriptor()
     for (event in document.walk()) {
@@ -314,12 +298,39 @@ private func appendBinarySemantic(out: CanonicalDescriptor, node: NodeRef): Unit
             out.append(value.extensionId);
             out.append(":");
             out.append(value.localKindId)
+            appendBinaryCustomPayload(out, value.payload)
         case NodeKind.CustomInline =>
             let value = node.asCustomInline().getOrThrow()
             out.append("=");
             out.append(value.extensionId);
             out.append(":");
             out.append(value.localKindId)
+            appendBinaryCustomPayload(out, value.payload)
+        case _ => ()
+    }
+}
+
+private func appendBinaryCustomPayload(out: CanonicalDescriptor, payload: CustomPayload): Unit {
+    out.append(payload.payloadTypeId())
+    match (payload) {
+        case value: HeadingIdPayload =>
+            out.append(value.rawId)
+            out.append(value.idSpan.startByte)
+            out.append(value.idSpan.endByte)
+        case value: FootnoteDefinitionPayload =>
+            out.append(value.labelRaw)
+            out.append(value.labelNormalized)
+            out.append(value.labelSpan.startByte)
+            out.append(value.labelSpan.endByte)
+        case value: FootnoteReferencePayload =>
+            out.append(value.labelRaw)
+            out.append(value.labelNormalized)
+            out.append(value.labelSpan.startByte)
+            out.append(value.labelSpan.endByte)
+        case value: SyntaxPayload =>
+            out.append(value.name)
+            out.append(value.parameters)
+            out.append(value.literal)
         case _ => ()
     }
 }

@@ -164,7 +164,8 @@ public class MarkdownParseArtifact {
         parserPlanVersion = "3"
         profileId = engine.profile.id
         dialectFingerprint = engine.dialect.fingerprint
-        engineFingerprint = computeEngineFingerprint(engine)
+        engineFingerprint = parserConfigurationFingerprint(engine.dialect.fingerprint, engine.limits,
+            engine.bindingOptions)
         let originalBytes = result.source.originalBytesForArtifact()
         sourceDigest = Sha256.digestBytes(originalBytes)
         decodedTextDigest = Sha256.digest(result.source.text())
@@ -193,6 +194,11 @@ extend MarkdownEngine {
      * @throws MarkdownException mapping 非 identity 或 provenance 不匹配时。
      */
     public func createArtifact(result: ParseResult): MarkdownParseArtifact {
+        if (result.document.bindings.footnotesEnabled && result.document.bindings.engineFingerprint !=
+            parserConfigurationFingerprint(dialect.fingerprint, limits, bindingOptions)) {
+            throw MarkdownException(MarkdownErrorCode.InvalidArtifact,
+                "bound document configuration does not match the artifact engine", phase: "artifact_encode")
+        }
         if (!result.source.hasIdentityMapping()) {
             throw MarkdownException(MarkdownErrorCode.InvalidArtifact,
                 "artifacts require an identity-preserving UTF-8 source mapping", phase: "artifact_encode")
@@ -261,8 +267,12 @@ extend MarkdownEngine {
         if (artifact.dialectFingerprint != dialect.fingerprint) {
             return ArtifactLoadResult.CacheMiss("dialect fingerprint")
         }
-        if (artifact.engineFingerprint != computeEngineFingerprint(this)) {
+        if (artifact.engineFingerprint != parserConfigurationFingerprint(dialect.fingerprint, limits, bindingOptions)) {
             return ArtifactLoadResult.CacheMiss("engine fingerprint")
+        }
+        if (artifact.document.bindings.footnotesEnabled && artifact.document.bindings.engineFingerprint != artifact
+            .engineFingerprint) {
+            return ArtifactLoadResult.CacheMiss("document binding identity")
         }
         if (artifact.utf8PolicyId != utf8PolicyId) {
             return ArtifactLoadResult.CacheMiss("UTF-8 policy")
@@ -350,23 +360,4 @@ private func identityOffsetMappingDigest(byteLength: Int64): String {
     descriptor.append("identity-offset-mapping")
     descriptor.append(byteLength)
     Sha256.digest(descriptor.toString())
-}
-
-private func computeEngineFingerprint(engine: MarkdownEngine): String {
-    let limits = engine.limits
-    let out = CanonicalDescriptor()
-    out.append("engine-0.10-plan-3")
-    out.append(engine.dialect.fingerprint)
-    out.append(limits.maximumInputBytes)
-    out.append(limits.maximumLineBytes)
-    out.append(limits.maximumNestingDepth)
-    out.append(limits.maximumAstNodes)
-    out.append(limits.maximumReferences)
-    out.append(limits.maximumTableColumns)
-    out.append(limits.maximumUrlBytes)
-    out.append(limits.maximumLiteralBytes)
-    out.append(limits.maximumOutputBytes)
-    out.append(limits.maximumExtensionCaptureBytes)
-    out.append(limits.maximumExtensionLookaheadBytes)
-    Sha256.digest(out.toString())
 }

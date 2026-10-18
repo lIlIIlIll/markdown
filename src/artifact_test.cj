@@ -96,12 +96,11 @@ class ArtifactSourceMapTest {
     func artifactRejectsParseResultWithMismatchedSourceOrEngine(): Unit {
         let commonmark = MarkdownEngine.builder().build()
         let parsed = commonmark.parse("original")
-        let wrongSource = ParseResult(
+        @ExpectThrows[IllegalArgumentException](ParseResult(
             parsed.document,
             SourceBuffer("different"),
             parsed.diagnostics.toArray()
-        )
-        expectInvalidArtifact(commonmark, wrongSource, "AST source digest")
+        ))
 
         let gfm = MarkdownEngine.builder().profile(MarkdownProfile.gfmModernV1()).build()
         expectInvalidArtifact(gfm, parsed, "AST profile")

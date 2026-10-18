@@ -26,6 +26,8 @@ public enum MarkdownErrorCode {
     | InvalidArtifact
     /** 显式输入采用了当前不支持的版本。 */
     | UnsupportedVersion
+    /** 引用无法按显式的严格绑定策略解析。 */
+    | InvalidReference
     /** 触发内部不变量违规。 */
     | InternalInvariantViolation
 }

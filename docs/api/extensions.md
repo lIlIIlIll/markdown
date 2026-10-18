@@ -258,6 +258,10 @@ Definition Lists、Heading IDs 和 Smart Punctuation。使用 `catalog()` 查询
 
 Front Matter 和 Math 只保留 literal，不执行配置或数学引擎。
 
+脚注和标题 ID 使用 2.0 语义与 typed payload；编号、目标和目录来自
+`Document.bindings`。定义列表仍处于旧的有限语法边界，不能从 `p1Dialect` 的名字推断全部
+issue #10 目标已经验收。具体语法、输出和执行边界见[文档绑定](../semantic-binding.md)。
+
 ## External descriptor
 
 `ExternalDialectDescriptor` 解析数据型 JSON/YAML descriptor。descriptor 不能携带

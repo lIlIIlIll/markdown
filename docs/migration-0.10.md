@@ -14,6 +14,13 @@
 - 移除 `StableNodeId` 和 `stableNodeId`。使用当前 Document 的
   `AstQuery.byNodeId(document, id)` 查询实际保留的节点。
 - lint `Fix` 绑定 `documentRevision` 和 source digest；不能跨独立 snapshot 或回退版本使用。
+- 脚注和标题 ID 升为 2.0 语义，使用 typed payload 和 `Document.bindings`；删除旧 sup/aside
+  及独立 heading span 的标签映射。HTML、Text、Markdown、查询与目录共享绑定结果。
+- 标题 ID 位于 `hN`，显式 ID 先预留，标题与脚注共用冲突分配。拼装片段使用
+  `BindingOptions(idScope: ...)`；具体规则见[文档绑定](semantic-binding.md)。
+- `SourceBuffer.text(node/document)` 和 `ParseResult` 校验实际来源归属。
+- `InlineSyntaxMatch` 增加 `rawLiteral` 和 `literalSpan`，分别提供原始捕获文本与精确范围；
+  `literal` 仍是容器规范化后的匹配内容。
 - Extension SPI 为 `2`，parser plan 为 `3`，parse artifact 与 binary snapshot schema 为 `3`。
   旧缓存返回 CacheMiss；显式 `BinaryArtifactCodec.read` 遇到旧持久化版本报
   `MarkdownErrorCode.UnsupportedVersion`，不尝试旧格式解码。

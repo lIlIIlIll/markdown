@@ -44,12 +44,12 @@
   },
   "api": {
     "snapshotPath": "api/public-api-v0.10.txt",
-    "declarations": 1434,
-    "sha256": "fc623ee89cad607cabadc473b377b39c6c7f8185a82c1593a1ce854447c76bdc"
+    "declarations": 1508,
+    "sha256": "9f143886736c41344551488f16623467848c7f7a913dc8658dafd07f683a8926"
   },
   "tests": {
-    "total": 1517,
-    "passed": 1517,
+    "total": 1534,
+    "passed": 1534,
     "skipped": 0,
     "errors": 0,
     "failed": 0

@@ -16,6 +16,24 @@ class NodeIdentityTests {
     }
 
     @TestCase
+    func sourceViewsAndIncrementalArtifactsRemainBoundToTheirActualSnapshot(): Unit {
+        let engine = MarkdownEngine.builder().build()
+        let original = engine.parseSnapshot("first\n\nlast")
+        let old = original.result.document.children()[1]
+        let changed = original.applyEdits([SourceEdit(SourceSpan(0, 5), "other")]).snapshot
+        let retained = AstQuery.byNodeId(changed.result.document, old.nodeId).getOrThrow()
+        @Expect(changed.result.source.text(retained), "last")
+        @Expect(changed.result.source.text(changed.result.document), "other\n\nlast")
+        @ExpectThrows[IllegalArgumentException](changed.result.source.text(old))
+        @ExpectThrows[IllegalArgumentException](SourceBuffer("other\n\nlast").text(retained))
+        let artifact = engine.createArtifact(changed.result)
+        match (engine.loadArtifact(artifact, "other\n\nlast")) {
+            case ArtifactLoadResult.Hit(document) => @Expect(HtmlRenderer().render(document), "<p>other</p>\n<p>last</p>\n")
+            case _ => @Expect(false)
+        }
+    }
+
+    @TestCase
     func identicalDocumentsAndRepeatedTextHaveDistinctIdentities(): Unit {
         let first = Markdown.parse("same\n\nsame").document
         let second = Markdown.parse("same\n\nsame").document

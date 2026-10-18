@@ -54,6 +54,7 @@ let engine = MarkdownEngine.builder()
 | `profile(profile)` | `MarkdownProfile` | 选择 profile，并清除之前设置的 dialect |
 | `limits(limits)` | `ParseLimits` | 覆盖 parser 限制 |
 | `dialect(dialect)` | `MarkdownDialect` | 编译并安装方言；未显式设置 limits 时使用 dialect limits |
+| `bindingOptions(options)` | `BindingOptions` | 配置文档片段 ID scope 和未定义脚注策略 |
 | `nativeScannerEnabled(enabled)` | `Bool` | 允许或禁止已注入 accelerator；不会自动链接 native library |
 | `build()` | 无 | 返回不可变 `MarkdownEngine` |
 
@@ -90,6 +91,11 @@ utf8Policy: Utf8Policy = Utf8Policy.Strict
 | `document` | `Document` | 完整不可变 AST |
 | `source` | `SourceBuffer` | 源文本、切片和位置转换 |
 | `diagnostics` | `ImmutableArray<Diagnostic>` | parser 恢复后保留的诊断 |
+
+`document.bindings` 提供脚注、标题和结构化目录的共享决策，详见
+[文档绑定](../semantic-binding.md)。`ParseResult(document, source, diagnostics)` 验证实际
+来源归属；给同一个 Document 配上另一份 SourceBuffer 会抛出 `IllegalArgumentException`。
+
 ## `tryParse`
 
 `ParseResult` 只表示成功。`tryParse` 返回 `ParseOutcome`：成功携带完整结果，致命
@@ -118,8 +124,7 @@ let result = session.finish()
 ```
 
 `feed` 只累计输入。`finish` 才执行解析。session 不能在 `finish` 后继续使用，也
-不支持并发调用。PRD 保留的 `newSession` 入口同样返回 `BufferedInputSession`；它不会
-提前产生 AST。
+不支持并发调用。旧 `newSession` 别名已移除。
 
 ## Source events
 
@@ -147,8 +152,8 @@ for (event in events.events.toArray()) {
 返回事件，`finish()` 发出最后一个 block 和 `DocumentEnd`。`feed()` 只扫描新增 bytes，
 并立即检查 input 和 line limits。逐 byte feed 不会反复复制或扫描全部 pending input。
 
-Event 值不持有 `Document` 或 `NodeRef`。配置 document processor 的 dialect 需要
-完整 AST，因此 Event preflight 会失败。
+Event 值不持有 `Document` 或 `NodeRef`。配置 document processor、脚注或标题 ID 绑定的
+dialect 需要完整 AST，因此 Event preflight 会失败。
 
 ## HTML execution mode
 

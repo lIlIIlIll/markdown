@@ -34,6 +34,7 @@ internal class ParserNodeFactory {
     private let maximumAstNodes: Int64
     private let source: ?SourceBuffer
     private var hasOrphans = false
+    internal var requiresBinding = false
 
     init(maximumAstNodes: Int64, estimatedInputBytes!: Int64 = 0, source!: ?SourceBuffer = None) {
         this.maximumAstNodes = maximumAstNodes
@@ -153,6 +154,9 @@ internal class ParserNodeFactory {
 
     func customBlock(extensionId: String, extensionSemanticVersion: String, localKindId: String, payload: CustomPayload,
         children: Array<Int64>, span: ?SourceSpan, origin: NodeOrigin): Int64 {
+        if (payload is FootnoteDefinitionPayload || payload is FootnoteReferencePayload || payload is HeadingIdPayload) {
+            requiresBinding = true
+        }
         arena.appendParserOwned(NodeKind.CustomBlock, NodeCategory.Block, span, origin.kind, children,
             payload: ArenaNodePayload.CustomValue(extensionId, extensionSemanticVersion, localKindId, payload),
             origin: Some(origin))
@@ -271,6 +275,9 @@ internal class ParserNodeFactory {
 
     func customInline(extensionId: String, extensionSemanticVersion: String, localKindId: String,
         payload: CustomPayload, children: Array<Int64>, span: ?SourceSpan, origin: NodeOrigin): Int64 {
+        if (payload is FootnoteDefinitionPayload || payload is FootnoteReferencePayload || payload is HeadingIdPayload) {
+            requiresBinding = true
+        }
         arena.appendParserOwned(NodeKind.CustomInline, NodeCategory.Inline, span, origin.kind, children,
             payload: ArenaNodePayload.CustomValue(extensionId, extensionSemanticVersion, localKindId, payload),
             origin: Some(origin))

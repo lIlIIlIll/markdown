@@ -19,6 +19,8 @@ let mark = InlineSyntax
 
 `delimiter(opener, closer)` 定义成对边界；只传一个值时 opener 与 closer 相同。
 `token(value)` 定义单 token 语法，`metadataSuffix` 定义后缀 metadata。
+`lineBreaks(false)` 禁止匹配内容跨行。`headingIdSuffix()` 声明只用于标题末尾的结构化
+`{#id}` 语法；不是普通行内 metadata 的别名。
 
 行内 rule 还可配置 CommonMark 或 literal-backslash escaping、flanking、children、可见内容、
 嵌套、delimiter/lookahead 上限、priority、conflict group、resource cost 和 typed emitter。
@@ -40,6 +42,11 @@ let note = BlockSyntax
 `content(Markdown)` 解析正文 children；`Literal` 保留原文。`linePrefix(prefix)` 创建单行
 语法，`documentStartOnly()` 只允许在文档开头匹配。默认 local kind 来自 opener 后的第一
 个单词；`kindFromFirstWord(false)` 使用固定 rule ID。
+
+`footnoteDefinition()` 声明 `[^label]:` 和缩进四列的多段正文，生成结构化脚注 payload。
+这与 `linePrefix` 的单行语法不同。脚注和标题语义需要完整 AST 绑定，目前不能由 RawBlock
+事件路径完成。这两个专用声明属于代码 DSL；external descriptor schema 1 没有新增对应
+字段。
 
 `maximumBlockBytes` 在 batch parser 和 `RawBlockEventSession.feed()` 中使用相同的正文
 字节语义实时执行。paired block 的外层 opener/closer 不计入正文；嵌套 opener、内层

@@ -328,6 +328,8 @@ internal class ParserHotPlan {
     internal let hasBlockDsl: Bool
     internal let hasInlineSpi: Bool
     internal let hasDocumentProcessors: Bool
+    internal let hasFootnotes: Bool
+    internal let headingIdRule: ?InlineSyntaxRule
     private let inlineDslByFirstByte: Array<ImmutableArray<InlineSyntaxRule>>
     private let blockDslByFirstByte: Array<ImmutableArray<BlockSyntaxRule>>
     private let inlineSpiByFirstByte: Array<ImmutableArray<InlineParserSpi>>
@@ -341,12 +343,27 @@ internal class ParserHotPlan {
         let inlineBuckets = Array<ArrayList<InlineSyntaxRule>>(256) {_ => ArrayList<InlineSyntaxRule>()}
         let blockBuckets = Array<ArrayList<BlockSyntaxRule>>(256) {_ => ArrayList<BlockSyntaxRule>()}
         let spiBuckets = Array<ArrayList<InlineParserSpi>>(256) {_ => ArrayList<InlineParserSpi>()}
+        var footnotes = false
+        var headingRule: ?InlineSyntaxRule = None
         for (rule in inlineRules) {
             inlineBuckets[Int64(rule.opener[0])].add(rule)
+            if (let InlineSyntaxKind.HeadingIdSuffix <- rule.syntaxKind) {
+                headingRule = Some(rule)
+            }
+            if (let Some(emitter) <- rule.emitter) {
+                if (emitter is FootnoteReferenceEmitter) {
+                    footnotes = true
+                }
+            }
         }
         for (rule in blockRules) {
             blockBuckets[Int64(rule.openerPrefix[0])].add(rule)
+            if (let BlockSyntaxKind.FootnoteDefinition <- rule.syntaxKind) {
+                footnotes = true
+            }
         }
+        hasFootnotes = footnotes
+        headingIdRule = headingRule
         for (spi in parserSpis) {
             for (trigger in spi.triggerBytes) {
                 spiBuckets[Int64(trigger)].add(spi)
@@ -438,6 +455,8 @@ public enum InlineSyntaxKind {
     | SingleToken
     /** metadata suffix 语法。 */
     | MetadataSuffix
+    /** 只允许出现在标题尾部的显式 ID。 */
+    | HeadingIdSuffix
 }
 
 /** inline delimiter 中反斜杠的处理策略。 */
@@ -499,8 +518,12 @@ public class InlineSyntaxMatch {
     public let extensionId: String
     /** 匹配的 rule id。 */
     public let ruleId: String
-    /** 匹配到的原始文本。 */
+    /** 容器归一化后的匹配体。 */
     public let literal: String
+    /** 未经容器内转义归一化的原始匹配体，遵循输入 UTF-8 策略。 */
+    public let rawLiteral: String
+    /** 匹配体本身的精确来源范围，不包含 delimiter。 */
+    public let literalSpan: SourceSpan
     /** 匹配覆盖的 source span。 */
     public let span: SourceSpan
     /** 匹配子节点的语义摘要。 */
@@ -508,15 +531,19 @@ public class InlineSyntaxMatch {
     /** 创建 inline 匹配记录。
      * @param extensionId 匹配所属的扩展 id。
      * @param ruleId 匹配的 rule id。
-     * @param literal 匹配到的原始文本。
+     * @param literal 容器归一化后的匹配体。
+     * @param rawLiteral 原始匹配体，遵循输入 UTF-8 策略。
+     * @param literalSpan 匹配体的来源范围。
      * @param span 匹配覆盖的 source span。
      * @param children 匹配子节点的语义摘要。
      */
-    public init(extensionId: String, ruleId: String, literal: String, span: SourceSpan,
-        children: Array<SyntaxChildSummary>) {
+    public init(extensionId: String, ruleId: String, literal: String, rawLiteral: String, literalSpan: SourceSpan,
+        span: SourceSpan, children: Array<SyntaxChildSummary>) {
         this.extensionId = extensionId
         this.ruleId = ruleId
         this.literal = literal
+        this.rawLiteral = rawLiteral
+        this.literalSpan = literalSpan
         this.span = span
         this.children = ImmutableArray<SyntaxChildSummary>(children)
     }
@@ -567,6 +594,8 @@ public class InlineSyntaxRule {
     public let emitContent: Bool
     /** 是否允许同 rule 嵌套。 */
     public let allowNesting: Bool
+    /** 匹配内容是否允许跨行。 */
+    public let allowLineBreaks: Bool
     /** delimiter 长度上限。 */
     public let maximumDelimiterLength: Int64
     /** rule lookahead byte 上限。 */
@@ -601,6 +630,7 @@ public class InlineSyntaxRule {
         parseChildren = builder.parseChildrenValue
         emitContent = builder.emitContentValue
         allowNesting = builder.allowNestingValue
+        allowLineBreaks = builder.allowLineBreaksValue
         maximumDelimiterLength = builder.maximumDelimiterLengthValue
         maximumLookahead = builder.maximumLookaheadValue
         priority = builder.priorityValue
@@ -610,6 +640,7 @@ public class InlineSyntaxRule {
         flankingRule = builder.flankingRuleValue
         phase = match (syntaxKind) {
             case InlineSyntaxKind.MetadataSuffix => SyntaxPhase.Metadata
+            case InlineSyntaxKind.HeadingIdSuffix => SyntaxPhase.Metadata
             case _ => SyntaxPhase.Inline
         }
         tieBreak = "registration-order>extension-id>rule-id"
@@ -643,6 +674,7 @@ public class InlineSyntaxBuilder {
     internal var parseChildrenValue = true
     internal var emitContentValue = true
     internal var allowNestingValue = true
+    internal var allowLineBreaksValue = true
     internal var maximumDelimiterLengthValue: Int64 = 16
     internal var maximumLookaheadValue: Int64 = 4096
     internal var priorityValue: Int64 = 100
@@ -700,6 +732,19 @@ public class InlineSyntaxBuilder {
         allowNestingValue = false
         this
     }
+    /** 定义只在标题尾部匹配的 `{#id}` 元数据。
+     * @return 同一 builder，支持链式调用。
+     */
+    public func headingIdSuffix(): InlineSyntaxBuilder {
+        syntaxKindValue = InlineSyntaxKind.HeadingIdSuffix
+        openerValue = "{#"
+        closerValue = "}"
+        parseChildrenValue = false
+        emitContentValue = false
+        allowNestingValue = false
+        allowLineBreaksValue = false
+        this
+    }
     /** 设置反斜杠 escaping policy。
      * @param policy 要使用的 escaping policy。
      * @return 同一 builder，支持链式调用。
@@ -738,6 +783,14 @@ public class InlineSyntaxBuilder {
      */
     public func nesting(allow: Bool): InlineSyntaxBuilder {
         allowNestingValue = allow
+        this
+    }
+    /** 设置匹配内容是否允许跨行。
+     * @param allow 是否允许换行。
+     * @return 同一 builder，支持链式调用。
+     */
+    public func lineBreaks(allow: Bool): InlineSyntaxBuilder {
+        allowLineBreaksValue = allow
         this
     }
     /** 设置 delimiter 长度上限。
@@ -811,12 +864,14 @@ public enum BlockContentMode {
     | Literal
 }
 
-/** block rule 的单行或 paired-container 形态。 */
+/** block rule 的边界语法。 */
 public enum BlockSyntaxKind {
     /** paired-container：由 opener 与 closer 定义范围。 */
     | PairedContainer
     /** 单行 rule。 */
     | SingleLine
+    /** 脚注定义：标签行和缩进四列的后续 Markdown blocks。 */
+    | FootnoteDefinition
 }
 
 // cjlint-ignore -end Public BlockContentMode.Markdown is the frozen DSL spelling.
@@ -1049,6 +1104,18 @@ public class BlockSyntaxBuilder {
         openerPrefixValue = prefix
         closerValue = ""
         allowNestingValue = false
+        this
+    }
+    /** 定义 `[^label]:` 脚注和缩进四列的后续正文。
+     * @return 同一 builder，支持链式调用。
+     */
+    public func footnoteDefinition(): BlockSyntaxBuilder {
+        syntaxKindValue = BlockSyntaxKind.FootnoteDefinition
+        openerPrefixValue = "[^"
+        closerValue = ""
+        contentModeValue = BlockContentMode.Markdown
+        kindFromFirstWordValue = false
+        allowNestingValue = true
         this
     }
     /** 设置 paired block 的精确 closer。
@@ -1757,6 +1824,7 @@ public class DialectCompiler {
 
     private static func validateCapabilities(dialect: MarkdownDialect): Unit {
         for (manifest in dialect.manifests) {
+            let boundRenderer = hasBoundSemanticRenderer(dialect, manifest.extensionId)
             var hasParser = false
             var hasPostprocessor = false
             var hasTransform = false
@@ -1809,23 +1877,23 @@ public class DialectCompiler {
             if (manifest.capabilities.transform && !hasTransform) {
                 fail("transform capability has no AST transform")
             }
-            if (manifest.capabilities.lint && !hasLint) {
+            if (manifest.capabilities.lint && !hasLint && !boundRenderer) {
                 fail("lint capability has no extension lint provider")
             }
-            if (manifest.capabilities.serialize || manifest.capabilities.incremental) {
-                fail("serialize/incremental extension capabilities are not supported by parser plan v1")
+            if ((manifest.capabilities.serialize && !boundRenderer) || manifest.capabilities.incremental) {
+                fail("the parser plan does not support the declared extension cache/edit capability")
             }
             let renderer = findRenderer(dialect.rendererRules, manifest.extensionId)
             let needsRenderer = manifest.capabilities.specHtml || manifest.capabilities.safeHtml || manifest
                 .capabilities
                 .plainText || manifest.capabilities.markdown || manifest.capabilities.format
-            if (needsRenderer && renderer.isNone() && match (manifest.missingRendererPolicy) {
+            if (needsRenderer && !boundRenderer && renderer.isNone() && match (manifest.missingRendererPolicy) {
                 case MissingRendererPolicy.Error => true;
                 case _ => false
             }) {
                 fail("declared renderer capability has no renderer rule")
             }
-            if (manifest.capabilities.markdown || manifest.capabilities.format) {
+            if (!boundRenderer && (manifest.capabilities.markdown || manifest.capabilities.format)) {
                 match (renderer) {
                     case Some(rule) =>
                         let complete = match (rule.markdownBlockLowering) {
@@ -1843,6 +1911,44 @@ public class DialectCompiler {
                 }
             }
         }
+    }
+
+    private static func hasBoundFootnoteRenderer(dialect: MarkdownDialect, extensionId: String): Bool {
+        if (extensionId != "footnotes") {
+            return false
+        }
+        var reference = false
+        var definition = false
+        for (rule in dialect.inlineBuilders) {
+            if (rule.extensionId == extensionId && rule.ruleId == "footnote-reference") {
+                if (let Some(emitter) <- rule.emitterValue) {
+                    if (emitter is FootnoteReferenceEmitter) {
+                        reference = true
+                    }
+                }
+            }
+        }
+        for (rule in dialect.blockBuilders) {
+            if (rule.extensionId == extensionId && rule.ruleId == "footnote-definition" && let BlockSyntaxKind
+                .FootnoteDefinition <- rule.syntaxKindValue) {
+                definition = true
+            }
+        }
+        reference && definition
+    }
+
+    private static func hasBoundSemanticRenderer(dialect: MarkdownDialect, extensionId: String): Bool {
+        if (hasBoundFootnoteRenderer(dialect, extensionId)) {
+            return true
+        }
+        if (extensionId == "heading-ids") {
+            for (rule in dialect.inlineBuilders) {
+                if (rule.extensionId == extensionId && let InlineSyntaxKind.HeadingIdSuffix <- rule.syntaxKindValue) {
+                    return true
+                }
+            }
+        }
+        false
     }
 
     private static func validateManifest(manifest: ExtensionManifest): Unit {
@@ -1866,6 +1972,11 @@ public class DialectCompiler {
             fail("inline opener/token must not be empty")
         }
         match (rule.syntaxKindValue) {
+            case InlineSyntaxKind.HeadingIdSuffix =>
+                if (rule.openerValue != "{#" || rule.closerValue != "}" || rule.emitterValue.isSome() || rule
+                    .parseChildrenValue || rule.emitContentValue || rule.allowLineBreaksValue) {
+                    fail("heading IDs require the structured heading suffix grammar and payload")
+                }
             case InlineSyntaxKind.SingleToken =>
                 if (!rule.closerValue.isEmpty()) {
                     fail("single-token syntax must not have a closer")
@@ -1897,6 +2008,14 @@ public class DialectCompiler {
             case BlockSyntaxKind.SingleLine =>
                 if (!rule.closerValue.isEmpty()) {
                     fail("single-line block must not have a closer")
+                }
+            case BlockSyntaxKind.FootnoteDefinition =>
+                if (rule.openerPrefixValue != "[^" || !rule.closerValue.isEmpty() || rule.kindFromFirstWordValue ||
+                    rule.emitterValue.isSome()) {
+                    fail("footnote definitions require the structured footnote grammar and payload")
+                }
+                if (let BlockContentMode.Literal <- rule.contentModeValue) {
+                    fail("footnote definition content must be Markdown")
                 }
         }
         if (rule.maximumBlockBytesValue <= 0 || rule.maximumCaptureLengthValue <= 0) {
@@ -1978,6 +2097,7 @@ public class DialectCompiler {
             match (manifest.missingRendererPolicy) {
                 case MissingRendererPolicy.Error =>
                     if ((manifest.capabilities.safeHtml || manifest.capabilities.specHtml) &&
+                        !hasBoundSemanticRenderer(dialect, manifest.extensionId) &&
                         !hasRenderer(dialect.rendererRules, manifest.extensionId)) {
                         fail("missing renderer coverage")
                     }
@@ -2562,6 +2682,7 @@ private func canonicalDescriptor(
             case InlineSyntaxKind.PairedDelimiter => out.append("paired")
             case InlineSyntaxKind.SingleToken => out.append("token")
             case InlineSyntaxKind.MetadataSuffix => out.append("metadata")
+            case InlineSyntaxKind.HeadingIdSuffix => out.append("heading-id")
         }
         out.append(":children=");
         out.append(rule.parseChildren)
@@ -2569,6 +2690,8 @@ private func canonicalDescriptor(
         out.append(rule.emitContent)
         out.append(":nesting=");
         out.append(rule.allowNesting)
+        out.append(":line-breaks=");
+        out.append(rule.allowLineBreaks)
         out.append(":delimiter=");
         out.append(rule.maximumDelimiterLength)
         out.append(":lookahead=");
@@ -2606,6 +2729,7 @@ private func canonicalDescriptor(
         match (rule.syntaxKind) {
             case BlockSyntaxKind.PairedContainer => out.append("paired")
             case BlockSyntaxKind.SingleLine => out.append("line")
+            case BlockSyntaxKind.FootnoteDefinition => out.append("footnote")
         }
         out.append(":dynamic-kind=");
         out.append(rule.kindFromFirstWord)

@@ -27,6 +27,7 @@
 | Markdown 转安全 HTML | [Cookbook：安全 HTML](cookbook.md#markdown-转安全-html) |
 | 启用表格、任务列表和删除线 | [Cookbook：GFM](cookbook.md#启用-gfm) |
 | 读取标题、链接和源码位置 | [Cookbook：AST 查询](cookbook.md#读取标题链接和位置) |
+| 使用脚注、标题 ID 和结构化目录 | [文档绑定](semantic-binding.md) |
 | 选择 String、bytes、stream 或 events | [输入、限制和取消](input-and-resources.md) |
 | 配置 HTML、URI 和 sanitizer | [Rendering API](api/rendering.md) |
 | 自定义块或行内语法 | [扩展开发](extensions.md) |

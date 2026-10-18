@@ -2,8 +2,8 @@ package markdown
 
 import std.collection.*
 
-// The sizes are part of the 0.9 snapshot format and intentionally live next
-// to the storage implementation instead of being parser tuning knobs.
+// Arena storage boundaries do not determine public NodeIds or persisted
+// identities. Keep storage parameters next to their implementation.
 internal let AST_NODE_CHUNK_SIZE: Int64 = 4096
 internal let AST_CHILD_CHUNK_SIZE: Int64 = 16384
 internal let AST_SOURCE_OFFSET_MAX: Int64 = 4294967294
@@ -364,6 +364,8 @@ public class Document {
     /** 此不可变 Document 视图的唯一 revision；不同视图的 NodeRef 不可混用。 */
     public let revision: Int64
     private let lineageAllocator: NodeLineage
+    /** 当前不可变视图的语义绑定索引。 */
+    public let bindings: DocumentBindings
     private let nodeChunks: Array<ArenaNodeChunk>
     private let childChunks: Array<ArenaChildChunk>
     private let payloads: Array<ArenaNodePayload>
@@ -381,9 +383,11 @@ public class Document {
     internal init(documentRevision: Int64, lineageAllocator: NodeLineage, nodeChunks: Array<ArenaNodeChunk>,
         childChunks: Array<ArenaChildChunk>, payloads: Array<ArenaNodePayload>, originMetadata: Array<NodeOrigin>,
         physicalNodeCount: Int64, physicalChildCount: Int64, rootIndex!: Int64 = -1,
-        reachableNodeIndexes!: Array<Int64> = [], reachableChildCount!: Int64 = -1, sourceBuffer!: ?SourceBuffer = None) {
+        reachableNodeIndexes!: Array<Int64> = [], reachableChildCount!: Int64 = -1, sourceBuffer!: ?SourceBuffer = None,
+        bindings!: DocumentBindings = DocumentBindings.empty()) {
         this.revision = documentRevision
         this.lineageAllocator = lineageAllocator
+        this.bindings = bindings
         this.nodeChunks = nodeChunks
         this.childChunks = childChunks
         this.payloads = payloads
@@ -422,6 +426,29 @@ public class Document {
 
     internal func nodeIdAt(index: Int64): NodeId {
         NodeId(lineage, recordAt(index).localIdentity)
+    }
+
+    internal func withBindings(value: DocumentBindings): Document {
+        copySnapshot(sourceBuffer, value)
+    }
+
+    internal func withSourceBuffer(value: SourceBuffer): Document {
+        copySnapshot(Some(value), bindings)
+    }
+
+    private func copySnapshot(source: ?SourceBuffer, bindings: DocumentBindings): Document {
+        Document(nextDocumentRevision(), lineageAllocator, nodeChunks, childChunks, payloads, originMetadata,
+            physicalNodeCount, physicalChildCount, rootIndex: rootRecordIndex, reachableNodeIndexes: logicalNodeIndexes,
+            reachableChildCount: childCount, sourceBuffer: source, bindings: bindings)
+    }
+
+    internal func requireSource(source: SourceBuffer): Unit {
+        if (let Some(owned) <- sourceBuffer) {
+            if (refEq(owned, source)) {
+                return
+            }
+        }
+        throw IllegalArgumentException("source buffer does not belong to this Document snapshot")
     }
 
     /** 返回逻辑 arena index 对应的 NodeRef。
@@ -635,6 +662,16 @@ public struct NodeRef <: Equatable<NodeRef> {
         get() {
             documentIdentity
         }
+    }
+
+    internal prop documentBindings: DocumentBindings {
+        get() {
+            snapshot.bindings
+        }
+    }
+
+    internal func requireSource(source: SourceBuffer): Unit {
+        snapshot.requireSource(source)
     }
     /** 节点种类。 */
     public prop kind: NodeKind {
@@ -989,6 +1026,12 @@ public struct HeadingNodeView {
     public let node: NodeRef
     /** 标题级别（1-6）。 */
     public let level: Int64
+    /** 标题扩展启用后的权威锚点与展示信息。 */
+    public prop binding: ?HeadingBinding {
+        get() {
+            node.documentBindings.headingForNode(node.nodeId)
+        }
+    }
     internal init(node: NodeRef, level: Int64) {
         this.node = node
         this.level = level

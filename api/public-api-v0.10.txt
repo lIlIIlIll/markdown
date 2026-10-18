@@ -3,6 +3,7 @@ arena.cj:package=markdown:owner=class/Document:public func children(): NodeChild
 arena.cj:package=markdown:owner=class/Document:public func children(node: NodeRef): NodeChildren {
 arena.cj:package=markdown:owner=class/Document:public func nodeAt(index: Int64): NodeRef {
 arena.cj:package=markdown:owner=class/Document:public func root(): NodeRef {
+arena.cj:package=markdown:owner=class/Document:public let bindings: DocumentBindings
 arena.cj:package=markdown:owner=class/Document:public let childCount: Int64
 arena.cj:package=markdown:owner=class/Document:public let nodeCount: Int64
 arena.cj:package=markdown:owner=class/Document:public let revision: Int64
@@ -46,6 +47,7 @@ arena.cj:package=markdown:owner=struct/HardBreakNodeView:public let node: NodeRe
 arena.cj:package=markdown:owner=struct/HardBreakNodeView:public let syntaxKind: HardBreakKind
 arena.cj:package=markdown:owner=struct/HeadingNodeView:public let level: Int64
 arena.cj:package=markdown:owner=struct/HeadingNodeView:public let node: NodeRef
+arena.cj:package=markdown:owner=struct/HeadingNodeView:public prop binding: ?HeadingBinding {
 arena.cj:package=markdown:owner=struct/HtmlBlockNodeView:public let blockType: Int64
 arena.cj:package=markdown:owner=struct/HtmlBlockNodeView:public let node: NodeRef
 arena.cj:package=markdown:owner=struct/HtmlBlockNodeView:public prop literal: String {
@@ -281,6 +283,44 @@ binary_artifact.cj:package=markdown:owner=enum/BinaryArtifactLoadResult:enum-var
 binary_artifact.cj:package=markdown:public class BinaryArtifactCodec {
 binary_artifact.cj:package=markdown:public class BinarySnapshotArtifact {
 binary_artifact.cj:package=markdown:public enum BinaryArtifactLoadResult {
+binding.cj:package=markdown:owner=class/BindingOptions:public init(idScope!: String = "", strictUndefinedFootnotes!: Bool = false) {
+binding.cj:package=markdown:owner=class/BindingOptions:public let idScope: String
+binding.cj:package=markdown:owner=class/BindingOptions:public let strictUndefinedFootnotes: Bool
+binding.cj:package=markdown:owner=class/DocumentBindings:public func footnoteReference(nodeId: NodeId): ?FootnoteReferenceBinding {
+binding.cj:package=markdown:owner=class/DocumentBindings:public func fragmentTarget(id: String): ?NodeId {
+binding.cj:package=markdown:owner=class/DocumentBindings:public func headingForId(id: String): ?HeadingBinding {
+binding.cj:package=markdown:owner=class/DocumentBindings:public func headingForNode(nodeId: NodeId): ?HeadingBinding {
+binding.cj:package=markdown:owner=class/DocumentBindings:public func linkForNode(nodeId: NodeId): ?LinkBinding {
+binding.cj:package=markdown:owner=class/DocumentBindings:public func tableOfContents(minimumLevel!: Int64 = 1, maximumLevel!: Int64 = 6): Array<TocEntry> {
+binding.cj:package=markdown:owner=class/DocumentBindings:public let diagnostics: ImmutableArray<Diagnostic>
+binding.cj:package=markdown:owner=class/DocumentBindings:public let footnotes: ImmutableArray<FootnoteDefinitionBinding>
+binding.cj:package=markdown:owner=class/DocumentBindings:public let headings: ImmutableArray<HeadingBinding>
+binding.cj:package=markdown:owner=class/DocumentBindings:public let links: ImmutableArray<LinkBinding>
+binding.cj:package=markdown:owner=class/FootnoteDefinitionBinding:public let definition: NodeId
+binding.cj:package=markdown:owner=class/FootnoteDefinitionBinding:public let definitionId: String
+binding.cj:package=markdown:owner=class/FootnoteDefinitionBinding:public let number: Int64
+binding.cj:package=markdown:owner=class/FootnoteDefinitionBinding:public let references: ImmutableArray<FootnoteReferenceBinding>
+binding.cj:package=markdown:owner=class/FootnoteDefinitionPayload:public func payloadTypeId(): String {
+binding.cj:package=markdown:owner=class/FootnoteDefinitionPayload:public init(labelRaw: String, labelSpan: SourceSpan) {
+binding.cj:package=markdown:owner=class/FootnoteDefinitionPayload:public let labelNormalized: String
+binding.cj:package=markdown:owner=class/FootnoteDefinitionPayload:public let labelRaw: String
+binding.cj:package=markdown:owner=class/FootnoteDefinitionPayload:public let labelSpan: SourceSpan
+binding.cj:package=markdown:owner=class/FootnoteReferenceBinding:public let definition: NodeId
+binding.cj:package=markdown:owner=class/FootnoteReferenceBinding:public let definitionId: String
+binding.cj:package=markdown:owner=class/FootnoteReferenceBinding:public let number: Int64
+binding.cj:package=markdown:owner=class/FootnoteReferenceBinding:public let reference: NodeId
+binding.cj:package=markdown:owner=class/FootnoteReferenceBinding:public let referenceId: String
+binding.cj:package=markdown:owner=class/FootnoteReferencePayload:public func payloadTypeId(): String {
+binding.cj:package=markdown:owner=class/FootnoteReferencePayload:public init(labelRaw: String, labelSpan: SourceSpan) {
+binding.cj:package=markdown:owner=class/FootnoteReferencePayload:public let labelNormalized: String
+binding.cj:package=markdown:owner=class/FootnoteReferencePayload:public let labelRaw: String
+binding.cj:package=markdown:owner=class/FootnoteReferencePayload:public let labelSpan: SourceSpan
+binding.cj:package=markdown:public class BindingOptions {
+binding.cj:package=markdown:public class DocumentBindings {
+binding.cj:package=markdown:public class FootnoteDefinitionBinding {
+binding.cj:package=markdown:public class FootnoteDefinitionPayload <: CustomPayload {
+binding.cj:package=markdown:public class FootnoteReferenceBinding {
+binding.cj:package=markdown:public class FootnoteReferencePayload <: CustomPayload {
 capabilities.cj:package=markdown:owner=class/EngineCapabilities:public func extension(extensionId: String): ?ExtensionCapabilityReport {
 capabilities.cj:package=markdown:owner=class/EngineCapabilities:public let builtInPluginOsSandbox: Bool
 capabilities.cj:package=markdown:owner=class/EngineCapabilities:public let dslSchemaVersions: ImmutableArray<String>
@@ -318,7 +358,7 @@ capabilities.cj:package=markdown:owner=extend/extend%20MarkdownEngine%20%7B:publ
 capabilities.cj:package=markdown:public class EngineCapabilities {
 capabilities.cj:package=markdown:public class ExecutionModelCapabilities {
 capabilities.cj:package=markdown:public class ExtensionCapabilityReport {
-core/core.cj:package=markdown.core:public import markdown.{AcceleratedMarkdownEngine, AstInvariantValidator, CancellationSource, CancellationToken, CodeBlockKind, CodeBlockNodeView, CodeSpanNodeView, Diagnostic, DiagnosticSeverity, Document, DocumentNodeView, EngineCapabilities, EventParseResult, EventParseSummary, ExecutionModelCapabilities, HardBreakKind, HardBreakNodeView, HeadingNodeView, HtmlExecutionMode, HtmlExecutionPath, HtmlExecutionResult, HtmlBlockNodeView, HtmlInlineNodeView, ImageNodeView, ImmutableArray, InputReadFailureException, LimitExceededException, LineScanRecords, LineScannerAccelerator, LinkNodeView, LinkSyntaxKind, ListDelimiter, ListItemNodeView, ListKind, ListNodeView, Markdown, MarkdownEngine, MarkdownEventAttribute, MarkdownEventMode, MarkdownEventSink, MarkdownSourceEvent, MarkdownSourceEventKind, MarkdownEngineBuilder, MarkdownErrorCode, MarkdownException, MarkdownProfile, NodeCategory, NodeId, NodeKind, NodeOrigin, NodeOriginKind, NodeRef, OperationBudget, OwnedUtf8Input, ParseLimits, ParseOutcome, ParseResult, ProfileKind, RawBlockEventSession, ReferenceDefinition, ReusableUtf8Input, SourceBuffer, SourcePosition, SourcePositionMap, SourceSlice, SourceSpan, TableAlignment, TaskState, TextNodeView, Utf16Position, Utf8Policy, VisualPosition}
+core/core.cj:package=markdown.core:public import markdown.{AcceleratedMarkdownEngine, AstInvariantValidator, CancellationSource, CancellationToken, BindingOptions, CodeBlockKind, CodeBlockNodeView, CodeSpanNodeView, Diagnostic, DiagnosticSeverity, Document, DocumentBindings, DocumentNodeView, EngineCapabilities, EventParseResult, EventParseSummary, ExecutionModelCapabilities, HardBreakKind, HardBreakNodeView, HeadingBinding, HeadingNodeView, TocEntry, HtmlExecutionMode, HtmlExecutionPath, HtmlExecutionResult, HtmlBlockNodeView, HtmlInlineNodeView, ImageNodeView, ImmutableArray, InputReadFailureException, LimitExceededException, LineScanRecords, LineScannerAccelerator, LinkBinding, LinkNodeView, LinkSyntaxKind, ListDelimiter, ListItemNodeView, ListKind, ListNodeView, Markdown, MarkdownEngine, MarkdownEventAttribute, MarkdownEventMode, MarkdownEventSink, MarkdownSourceEvent, MarkdownSourceEventKind, MarkdownEngineBuilder, MarkdownErrorCode, MarkdownException, MarkdownProfile, NodeCategory, NodeId, NodeKind, NodeOrigin, NodeOriginKind, NodeRef, OperationBudget, OwnedUtf8Input, ParseLimits, ParseOutcome, ParseResult, ProfileKind, RawBlockEventSession, ReferenceDefinition, ReusableUtf8Input, SourceBuffer, SourcePosition, SourcePositionMap, SourceSlice, SourceSpan, TableAlignment, TaskState, TextNodeView, Utf16Position, Utf8Policy, VisualPosition}
 diagnostic.cj:package=markdown:owner=class/Diagnostic:public init(code: String, severity: DiagnosticSeverity, message: String, span: SourceSpan, relatedSpans!: Array<SourceSpan> = [], extensionId!: ?String = None, ruleId!: ?String = None, fixes!: Array<DiagnosticFix> = []) {
 diagnostic.cj:package=markdown:owner=class/Diagnostic:public let code: String
 diagnostic.cj:package=markdown:owner=class/Diagnostic:public let extensionId: ?String
@@ -361,6 +401,7 @@ diagnostic.cj:package=markdown:owner=enum/MarkdownErrorCode:enum-variant | Input
 diagnostic.cj:package=markdown:owner=enum/MarkdownErrorCode:enum-variant | InternalInvariantViolation
 diagnostic.cj:package=markdown:owner=enum/MarkdownErrorCode:enum-variant | InvalidArtifact
 diagnostic.cj:package=markdown:owner=enum/MarkdownErrorCode:enum-variant | InvalidEncoding
+diagnostic.cj:package=markdown:owner=enum/MarkdownErrorCode:enum-variant | InvalidReference
 diagnostic.cj:package=markdown:owner=enum/MarkdownErrorCode:enum-variant | LimitExceeded
 diagnostic.cj:package=markdown:owner=enum/MarkdownErrorCode:enum-variant | RenderFailure
 diagnostic.cj:package=markdown:owner=enum/MarkdownErrorCode:enum-variant | SinkFailure
@@ -568,6 +609,7 @@ extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func conflic
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func content(mode: BlockContentMode): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func documentStartOnly(enabled!: Bool = true): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func emit(emitter: BlockPayloadEmitter): BlockSyntaxBuilder {
+extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func footnoteDefinition(): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func kindFromFirstWord(enabled: Bool): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func linePrefix(prefix: String): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func maximumBlockBytes(value: Int64): BlockSyntaxBuilder {
@@ -680,6 +722,8 @@ extension.cj:package=markdown:owner=class/InlineSyntaxBuilder:public func emit(e
 extension.cj:package=markdown:owner=class/InlineSyntaxBuilder:public func emitContent(enabled: Bool): InlineSyntaxBuilder {
 extension.cj:package=markdown:owner=class/InlineSyntaxBuilder:public func escaping(policy: InlineEscapePolicy): InlineSyntaxBuilder {
 extension.cj:package=markdown:owner=class/InlineSyntaxBuilder:public func flanking(rule: InlineFlankingRule): InlineSyntaxBuilder {
+extension.cj:package=markdown:owner=class/InlineSyntaxBuilder:public func headingIdSuffix(): InlineSyntaxBuilder {
+extension.cj:package=markdown:owner=class/InlineSyntaxBuilder:public func lineBreaks(allow: Bool): InlineSyntaxBuilder {
 extension.cj:package=markdown:owner=class/InlineSyntaxBuilder:public func maximumDelimiterLength(value: Int64): InlineSyntaxBuilder {
 extension.cj:package=markdown:owner=class/InlineSyntaxBuilder:public func maximumLookahead(value: Int64): InlineSyntaxBuilder {
 extension.cj:package=markdown:owner=class/InlineSyntaxBuilder:public func metadataSuffix(opener: String, closer: String): InlineSyntaxBuilder {
@@ -689,12 +733,15 @@ extension.cj:package=markdown:owner=class/InlineSyntaxBuilder:public func resour
 extension.cj:package=markdown:owner=class/InlineSyntaxBuilder:public func token(value: String): InlineSyntaxBuilder {
 extension.cj:package=markdown:owner=class/InlineSyntaxBuilder:public let extensionId: String
 extension.cj:package=markdown:owner=class/InlineSyntaxBuilder:public let ruleId: String
-extension.cj:package=markdown:owner=class/InlineSyntaxMatch:public init(extensionId: String, ruleId: String, literal: String, span: SourceSpan, children: Array<SyntaxChildSummary>) {
+extension.cj:package=markdown:owner=class/InlineSyntaxMatch:public init(extensionId: String, ruleId: String, literal: String, rawLiteral: String, literalSpan: SourceSpan, span: SourceSpan, children: Array<SyntaxChildSummary>) {
 extension.cj:package=markdown:owner=class/InlineSyntaxMatch:public let children: ImmutableArray<SyntaxChildSummary>
 extension.cj:package=markdown:owner=class/InlineSyntaxMatch:public let extensionId: String
 extension.cj:package=markdown:owner=class/InlineSyntaxMatch:public let literal: String
+extension.cj:package=markdown:owner=class/InlineSyntaxMatch:public let literalSpan: SourceSpan
+extension.cj:package=markdown:owner=class/InlineSyntaxMatch:public let rawLiteral: String
 extension.cj:package=markdown:owner=class/InlineSyntaxMatch:public let ruleId: String
 extension.cj:package=markdown:owner=class/InlineSyntaxMatch:public let span: SourceSpan
+extension.cj:package=markdown:owner=class/InlineSyntaxRule:public let allowLineBreaks: Bool
 extension.cj:package=markdown:owner=class/InlineSyntaxRule:public let allowNesting: Bool
 extension.cj:package=markdown:owner=class/InlineSyntaxRule:public let backtrackingPolicy: SyntaxBacktrackingPolicy
 extension.cj:package=markdown:owner=class/InlineSyntaxRule:public let closer: String
@@ -769,6 +816,7 @@ extension.cj:package=markdown:owner=class/SyntaxResourceCost:public let baseCost
 extension.cj:package=markdown:owner=class/SyntaxResourceCost:public let perByteCost: Int64
 extension.cj:package=markdown:owner=enum/BlockContentMode:enum-variant | Literal
 extension.cj:package=markdown:owner=enum/BlockContentMode:enum-variant | Markdown
+extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | FootnoteDefinition
 extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | PairedContainer
 extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | SingleLine
 extension.cj:package=markdown:owner=enum/ExtensionProcessingPhase:enum-variant | AstTransform
@@ -780,6 +828,7 @@ extension.cj:package=markdown:owner=enum/InlineFlankingRule:enum-variant | Commo
 extension.cj:package=markdown:owner=enum/InlineFlankingRule:enum-variant | WordBoundary
 extension.cj:package=markdown:owner=enum/InlineParserSpiResult:enum-variant | Matched(InlineParserSpiNode, Int64)
 extension.cj:package=markdown:owner=enum/InlineParserSpiResult:enum-variant | NoMatch
+extension.cj:package=markdown:owner=enum/InlineSyntaxKind:enum-variant | HeadingIdSuffix
 extension.cj:package=markdown:owner=enum/InlineSyntaxKind:enum-variant | MetadataSuffix
 extension.cj:package=markdown:owner=enum/InlineSyntaxKind:enum-variant | PairedDelimiter
 extension.cj:package=markdown:owner=enum/InlineSyntaxKind:enum-variant | SingleToken
@@ -873,7 +922,7 @@ extension.cj:package=markdown:public interface ExtensionDocumentProcessor {
 extension.cj:package=markdown:public interface ExtensionLintProvider {
 extension.cj:package=markdown:public interface InlineParserSpi {
 extension.cj:package=markdown:public interface InlinePayloadEmitter {
-extensions/extensions.cj:package=markdown.extensions:public import markdown.{BlockContentMode, BlockPayloadEmitter, BlockSyntax, BlockSyntaxBuilder, BlockSyntaxKind, BlockSyntaxMatch, BlockSyntaxRule, CompiledDialectExplanation, CompiledMarkdownDialect, DialectCompiler, DialectParserOptions, ExtensionCapabilities, ExtensionCapabilityReport, ExtensionDependency, ExtensionDocumentProcessor, ExtensionFailureException, ExtensionLintProvider, ExtensionManifest, ExtensionProcessingPhase, ExternalDialectDescriptor, InlineFlankingRule, InlineParserSpi, InlineParserSpiContext, InlineParserSpiResult, InlinePayloadEmitter, InlineSyntax, InlineSyntaxBuilder, InlineSyntaxKind, InlineSyntaxMatch, InlineSyntaxRule, MarkdownBlockLowering, MarkdownDialect, MarkdownDialectBuilder, OfficialExtensionDescriptor, OfficialExtensions, RendererAttributeKind, RendererAttributeSource, RendererAttributeSpec, RendererRule, SyntaxBacktrackingPolicy, SyntaxParameterSpec, SyntaxParameterType, SyntaxParameterValue, SyntaxPayload, SyntaxPhase, SyntaxResourceCost}
+extensions/extensions.cj:package=markdown.extensions:public import markdown.{BlockContentMode, BlockPayloadEmitter, BlockSyntax, BlockSyntaxBuilder, BlockSyntaxKind, BlockSyntaxMatch, BlockSyntaxRule, CompiledDialectExplanation, CompiledMarkdownDialect, DialectCompiler, DialectParserOptions, ExtensionCapabilities, ExtensionCapabilityReport, ExtensionDependency, ExtensionDocumentProcessor, ExtensionFailureException, ExtensionLintProvider, ExtensionManifest, FootnoteDefinitionBinding, FootnoteDefinitionPayload, FootnoteReferenceBinding, FootnoteReferencePayload, HeadingBinding, HeadingIdPayload, TocEntry, ExtensionProcessingPhase, ExternalDialectDescriptor, InlineFlankingRule, InlineParserSpi, InlineParserSpiContext, InlineParserSpiResult, InlinePayloadEmitter, InlineSyntax, InlineSyntaxBuilder, InlineSyntaxKind, InlineSyntaxMatch, InlineSyntaxRule, MarkdownBlockLowering, MarkdownDialect, MarkdownDialectBuilder, OfficialExtensionDescriptor, OfficialExtensions, RendererAttributeKind, RendererAttributeSource, RendererAttributeSpec, RendererRule, SyntaxBacktrackingPolicy, SyntaxParameterSpec, SyntaxParameterType, SyntaxParameterValue, SyntaxPayload, SyntaxPhase, SyntaxResourceCost}
 external_descriptor.cj:package=markdown:owner=class/ExternalDialectDescriptor:public func compile(): CompiledMarkdownDialect {
 external_descriptor.cj:package=markdown:owner=class/ExternalDialectDescriptor:public func toDialect(): MarkdownDialect {
 external_descriptor.cj:package=markdown:owner=class/ExternalDialectDescriptor:public let baseProfileId: String
@@ -911,6 +960,23 @@ formatter.cj:package=markdown:owner=class/MarkdownFormatOptions:public let stron
 formatter.cj:package=markdown:owner=class/MarkdownFormatOptions:public let tablePadding: Bool
 formatter.cj:package=markdown:public class CanonicalMarkdownRenderer {
 formatter.cj:package=markdown:public class MarkdownFormatOptions {
+headings.cj:package=markdown:owner=class/HeadingBinding:public let explicitId: ?String
+headings.cj:package=markdown:owner=class/HeadingBinding:public let explicitIdSpan: ?SourceSpan
+headings.cj:package=markdown:owner=class/HeadingBinding:public let heading: NodeId
+headings.cj:package=markdown:owner=class/HeadingBinding:public let id: String
+headings.cj:package=markdown:owner=class/HeadingBinding:public let level: Int64
+headings.cj:package=markdown:owner=class/HeadingBinding:public let scope: String
+headings.cj:package=markdown:owner=class/HeadingBinding:public let span: ?SourceSpan
+headings.cj:package=markdown:owner=class/HeadingBinding:public let text: String
+headings.cj:package=markdown:owner=class/HeadingIdPayload:public func payloadTypeId(): String {
+headings.cj:package=markdown:owner=class/HeadingIdPayload:public init(rawId: String, idSpan: SourceSpan) {
+headings.cj:package=markdown:owner=class/HeadingIdPayload:public let idSpan: SourceSpan
+headings.cj:package=markdown:owner=class/HeadingIdPayload:public let rawId: String
+headings.cj:package=markdown:owner=class/TocEntry:public let children: ImmutableArray<TocEntry>
+headings.cj:package=markdown:owner=class/TocEntry:public let heading: HeadingBinding
+headings.cj:package=markdown:public class HeadingBinding {
+headings.cj:package=markdown:public class HeadingIdPayload <: CustomPayload {
+headings.cj:package=markdown:public class TocEntry {
 isolation.cj:package=markdown:owner=class/IsolatedPluginRequest:public init(extensionId: String, implementationVersion: String, operation: String, payload: String, protocolVersion!: String = "markdown-isolation-ipc-1") {
 isolation.cj:package=markdown:owner=class/IsolatedPluginRequest:public let extensionId: String
 isolation.cj:package=markdown:owner=class/IsolatedPluginRequest:public let implementationVersion: String
@@ -999,6 +1065,12 @@ limits.cj:package=markdown:public class CancellationSource {
 limits.cj:package=markdown:public class CancellationToken {
 limits.cj:package=markdown:public class OperationBudget {
 limits.cj:package=markdown:public class ParseLimits {
+link_binding.cj:package=markdown:owner=class/LinkBinding:public let destination: String
+link_binding.cj:package=markdown:owner=class/LinkBinding:public let isLocalFragment: Bool
+link_binding.cj:package=markdown:owner=class/LinkBinding:public let link: NodeId
+link_binding.cj:package=markdown:owner=class/LinkBinding:public let renderedDestination: String
+link_binding.cj:package=markdown:owner=class/LinkBinding:public let target: ?NodeId
+link_binding.cj:package=markdown:public class LinkBinding {
 lint.cj:package=markdown:owner=class/CompiledDialectExplanation:public init(engine: MarkdownEngine) {
 lint.cj:package=markdown:owner=class/CompiledDialectExplanation:public let blockRuleOrder: ImmutableArray<String>
 lint.cj:package=markdown:owner=class/CompiledDialectExplanation:public let fingerprint: String
@@ -1117,10 +1189,12 @@ parser.cj:package=markdown:owner=class/MarkdownEngine:public func parse(input: O
 parser.cj:package=markdown:owner=class/MarkdownEngine:public func parse(input: ReusableUtf8Input, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): ParseResult {
 parser.cj:package=markdown:owner=class/MarkdownEngine:public func parse(value: String, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): ParseResult {
 parser.cj:package=markdown:owner=class/MarkdownEngine:public func tryParse(value: String, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): ParseOutcome {
+parser.cj:package=markdown:owner=class/MarkdownEngine:public let bindingOptions: BindingOptions
 parser.cj:package=markdown:owner=class/MarkdownEngine:public let dialect: CompiledMarkdownDialect
 parser.cj:package=markdown:owner=class/MarkdownEngine:public let limits: ParseLimits
 parser.cj:package=markdown:owner=class/MarkdownEngine:public let profile: MarkdownProfile
 parser.cj:package=markdown:owner=class/MarkdownEngine:public static func builder(): MarkdownEngineBuilder {
+parser.cj:package=markdown:owner=class/MarkdownEngineBuilder:public func bindingOptions(options: BindingOptions): MarkdownEngineBuilder {
 parser.cj:package=markdown:owner=class/MarkdownEngineBuilder:public func build(): MarkdownEngine {
 parser.cj:package=markdown:owner=class/MarkdownEngineBuilder:public func dialect(dialect: MarkdownDialect): MarkdownEngineBuilder {
 parser.cj:package=markdown:owner=class/MarkdownEngineBuilder:public func limits(limits: ParseLimits): MarkdownEngineBuilder {

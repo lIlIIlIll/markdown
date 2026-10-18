@@ -750,7 +750,10 @@ public class DocumentSnapshot {
         })
         let sourceText = result.source.text()
         let nextText = sourceText[0..edit.range.startByte] + edit.replacement + sourceText[edit.range.endByte..]
-        let nextResult = ParseResult(nextDocument, SourceBuffer(nextText), result.diagnostics.toArray())
+        let nextSource = SourceBuffer(nextText)
+        let nextResult = ParseResult(nextDocument.withSourceBuffer(nextSource), nextSource, result
+            .diagnostics
+            .toArray())
         let nextSnapshot = DocumentSnapshot(engine, version + 1, nextResult)
         let changed = ArrayList<NodeId>()
         changed.add(textNode.nodeId)

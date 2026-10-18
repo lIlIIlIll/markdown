@@ -481,9 +481,11 @@ extend MarkdownEngine {
         if (source.size > limits.maximumInputBytes) {
             throw LimitExceededException("input_bytes", limits.maximumInputBytes, source.size, "input")
         }
-        if (dialect.parserHotPlan.hasDocumentProcessors) {
+        if (dialect.parserHotPlan.hasDocumentProcessors || (dialect.parserOptions.extensionsEnabled && (dialect
+            .parserHotPlan
+            .hasFootnotes || dialect.parserHotPlan.headingIdRule.isSome()))) {
             throw MarkdownException(MarkdownErrorCode.ExtensionFailure,
-                "document processors require the full AST execution path", phase: "event_preflight")
+                "document-wide processors and binding require the full AST execution path", phase: "event_preflight")
         }
         let finalSemantics = if (let MarkdownEventMode.ResolvedEventMode <- mode) {
             true
@@ -603,6 +605,13 @@ public class RawBlockEventSession {
 
     internal init(engine: MarkdownEngine, utf8Policy: Utf8Policy, cancellation: CancellationToken,
         budget: OperationBudget, scanCheckpointObserver!: ?RawBlockScanCheckpointObserver = None) {
+        if (engine.dialect.parserHotPlan.hasDocumentProcessors || (engine.dialect.parserOptions.extensionsEnabled && (engine
+            .dialect
+            .parserHotPlan
+            .hasFootnotes || engine.dialect.parserHotPlan.headingIdRule.isSome()))) {
+            throw MarkdownException(MarkdownErrorCode.ExtensionFailure,
+                "document-wide processors and binding require the full AST execution path", phase: "event_preflight")
+        }
         this.engine = engine
         this.utf8Policy = utf8Policy
         this.cancellation = cancellation
@@ -1156,6 +1165,8 @@ public class RawBlockEventSession {
     private func observeRawBlockStart(lineStart: Int64, lineEnd: Int64): Bool {
         if (let Some(rule) <- matchingBlockDslRule(lineStart, lineEnd)) {
             match (rule.syntaxKind) {
+                case BlockSyntaxKind.FootnoteDefinition => throw MarkdownException(MarkdownErrorCode.ExtensionFailure,
+                    "footnote definitions require document binding", phase: "event_preflight")
                 case BlockSyntaxKind.SingleLine =>
                     indentedCodeMayStart = true
                     return true

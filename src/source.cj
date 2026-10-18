@@ -415,9 +415,10 @@ public class SourceBuffer {
     /** 返回节点 source span 对应文本；无 span 的节点会失败。
      * @param node 目标节点。
      * @return 节点 span 对应文本。
-     * @throws IllegalArgumentException 节点无 span 或 span 越界时。
+     * @throws IllegalArgumentException 节点没有关联此 source、没有 span 或 span 越界时。
      */
     public func text(node: NodeRef): String {
+        node.requireSource(this)
         match (node.span) {
             case Some(span) => slice(span)
             case None => throw IllegalArgumentException("node has no source span")

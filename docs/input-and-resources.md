@@ -67,7 +67,7 @@ Resolved mode 会先建立 reference index。RawBlock mode 不提供后置 refer
 | `maximumLineBytes` | 单行 |
 | `maximumNestingDepth` | block/inline nesting |
 | `maximumAstNodes` | 实际构造的内建、扩展和 SPI AST 节点 |
-| `maximumReferences` | reference definitions |
+| `maximumReferences` | reference definitions、脚注定义/引用、标题锚点和脚注锚点/回链的累计工作单元 |
 | `maximumTableColumns` | table columns |
 | `maximumUrlBytes` | link/image destination |
 | `maximumLiteralBytes` | code、HTML 和其他累计 literal |

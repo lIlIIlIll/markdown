@@ -9,7 +9,7 @@ class OfficialExtensionsTest {
     func catalogAndDefaultEnablementMatrixAreVersioned(): Unit {
         let catalog = OfficialExtensions.catalog()
         @Expect(catalog.size, 12)
-        @Expect(findOfficial(catalog, "footnotes").targetVersion, "1.1")
+        @Expect(findOfficial(catalog, "footnotes").targetVersion, "2.0")
         @Expect(findOfficial(catalog, "footnotes").defaultEnabled, false)
         @Expect(findOfficial(catalog, "gfm-tables").isDefaultFor("gfm-modern-v1"), true)
         @Expect(findOfficial(catalog, "gfm-tables").isDefaultFor("commonmark-0.31.2"), false)
@@ -54,7 +54,7 @@ class OfficialExtensionsTest {
             }
         }
         let html = engine.htmlRenderer().render(parsed.document)
-        @Expect(html.contains("<span class=\"heading-id\" id=\"main\"></span>"), true)
+        @Expect(html.contains("<h1 id=\"main\">H</h1>"), true)
         @Expect(html.contains("<div class=\"math-block\">a + b</div>"), true)
         @Expect(html.contains("title: x"), true)
 

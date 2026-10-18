@@ -60,7 +60,7 @@ public class ParseLimits {
     public let maximumNestingDepth: Int64
     /** AST 节点总数上限。 */
     public let maximumAstNodes: Int64
-    /** 引用定义数量上限。 */
+    /** 引用定义、脚注引用及生成的锚点/回链的累计上限。 */
     public let maximumReferences: Int64
     /** 表格列数上限。 */
     public let maximumTableColumns: Int64
@@ -81,7 +81,7 @@ public class ParseLimits {
      * @param maximumLineBytes 单行的最大字节数。
      * @param maximumNestingDepth 最大嵌套深度。
      * @param maximumAstNodes AST 节点总数上限。
-     * @param maximumReferences 引用定义数量上限。
+     * @param maximumReferences 引用定义、脚注引用及生成的锚点/回链的累计上限。
      * @param maximumTableColumns 表格列数上限。
      * @param maximumUrlBytes URL 的最大字节数。
      * @param maximumLiteralBytes 单个 literal 的最大字节数。

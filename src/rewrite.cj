@@ -119,6 +119,10 @@ public class TreeRewriter {
         }
         let result = builder.freeze(roots[0])
         AstInvariantValidator().validate(result)
+        if (document.bindings.footnotesEnabled) {
+            return DocumentBinder.bind(result, document.bindings.options, document.bindings.limits, budget, cancellation,
+                headingsEnabled: document.bindings.headingsEnabled)
+        }
         result
     }
 }
