@@ -14,7 +14,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("\tfoo\tbaz\t\tbim\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>foo\tbaz\t\tbim\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>foo\tbaz\t\tbim\n</code></pre>\n")
     }
 
     @TestCase
@@ -25,7 +25,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("  \tfoo\tbaz\t\tbim\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>foo\tbaz\t\tbim\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>foo\tbaz\t\tbim\n</code></pre>\n")
     }
 
     @TestCase
@@ -36,7 +36,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    a\ta\n    ὐ\ta\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>a\ta\nὐ\ta\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>a\ta\nὐ\ta\n</code></pre>\n")
     }
 
     @TestCase
@@ -47,7 +47,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("  - foo\n\n\tbar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<p>foo</p>\n<p>bar</p>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<p>foo</p>\n<p>bar</p>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -58,7 +58,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- foo\n\n\t\tbar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<p>foo</p>\n<pre><code>  bar\n</code></pre>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<p>foo</p>\n<pre><code>  bar\n</code></pre>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -69,7 +69,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(">\t\tfoo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<pre><code>  foo\n</code></pre>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<pre><code>  foo\n</code></pre>\n</blockquote>\n")
     }
 
     @TestCase
@@ -80,7 +80,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("-\t\tfoo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<pre><code>  foo\n</code></pre>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<pre><code>  foo\n</code></pre>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -91,7 +91,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    foo\n\tbar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>foo\nbar\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>foo\nbar\n</code></pre>\n")
     }
 
     @TestCase
@@ -102,7 +102,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(" - foo\n   - bar\n\t - baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>foo\n<ul>\n<li>bar\n<ul>\n<li>baz</li>\n</ul>\n</li>\n</ul>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>foo\n<ul>\n<li>bar\n<ul>\n<li>baz</li>\n</ul>\n</li>\n</ul>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -113,7 +113,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("#\tFoo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h1>Foo</h1>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h1>Foo</h1>\n")
     }
 
     @TestCase
@@ -124,7 +124,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*\t*\t*\t\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<hr />\n")
     }
 
     @TestCase
@@ -135,7 +135,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- `one\n- two`\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>`one</li>\n<li>two`</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>`one</li>\n<li>two`</li>\n</ul>\n")
     }
 
     @TestCase
@@ -146,7 +146,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("***\n---\n___\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<hr />\n<hr />\n<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<hr />\n<hr />\n<hr />\n")
     }
 
     @TestCase
@@ -157,7 +157,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("+++\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>+++</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>+++</p>\n")
     }
 
     @TestCase
@@ -168,7 +168,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("===\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>===</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>===</p>\n")
     }
 
     @TestCase
@@ -179,7 +179,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("--\n**\n__\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>--\n**\n__</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>--\n**\n__</p>\n")
     }
 
     @TestCase
@@ -190,7 +190,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(" ***\n  ***\n   ***\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<hr />\n<hr />\n<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<hr />\n<hr />\n<hr />\n")
     }
 
     @TestCase
@@ -201,7 +201,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    ***\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>***\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>***\n</code></pre>\n")
     }
 
     @TestCase
@@ -212,7 +212,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo\n    ***\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>Foo\n***</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>Foo\n***</p>\n")
     }
 
     @TestCase
@@ -223,7 +223,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_____________________________________\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<hr />\n")
     }
 
     @TestCase
@@ -234,7 +234,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(" - - -\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<hr />\n")
     }
 
     @TestCase
@@ -245,7 +245,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(" **  * ** * ** * **\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<hr />\n")
     }
 
     @TestCase
@@ -256,7 +256,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("-     -      -      -\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<hr />\n")
     }
 
     @TestCase
@@ -267,7 +267,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- - - -    \n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<hr />\n")
     }
 
     @TestCase
@@ -278,7 +278,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_ _ _ _ a\n\na------\n\n---a---\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>_ _ _ _ a</p>\n<p>a------</p>\n<p>---a---</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>_ _ _ _ a</p>\n<p>a------</p>\n<p>---a---</p>\n")
     }
 
     @TestCase
@@ -289,7 +289,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(" *-*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>-</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>-</em></p>\n")
     }
 
     @TestCase
@@ -300,7 +300,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- foo\n***\n- bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>foo</li>\n</ul>\n<hr />\n<ul>\n<li>bar</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>foo</li>\n</ul>\n<hr />\n<ul>\n<li>bar</li>\n</ul>\n")
     }
 
     @TestCase
@@ -311,7 +311,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo\n***\nbar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>Foo</p>\n<hr />\n<p>bar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>Foo</p>\n<hr />\n<p>bar</p>\n")
     }
 
     @TestCase
@@ -322,7 +322,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo\n---\nbar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h2>Foo</h2>\n<p>bar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h2>Foo</h2>\n<p>bar</p>\n")
     }
 
     @TestCase
@@ -333,7 +333,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("* Foo\n* * *\n* Bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>Foo</li>\n</ul>\n<hr />\n<ul>\n<li>Bar</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>Foo</li>\n</ul>\n<hr />\n<ul>\n<li>Bar</li>\n</ul>\n")
     }
 
     @TestCase
@@ -344,7 +344,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- Foo\n- * * *\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>Foo</li>\n<li>\n<hr />\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>Foo</li>\n<li>\n<hr />\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -355,7 +355,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("# foo\n## foo\n### foo\n#### foo\n##### foo\n###### foo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h1>foo</h1>\n<h2>foo</h2>\n<h3>foo</h3>\n<h4>foo</h4>\n<h5>foo</h5>\n<h6>foo</h6>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h1>foo</h1>\n<h2>foo</h2>\n<h3>foo</h3>\n<h4>foo</h4>\n<h5>foo</h5>\n<h6>foo</h6>\n")
     }
 
     @TestCase
@@ -366,7 +366,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("####### foo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>####### foo</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>####### foo</p>\n")
     }
 
     @TestCase
@@ -377,7 +377,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("#5 bolt\n\n#hashtag\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>#5 bolt</p>\n<p>#hashtag</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>#5 bolt</p>\n<p>#hashtag</p>\n")
     }
 
     @TestCase
@@ -388,7 +388,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("\\## foo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>## foo</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>## foo</p>\n")
     }
 
     @TestCase
@@ -399,7 +399,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("# foo *bar* \\*baz\\*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h1>foo <em>bar</em> *baz*</h1>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h1>foo <em>bar</em> *baz*</h1>\n")
     }
 
     @TestCase
@@ -410,7 +410,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("#                  foo                     \n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h1>foo</h1>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h1>foo</h1>\n")
     }
 
     @TestCase
@@ -421,7 +421,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(" ### foo\n  ## foo\n   # foo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h3>foo</h3>\n<h2>foo</h2>\n<h1>foo</h1>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h3>foo</h3>\n<h2>foo</h2>\n<h1>foo</h1>\n")
     }
 
     @TestCase
@@ -432,7 +432,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    # foo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code># foo\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code># foo\n</code></pre>\n")
     }
 
     @TestCase
@@ -443,7 +443,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo\n    # bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo\n# bar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo\n# bar</p>\n")
     }
 
     @TestCase
@@ -454,7 +454,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("## foo ##\n  ###   bar    ###\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h2>foo</h2>\n<h3>bar</h3>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h2>foo</h2>\n<h3>bar</h3>\n")
     }
 
     @TestCase
@@ -465,7 +465,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("# foo ##################################\n##### foo ##\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h1>foo</h1>\n<h5>foo</h5>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h1>foo</h1>\n<h5>foo</h5>\n")
     }
 
     @TestCase
@@ -476,7 +476,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("### foo ###     \n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h3>foo</h3>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h3>foo</h3>\n")
     }
 
     @TestCase
@@ -487,7 +487,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("### foo ### b\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h3>foo ### b</h3>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h3>foo ### b</h3>\n")
     }
 
     @TestCase
@@ -498,7 +498,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("# foo#\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h1>foo#</h1>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h1>foo#</h1>\n")
     }
 
     @TestCase
@@ -509,7 +509,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("### foo \\###\n## foo #\\##\n# foo \\#\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h3>foo ###</h3>\n<h2>foo ###</h2>\n<h1>foo #</h1>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h3>foo ###</h3>\n<h2>foo ###</h2>\n<h1>foo #</h1>\n")
     }
 
     @TestCase
@@ -520,7 +520,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("****\n## foo\n****\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<hr />\n<h2>foo</h2>\n<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<hr />\n<h2>foo</h2>\n<hr />\n")
     }
 
     @TestCase
@@ -531,7 +531,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo bar\n# baz\nBar foo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>Foo bar</p>\n<h1>baz</h1>\n<p>Bar foo</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>Foo bar</p>\n<h1>baz</h1>\n<p>Bar foo</p>\n")
     }
 
     @TestCase
@@ -542,7 +542,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("## \n#\n### ###\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h2></h2>\n<h1></h1>\n<h3></h3>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h2></h2>\n<h1></h1>\n<h3></h3>\n")
     }
 
     @TestCase
@@ -553,7 +553,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo *bar*\n=========\n\nFoo *bar*\n---------\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h1>Foo <em>bar</em></h1>\n<h2>Foo <em>bar</em></h2>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h1>Foo <em>bar</em></h1>\n<h2>Foo <em>bar</em></h2>\n")
     }
 
     @TestCase
@@ -564,7 +564,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo *bar\nbaz*\n====\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h1>Foo <em>bar\nbaz</em></h1>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h1>Foo <em>bar\nbaz</em></h1>\n")
     }
 
     @TestCase
@@ -575,7 +575,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("  Foo *bar\nbaz*\t\n====\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h1>Foo <em>bar\nbaz</em></h1>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h1>Foo <em>bar\nbaz</em></h1>\n")
     }
 
     @TestCase
@@ -586,7 +586,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo\n-------------------------\n\nFoo\n=\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h2>Foo</h2>\n<h1>Foo</h1>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h2>Foo</h2>\n<h1>Foo</h1>\n")
     }
 
     @TestCase
@@ -597,7 +597,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("   Foo\n---\n\n  Foo\n-----\n\n  Foo\n  ===\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h2>Foo</h2>\n<h2>Foo</h2>\n<h1>Foo</h1>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h2>Foo</h2>\n<h2>Foo</h2>\n<h1>Foo</h1>\n")
     }
 
     @TestCase
@@ -608,7 +608,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    Foo\n    ---\n\n    Foo\n---\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>Foo\n---\n\nFoo\n</code></pre>\n<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>Foo\n---\n\nFoo\n</code></pre>\n<hr />\n")
     }
 
     @TestCase
@@ -619,7 +619,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo\n   ----      \n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h2>Foo</h2>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h2>Foo</h2>\n")
     }
 
     @TestCase
@@ -630,7 +630,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo\n    ---\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>Foo\n---</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>Foo\n---</p>\n")
     }
 
     @TestCase
@@ -641,7 +641,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo\n= =\n\nFoo\n--- -\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>Foo\n= =</p>\n<p>Foo</p>\n<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>Foo\n= =</p>\n<p>Foo</p>\n<hr />\n")
     }
 
     @TestCase
@@ -652,7 +652,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo  \n-----\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h2>Foo</h2>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h2>Foo</h2>\n")
     }
 
     @TestCase
@@ -663,7 +663,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo\\\n----\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h2>Foo\\</h2>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h2>Foo\\</h2>\n")
     }
 
     @TestCase
@@ -674,7 +674,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("`Foo\n----\n`\n\n<a title=\"a lot\n---\nof dashes\"/>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h2>`Foo</h2>\n<p>`</p>\n<h2>&lt;a title=&quot;a lot</h2>\n<p>of dashes&quot;/&gt;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h2>`Foo</h2>\n<p>`</p>\n<h2>&lt;a title=&quot;a lot</h2>\n<p>of dashes&quot;/&gt;</p>\n")
     }
 
     @TestCase
@@ -685,7 +685,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> Foo\n---\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<p>Foo</p>\n</blockquote>\n<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<p>Foo</p>\n</blockquote>\n<hr />\n")
     }
 
     @TestCase
@@ -696,7 +696,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> foo\nbar\n===\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<p>foo\nbar\n===</p>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<p>foo\nbar\n===</p>\n</blockquote>\n")
     }
 
     @TestCase
@@ -707,7 +707,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- Foo\n---\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>Foo</li>\n</ul>\n<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>Foo</li>\n</ul>\n<hr />\n")
     }
 
     @TestCase
@@ -718,7 +718,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo\nBar\n---\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h2>Foo\nBar</h2>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h2>Foo\nBar</h2>\n")
     }
 
     @TestCase
@@ -729,7 +729,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("---\nFoo\n---\nBar\n---\nBaz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<hr />\n<h2>Foo</h2>\n<h2>Bar</h2>\n<p>Baz</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<hr />\n<h2>Foo</h2>\n<h2>Bar</h2>\n<p>Baz</p>\n")
     }
 
     @TestCase
@@ -740,7 +740,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("\n====\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>====</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>====</p>\n")
     }
 
     @TestCase
@@ -751,7 +751,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("---\n---\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<hr />\n<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<hr />\n<hr />\n")
     }
 
     @TestCase
@@ -762,7 +762,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- foo\n-----\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>foo</li>\n</ul>\n<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>foo</li>\n</ul>\n<hr />\n")
     }
 
     @TestCase
@@ -773,7 +773,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    foo\n---\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>foo\n</code></pre>\n<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>foo\n</code></pre>\n<hr />\n")
     }
 
     @TestCase
@@ -784,7 +784,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> foo\n-----\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<p>foo</p>\n</blockquote>\n<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<p>foo</p>\n</blockquote>\n<hr />\n")
     }
 
     @TestCase
@@ -795,7 +795,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("\\> foo\n------\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h2>&gt; foo</h2>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h2>&gt; foo</h2>\n")
     }
 
     @TestCase
@@ -806,7 +806,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo\n\nbar\n---\nbaz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>Foo</p>\n<h2>bar</h2>\n<p>baz</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>Foo</p>\n<h2>bar</h2>\n<p>baz</p>\n")
     }
 
     @TestCase
@@ -817,7 +817,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo\nbar\n\n---\n\nbaz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>Foo\nbar</p>\n<hr />\n<p>baz</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>Foo\nbar</p>\n<hr />\n<p>baz</p>\n")
     }
 
     @TestCase
@@ -828,7 +828,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo\nbar\n* * *\nbaz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>Foo\nbar</p>\n<hr />\n<p>baz</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>Foo\nbar</p>\n<hr />\n<p>baz</p>\n")
     }
 
     @TestCase
@@ -839,7 +839,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo\nbar\n\\---\nbaz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>Foo\nbar\n---\nbaz</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>Foo\nbar\n---\nbaz</p>\n")
     }
 
     @TestCase
@@ -850,7 +850,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    a simple\n      indented code block\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>a simple\n  indented code block\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>a simple\n  indented code block\n</code></pre>\n")
     }
 
     @TestCase
@@ -861,7 +861,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("  - foo\n\n    bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<p>foo</p>\n<p>bar</p>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<p>foo</p>\n<p>bar</p>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -872,7 +872,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("1.  foo\n\n    - bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol>\n<li>\n<p>foo</p>\n<ul>\n<li>bar</li>\n</ul>\n</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol>\n<li>\n<p>foo</p>\n<ul>\n<li>bar</li>\n</ul>\n</li>\n</ol>\n")
     }
 
     @TestCase
@@ -883,7 +883,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    <a/>\n    *hi*\n\n    - one\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>&lt;a/&gt;\n*hi*\n\n- one\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>&lt;a/&gt;\n*hi*\n\n- one\n</code></pre>\n")
     }
 
     @TestCase
@@ -894,7 +894,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    chunk1\n\n    chunk2\n  \n \n \n    chunk3\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>chunk1\n\nchunk2\n\n\n\nchunk3\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>chunk1\n\nchunk2\n\n\n\nchunk3\n</code></pre>\n")
     }
 
     @TestCase
@@ -905,7 +905,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    chunk1\n      \n      chunk2\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>chunk1\n  \n  chunk2\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>chunk1\n  \n  chunk2\n</code></pre>\n")
     }
 
     @TestCase
@@ -916,7 +916,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo\n    bar\n\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>Foo\nbar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>Foo\nbar</p>\n")
     }
 
     @TestCase
@@ -927,7 +927,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    foo\nbar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>foo\n</code></pre>\n<p>bar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>foo\n</code></pre>\n<p>bar</p>\n")
     }
 
     @TestCase
@@ -938,7 +938,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("# Heading\n    foo\nHeading\n------\n    foo\n----\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h1>Heading</h1>\n<pre><code>foo\n</code></pre>\n<h2>Heading</h2>\n<pre><code>foo\n</code></pre>\n<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h1>Heading</h1>\n<pre><code>foo\n</code></pre>\n<h2>Heading</h2>\n<pre><code>foo\n</code></pre>\n<hr />\n")
     }
 
     @TestCase
@@ -949,7 +949,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("        foo\n    bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>    foo\nbar\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>    foo\nbar\n</code></pre>\n")
     }
 
     @TestCase
@@ -960,7 +960,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("\n    \n    foo\n    \n\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>foo\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>foo\n</code></pre>\n")
     }
 
     @TestCase
@@ -971,7 +971,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    foo  \n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>foo  \n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>foo  \n</code></pre>\n")
     }
 
     @TestCase
@@ -982,7 +982,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("```\n<\n >\n```\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>&lt;\n &gt;\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>&lt;\n &gt;\n</code></pre>\n")
     }
 
     @TestCase
@@ -993,7 +993,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("~~~\n<\n >\n~~~\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>&lt;\n &gt;\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>&lt;\n &gt;\n</code></pre>\n")
     }
 
     @TestCase
@@ -1004,7 +1004,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("``\nfoo\n``\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code>foo</code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code>foo</code></p>\n")
     }
 
     @TestCase
@@ -1015,7 +1015,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("```\naaa\n~~~\n```\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>aaa\n~~~\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>aaa\n~~~\n</code></pre>\n")
     }
 
     @TestCase
@@ -1026,7 +1026,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("~~~\naaa\n```\n~~~\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>aaa\n```\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>aaa\n```\n</code></pre>\n")
     }
 
     @TestCase
@@ -1037,7 +1037,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("````\naaa\n```\n``````\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>aaa\n```\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>aaa\n```\n</code></pre>\n")
     }
 
     @TestCase
@@ -1048,7 +1048,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("~~~~\naaa\n~~~\n~~~~\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>aaa\n~~~\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>aaa\n~~~\n</code></pre>\n")
     }
 
     @TestCase
@@ -1059,7 +1059,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("```\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code></code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code></code></pre>\n")
     }
 
     @TestCase
@@ -1070,7 +1070,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("`````\n\n```\naaa\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>\n```\naaa\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>\n```\naaa\n</code></pre>\n")
     }
 
     @TestCase
@@ -1081,7 +1081,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> ```\n> aaa\n\nbbb\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<pre><code>aaa\n</code></pre>\n</blockquote>\n<p>bbb</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<pre><code>aaa\n</code></pre>\n</blockquote>\n<p>bbb</p>\n")
     }
 
     @TestCase
@@ -1092,7 +1092,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("```\n\n  \n```\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>\n  \n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>\n  \n</code></pre>\n")
     }
 
     @TestCase
@@ -1103,7 +1103,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("```\n```\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code></code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code></code></pre>\n")
     }
 
     @TestCase
@@ -1114,7 +1114,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(" ```\n aaa\naaa\n```\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>aaa\naaa\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>aaa\naaa\n</code></pre>\n")
     }
 
     @TestCase
@@ -1125,7 +1125,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("  ```\naaa\n  aaa\naaa\n  ```\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>aaa\naaa\naaa\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>aaa\naaa\naaa\n</code></pre>\n")
     }
 
     @TestCase
@@ -1136,7 +1136,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("   ```\n   aaa\n    aaa\n  aaa\n   ```\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>aaa\n aaa\naaa\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>aaa\n aaa\naaa\n</code></pre>\n")
     }
 
     @TestCase
@@ -1147,7 +1147,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    ```\n    aaa\n    ```\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>```\naaa\n```\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>```\naaa\n```\n</code></pre>\n")
     }
 
     @TestCase
@@ -1158,7 +1158,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("```\naaa\n  ```\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>aaa\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>aaa\n</code></pre>\n")
     }
 
     @TestCase
@@ -1169,7 +1169,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("   ```\naaa\n  ```\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>aaa\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>aaa\n</code></pre>\n")
     }
 
     @TestCase
@@ -1180,7 +1180,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("```\naaa\n    ```\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>aaa\n    ```\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>aaa\n    ```\n</code></pre>\n")
     }
 
     @TestCase
@@ -1191,7 +1191,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("``` ```\naaa\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code> </code>\naaa</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code> </code>\naaa</p>\n")
     }
 
     @TestCase
@@ -1202,7 +1202,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("~~~~~~\naaa\n~~~ ~~\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>aaa\n~~~ ~~\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>aaa\n~~~ ~~\n</code></pre>\n")
     }
 
     @TestCase
@@ -1213,7 +1213,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo\n```\nbar\n```\nbaz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo</p>\n<pre><code>bar\n</code></pre>\n<p>baz</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo</p>\n<pre><code>bar\n</code></pre>\n<p>baz</p>\n")
     }
 
     @TestCase
@@ -1224,7 +1224,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo\n---\n~~~\nbar\n~~~\n# baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h2>foo</h2>\n<pre><code>bar\n</code></pre>\n<h1>baz</h1>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h2>foo</h2>\n<pre><code>bar\n</code></pre>\n<h1>baz</h1>\n")
     }
 
     @TestCase
@@ -1235,7 +1235,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("```ruby\ndef foo(x)\n  return 3\nend\n```\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code class=\"language-ruby\">def foo(x)\n  return 3\nend\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code class=\"language-ruby\">def foo(x)\n  return 3\nend\n</code></pre>\n")
     }
 
     @TestCase
@@ -1246,7 +1246,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("~~~~    ruby startline=3 $%@#$\ndef foo(x)\n  return 3\nend\n~~~~~~~\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code class=\"language-ruby\">def foo(x)\n  return 3\nend\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code class=\"language-ruby\">def foo(x)\n  return 3\nend\n</code></pre>\n")
     }
 
     @TestCase
@@ -1257,7 +1257,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("````;\n````\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code class=\"language-;\"></code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code class=\"language-;\"></code></pre>\n")
     }
 
     @TestCase
@@ -1268,7 +1268,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("``` aa ```\nfoo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code>aa</code>\nfoo</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code>aa</code>\nfoo</p>\n")
     }
 
     @TestCase
@@ -1279,7 +1279,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("~~~ aa ``` ~~~\nfoo\n~~~\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code class=\"language-aa\">foo\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code class=\"language-aa\">foo\n</code></pre>\n")
     }
 
     @TestCase
@@ -1290,7 +1290,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("```\n``` aaa\n```\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>``` aaa\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>``` aaa\n</code></pre>\n")
     }
 
     @TestCase
@@ -1301,7 +1301,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<table><tr><td>\n<pre>\n**Hello**,\n\n_world_.\n</pre>\n</td></tr></table>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<table><tr><td>\n<pre>\n**Hello**,\n<p><em>world</em>.\n</pre></p>\n</td></tr></table>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<table><tr><td>\n<pre>\n**Hello**,\n<p><em>world</em>.\n</pre></p>\n</td></tr></table>\n")
     }
 
     @TestCase
@@ -1312,7 +1312,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<table>\n  <tr>\n    <td>\n           hi\n    </td>\n  </tr>\n</table>\n\nokay.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<table>\n  <tr>\n    <td>\n           hi\n    </td>\n  </tr>\n</table>\n<p>okay.</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<table>\n  <tr>\n    <td>\n           hi\n    </td>\n  </tr>\n</table>\n<p>okay.</p>\n")
     }
 
     @TestCase
@@ -1323,7 +1323,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(" <div>\n  *hello*\n         <foo><a>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), " <div>\n  *hello*\n         <foo><a>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), " <div>\n  *hello*\n         <foo><a>\n")
     }
 
     @TestCase
@@ -1334,7 +1334,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("</div>\n*foo*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "</div>\n*foo*\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "</div>\n*foo*\n")
     }
 
     @TestCase
@@ -1345,7 +1345,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<DIV CLASS=\"foo\">\n\n*Markdown*\n\n</DIV>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<DIV CLASS=\"foo\">\n<p><em>Markdown</em></p>\n</DIV>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<DIV CLASS=\"foo\">\n<p><em>Markdown</em></p>\n</DIV>\n")
     }
 
     @TestCase
@@ -1356,7 +1356,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<div id=\"foo\"\n  class=\"bar\">\n</div>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<div id=\"foo\"\n  class=\"bar\">\n</div>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<div id=\"foo\"\n  class=\"bar\">\n</div>\n")
     }
 
     @TestCase
@@ -1367,7 +1367,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<div id=\"foo\" class=\"bar\n  baz\">\n</div>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<div id=\"foo\" class=\"bar\n  baz\">\n</div>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<div id=\"foo\" class=\"bar\n  baz\">\n</div>\n")
     }
 
     @TestCase
@@ -1378,7 +1378,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<div>\n*foo*\n\n*bar*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<div>\n*foo*\n<p><em>bar</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<div>\n*foo*\n<p><em>bar</em></p>\n")
     }
 
     @TestCase
@@ -1389,7 +1389,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<div id=\"foo\"\n*hi*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<div id=\"foo\"\n*hi*\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<div id=\"foo\"\n*hi*\n")
     }
 
     @TestCase
@@ -1400,7 +1400,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<div class\nfoo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<div class\nfoo\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<div class\nfoo\n")
     }
 
     @TestCase
@@ -1411,7 +1411,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<div *???-&&&-<---\n*foo*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<div *???-&&&-<---\n*foo*\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<div *???-&&&-<---\n*foo*\n")
     }
 
     @TestCase
@@ -1422,7 +1422,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<div><a href=\"bar\">*foo*</a></div>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<div><a href=\"bar\">*foo*</a></div>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<div><a href=\"bar\">*foo*</a></div>\n")
     }
 
     @TestCase
@@ -1433,7 +1433,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<table><tr><td>\nfoo\n</td></tr></table>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<table><tr><td>\nfoo\n</td></tr></table>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<table><tr><td>\nfoo\n</td></tr></table>\n")
     }
 
     @TestCase
@@ -1444,7 +1444,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<div></div>\n``` c\nint x = 33;\n```\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<div></div>\n``` c\nint x = 33;\n```\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<div></div>\n``` c\nint x = 33;\n```\n")
     }
 
     @TestCase
@@ -1455,7 +1455,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<a href=\"foo\">\n*bar*\n</a>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<a href=\"foo\">\n*bar*\n</a>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<a href=\"foo\">\n*bar*\n</a>\n")
     }
 
     @TestCase
@@ -1466,7 +1466,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<Warning>\n*bar*\n</Warning>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<Warning>\n*bar*\n</Warning>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<Warning>\n*bar*\n</Warning>\n")
     }
 
     @TestCase
@@ -1477,7 +1477,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<i class=\"foo\">\n*bar*\n</i>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<i class=\"foo\">\n*bar*\n</i>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<i class=\"foo\">\n*bar*\n</i>\n")
     }
 
     @TestCase
@@ -1488,7 +1488,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("</ins>\n*bar*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "</ins>\n*bar*\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "</ins>\n*bar*\n")
     }
 
     @TestCase
@@ -1499,7 +1499,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<del>\n*foo*\n</del>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<del>\n*foo*\n</del>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<del>\n*foo*\n</del>\n")
     }
 
     @TestCase
@@ -1510,7 +1510,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<del>\n\n*foo*\n\n</del>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<del>\n<p><em>foo</em></p>\n</del>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<del>\n<p><em>foo</em></p>\n</del>\n")
     }
 
     @TestCase
@@ -1521,7 +1521,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<del>*foo*</del>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><del><em>foo</em></del></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><del><em>foo</em></del></p>\n")
     }
 
     @TestCase
@@ -1533,7 +1533,7 @@ class Gfm029ConformanceTest {
             .parse(
                 "<pre language=\"haskell\"><code>\nimport Text.HTML.TagSoup\n\nmain :: IO ()\nmain = print $ parseTags tags\n</code></pre>\nokay\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre language=\"haskell\"><code>\nimport Text.HTML.TagSoup\n\nmain :: IO ()\nmain = print $ parseTags tags\n</code></pre>\n<p>okay</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre language=\"haskell\"><code>\nimport Text.HTML.TagSoup\n\nmain :: IO ()\nmain = print $ parseTags tags\n</code></pre>\n<p>okay</p>\n")
     }
 
     @TestCase
@@ -1545,7 +1545,7 @@ class Gfm029ConformanceTest {
             .parse(
                 "<script type=\"text/javascript\">\n// JavaScript example\n\ndocument.getElementById(\"demo\").innerHTML = \"Hello JavaScript!\";\n</script>\nokay\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<script type=\"text/javascript\">\n// JavaScript example\n\ndocument.getElementById(\"demo\").innerHTML = \"Hello JavaScript!\";\n</script>\n<p>okay</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<script type=\"text/javascript\">\n// JavaScript example\n\ndocument.getElementById(\"demo\").innerHTML = \"Hello JavaScript!\";\n</script>\n<p>okay</p>\n")
     }
 
     @TestCase
@@ -1556,7 +1556,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<style\n  type=\"text/css\">\nh1 {color:red;}\n\np {color:blue;}\n</style>\nokay\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<style\n  type=\"text/css\">\nh1 {color:red;}\n\np {color:blue;}\n</style>\n<p>okay</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<style\n  type=\"text/css\">\nh1 {color:red;}\n\np {color:blue;}\n</style>\n<p>okay</p>\n")
     }
 
     @TestCase
@@ -1567,7 +1567,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<style\n  type=\"text/css\">\n\nfoo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<style\n  type=\"text/css\">\n\nfoo\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<style\n  type=\"text/css\">\n\nfoo\n")
     }
 
     @TestCase
@@ -1578,7 +1578,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> <div>\n> foo\n\nbar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<div>\nfoo\n</blockquote>\n<p>bar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<div>\nfoo\n</blockquote>\n<p>bar</p>\n")
     }
 
     @TestCase
@@ -1589,7 +1589,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- <div>\n- foo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<div>\n</li>\n<li>foo</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<div>\n</li>\n<li>foo</li>\n</ul>\n")
     }
 
     @TestCase
@@ -1600,7 +1600,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<style>p{color:red;}</style>\n*foo*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<style>p{color:red;}</style>\n<p><em>foo</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<style>p{color:red;}</style>\n<p><em>foo</em></p>\n")
     }
 
     @TestCase
@@ -1611,7 +1611,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<!-- foo -->*bar*\n*baz*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<!-- foo -->*bar*\n<p><em>baz</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<!-- foo -->*bar*\n<p><em>baz</em></p>\n")
     }
 
     @TestCase
@@ -1622,7 +1622,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<script>\nfoo\n</script>1. *bar*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<script>\nfoo\n</script>1. *bar*\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<script>\nfoo\n</script>1. *bar*\n")
     }
 
     @TestCase
@@ -1633,7 +1633,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<!-- Foo\n\nbar\n   baz -->\nokay\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<!-- Foo\n\nbar\n   baz -->\n<p>okay</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<!-- Foo\n\nbar\n   baz -->\n<p>okay</p>\n")
     }
 
     @TestCase
@@ -1644,7 +1644,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<?php\n\n  echo '>';\n\n?>\nokay\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<?php\n\n  echo '>';\n\n?>\n<p>okay</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<?php\n\n  echo '>';\n\n?>\n<p>okay</p>\n")
     }
 
     @TestCase
@@ -1655,7 +1655,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<!DOCTYPE html>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<!DOCTYPE html>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<!DOCTYPE html>\n")
     }
 
     @TestCase
@@ -1667,7 +1667,7 @@ class Gfm029ConformanceTest {
             .parse(
                 "<![CDATA[\nfunction matchwo(a,b)\n{\n  if (a < b && a < 0) then {\n    return 1;\n\n  } else {\n\n    return 0;\n  }\n}\n]]>\nokay\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<![CDATA[\nfunction matchwo(a,b)\n{\n  if (a < b && a < 0) then {\n    return 1;\n\n  } else {\n\n    return 0;\n  }\n}\n]]>\n<p>okay</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<![CDATA[\nfunction matchwo(a,b)\n{\n  if (a < b && a < 0) then {\n    return 1;\n\n  } else {\n\n    return 0;\n  }\n}\n]]>\n<p>okay</p>\n")
     }
 
     @TestCase
@@ -1678,7 +1678,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("  <!-- foo -->\n\n    <!-- foo -->\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "  <!-- foo -->\n<pre><code>&lt;!-- foo --&gt;\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "  <!-- foo -->\n<pre><code>&lt;!-- foo --&gt;\n</code></pre>\n")
     }
 
     @TestCase
@@ -1689,7 +1689,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("  <div>\n\n    <div>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "  <div>\n<pre><code>&lt;div&gt;\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "  <div>\n<pre><code>&lt;div&gt;\n</code></pre>\n")
     }
 
     @TestCase
@@ -1700,7 +1700,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo\n<div>\nbar\n</div>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>Foo</p>\n<div>\nbar\n</div>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>Foo</p>\n<div>\nbar\n</div>\n")
     }
 
     @TestCase
@@ -1711,7 +1711,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<div>\nbar\n</div>\n*foo*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<div>\nbar\n</div>\n*foo*\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<div>\nbar\n</div>\n*foo*\n")
     }
 
     @TestCase
@@ -1722,7 +1722,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo\n<a href=\"bar\">\nbaz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>Foo\n<a href=\"bar\">\nbaz</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>Foo\n<a href=\"bar\">\nbaz</p>\n")
     }
 
     @TestCase
@@ -1733,7 +1733,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<div>\n\n*Emphasized* text.\n\n</div>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<div>\n<p><em>Emphasized</em> text.</p>\n</div>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<div>\n<p><em>Emphasized</em> text.</p>\n</div>\n")
     }
 
     @TestCase
@@ -1744,7 +1744,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<div>\n*Emphasized* text.\n</div>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<div>\n*Emphasized* text.\n</div>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<div>\n*Emphasized* text.\n</div>\n")
     }
 
     @TestCase
@@ -1755,7 +1755,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<table>\n\n<tr>\n\n<td>\nHi\n</td>\n\n</tr>\n\n</table>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<table>\n<tr>\n<td>\nHi\n</td>\n</tr>\n</table>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<table>\n<tr>\n<td>\nHi\n</td>\n</tr>\n</table>\n")
     }
 
     @TestCase
@@ -1766,7 +1766,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<table>\n\n  <tr>\n\n    <td>\n      Hi\n    </td>\n\n  </tr>\n\n</table>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<table>\n  <tr>\n<pre><code>&lt;td&gt;\n  Hi\n&lt;/td&gt;\n</code></pre>\n  </tr>\n</table>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<table>\n  <tr>\n<pre><code>&lt;td&gt;\n  Hi\n&lt;/td&gt;\n</code></pre>\n  </tr>\n</table>\n")
     }
 
     @TestCase
@@ -1777,7 +1777,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]: /url \"title\"\n\n[foo]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\" title=\"title\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\" title=\"title\">foo</a></p>\n")
     }
 
     @TestCase
@@ -1788,7 +1788,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("   [foo]: \n      /url  \n           'the title'  \n\n[foo]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\" title=\"the title\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\" title=\"the title\">foo</a></p>\n")
     }
 
     @TestCase
@@ -1799,7 +1799,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[Foo*bar\\]]:my_(url) 'title (with parens)'\n\n[Foo*bar\\]]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"my_(url)\" title=\"title (with parens)\">Foo*bar]</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"my_(url)\" title=\"title (with parens)\">Foo*bar]</a></p>\n")
     }
 
     @TestCase
@@ -1810,7 +1810,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[Foo bar]:\n<my url>\n'title'\n\n[Foo bar]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"my%20url\" title=\"title\">Foo bar</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"my%20url\" title=\"title\">Foo bar</a></p>\n")
     }
 
     @TestCase
@@ -1821,7 +1821,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]: /url '\ntitle\nline1\nline2\n'\n\n[foo]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\" title=\"\ntitle\nline1\nline2\n\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\" title=\"\ntitle\nline1\nline2\n\">foo</a></p>\n")
     }
 
     @TestCase
@@ -1832,7 +1832,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]: /url 'title\n\nwith blank line'\n\n[foo]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo]: /url 'title</p>\n<p>with blank line'</p>\n<p>[foo]</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo]: /url 'title</p>\n<p>with blank line'</p>\n<p>[foo]</p>\n")
     }
 
     @TestCase
@@ -1843,7 +1843,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]:\n/url\n\n[foo]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\">foo</a></p>\n")
     }
 
     @TestCase
@@ -1854,7 +1854,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]:\n\n[foo]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo]:</p>\n<p>[foo]</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo]:</p>\n<p>[foo]</p>\n")
     }
 
     @TestCase
@@ -1865,7 +1865,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]: <>\n\n[foo]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"\">foo</a></p>\n")
     }
 
     @TestCase
@@ -1876,7 +1876,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]: <bar>(baz)\n\n[foo]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo]: <bar>(baz)</p>\n<p>[foo]</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo]: <bar>(baz)</p>\n<p>[foo]</p>\n")
     }
 
     @TestCase
@@ -1887,7 +1887,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]: /url\\bar\\*baz \"foo\\\"bar\\baz\"\n\n[foo]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url%5Cbar*baz\" title=\"foo&quot;bar\\baz\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url%5Cbar*baz\" title=\"foo&quot;bar\\baz\">foo</a></p>\n")
     }
 
     @TestCase
@@ -1898,7 +1898,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]\n\n[foo]: url\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"url\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"url\">foo</a></p>\n")
     }
 
     @TestCase
@@ -1909,7 +1909,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]\n\n[foo]: first\n[foo]: second\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"first\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"first\">foo</a></p>\n")
     }
 
     @TestCase
@@ -1920,7 +1920,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[FOO]: /url\n\n[Foo]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\">Foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\">Foo</a></p>\n")
     }
 
     @TestCase
@@ -1931,7 +1931,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[ΑΓΩ]: /φου\n\n[αγω]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/%CF%86%CE%BF%CF%85\">αγω</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/%CF%86%CE%BF%CF%85\">αγω</a></p>\n")
     }
 
     @TestCase
@@ -1942,7 +1942,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]: /url\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "")
     }
 
     @TestCase
@@ -1953,7 +1953,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[\nfoo\n]: /url\nbar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>bar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>bar</p>\n")
     }
 
     @TestCase
@@ -1964,7 +1964,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]: /url \"title\" ok\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo]: /url &quot;title&quot; ok</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo]: /url &quot;title&quot; ok</p>\n")
     }
 
     @TestCase
@@ -1975,7 +1975,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]: /url\n\"title\" ok\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>&quot;title&quot; ok</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>&quot;title&quot; ok</p>\n")
     }
 
     @TestCase
@@ -1986,7 +1986,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    [foo]: /url \"title\"\n\n[foo]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>[foo]: /url &quot;title&quot;\n</code></pre>\n<p>[foo]</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>[foo]: /url &quot;title&quot;\n</code></pre>\n<p>[foo]</p>\n")
     }
 
     @TestCase
@@ -1997,7 +1997,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("```\n[foo]: /url\n```\n\n[foo]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>[foo]: /url\n</code></pre>\n<p>[foo]</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>[foo]: /url\n</code></pre>\n<p>[foo]</p>\n")
     }
 
     @TestCase
@@ -2008,7 +2008,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo\n[bar]: /baz\n\n[bar]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>Foo\n[bar]: /baz</p>\n<p>[bar]</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>Foo\n[bar]: /baz</p>\n<p>[bar]</p>\n")
     }
 
     @TestCase
@@ -2019,7 +2019,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("# [Foo]\n[foo]: /url\n> bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h1><a href=\"/url\">Foo</a></h1>\n<blockquote>\n<p>bar</p>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h1><a href=\"/url\">Foo</a></h1>\n<blockquote>\n<p>bar</p>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2030,7 +2030,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]: /url\nbar\n===\n[foo]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h1>bar</h1>\n<p><a href=\"/url\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h1>bar</h1>\n<p><a href=\"/url\">foo</a></p>\n")
     }
 
     @TestCase
@@ -2041,7 +2041,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]: /url\n===\n[foo]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>===\n<a href=\"/url\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>===\n<a href=\"/url\">foo</a></p>\n")
     }
 
     @TestCase
@@ -2052,7 +2052,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]: /foo-url \"foo\"\n[bar]: /bar-url\n  \"bar\"\n[baz]: /baz-url\n\n[foo],\n[bar],\n[baz]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/foo-url\" title=\"foo\">foo</a>,\n<a href=\"/bar-url\" title=\"bar\">bar</a>,\n<a href=\"/baz-url\">baz</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/foo-url\" title=\"foo\">foo</a>,\n<a href=\"/bar-url\" title=\"bar\">bar</a>,\n<a href=\"/baz-url\">baz</a></p>\n")
     }
 
     @TestCase
@@ -2063,7 +2063,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]\n\n> [foo]: /url\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\">foo</a></p>\n<blockquote>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\">foo</a></p>\n<blockquote>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2074,7 +2074,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]: /url\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "")
     }
 
     @TestCase
@@ -2085,7 +2085,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("aaa\n\nbbb\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>aaa</p>\n<p>bbb</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>aaa</p>\n<p>bbb</p>\n")
     }
 
     @TestCase
@@ -2096,7 +2096,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("aaa\nbbb\n\nccc\nddd\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>aaa\nbbb</p>\n<p>ccc\nddd</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>aaa\nbbb</p>\n<p>ccc\nddd</p>\n")
     }
 
     @TestCase
@@ -2107,7 +2107,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("aaa\n\n\nbbb\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>aaa</p>\n<p>bbb</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>aaa</p>\n<p>bbb</p>\n")
     }
 
     @TestCase
@@ -2118,7 +2118,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("  aaa\n bbb\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>aaa\nbbb</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>aaa\nbbb</p>\n")
     }
 
     @TestCase
@@ -2129,7 +2129,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("aaa\n             bbb\n                                       ccc\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>aaa\nbbb\nccc</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>aaa\nbbb\nccc</p>\n")
     }
 
     @TestCase
@@ -2140,7 +2140,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("   aaa\nbbb\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>aaa\nbbb</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>aaa\nbbb</p>\n")
     }
 
     @TestCase
@@ -2151,7 +2151,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    aaa\nbbb\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>aaa\n</code></pre>\n<p>bbb</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>aaa\n</code></pre>\n<p>bbb</p>\n")
     }
 
     @TestCase
@@ -2162,7 +2162,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("aaa     \nbbb     \n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>aaa<br />\nbbb</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>aaa<br />\nbbb</p>\n")
     }
 
     @TestCase
@@ -2173,7 +2173,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("  \n\naaa\n  \n\n# aaa\n\n  \n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>aaa</p>\n<h1>aaa</h1>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>aaa</p>\n<h1>aaa</h1>\n")
     }
 
     @TestCase
@@ -2184,7 +2184,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("| foo | bar |\n| --- | --- |\n| baz | bim |\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<table>\n<thead>\n<tr>\n<th>foo</th>\n<th>bar</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>baz</td>\n<td>bim</td>\n</tr>\n</tbody>\n</table>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<table>\n<thead>\n<tr>\n<th>foo</th>\n<th>bar</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>baz</td>\n<td>bim</td>\n</tr>\n</tbody>\n</table>\n")
     }
 
     @TestCase
@@ -2195,7 +2195,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("| abc | defghi |\n:-: | -----------:\nbar | baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<table>\n<thead>\n<tr>\n<th align=\"center\">abc</th>\n<th align=\"right\">defghi</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td align=\"center\">bar</td>\n<td align=\"right\">baz</td>\n</tr>\n</tbody>\n</table>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<table>\n<thead>\n<tr>\n<th align=\"center\">abc</th>\n<th align=\"right\">defghi</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td align=\"center\">bar</td>\n<td align=\"right\">baz</td>\n</tr>\n</tbody>\n</table>\n")
     }
 
     @TestCase
@@ -2206,7 +2206,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("| f\\|oo  |\n| ------ |\n| b `\\|` az |\n| b **\\|** im |\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<table>\n<thead>\n<tr>\n<th>f|oo</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>b <code>|</code> az</td>\n</tr>\n<tr>\n<td>b <strong>|</strong> im</td>\n</tr>\n</tbody>\n</table>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<table>\n<thead>\n<tr>\n<th>f|oo</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>b <code>|</code> az</td>\n</tr>\n<tr>\n<td>b <strong>|</strong> im</td>\n</tr>\n</tbody>\n</table>\n")
     }
 
     @TestCase
@@ -2217,7 +2217,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("| abc | def |\n| --- | --- |\n| bar | baz |\n> bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<table>\n<thead>\n<tr>\n<th>abc</th>\n<th>def</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>bar</td>\n<td>baz</td>\n</tr>\n</tbody>\n</table>\n<blockquote>\n<p>bar</p>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<table>\n<thead>\n<tr>\n<th>abc</th>\n<th>def</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>bar</td>\n<td>baz</td>\n</tr>\n</tbody>\n</table>\n<blockquote>\n<p>bar</p>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2228,7 +2228,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("| abc | def |\n| --- | --- |\n| bar | baz |\nbar\n\nbar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<table>\n<thead>\n<tr>\n<th>abc</th>\n<th>def</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>bar</td>\n<td>baz</td>\n</tr>\n<tr>\n<td>bar</td>\n<td></td>\n</tr>\n</tbody>\n</table>\n<p>bar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<table>\n<thead>\n<tr>\n<th>abc</th>\n<th>def</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>bar</td>\n<td>baz</td>\n</tr>\n<tr>\n<td>bar</td>\n<td></td>\n</tr>\n</tbody>\n</table>\n<p>bar</p>\n")
     }
 
     @TestCase
@@ -2239,7 +2239,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("| abc | def |\n| --- |\n| bar |\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<p>| abc | def |\n| --- |\n| bar |</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<p>| abc | def |\n| --- |\n| bar |</p>\n")
     }
 
     @TestCase
@@ -2250,7 +2250,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("| abc | def |\n| --- | --- |\n| bar |\n| bar | baz | boo |\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<table>\n<thead>\n<tr>\n<th>abc</th>\n<th>def</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>bar</td>\n<td></td>\n</tr>\n<tr>\n<td>bar</td>\n<td>baz</td>\n</tr>\n</tbody>\n</table>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<table>\n<thead>\n<tr>\n<th>abc</th>\n<th>def</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>bar</td>\n<td></td>\n</tr>\n<tr>\n<td>bar</td>\n<td>baz</td>\n</tr>\n</tbody>\n</table>\n")
     }
 
     @TestCase
@@ -2261,7 +2261,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("| abc | def |\n| --- | --- |\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<table>\n<thead>\n<tr>\n<th>abc</th>\n<th>def</th>\n</tr>\n</thead>\n</table>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<table>\n<thead>\n<tr>\n<th>abc</th>\n<th>def</th>\n</tr>\n</thead>\n</table>\n")
     }
 
     @TestCase
@@ -2272,7 +2272,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> # Foo\n> bar\n> baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<h1>Foo</h1>\n<p>bar\nbaz</p>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<h1>Foo</h1>\n<p>bar\nbaz</p>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2283,7 +2283,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("># Foo\n>bar\n> baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<h1>Foo</h1>\n<p>bar\nbaz</p>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<h1>Foo</h1>\n<p>bar\nbaz</p>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2294,7 +2294,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("   > # Foo\n   > bar\n > baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<h1>Foo</h1>\n<p>bar\nbaz</p>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<h1>Foo</h1>\n<p>bar\nbaz</p>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2305,7 +2305,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    > # Foo\n    > bar\n    > baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>&gt; # Foo\n&gt; bar\n&gt; baz\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>&gt; # Foo\n&gt; bar\n&gt; baz\n</code></pre>\n")
     }
 
     @TestCase
@@ -2316,7 +2316,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> # Foo\n> bar\nbaz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<h1>Foo</h1>\n<p>bar\nbaz</p>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<h1>Foo</h1>\n<p>bar\nbaz</p>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2327,7 +2327,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> bar\nbaz\n> foo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<p>bar\nbaz\nfoo</p>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<p>bar\nbaz\nfoo</p>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2338,7 +2338,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> foo\n---\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<p>foo</p>\n</blockquote>\n<hr />\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<p>foo</p>\n</blockquote>\n<hr />\n")
     }
 
     @TestCase
@@ -2349,7 +2349,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> - foo\n- bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<ul>\n<li>foo</li>\n</ul>\n</blockquote>\n<ul>\n<li>bar</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<ul>\n<li>foo</li>\n</ul>\n</blockquote>\n<ul>\n<li>bar</li>\n</ul>\n")
     }
 
     @TestCase
@@ -2360,7 +2360,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(">     foo\n    bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<pre><code>foo\n</code></pre>\n</blockquote>\n<pre><code>bar\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<pre><code>foo\n</code></pre>\n</blockquote>\n<pre><code>bar\n</code></pre>\n")
     }
 
     @TestCase
@@ -2371,7 +2371,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> ```\nfoo\n```\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<pre><code></code></pre>\n</blockquote>\n<p>foo</p>\n<pre><code></code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<pre><code></code></pre>\n</blockquote>\n<p>foo</p>\n<pre><code></code></pre>\n")
     }
 
     @TestCase
@@ -2382,7 +2382,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> foo\n    - bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<p>foo\n- bar</p>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<p>foo\n- bar</p>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2393,7 +2393,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(">\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2404,7 +2404,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(">\n>  \n> \n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2415,7 +2415,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(">\n> foo\n>  \n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<p>foo</p>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<p>foo</p>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2426,7 +2426,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> foo\n\n> bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<p>foo</p>\n</blockquote>\n<blockquote>\n<p>bar</p>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<p>foo</p>\n</blockquote>\n<blockquote>\n<p>bar</p>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2437,7 +2437,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> foo\n> bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<p>foo\nbar</p>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<p>foo\nbar</p>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2448,7 +2448,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> foo\n>\n> bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<p>foo</p>\n<p>bar</p>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<p>foo</p>\n<p>bar</p>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2459,7 +2459,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo\n> bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo</p>\n<blockquote>\n<p>bar</p>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo</p>\n<blockquote>\n<p>bar</p>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2470,7 +2470,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> aaa\n***\n> bbb\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<p>aaa</p>\n</blockquote>\n<hr />\n<blockquote>\n<p>bbb</p>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<p>aaa</p>\n</blockquote>\n<hr />\n<blockquote>\n<p>bbb</p>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2481,7 +2481,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> bar\nbaz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<p>bar\nbaz</p>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<p>bar\nbaz</p>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2492,7 +2492,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> bar\n\nbaz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<p>bar</p>\n</blockquote>\n<p>baz</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<p>bar</p>\n</blockquote>\n<p>baz</p>\n")
     }
 
     @TestCase
@@ -2503,7 +2503,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> bar\n>\nbaz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<p>bar</p>\n</blockquote>\n<p>baz</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<p>bar</p>\n</blockquote>\n<p>baz</p>\n")
     }
 
     @TestCase
@@ -2514,7 +2514,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> > > foo\nbar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<blockquote>\n<blockquote>\n<p>foo\nbar</p>\n</blockquote>\n</blockquote>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<blockquote>\n<blockquote>\n<p>foo\nbar</p>\n</blockquote>\n</blockquote>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2525,7 +2525,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(">>> foo\n> bar\n>>baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<blockquote>\n<blockquote>\n<p>foo\nbar\nbaz</p>\n</blockquote>\n</blockquote>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<blockquote>\n<blockquote>\n<p>foo\nbar\nbaz</p>\n</blockquote>\n</blockquote>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2536,7 +2536,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(">     code\n\n>    not code\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<pre><code>code\n</code></pre>\n</blockquote>\n<blockquote>\n<p>not code</p>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<pre><code>code\n</code></pre>\n</blockquote>\n<blockquote>\n<p>not code</p>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2547,7 +2547,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("A paragraph\nwith two lines.\n\n    indented code\n\n> A block quote.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>A paragraph\nwith two lines.</p>\n<pre><code>indented code\n</code></pre>\n<blockquote>\n<p>A block quote.</p>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>A paragraph\nwith two lines.</p>\n<pre><code>indented code\n</code></pre>\n<blockquote>\n<p>A block quote.</p>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2558,7 +2558,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("1.  A paragraph\n    with two lines.\n\n        indented code\n\n    > A block quote.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol>\n<li>\n<p>A paragraph\nwith two lines.</p>\n<pre><code>indented code\n</code></pre>\n<blockquote>\n<p>A block quote.</p>\n</blockquote>\n</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol>\n<li>\n<p>A paragraph\nwith two lines.</p>\n<pre><code>indented code\n</code></pre>\n<blockquote>\n<p>A block quote.</p>\n</blockquote>\n</li>\n</ol>\n")
     }
 
     @TestCase
@@ -2569,7 +2569,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- one\n\n two\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>one</li>\n</ul>\n<p>two</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>one</li>\n</ul>\n<p>two</p>\n")
     }
 
     @TestCase
@@ -2580,7 +2580,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- one\n\n  two\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<p>one</p>\n<p>two</p>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<p>one</p>\n<p>two</p>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -2591,7 +2591,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(" -    one\n\n     two\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>one</li>\n</ul>\n<pre><code> two\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>one</li>\n</ul>\n<pre><code> two\n</code></pre>\n")
     }
 
     @TestCase
@@ -2602,7 +2602,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(" -    one\n\n      two\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<p>one</p>\n<p>two</p>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<p>one</p>\n<p>two</p>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -2613,7 +2613,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("   > > 1.  one\n>>\n>>     two\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<blockquote>\n<ol>\n<li>\n<p>one</p>\n<p>two</p>\n</li>\n</ol>\n</blockquote>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<blockquote>\n<ol>\n<li>\n<p>one</p>\n<p>two</p>\n</li>\n</ol>\n</blockquote>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2624,7 +2624,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(">>- one\n>>\n  >  > two\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<blockquote>\n<ul>\n<li>one</li>\n</ul>\n<p>two</p>\n</blockquote>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<blockquote>\n<ul>\n<li>one</li>\n</ul>\n<p>two</p>\n</blockquote>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2635,7 +2635,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("-one\n\n2.two\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>-one</p>\n<p>2.two</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>-one</p>\n<p>2.two</p>\n")
     }
 
     @TestCase
@@ -2646,7 +2646,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- foo\n\n\n  bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<p>foo</p>\n<p>bar</p>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<p>foo</p>\n<p>bar</p>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -2657,7 +2657,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("1.  foo\n\n    ```\n    bar\n    ```\n\n    baz\n\n    > bam\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol>\n<li>\n<p>foo</p>\n<pre><code>bar\n</code></pre>\n<p>baz</p>\n<blockquote>\n<p>bam</p>\n</blockquote>\n</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol>\n<li>\n<p>foo</p>\n<pre><code>bar\n</code></pre>\n<p>baz</p>\n<blockquote>\n<p>bam</p>\n</blockquote>\n</li>\n</ol>\n")
     }
 
     @TestCase
@@ -2668,7 +2668,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- Foo\n\n      bar\n\n\n      baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<p>Foo</p>\n<pre><code>bar\n\n\nbaz\n</code></pre>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<p>Foo</p>\n<pre><code>bar\n\n\nbaz\n</code></pre>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -2679,7 +2679,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("123456789. ok\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol start=\"123456789\">\n<li>ok</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol start=\"123456789\">\n<li>ok</li>\n</ol>\n")
     }
 
     @TestCase
@@ -2690,7 +2690,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("1234567890. not ok\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>1234567890. not ok</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>1234567890. not ok</p>\n")
     }
 
     @TestCase
@@ -2701,7 +2701,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("0. ok\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol start=\"0\">\n<li>ok</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol start=\"0\">\n<li>ok</li>\n</ol>\n")
     }
 
     @TestCase
@@ -2712,7 +2712,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("003. ok\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol start=\"3\">\n<li>ok</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol start=\"3\">\n<li>ok</li>\n</ol>\n")
     }
 
     @TestCase
@@ -2723,7 +2723,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("-1. not ok\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>-1. not ok</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>-1. not ok</p>\n")
     }
 
     @TestCase
@@ -2734,7 +2734,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- foo\n\n      bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<p>foo</p>\n<pre><code>bar\n</code></pre>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<p>foo</p>\n<pre><code>bar\n</code></pre>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -2745,7 +2745,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("  10.  foo\n\n           bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol start=\"10\">\n<li>\n<p>foo</p>\n<pre><code>bar\n</code></pre>\n</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol start=\"10\">\n<li>\n<p>foo</p>\n<pre><code>bar\n</code></pre>\n</li>\n</ol>\n")
     }
 
     @TestCase
@@ -2756,7 +2756,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    indented code\n\nparagraph\n\n    more code\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>indented code\n</code></pre>\n<p>paragraph</p>\n<pre><code>more code\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>indented code\n</code></pre>\n<p>paragraph</p>\n<pre><code>more code\n</code></pre>\n")
     }
 
     @TestCase
@@ -2767,7 +2767,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("1.     indented code\n\n   paragraph\n\n       more code\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol>\n<li>\n<pre><code>indented code\n</code></pre>\n<p>paragraph</p>\n<pre><code>more code\n</code></pre>\n</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol>\n<li>\n<pre><code>indented code\n</code></pre>\n<p>paragraph</p>\n<pre><code>more code\n</code></pre>\n</li>\n</ol>\n")
     }
 
     @TestCase
@@ -2778,7 +2778,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("1.      indented code\n\n   paragraph\n\n       more code\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol>\n<li>\n<pre><code> indented code\n</code></pre>\n<p>paragraph</p>\n<pre><code>more code\n</code></pre>\n</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol>\n<li>\n<pre><code> indented code\n</code></pre>\n<p>paragraph</p>\n<pre><code>more code\n</code></pre>\n</li>\n</ol>\n")
     }
 
     @TestCase
@@ -2789,7 +2789,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("   foo\n\nbar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo</p>\n<p>bar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo</p>\n<p>bar</p>\n")
     }
 
     @TestCase
@@ -2800,7 +2800,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("-    foo\n\n  bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>foo</li>\n</ul>\n<p>bar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>foo</li>\n</ul>\n<p>bar</p>\n")
     }
 
     @TestCase
@@ -2811,7 +2811,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("-  foo\n\n   bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<p>foo</p>\n<p>bar</p>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<p>foo</p>\n<p>bar</p>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -2822,7 +2822,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("-\n  foo\n-\n  ```\n  bar\n  ```\n-\n      baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>foo</li>\n<li>\n<pre><code>bar\n</code></pre>\n</li>\n<li>\n<pre><code>baz\n</code></pre>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>foo</li>\n<li>\n<pre><code>bar\n</code></pre>\n</li>\n<li>\n<pre><code>baz\n</code></pre>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -2833,7 +2833,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("-   \n  foo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>foo</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>foo</li>\n</ul>\n")
     }
 
     @TestCase
@@ -2844,7 +2844,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("-\n\n  foo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li></li>\n</ul>\n<p>foo</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li></li>\n</ul>\n<p>foo</p>\n")
     }
 
     @TestCase
@@ -2855,7 +2855,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- foo\n-\n- bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>foo</li>\n<li></li>\n<li>bar</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>foo</li>\n<li></li>\n<li>bar</li>\n</ul>\n")
     }
 
     @TestCase
@@ -2866,7 +2866,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- foo\n-   \n- bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>foo</li>\n<li></li>\n<li>bar</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>foo</li>\n<li></li>\n<li>bar</li>\n</ul>\n")
     }
 
     @TestCase
@@ -2877,7 +2877,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("1. foo\n2.\n3. bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol>\n<li>foo</li>\n<li></li>\n<li>bar</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol>\n<li>foo</li>\n<li></li>\n<li>bar</li>\n</ol>\n")
     }
 
     @TestCase
@@ -2888,7 +2888,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li></li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li></li>\n</ul>\n")
     }
 
     @TestCase
@@ -2899,7 +2899,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo\n*\n\nfoo\n1.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo\n*</p>\n<p>foo\n1.</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo\n*</p>\n<p>foo\n1.</p>\n")
     }
 
     @TestCase
@@ -2910,7 +2910,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse(" 1.  A paragraph\n     with two lines.\n\n         indented code\n\n     > A block quote.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol>\n<li>\n<p>A paragraph\nwith two lines.</p>\n<pre><code>indented code\n</code></pre>\n<blockquote>\n<p>A block quote.</p>\n</blockquote>\n</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol>\n<li>\n<p>A paragraph\nwith two lines.</p>\n<pre><code>indented code\n</code></pre>\n<blockquote>\n<p>A block quote.</p>\n</blockquote>\n</li>\n</ol>\n")
     }
 
     @TestCase
@@ -2921,7 +2921,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("  1.  A paragraph\n      with two lines.\n\n          indented code\n\n      > A block quote.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol>\n<li>\n<p>A paragraph\nwith two lines.</p>\n<pre><code>indented code\n</code></pre>\n<blockquote>\n<p>A block quote.</p>\n</blockquote>\n</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol>\n<li>\n<p>A paragraph\nwith two lines.</p>\n<pre><code>indented code\n</code></pre>\n<blockquote>\n<p>A block quote.</p>\n</blockquote>\n</li>\n</ol>\n")
     }
 
     @TestCase
@@ -2933,7 +2933,7 @@ class Gfm029ConformanceTest {
             .parse(
                 "   1.  A paragraph\n       with two lines.\n\n           indented code\n\n       > A block quote.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol>\n<li>\n<p>A paragraph\nwith two lines.</p>\n<pre><code>indented code\n</code></pre>\n<blockquote>\n<p>A block quote.</p>\n</blockquote>\n</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol>\n<li>\n<p>A paragraph\nwith two lines.</p>\n<pre><code>indented code\n</code></pre>\n<blockquote>\n<p>A block quote.</p>\n</blockquote>\n</li>\n</ol>\n")
     }
 
     @TestCase
@@ -2945,7 +2945,7 @@ class Gfm029ConformanceTest {
             .parse(
                 "    1.  A paragraph\n        with two lines.\n\n            indented code\n\n        > A block quote.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>1.  A paragraph\n    with two lines.\n\n        indented code\n\n    &gt; A block quote.\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>1.  A paragraph\n    with two lines.\n\n        indented code\n\n    &gt; A block quote.\n</code></pre>\n")
     }
 
     @TestCase
@@ -2956,7 +2956,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("  1.  A paragraph\nwith two lines.\n\n          indented code\n\n      > A block quote.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol>\n<li>\n<p>A paragraph\nwith two lines.</p>\n<pre><code>indented code\n</code></pre>\n<blockquote>\n<p>A block quote.</p>\n</blockquote>\n</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol>\n<li>\n<p>A paragraph\nwith two lines.</p>\n<pre><code>indented code\n</code></pre>\n<blockquote>\n<p>A block quote.</p>\n</blockquote>\n</li>\n</ol>\n")
     }
 
     @TestCase
@@ -2967,7 +2967,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("  1.  A paragraph\n    with two lines.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol>\n<li>A paragraph\nwith two lines.</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol>\n<li>A paragraph\nwith two lines.</li>\n</ol>\n")
     }
 
     @TestCase
@@ -2978,7 +2978,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> 1. > Blockquote\ncontinued here.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<ol>\n<li>\n<blockquote>\n<p>Blockquote\ncontinued here.</p>\n</blockquote>\n</li>\n</ol>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<ol>\n<li>\n<blockquote>\n<p>Blockquote\ncontinued here.</p>\n</blockquote>\n</li>\n</ol>\n</blockquote>\n")
     }
 
     @TestCase
@@ -2989,7 +2989,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("> 1. > Blockquote\n> continued here.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<blockquote>\n<ol>\n<li>\n<blockquote>\n<p>Blockquote\ncontinued here.</p>\n</blockquote>\n</li>\n</ol>\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<blockquote>\n<ol>\n<li>\n<blockquote>\n<p>Blockquote\ncontinued here.</p>\n</blockquote>\n</li>\n</ol>\n</blockquote>\n")
     }
 
     @TestCase
@@ -3000,7 +3000,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- foo\n  - bar\n    - baz\n      - boo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>foo\n<ul>\n<li>bar\n<ul>\n<li>baz\n<ul>\n<li>boo</li>\n</ul>\n</li>\n</ul>\n</li>\n</ul>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>foo\n<ul>\n<li>bar\n<ul>\n<li>baz\n<ul>\n<li>boo</li>\n</ul>\n</li>\n</ul>\n</li>\n</ul>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3011,7 +3011,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- foo\n - bar\n  - baz\n   - boo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>foo</li>\n<li>bar</li>\n<li>baz</li>\n<li>boo</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>foo</li>\n<li>bar</li>\n<li>baz</li>\n<li>boo</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3022,7 +3022,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("10) foo\n    - bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol start=\"10\">\n<li>foo\n<ul>\n<li>bar</li>\n</ul>\n</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol start=\"10\">\n<li>foo\n<ul>\n<li>bar</li>\n</ul>\n</li>\n</ol>\n")
     }
 
     @TestCase
@@ -3033,7 +3033,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("10) foo\n   - bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol start=\"10\">\n<li>foo</li>\n</ol>\n<ul>\n<li>bar</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol start=\"10\">\n<li>foo</li>\n</ol>\n<ul>\n<li>bar</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3044,7 +3044,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- - foo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<ul>\n<li>foo</li>\n</ul>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<ul>\n<li>foo</li>\n</ul>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3055,7 +3055,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("1. - 2. foo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol>\n<li>\n<ul>\n<li>\n<ol start=\"2\">\n<li>foo</li>\n</ol>\n</li>\n</ul>\n</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol>\n<li>\n<ul>\n<li>\n<ol start=\"2\">\n<li>foo</li>\n</ol>\n</li>\n</ul>\n</li>\n</ol>\n")
     }
 
     @TestCase
@@ -3066,7 +3066,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- # Foo\n- Bar\n  ---\n  baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<h1>Foo</h1>\n</li>\n<li>\n<h2>Bar</h2>\nbaz</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<h1>Foo</h1>\n</li>\n<li>\n<h2>Bar</h2>\nbaz</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3077,7 +3077,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- foo\n- bar\n+ baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>foo</li>\n<li>bar</li>\n</ul>\n<ul>\n<li>baz</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>foo</li>\n<li>bar</li>\n</ul>\n<ul>\n<li>baz</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3088,7 +3088,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("1. foo\n2. bar\n3) baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol>\n<li>foo</li>\n<li>bar</li>\n</ol>\n<ol start=\"3\">\n<li>baz</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol>\n<li>foo</li>\n<li>bar</li>\n</ol>\n<ol start=\"3\">\n<li>baz</li>\n</ol>\n")
     }
 
     @TestCase
@@ -3099,7 +3099,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo\n- bar\n- baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>Foo</p>\n<ul>\n<li>bar</li>\n<li>baz</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>Foo</p>\n<ul>\n<li>bar</li>\n<li>baz</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3110,7 +3110,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("The number of windows in my house is\n14.  The number of doors is 6.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>The number of windows in my house is\n14.  The number of doors is 6.</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>The number of windows in my house is\n14.  The number of doors is 6.</p>\n")
     }
 
     @TestCase
@@ -3121,7 +3121,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("The number of windows in my house is\n1.  The number of doors is 6.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>The number of windows in my house is</p>\n<ol>\n<li>The number of doors is 6.</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>The number of windows in my house is</p>\n<ol>\n<li>The number of doors is 6.</li>\n</ol>\n")
     }
 
     @TestCase
@@ -3132,7 +3132,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- foo\n\n- bar\n\n\n- baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<p>foo</p>\n</li>\n<li>\n<p>bar</p>\n</li>\n<li>\n<p>baz</p>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<p>foo</p>\n</li>\n<li>\n<p>bar</p>\n</li>\n<li>\n<p>baz</p>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3143,7 +3143,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- foo\n  - bar\n    - baz\n\n\n      bim\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>foo\n<ul>\n<li>bar\n<ul>\n<li>\n<p>baz</p>\n<p>bim</p>\n</li>\n</ul>\n</li>\n</ul>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>foo\n<ul>\n<li>bar\n<ul>\n<li>\n<p>baz</p>\n<p>bim</p>\n</li>\n</ul>\n</li>\n</ul>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3154,7 +3154,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- foo\n- bar\n\n<!-- -->\n\n- baz\n- bim\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>foo</li>\n<li>bar</li>\n</ul>\n<!-- -->\n<ul>\n<li>baz</li>\n<li>bim</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>foo</li>\n<li>bar</li>\n</ul>\n<!-- -->\n<ul>\n<li>baz</li>\n<li>bim</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3165,7 +3165,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("-   foo\n\n    notcode\n\n-   foo\n\n<!-- -->\n\n    code\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<p>foo</p>\n<p>notcode</p>\n</li>\n<li>\n<p>foo</p>\n</li>\n</ul>\n<!-- -->\n<pre><code>code\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<p>foo</p>\n<p>notcode</p>\n</li>\n<li>\n<p>foo</p>\n</li>\n</ul>\n<!-- -->\n<pre><code>code\n</code></pre>\n")
     }
 
     @TestCase
@@ -3176,7 +3176,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- a\n - b\n  - c\n   - d\n  - e\n - f\n- g\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>a</li>\n<li>b</li>\n<li>c</li>\n<li>d</li>\n<li>e</li>\n<li>f</li>\n<li>g</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>a</li>\n<li>b</li>\n<li>c</li>\n<li>d</li>\n<li>e</li>\n<li>f</li>\n<li>g</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3187,7 +3187,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("1. a\n\n  2. b\n\n   3. c\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol>\n<li>\n<p>a</p>\n</li>\n<li>\n<p>b</p>\n</li>\n<li>\n<p>c</p>\n</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol>\n<li>\n<p>a</p>\n</li>\n<li>\n<p>b</p>\n</li>\n<li>\n<p>c</p>\n</li>\n</ol>\n")
     }
 
     @TestCase
@@ -3198,7 +3198,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- a\n - b\n  - c\n   - d\n    - e\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>a</li>\n<li>b</li>\n<li>c</li>\n<li>d\n- e</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>a</li>\n<li>b</li>\n<li>c</li>\n<li>d\n- e</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3209,7 +3209,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("1. a\n\n  2. b\n\n    3. c\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol>\n<li>\n<p>a</p>\n</li>\n<li>\n<p>b</p>\n</li>\n</ol>\n<pre><code>3. c\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol>\n<li>\n<p>a</p>\n</li>\n<li>\n<p>b</p>\n</li>\n</ol>\n<pre><code>3. c\n</code></pre>\n")
     }
 
     @TestCase
@@ -3220,7 +3220,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- a\n- b\n\n- c\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<p>a</p>\n</li>\n<li>\n<p>b</p>\n</li>\n<li>\n<p>c</p>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<p>a</p>\n</li>\n<li>\n<p>b</p>\n</li>\n<li>\n<p>c</p>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3231,7 +3231,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("* a\n*\n\n* c\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<p>a</p>\n</li>\n<li></li>\n<li>\n<p>c</p>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<p>a</p>\n</li>\n<li></li>\n<li>\n<p>c</p>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3242,7 +3242,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- a\n- b\n\n  c\n- d\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<p>a</p>\n</li>\n<li>\n<p>b</p>\n<p>c</p>\n</li>\n<li>\n<p>d</p>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<p>a</p>\n</li>\n<li>\n<p>b</p>\n<p>c</p>\n</li>\n<li>\n<p>d</p>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3253,7 +3253,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- a\n- b\n\n  [ref]: /url\n- d\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<p>a</p>\n</li>\n<li>\n<p>b</p>\n</li>\n<li>\n<p>d</p>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<p>a</p>\n</li>\n<li>\n<p>b</p>\n</li>\n<li>\n<p>d</p>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3264,7 +3264,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- a\n- ```\n  b\n\n\n  ```\n- c\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>a</li>\n<li>\n<pre><code>b\n\n\n</code></pre>\n</li>\n<li>c</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>a</li>\n<li>\n<pre><code>b\n\n\n</code></pre>\n</li>\n<li>c</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3275,7 +3275,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- a\n  - b\n\n    c\n- d\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>a\n<ul>\n<li>\n<p>b</p>\n<p>c</p>\n</li>\n</ul>\n</li>\n<li>d</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>a\n<ul>\n<li>\n<p>b</p>\n<p>c</p>\n</li>\n</ul>\n</li>\n<li>d</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3286,7 +3286,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("* a\n  > b\n  >\n* c\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>a\n<blockquote>\n<p>b</p>\n</blockquote>\n</li>\n<li>c</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>a\n<blockquote>\n<p>b</p>\n</blockquote>\n</li>\n<li>c</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3297,7 +3297,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- a\n  > b\n  ```\n  c\n  ```\n- d\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>a\n<blockquote>\n<p>b</p>\n</blockquote>\n<pre><code>c\n</code></pre>\n</li>\n<li>d</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>a\n<blockquote>\n<p>b</p>\n</blockquote>\n<pre><code>c\n</code></pre>\n</li>\n<li>d</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3308,7 +3308,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- a\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>a</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>a</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3319,7 +3319,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- a\n  - b\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>a\n<ul>\n<li>b</li>\n</ul>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>a\n<ul>\n<li>b</li>\n</ul>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3330,7 +3330,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("1. ```\n   foo\n   ```\n\n   bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ol>\n<li>\n<pre><code>foo\n</code></pre>\n<p>bar</p>\n</li>\n</ol>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ol>\n<li>\n<pre><code>foo\n</code></pre>\n<p>bar</p>\n</li>\n</ol>\n")
     }
 
     @TestCase
@@ -3341,7 +3341,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("* foo\n  * bar\n\n  baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<p>foo</p>\n<ul>\n<li>bar</li>\n</ul>\n<p>baz</p>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<p>foo</p>\n<ul>\n<li>bar</li>\n</ul>\n<p>baz</p>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3352,7 +3352,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("- a\n  - b\n  - c\n\n- d\n  - e\n  - f\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<ul>\n<li>\n<p>a</p>\n<ul>\n<li>b</li>\n<li>c</li>\n</ul>\n</li>\n<li>\n<p>d</p>\n<ul>\n<li>e</li>\n<li>f</li>\n</ul>\n</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<ul>\n<li>\n<p>a</p>\n<ul>\n<li>b</li>\n<li>c</li>\n</ul>\n</li>\n<li>\n<p>d</p>\n<ul>\n<li>e</li>\n<li>f</li>\n</ul>\n</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3363,7 +3363,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("`hi`lo`\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code>hi</code>lo`</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code>hi</code>lo`</p>\n")
     }
 
     @TestCase
@@ -3375,7 +3375,7 @@ class Gfm029ConformanceTest {
             .parse(
                 "\\!\\\"\\#\\$\\%\\&\\'\\(\\)\\*\\+\\,\\-\\.\\/\\:\\;\\<\\=\\>\\?\\@\\[\\\\\\]\\^\\_\\`\\{\\|\\}\\~\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\\]^_`{|}~</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\\]^_`{|}~</p>\n")
     }
 
     @TestCase
@@ -3386,7 +3386,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("\\\t\\A\\a\\ \\3\\φ\\«\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>\\\t\\A\\a\\ \\3\\φ\\«</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>\\\t\\A\\a\\ \\3\\φ\\«</p>\n")
     }
 
     @TestCase
@@ -3398,7 +3398,7 @@ class Gfm029ConformanceTest {
             .parse(
                 "\\*not emphasized*\n\\<br/> not a tag\n\\[not a link](/foo)\n\\`not code`\n1\\. not a list\n\\* not a list\n\\# not a heading\n\\[foo]: /url \"not a reference\"\n\\&ouml; not a character entity\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>*not emphasized*\n&lt;br/&gt; not a tag\n[not a link](/foo)\n`not code`\n1. not a list\n* not a list\n# not a heading\n[foo]: /url &quot;not a reference&quot;\n&amp;ouml; not a character entity</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>*not emphasized*\n&lt;br/&gt; not a tag\n[not a link](/foo)\n`not code`\n1. not a list\n* not a list\n# not a heading\n[foo]: /url &quot;not a reference&quot;\n&amp;ouml; not a character entity</p>\n")
     }
 
     @TestCase
@@ -3409,7 +3409,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("\\\\*emphasis*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>\\<em>emphasis</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>\\<em>emphasis</em></p>\n")
     }
 
     @TestCase
@@ -3420,7 +3420,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo\\\nbar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo<br />\nbar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo<br />\nbar</p>\n")
     }
 
     @TestCase
@@ -3431,7 +3431,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("`` \\[\\` ``\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code>\\[\\`</code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code>\\[\\`</code></p>\n")
     }
 
     @TestCase
@@ -3442,7 +3442,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    \\[\\]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>\\[\\]\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>\\[\\]\n</code></pre>\n")
     }
 
     @TestCase
@@ -3453,7 +3453,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("~~~\n\\[\\]\n~~~\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>\\[\\]\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>\\[\\]\n</code></pre>\n")
     }
 
     @TestCase
@@ -3464,7 +3464,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<http://example.com?find=\\*>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"http://example.com?find=%5C*\">http://example.com?find=\\*</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"http://example.com?find=%5C*\">http://example.com?find=\\*</a></p>\n")
     }
 
     @TestCase
@@ -3475,7 +3475,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<a href=\"/bar\\/)\">\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<a href=\"/bar\\/)\">\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<a href=\"/bar\\/)\">\n")
     }
 
     @TestCase
@@ -3486,7 +3486,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo](/bar\\* \"ti\\*tle\")\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/bar*\" title=\"ti*tle\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/bar*\" title=\"ti*tle\">foo</a></p>\n")
     }
 
     @TestCase
@@ -3497,7 +3497,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]\n\n[foo]: /bar\\* \"ti\\*tle\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/bar*\" title=\"ti*tle\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/bar*\" title=\"ti*tle\">foo</a></p>\n")
     }
 
     @TestCase
@@ -3508,7 +3508,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("``` foo\\+bar\nfoo\n```\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code class=\"language-foo+bar\">foo\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code class=\"language-foo+bar\">foo\n</code></pre>\n")
     }
 
     @TestCase
@@ -3520,7 +3520,7 @@ class Gfm029ConformanceTest {
             .parse(
                 "&nbsp; &amp; &copy; &AElig; &Dcaron;\n&frac34; &HilbertSpace; &DifferentialD;\n&ClockwiseContourIntegral; &ngE;\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>  &amp; © Æ Ď\n¾ ℋ ⅆ\n∲ ≧̸</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>  &amp; © Æ Ď\n¾ ℋ ⅆ\n∲ ≧̸</p>\n")
     }
 
     @TestCase
@@ -3531,7 +3531,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("&#35; &#1234; &#992; &#0;\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p># Ӓ Ϡ \u{FFFD}</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p># Ӓ Ϡ \u{FFFD}</p>\n")
     }
 
     @TestCase
@@ -3542,7 +3542,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("&#X22; &#XD06; &#xcab;\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>&quot; ആ ಫ</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>&quot; ആ ಫ</p>\n")
     }
 
     @TestCase
@@ -3553,7 +3553,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("&nbsp &x; &#; &#x;\n&#987654321;\n&#abcdef0;\n&ThisIsNotDefined; &hi?;\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>&amp;nbsp &amp;x; &amp;#; &amp;#x;\n&amp;#987654321;\n&amp;#abcdef0;\n&amp;ThisIsNotDefined; &amp;hi?;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>&amp;nbsp &amp;x; &amp;#; &amp;#x;\n&amp;#987654321;\n&amp;#abcdef0;\n&amp;ThisIsNotDefined; &amp;hi?;</p>\n")
     }
 
     @TestCase
@@ -3564,7 +3564,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("&copy\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>&amp;copy</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>&amp;copy</p>\n")
     }
 
     @TestCase
@@ -3575,7 +3575,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("&MadeUpEntity;\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>&amp;MadeUpEntity;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>&amp;MadeUpEntity;</p>\n")
     }
 
     @TestCase
@@ -3586,7 +3586,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<a href=\"&ouml;&ouml;.html\">\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<a href=\"&ouml;&ouml;.html\">\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<a href=\"&ouml;&ouml;.html\">\n")
     }
 
     @TestCase
@@ -3597,7 +3597,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo](/f&ouml;&ouml; \"f&ouml;&ouml;\")\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/f%C3%B6%C3%B6\" title=\"föö\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/f%C3%B6%C3%B6\" title=\"föö\">foo</a></p>\n")
     }
 
     @TestCase
@@ -3608,7 +3608,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]\n\n[foo]: /f&ouml;&ouml; \"f&ouml;&ouml;\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/f%C3%B6%C3%B6\" title=\"föö\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/f%C3%B6%C3%B6\" title=\"föö\">foo</a></p>\n")
     }
 
     @TestCase
@@ -3619,7 +3619,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("``` f&ouml;&ouml;\nfoo\n```\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code class=\"language-föö\">foo\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code class=\"language-föö\">foo\n</code></pre>\n")
     }
 
     @TestCase
@@ -3630,7 +3630,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("`f&ouml;&ouml;`\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code>f&amp;ouml;&amp;ouml;</code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code>f&amp;ouml;&amp;ouml;</code></p>\n")
     }
 
     @TestCase
@@ -3641,7 +3641,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("    f&ouml;f&ouml;\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<pre><code>f&amp;ouml;f&amp;ouml;\n</code></pre>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<pre><code>f&amp;ouml;f&amp;ouml;\n</code></pre>\n")
     }
 
     @TestCase
@@ -3652,7 +3652,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("&#42;foo&#42;\n*foo*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>*foo*\n<em>foo</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>*foo*\n<em>foo</em></p>\n")
     }
 
     @TestCase
@@ -3663,7 +3663,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("&#42; foo\n\n* foo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>* foo</p>\n<ul>\n<li>foo</li>\n</ul>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>* foo</p>\n<ul>\n<li>foo</li>\n</ul>\n")
     }
 
     @TestCase
@@ -3674,7 +3674,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo&#10;&#10;bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo\n\nbar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo\n\nbar</p>\n")
     }
 
     @TestCase
@@ -3685,7 +3685,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("&#9;foo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>\tfoo</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>\tfoo</p>\n")
     }
 
     @TestCase
@@ -3696,7 +3696,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[a](url &quot;tit&quot;)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[a](url &quot;tit&quot;)</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[a](url &quot;tit&quot;)</p>\n")
     }
 
     @TestCase
@@ -3707,7 +3707,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("`foo`\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code>foo</code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code>foo</code></p>\n")
     }
 
     @TestCase
@@ -3718,7 +3718,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("`` foo ` bar ``\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code>foo ` bar</code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code>foo ` bar</code></p>\n")
     }
 
     @TestCase
@@ -3729,7 +3729,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("` `` `\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code>``</code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code>``</code></p>\n")
     }
 
     @TestCase
@@ -3740,7 +3740,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("`  ``  `\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code> `` </code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code> `` </code></p>\n")
     }
 
     @TestCase
@@ -3751,7 +3751,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("` a`\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code> a</code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code> a</code></p>\n")
     }
 
     @TestCase
@@ -3762,7 +3762,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("` b `\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code> b </code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code> b </code></p>\n")
     }
 
     @TestCase
@@ -3773,7 +3773,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("` `\n`  `\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code> </code>\n<code>  </code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code> </code>\n<code>  </code></p>\n")
     }
 
     @TestCase
@@ -3784,7 +3784,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("``\nfoo\nbar  \nbaz\n``\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code>foo bar   baz</code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code>foo bar   baz</code></p>\n")
     }
 
     @TestCase
@@ -3795,7 +3795,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("``\nfoo \n``\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code>foo </code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code>foo </code></p>\n")
     }
 
     @TestCase
@@ -3806,7 +3806,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("`foo   bar \nbaz`\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code>foo   bar  baz</code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code>foo   bar  baz</code></p>\n")
     }
 
     @TestCase
@@ -3817,7 +3817,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("`foo\\`bar`\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code>foo\\</code>bar`</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code>foo\\</code>bar`</p>\n")
     }
 
     @TestCase
@@ -3828,7 +3828,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("``foo`bar``\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code>foo`bar</code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code>foo`bar</code></p>\n")
     }
 
     @TestCase
@@ -3839,7 +3839,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("` foo `` bar `\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code>foo `` bar</code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code>foo `` bar</code></p>\n")
     }
 
     @TestCase
@@ -3850,7 +3850,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo`*`\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>*foo<code>*</code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>*foo<code>*</code></p>\n")
     }
 
     @TestCase
@@ -3861,7 +3861,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[not a `link](/foo`)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[not a <code>link](/foo</code>)</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[not a <code>link](/foo</code>)</p>\n")
     }
 
     @TestCase
@@ -3872,7 +3872,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("`<a href=\"`\">`\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code>&lt;a href=&quot;</code>&quot;&gt;`</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code>&lt;a href=&quot;</code>&quot;&gt;`</p>\n")
     }
 
     @TestCase
@@ -3883,7 +3883,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<a href=\"`\">`\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"`\">`</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"`\">`</p>\n")
     }
 
     @TestCase
@@ -3894,7 +3894,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("`<http://foo.bar.`baz>`\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code>&lt;http://foo.bar.</code>baz&gt;`</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code>&lt;http://foo.bar.</code>baz&gt;`</p>\n")
     }
 
     @TestCase
@@ -3905,7 +3905,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<http://foo.bar.`baz>`\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"http://foo.bar.%60baz\">http://foo.bar.`baz</a>`</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"http://foo.bar.%60baz\">http://foo.bar.`baz</a>`</p>\n")
     }
 
     @TestCase
@@ -3916,7 +3916,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("```foo``\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>```foo``</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>```foo``</p>\n")
     }
 
     @TestCase
@@ -3927,7 +3927,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("`foo\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>`foo</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>`foo</p>\n")
     }
 
     @TestCase
@@ -3938,7 +3938,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("`foo``bar``\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>`foo<code>bar</code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>`foo<code>bar</code></p>\n")
     }
 
     @TestCase
@@ -3949,7 +3949,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo bar*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo bar</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo bar</em></p>\n")
     }
 
     @TestCase
@@ -3960,7 +3960,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("a * foo bar*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>a * foo bar*</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>a * foo bar*</p>\n")
     }
 
     @TestCase
@@ -3971,7 +3971,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("a*\"foo\"*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>a*&quot;foo&quot;*</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>a*&quot;foo&quot;*</p>\n")
     }
 
     @TestCase
@@ -3982,7 +3982,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("* a *\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>* a *</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>* a *</p>\n")
     }
 
     @TestCase
@@ -3993,7 +3993,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo*bar*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo<em>bar</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo<em>bar</em></p>\n")
     }
 
     @TestCase
@@ -4004,7 +4004,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("5*6*78\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>5<em>6</em>78</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>5<em>6</em>78</p>\n")
     }
 
     @TestCase
@@ -4015,7 +4015,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_foo bar_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo bar</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo bar</em></p>\n")
     }
 
     @TestCase
@@ -4026,7 +4026,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_ foo bar_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>_ foo bar_</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>_ foo bar_</p>\n")
     }
 
     @TestCase
@@ -4037,7 +4037,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("a_\"foo\"_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>a_&quot;foo&quot;_</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>a_&quot;foo&quot;_</p>\n")
     }
 
     @TestCase
@@ -4048,7 +4048,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo_bar_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo_bar_</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo_bar_</p>\n")
     }
 
     @TestCase
@@ -4059,7 +4059,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("5_6_78\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>5_6_78</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>5_6_78</p>\n")
     }
 
     @TestCase
@@ -4070,7 +4070,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("пристаням_стремятся_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>пристаням_стремятся_</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>пристаням_стремятся_</p>\n")
     }
 
     @TestCase
@@ -4081,7 +4081,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("aa_\"bb\"_cc\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>aa_&quot;bb&quot;_cc</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>aa_&quot;bb&quot;_cc</p>\n")
     }
 
     @TestCase
@@ -4092,7 +4092,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo-_(bar)_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo-<em>(bar)</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo-<em>(bar)</em></p>\n")
     }
 
     @TestCase
@@ -4103,7 +4103,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_foo*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>_foo*</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>_foo*</p>\n")
     }
 
     @TestCase
@@ -4114,7 +4114,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo bar *\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>*foo bar *</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>*foo bar *</p>\n")
     }
 
     @TestCase
@@ -4125,7 +4125,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo bar\n*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>*foo bar\n*</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>*foo bar\n*</p>\n")
     }
 
     @TestCase
@@ -4136,7 +4136,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*(*foo)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>*(*foo)</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>*(*foo)</p>\n")
     }
 
     @TestCase
@@ -4147,7 +4147,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*(*foo*)*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>(<em>foo</em>)</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>(<em>foo</em>)</em></p>\n")
     }
 
     @TestCase
@@ -4158,7 +4158,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo*bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo</em>bar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo</em>bar</p>\n")
     }
 
     @TestCase
@@ -4169,7 +4169,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_foo bar _\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>_foo bar _</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>_foo bar _</p>\n")
     }
 
     @TestCase
@@ -4180,7 +4180,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_(_foo)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>_(_foo)</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>_(_foo)</p>\n")
     }
 
     @TestCase
@@ -4191,7 +4191,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_(_foo_)_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>(<em>foo</em>)</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>(<em>foo</em>)</em></p>\n")
     }
 
     @TestCase
@@ -4202,7 +4202,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_foo_bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>_foo_bar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>_foo_bar</p>\n")
     }
 
     @TestCase
@@ -4213,7 +4213,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_пристаням_стремятся\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>_пристаням_стремятся</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>_пристаням_стремятся</p>\n")
     }
 
     @TestCase
@@ -4224,7 +4224,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_foo_bar_baz_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo_bar_baz</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo_bar_baz</em></p>\n")
     }
 
     @TestCase
@@ -4235,7 +4235,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_(bar)_.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>(bar)</em>.</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>(bar)</em>.</p>\n")
     }
 
     @TestCase
@@ -4246,7 +4246,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**foo bar**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo bar</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo bar</strong></p>\n")
     }
 
     @TestCase
@@ -4257,7 +4257,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("** foo bar**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>** foo bar**</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>** foo bar**</p>\n")
     }
 
     @TestCase
@@ -4268,7 +4268,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("a**\"foo\"**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>a**&quot;foo&quot;**</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>a**&quot;foo&quot;**</p>\n")
     }
 
     @TestCase
@@ -4279,7 +4279,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo**bar**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo<strong>bar</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo<strong>bar</strong></p>\n")
     }
 
     @TestCase
@@ -4290,7 +4290,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__foo bar__\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo bar</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo bar</strong></p>\n")
     }
 
     @TestCase
@@ -4301,7 +4301,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__ foo bar__\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>__ foo bar__</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>__ foo bar__</p>\n")
     }
 
     @TestCase
@@ -4312,7 +4312,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__\nfoo bar__\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>__\nfoo bar__</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>__\nfoo bar__</p>\n")
     }
 
     @TestCase
@@ -4323,7 +4323,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("a__\"foo\"__\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>a__&quot;foo&quot;__</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>a__&quot;foo&quot;__</p>\n")
     }
 
     @TestCase
@@ -4334,7 +4334,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo__bar__\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo__bar__</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo__bar__</p>\n")
     }
 
     @TestCase
@@ -4345,7 +4345,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("5__6__78\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>5__6__78</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>5__6__78</p>\n")
     }
 
     @TestCase
@@ -4356,7 +4356,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("пристаням__стремятся__\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>пристаням__стремятся__</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>пристаням__стремятся__</p>\n")
     }
 
     @TestCase
@@ -4367,7 +4367,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__foo, __bar__, baz__\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo, <strong>bar</strong>, baz</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo, <strong>bar</strong>, baz</strong></p>\n")
     }
 
     @TestCase
@@ -4378,7 +4378,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo-__(bar)__\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo-<strong>(bar)</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo-<strong>(bar)</strong></p>\n")
     }
 
     @TestCase
@@ -4389,7 +4389,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**foo bar **\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>**foo bar **</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>**foo bar **</p>\n")
     }
 
     @TestCase
@@ -4400,7 +4400,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**(**foo)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>**(**foo)</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>**(**foo)</p>\n")
     }
 
     @TestCase
@@ -4411,7 +4411,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*(**foo**)*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>(<strong>foo</strong>)</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>(<strong>foo</strong>)</em></p>\n")
     }
 
     @TestCase
@@ -4422,7 +4422,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**Gomphocarpus (*Gomphocarpus physocarpus*, syn.\n*Asclepias physocarpa*)**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>Gomphocarpus (<em>Gomphocarpus physocarpus</em>, syn.\n<em>Asclepias physocarpa</em>)</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>Gomphocarpus (<em>Gomphocarpus physocarpus</em>, syn.\n<em>Asclepias physocarpa</em>)</strong></p>\n")
     }
 
     @TestCase
@@ -4433,7 +4433,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**foo \"*bar*\" foo**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo &quot;<em>bar</em>&quot; foo</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo &quot;<em>bar</em>&quot; foo</strong></p>\n")
     }
 
     @TestCase
@@ -4444,7 +4444,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**foo**bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo</strong>bar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo</strong>bar</p>\n")
     }
 
     @TestCase
@@ -4455,7 +4455,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__foo bar __\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>__foo bar __</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>__foo bar __</p>\n")
     }
 
     @TestCase
@@ -4466,7 +4466,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__(__foo)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>__(__foo)</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>__(__foo)</p>\n")
     }
 
     @TestCase
@@ -4477,7 +4477,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_(__foo__)_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>(<strong>foo</strong>)</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>(<strong>foo</strong>)</em></p>\n")
     }
 
     @TestCase
@@ -4488,7 +4488,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__foo__bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>__foo__bar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>__foo__bar</p>\n")
     }
 
     @TestCase
@@ -4499,7 +4499,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__пристаням__стремятся\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>__пристаням__стремятся</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>__пристаням__стремятся</p>\n")
     }
 
     @TestCase
@@ -4510,7 +4510,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__foo__bar__baz__\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo__bar__baz</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo__bar__baz</strong></p>\n")
     }
 
     @TestCase
@@ -4521,7 +4521,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__(bar)__.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>(bar)</strong>.</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>(bar)</strong>.</p>\n")
     }
 
     @TestCase
@@ -4532,7 +4532,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo [bar](/url)*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo <a href=\"/url\">bar</a></em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo <a href=\"/url\">bar</a></em></p>\n")
     }
 
     @TestCase
@@ -4543,7 +4543,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo\nbar*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo\nbar</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo\nbar</em></p>\n")
     }
 
     @TestCase
@@ -4554,7 +4554,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_foo __bar__ baz_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo <strong>bar</strong> baz</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo <strong>bar</strong> baz</em></p>\n")
     }
 
     @TestCase
@@ -4565,7 +4565,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_foo _bar_ baz_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo <em>bar</em> baz</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo <em>bar</em> baz</em></p>\n")
     }
 
     @TestCase
@@ -4576,7 +4576,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__foo_ bar_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em><em>foo</em> bar</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em><em>foo</em> bar</em></p>\n")
     }
 
     @TestCase
@@ -4587,7 +4587,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo *bar**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo <em>bar</em></em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo <em>bar</em></em></p>\n")
     }
 
     @TestCase
@@ -4598,7 +4598,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo **bar** baz*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo <strong>bar</strong> baz</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo <strong>bar</strong> baz</em></p>\n")
     }
 
     @TestCase
@@ -4609,7 +4609,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo**bar**baz*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo<strong>bar</strong>baz</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo<strong>bar</strong>baz</em></p>\n")
     }
 
     @TestCase
@@ -4620,7 +4620,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo**bar*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo**bar</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo**bar</em></p>\n")
     }
 
     @TestCase
@@ -4631,7 +4631,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("***foo** bar*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em><strong>foo</strong> bar</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em><strong>foo</strong> bar</em></p>\n")
     }
 
     @TestCase
@@ -4642,7 +4642,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo **bar***\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo <strong>bar</strong></em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo <strong>bar</strong></em></p>\n")
     }
 
     @TestCase
@@ -4653,7 +4653,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo**bar***\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo<strong>bar</strong></em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo<strong>bar</strong></em></p>\n")
     }
 
     @TestCase
@@ -4664,7 +4664,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo***bar***baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo<em><strong>bar</strong></em>baz</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo<em><strong>bar</strong></em>baz</p>\n")
     }
 
     @TestCase
@@ -4675,7 +4675,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo******bar*********baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo<strong><strong><strong>bar</strong></strong></strong>***baz</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo<strong><strong><strong>bar</strong></strong></strong>***baz</p>\n")
     }
 
     @TestCase
@@ -4686,7 +4686,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo **bar *baz* bim** bop*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo <strong>bar <em>baz</em> bim</strong> bop</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo <strong>bar <em>baz</em> bim</strong> bop</em></p>\n")
     }
 
     @TestCase
@@ -4697,7 +4697,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo [*bar*](/url)*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo <a href=\"/url\"><em>bar</em></a></em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo <a href=\"/url\"><em>bar</em></a></em></p>\n")
     }
 
     @TestCase
@@ -4708,7 +4708,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("** is not an empty emphasis\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>** is not an empty emphasis</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>** is not an empty emphasis</p>\n")
     }
 
     @TestCase
@@ -4719,7 +4719,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**** is not an empty strong emphasis\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>**** is not an empty strong emphasis</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>**** is not an empty strong emphasis</p>\n")
     }
 
     @TestCase
@@ -4730,7 +4730,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**foo [bar](/url)**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo <a href=\"/url\">bar</a></strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo <a href=\"/url\">bar</a></strong></p>\n")
     }
 
     @TestCase
@@ -4741,7 +4741,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**foo\nbar**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo\nbar</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo\nbar</strong></p>\n")
     }
 
     @TestCase
@@ -4752,7 +4752,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__foo _bar_ baz__\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo <em>bar</em> baz</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo <em>bar</em> baz</strong></p>\n")
     }
 
     @TestCase
@@ -4763,7 +4763,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__foo __bar__ baz__\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo <strong>bar</strong> baz</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo <strong>bar</strong> baz</strong></p>\n")
     }
 
     @TestCase
@@ -4774,7 +4774,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("____foo__ bar__\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong><strong>foo</strong> bar</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong><strong>foo</strong> bar</strong></p>\n")
     }
 
     @TestCase
@@ -4785,7 +4785,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**foo **bar****\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo <strong>bar</strong></strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo <strong>bar</strong></strong></p>\n")
     }
 
     @TestCase
@@ -4796,7 +4796,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**foo *bar* baz**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo <em>bar</em> baz</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo <em>bar</em> baz</strong></p>\n")
     }
 
     @TestCase
@@ -4807,7 +4807,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**foo*bar*baz**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo<em>bar</em>baz</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo<em>bar</em>baz</strong></p>\n")
     }
 
     @TestCase
@@ -4818,7 +4818,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("***foo* bar**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong><em>foo</em> bar</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong><em>foo</em> bar</strong></p>\n")
     }
 
     @TestCase
@@ -4829,7 +4829,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**foo *bar***\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo <em>bar</em></strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo <em>bar</em></strong></p>\n")
     }
 
     @TestCase
@@ -4840,7 +4840,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**foo *bar **baz**\nbim* bop**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo <em>bar <strong>baz</strong>\nbim</em> bop</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo <em>bar <strong>baz</strong>\nbim</em> bop</strong></p>\n")
     }
 
     @TestCase
@@ -4851,7 +4851,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**foo [*bar*](/url)**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo <a href=\"/url\"><em>bar</em></a></strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo <a href=\"/url\"><em>bar</em></a></strong></p>\n")
     }
 
     @TestCase
@@ -4862,7 +4862,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__ is not an empty emphasis\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>__ is not an empty emphasis</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>__ is not an empty emphasis</p>\n")
     }
 
     @TestCase
@@ -4873,7 +4873,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("____ is not an empty strong emphasis\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>____ is not an empty strong emphasis</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>____ is not an empty strong emphasis</p>\n")
     }
 
     @TestCase
@@ -4884,7 +4884,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo ***\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo ***</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo ***</p>\n")
     }
 
     @TestCase
@@ -4895,7 +4895,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo *\\**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo <em>*</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo <em>*</em></p>\n")
     }
 
     @TestCase
@@ -4906,7 +4906,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo *_*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo <em>_</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo <em>_</em></p>\n")
     }
 
     @TestCase
@@ -4917,7 +4917,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo *****\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo *****</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo *****</p>\n")
     }
 
     @TestCase
@@ -4928,7 +4928,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo **\\***\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo <strong>*</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo <strong>*</strong></p>\n")
     }
 
     @TestCase
@@ -4939,7 +4939,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo **_**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo <strong>_</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo <strong>_</strong></p>\n")
     }
 
     @TestCase
@@ -4950,7 +4950,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**foo*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>*<em>foo</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>*<em>foo</em></p>\n")
     }
 
     @TestCase
@@ -4961,7 +4961,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo</em>*</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo</em>*</p>\n")
     }
 
     @TestCase
@@ -4972,7 +4972,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("***foo**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>*<strong>foo</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>*<strong>foo</strong></p>\n")
     }
 
     @TestCase
@@ -4983,7 +4983,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("****foo*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>***<em>foo</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>***<em>foo</em></p>\n")
     }
 
     @TestCase
@@ -4994,7 +4994,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**foo***\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo</strong>*</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo</strong>*</p>\n")
     }
 
     @TestCase
@@ -5005,7 +5005,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo****\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo</em>***</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo</em>***</p>\n")
     }
 
     @TestCase
@@ -5016,7 +5016,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo ___\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo ___</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo ___</p>\n")
     }
 
     @TestCase
@@ -5027,7 +5027,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo _\\__\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo <em>_</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo <em>_</em></p>\n")
     }
 
     @TestCase
@@ -5038,7 +5038,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo _*_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo <em>*</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo <em>*</em></p>\n")
     }
 
     @TestCase
@@ -5049,7 +5049,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo _____\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo _____</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo _____</p>\n")
     }
 
     @TestCase
@@ -5060,7 +5060,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo __\\___\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo <strong>_</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo <strong>_</strong></p>\n")
     }
 
     @TestCase
@@ -5071,7 +5071,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo __*__\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo <strong>*</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo <strong>*</strong></p>\n")
     }
 
     @TestCase
@@ -5082,7 +5082,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__foo_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>_<em>foo</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>_<em>foo</em></p>\n")
     }
 
     @TestCase
@@ -5093,7 +5093,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_foo__\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo</em>_</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo</em>_</p>\n")
     }
 
     @TestCase
@@ -5104,7 +5104,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("___foo__\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>_<strong>foo</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>_<strong>foo</strong></p>\n")
     }
 
     @TestCase
@@ -5115,7 +5115,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("____foo_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>___<em>foo</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>___<em>foo</em></p>\n")
     }
 
     @TestCase
@@ -5126,7 +5126,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__foo___\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo</strong>_</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo</strong>_</p>\n")
     }
 
     @TestCase
@@ -5137,7 +5137,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_foo____\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo</em>___</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo</em>___</p>\n")
     }
 
     @TestCase
@@ -5148,7 +5148,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**foo**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo</strong></p>\n")
     }
 
     @TestCase
@@ -5159,7 +5159,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*_foo_*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em><em>foo</em></em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em><em>foo</em></em></p>\n")
     }
 
     @TestCase
@@ -5170,7 +5170,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__foo__\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong>foo</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong>foo</strong></p>\n")
     }
 
     @TestCase
@@ -5181,7 +5181,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_*foo*_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em><em>foo</em></em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em><em>foo</em></em></p>\n")
     }
 
     @TestCase
@@ -5192,7 +5192,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("****foo****\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong><strong>foo</strong></strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong><strong>foo</strong></strong></p>\n")
     }
 
     @TestCase
@@ -5203,7 +5203,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("____foo____\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong><strong>foo</strong></strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong><strong>foo</strong></strong></p>\n")
     }
 
     @TestCase
@@ -5214,7 +5214,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("******foo******\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><strong><strong><strong>foo</strong></strong></strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><strong><strong><strong>foo</strong></strong></strong></p>\n")
     }
 
     @TestCase
@@ -5225,7 +5225,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("***foo***\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em><strong>foo</strong></em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em><strong>foo</strong></em></p>\n")
     }
 
     @TestCase
@@ -5236,7 +5236,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_____foo_____\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em><strong><strong>foo</strong></strong></em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em><strong><strong>foo</strong></strong></em></p>\n")
     }
 
     @TestCase
@@ -5247,7 +5247,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo _bar* baz_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo _bar</em> baz_</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo _bar</em> baz_</p>\n")
     }
 
     @TestCase
@@ -5258,7 +5258,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo __bar *baz bim__ bam*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo <strong>bar *baz bim</strong> bam</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo <strong>bar *baz bim</strong> bam</em></p>\n")
     }
 
     @TestCase
@@ -5269,7 +5269,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**foo **bar baz**\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>**foo <strong>bar baz</strong></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>**foo <strong>bar baz</strong></p>\n")
     }
 
     @TestCase
@@ -5280,7 +5280,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo *bar baz*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>*foo <em>bar baz</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>*foo <em>bar baz</em></p>\n")
     }
 
     @TestCase
@@ -5291,7 +5291,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*[bar*](/url)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>*<a href=\"/url\">bar*</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>*<a href=\"/url\">bar*</a></p>\n")
     }
 
     @TestCase
@@ -5302,7 +5302,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_foo [bar_](/url)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>_foo <a href=\"/url\">bar_</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>_foo <a href=\"/url\">bar_</a></p>\n")
     }
 
     @TestCase
@@ -5313,7 +5313,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*<img src=\"foo\" title=\"*\"/>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>*<img src=\"foo\" title=\"*\"/></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>*<img src=\"foo\" title=\"*\"/></p>\n")
     }
 
     @TestCase
@@ -5324,7 +5324,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**<a href=\"**\">\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>**<a href=\"**\"></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>**<a href=\"**\"></p>\n")
     }
 
     @TestCase
@@ -5335,7 +5335,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__<a href=\"__\">\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>__<a href=\"__\"></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>__<a href=\"__\"></p>\n")
     }
 
     @TestCase
@@ -5346,7 +5346,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*a `*`*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>a <code>*</code></em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>a <code>*</code></em></p>\n")
     }
 
     @TestCase
@@ -5357,7 +5357,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("_a `_`_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>a <code>_</code></em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>a <code>_</code></em></p>\n")
     }
 
     @TestCase
@@ -5368,7 +5368,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("**a<http://foo.bar/?q=**>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>**a<a href=\"http://foo.bar/?q=**\">http://foo.bar/?q=**</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>**a<a href=\"http://foo.bar/?q=**\">http://foo.bar/?q=**</a></p>\n")
     }
 
     @TestCase
@@ -5379,7 +5379,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("__a<http://foo.bar/?q=__>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>__a<a href=\"http://foo.bar/?q=__\">http://foo.bar/?q=__</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>__a<a href=\"http://foo.bar/?q=__\">http://foo.bar/?q=__</a></p>\n")
     }
 
     @TestCase
@@ -5390,7 +5390,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("~~Hi~~ Hello, world!\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<p><del>Hi</del> Hello, world!</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<p><del>Hi</del> Hello, world!</p>\n")
     }
 
     @TestCase
@@ -5401,7 +5401,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("This ~~has a\n\nnew paragraph~~.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<p>This ~~has a</p>\n<p>new paragraph~~.</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<p>This ~~has a</p>\n<p>new paragraph~~.</p>\n")
     }
 
     @TestCase
@@ -5412,7 +5412,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](/uri \"title\")\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/uri\" title=\"title\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/uri\" title=\"title\">link</a></p>\n")
     }
 
     @TestCase
@@ -5423,7 +5423,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](/uri)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/uri\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/uri\">link</a></p>\n")
     }
 
     @TestCase
@@ -5434,7 +5434,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link]()\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"\">link</a></p>\n")
     }
 
     @TestCase
@@ -5445,7 +5445,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](<>)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"\">link</a></p>\n")
     }
 
     @TestCase
@@ -5456,7 +5456,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](/my uri)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[link](/my uri)</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[link](/my uri)</p>\n")
     }
 
     @TestCase
@@ -5467,7 +5467,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](</my uri>)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/my%20uri\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/my%20uri\">link</a></p>\n")
     }
 
     @TestCase
@@ -5478,7 +5478,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](foo\nbar)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[link](foo\nbar)</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[link](foo\nbar)</p>\n")
     }
 
     @TestCase
@@ -5489,7 +5489,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](<foo\nbar>)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[link](<foo\nbar>)</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[link](<foo\nbar>)</p>\n")
     }
 
     @TestCase
@@ -5500,7 +5500,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[a](<b)c>)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"b)c\">a</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"b)c\">a</a></p>\n")
     }
 
     @TestCase
@@ -5511,7 +5511,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](<foo\\>)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[link](&lt;foo&gt;)</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[link](&lt;foo&gt;)</p>\n")
     }
 
     @TestCase
@@ -5522,7 +5522,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[a](<b)c\n[a](<b)c>\n[a](<b>c)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[a](&lt;b)c\n[a](&lt;b)c&gt;\n[a](<b>c)</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[a](&lt;b)c\n[a](&lt;b)c&gt;\n[a](<b>c)</p>\n")
     }
 
     @TestCase
@@ -5533,7 +5533,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](\\(foo\\))\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"(foo)\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"(foo)\">link</a></p>\n")
     }
 
     @TestCase
@@ -5544,7 +5544,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](foo(and(bar)))\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"foo(and(bar))\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"foo(and(bar))\">link</a></p>\n")
     }
 
     @TestCase
@@ -5555,7 +5555,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](foo\\(and\\(bar\\))\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"foo(and(bar)\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"foo(and(bar)\">link</a></p>\n")
     }
 
     @TestCase
@@ -5566,7 +5566,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](<foo(and(bar)>)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"foo(and(bar)\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"foo(and(bar)\">link</a></p>\n")
     }
 
     @TestCase
@@ -5577,7 +5577,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](foo\\)\\:)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"foo):\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"foo):\">link</a></p>\n")
     }
 
     @TestCase
@@ -5589,7 +5589,7 @@ class Gfm029ConformanceTest {
             .parse(
                 "[link](#fragment)\n\n[link](http://example.com#fragment)\n\n[link](http://example.com?foo=3#frag)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"#fragment\">link</a></p>\n<p><a href=\"http://example.com#fragment\">link</a></p>\n<p><a href=\"http://example.com?foo=3#frag\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"#fragment\">link</a></p>\n<p><a href=\"http://example.com#fragment\">link</a></p>\n<p><a href=\"http://example.com?foo=3#frag\">link</a></p>\n")
     }
 
     @TestCase
@@ -5600,7 +5600,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](foo\\bar)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"foo%5Cbar\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"foo%5Cbar\">link</a></p>\n")
     }
 
     @TestCase
@@ -5611,7 +5611,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](foo%20b&auml;)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"foo%20b%C3%A4\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"foo%20b%C3%A4\">link</a></p>\n")
     }
 
     @TestCase
@@ -5622,7 +5622,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](\"title\")\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"%22title%22\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"%22title%22\">link</a></p>\n")
     }
 
     @TestCase
@@ -5633,7 +5633,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](/url \"title\")\n[link](/url 'title')\n[link](/url (title))\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\" title=\"title\">link</a>\n<a href=\"/url\" title=\"title\">link</a>\n<a href=\"/url\" title=\"title\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\" title=\"title\">link</a>\n<a href=\"/url\" title=\"title\">link</a>\n<a href=\"/url\" title=\"title\">link</a></p>\n")
     }
 
     @TestCase
@@ -5644,7 +5644,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](/url \"title \\\"&quot;\")\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\" title=\"title &quot;&quot;\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\" title=\"title &quot;&quot;\">link</a></p>\n")
     }
 
     @TestCase
@@ -5655,7 +5655,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](/url \"title\")\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url%C2%A0%22title%22\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url%C2%A0%22title%22\">link</a></p>\n")
     }
 
     @TestCase
@@ -5666,7 +5666,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](/url \"title \"and\" title\")\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[link](/url &quot;title &quot;and&quot; title&quot;)</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[link](/url &quot;title &quot;and&quot; title&quot;)</p>\n")
     }
 
     @TestCase
@@ -5677,7 +5677,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](/url 'title \"and\" title')\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\" title=\"title &quot;and&quot; title\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\" title=\"title &quot;and&quot; title\">link</a></p>\n")
     }
 
     @TestCase
@@ -5688,7 +5688,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link](   /uri\n  \"title\"  )\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/uri\" title=\"title\">link</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/uri\" title=\"title\">link</a></p>\n")
     }
 
     @TestCase
@@ -5699,7 +5699,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link] (/uri)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[link] (/uri)</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[link] (/uri)</p>\n")
     }
 
     @TestCase
@@ -5710,7 +5710,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link [foo [bar]]](/uri)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/uri\">link [foo [bar]]</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/uri\">link [foo [bar]]</a></p>\n")
     }
 
     @TestCase
@@ -5721,7 +5721,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link] bar](/uri)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[link] bar](/uri)</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[link] bar](/uri)</p>\n")
     }
 
     @TestCase
@@ -5732,7 +5732,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link [bar](/uri)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[link <a href=\"/uri\">bar</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[link <a href=\"/uri\">bar</a></p>\n")
     }
 
     @TestCase
@@ -5743,7 +5743,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link \\[bar](/uri)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/uri\">link [bar</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/uri\">link [bar</a></p>\n")
     }
 
     @TestCase
@@ -5754,7 +5754,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link *foo **bar** `#`*](/uri)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/uri\">link <em>foo <strong>bar</strong> <code>#</code></em></a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/uri\">link <em>foo <strong>bar</strong> <code>#</code></em></a></p>\n")
     }
 
     @TestCase
@@ -5765,7 +5765,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[![moon](moon.jpg)](/uri)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/uri\"><img src=\"moon.jpg\" alt=\"moon\" /></a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/uri\"><img src=\"moon.jpg\" alt=\"moon\" /></a></p>\n")
     }
 
     @TestCase
@@ -5776,7 +5776,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo [bar](/uri)](/uri)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo <a href=\"/uri\">bar</a>](/uri)</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo <a href=\"/uri\">bar</a>](/uri)</p>\n")
     }
 
     @TestCase
@@ -5787,7 +5787,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo *[bar [baz](/uri)](/uri)*](/uri)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo <em>[bar <a href=\"/uri\">baz</a>](/uri)</em>](/uri)</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo <em>[bar <a href=\"/uri\">baz</a>](/uri)</em>](/uri)</p>\n")
     }
 
     @TestCase
@@ -5798,7 +5798,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![[[foo](uri1)](uri2)](uri3)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"uri3\" alt=\"[foo](uri2)\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"uri3\" alt=\"[foo](uri2)\" /></p>\n")
     }
 
     @TestCase
@@ -5809,7 +5809,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*[foo*](/uri)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>*<a href=\"/uri\">foo*</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>*<a href=\"/uri\">foo*</a></p>\n")
     }
 
     @TestCase
@@ -5820,7 +5820,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo *bar](baz*)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"baz*\">foo *bar</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"baz*\">foo *bar</a></p>\n")
     }
 
     @TestCase
@@ -5831,7 +5831,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo [bar* baz]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo [bar</em> baz]</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo [bar</em> baz]</p>\n")
     }
 
     @TestCase
@@ -5842,7 +5842,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo <bar attr=\"](baz)\">\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo <bar attr=\"](baz)\"></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo <bar attr=\"](baz)\"></p>\n")
     }
 
     @TestCase
@@ -5853,7 +5853,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo`](/uri)`\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo<code>](/uri)</code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo<code>](/uri)</code></p>\n")
     }
 
     @TestCase
@@ -5864,7 +5864,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo<http://example.com/?search=](uri)>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo<a href=\"http://example.com/?search=%5D(uri)\">http://example.com/?search=](uri)</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo<a href=\"http://example.com/?search=%5D(uri)\">http://example.com/?search=](uri)</a></p>\n")
     }
 
     @TestCase
@@ -5875,7 +5875,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo][bar]\n\n[bar]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\" title=\"title\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\" title=\"title\">foo</a></p>\n")
     }
 
     @TestCase
@@ -5886,7 +5886,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link [foo [bar]]][ref]\n\n[ref]: /uri\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/uri\">link [foo [bar]]</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/uri\">link [foo [bar]]</a></p>\n")
     }
 
     @TestCase
@@ -5897,7 +5897,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link \\[bar][ref]\n\n[ref]: /uri\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/uri\">link [bar</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/uri\">link [bar</a></p>\n")
     }
 
     @TestCase
@@ -5908,7 +5908,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[link *foo **bar** `#`*][ref]\n\n[ref]: /uri\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/uri\">link <em>foo <strong>bar</strong> <code>#</code></em></a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/uri\">link <em>foo <strong>bar</strong> <code>#</code></em></a></p>\n")
     }
 
     @TestCase
@@ -5919,7 +5919,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[![moon](moon.jpg)][ref]\n\n[ref]: /uri\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/uri\"><img src=\"moon.jpg\" alt=\"moon\" /></a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/uri\"><img src=\"moon.jpg\" alt=\"moon\" /></a></p>\n")
     }
 
     @TestCase
@@ -5930,7 +5930,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo [bar](/uri)][ref]\n\n[ref]: /uri\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo <a href=\"/uri\">bar</a>]<a href=\"/uri\">ref</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo <a href=\"/uri\">bar</a>]<a href=\"/uri\">ref</a></p>\n")
     }
 
     @TestCase
@@ -5941,7 +5941,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo *bar [baz][ref]*][ref]\n\n[ref]: /uri\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo <em>bar <a href=\"/uri\">baz</a></em>]<a href=\"/uri\">ref</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo <em>bar <a href=\"/uri\">baz</a></em>]<a href=\"/uri\">ref</a></p>\n")
     }
 
     @TestCase
@@ -5952,7 +5952,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*[foo*][ref]\n\n[ref]: /uri\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>*<a href=\"/uri\">foo*</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>*<a href=\"/uri\">foo*</a></p>\n")
     }
 
     @TestCase
@@ -5963,7 +5963,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo *bar][ref]\n\n[ref]: /uri\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/uri\">foo *bar</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/uri\">foo *bar</a></p>\n")
     }
 
     @TestCase
@@ -5974,7 +5974,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo <bar attr=\"][ref]\">\n\n[ref]: /uri\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo <bar attr=\"][ref]\"></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo <bar attr=\"][ref]\"></p>\n")
     }
 
     @TestCase
@@ -5985,7 +5985,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo`][ref]`\n\n[ref]: /uri\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo<code>][ref]</code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo<code>][ref]</code></p>\n")
     }
 
     @TestCase
@@ -5996,7 +5996,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo<http://example.com/?search=][ref]>\n\n[ref]: /uri\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo<a href=\"http://example.com/?search=%5D%5Bref%5D\">http://example.com/?search=][ref]</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo<a href=\"http://example.com/?search=%5D%5Bref%5D\">http://example.com/?search=][ref]</a></p>\n")
     }
 
     @TestCase
@@ -6007,7 +6007,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo][BaR]\n\n[bar]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\" title=\"title\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\" title=\"title\">foo</a></p>\n")
     }
 
     @TestCase
@@ -6018,7 +6018,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[Толпой][Толпой] is a Russian word.\n\n[ТОЛПОЙ]: /url\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\">Толпой</a> is a Russian word.</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\">Толпой</a> is a Russian word.</p>\n")
     }
 
     @TestCase
@@ -6029,7 +6029,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[Foo\n  bar]: /url\n\n[Baz][Foo bar]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\">Baz</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\">Baz</a></p>\n")
     }
 
     @TestCase
@@ -6040,7 +6040,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo] [bar]\n\n[bar]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo] <a href=\"/url\" title=\"title\">bar</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo] <a href=\"/url\" title=\"title\">bar</a></p>\n")
     }
 
     @TestCase
@@ -6051,7 +6051,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]\n[bar]\n\n[bar]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo]\n<a href=\"/url\" title=\"title\">bar</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo]\n<a href=\"/url\" title=\"title\">bar</a></p>\n")
     }
 
     @TestCase
@@ -6062,7 +6062,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]: /url1\n\n[foo]: /url2\n\n[bar][foo]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url1\">bar</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url1\">bar</a></p>\n")
     }
 
     @TestCase
@@ -6073,7 +6073,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[bar][foo\\!]\n\n[foo!]: /url\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[bar][foo!]</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[bar][foo!]</p>\n")
     }
 
     @TestCase
@@ -6084,7 +6084,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo][ref[]\n\n[ref[]: /uri\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo][ref[]</p>\n<p>[ref[]: /uri</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo][ref[]</p>\n<p>[ref[]: /uri</p>\n")
     }
 
     @TestCase
@@ -6095,7 +6095,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo][ref[bar]]\n\n[ref[bar]]: /uri\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo][ref[bar]]</p>\n<p>[ref[bar]]: /uri</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo][ref[bar]]</p>\n<p>[ref[bar]]: /uri</p>\n")
     }
 
     @TestCase
@@ -6106,7 +6106,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[[[foo]]]\n\n[[[foo]]]: /url\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[[[foo]]]</p>\n<p>[[[foo]]]: /url</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[[[foo]]]</p>\n<p>[[[foo]]]: /url</p>\n")
     }
 
     @TestCase
@@ -6117,7 +6117,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo][ref\\[]\n\n[ref\\[]: /uri\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/uri\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/uri\">foo</a></p>\n")
     }
 
     @TestCase
@@ -6128,7 +6128,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[bar\\\\]: /uri\n\n[bar\\\\]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/uri\">bar\\</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/uri\">bar\\</a></p>\n")
     }
 
     @TestCase
@@ -6139,7 +6139,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[]\n\n[]: /uri\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[]</p>\n<p>[]: /uri</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[]</p>\n<p>[]: /uri</p>\n")
     }
 
     @TestCase
@@ -6150,7 +6150,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[\n ]\n\n[\n ]: /uri\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[\n]</p>\n<p>[\n]: /uri</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[\n]</p>\n<p>[\n]: /uri</p>\n")
     }
 
     @TestCase
@@ -6161,7 +6161,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo][]\n\n[foo]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\" title=\"title\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\" title=\"title\">foo</a></p>\n")
     }
 
     @TestCase
@@ -6172,7 +6172,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[*foo* bar][]\n\n[*foo* bar]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\" title=\"title\"><em>foo</em> bar</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\" title=\"title\"><em>foo</em> bar</a></p>\n")
     }
 
     @TestCase
@@ -6183,7 +6183,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[Foo][]\n\n[foo]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\" title=\"title\">Foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\" title=\"title\">Foo</a></p>\n")
     }
 
     @TestCase
@@ -6194,7 +6194,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo] \n[]\n\n[foo]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\" title=\"title\">foo</a>\n[]</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\" title=\"title\">foo</a>\n[]</p>\n")
     }
 
     @TestCase
@@ -6205,7 +6205,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]\n\n[foo]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\" title=\"title\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\" title=\"title\">foo</a></p>\n")
     }
 
     @TestCase
@@ -6216,7 +6216,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[*foo* bar]\n\n[*foo* bar]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\" title=\"title\"><em>foo</em> bar</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\" title=\"title\"><em>foo</em> bar</a></p>\n")
     }
 
     @TestCase
@@ -6227,7 +6227,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[[*foo* bar]]\n\n[*foo* bar]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[<a href=\"/url\" title=\"title\"><em>foo</em> bar</a>]</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[<a href=\"/url\" title=\"title\"><em>foo</em> bar</a>]</p>\n")
     }
 
     @TestCase
@@ -6238,7 +6238,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[[bar [foo]\n\n[foo]: /url\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[[bar <a href=\"/url\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[[bar <a href=\"/url\">foo</a></p>\n")
     }
 
     @TestCase
@@ -6249,7 +6249,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[Foo]\n\n[foo]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\" title=\"title\">Foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\" title=\"title\">Foo</a></p>\n")
     }
 
     @TestCase
@@ -6260,7 +6260,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo] bar\n\n[foo]: /url\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url\">foo</a> bar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url\">foo</a> bar</p>\n")
     }
 
     @TestCase
@@ -6271,7 +6271,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("\\[foo]\n\n[foo]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo]</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo]</p>\n")
     }
 
     @TestCase
@@ -6282,7 +6282,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo*]: /url\n\n*[foo*]\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>*<a href=\"/url\">foo*</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>*<a href=\"/url\">foo*</a></p>\n")
     }
 
     @TestCase
@@ -6293,7 +6293,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo][bar]\n\n[foo]: /url1\n[bar]: /url2\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url2\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url2\">foo</a></p>\n")
     }
 
     @TestCase
@@ -6304,7 +6304,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo][]\n\n[foo]: /url1\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url1\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url1\">foo</a></p>\n")
     }
 
     @TestCase
@@ -6315,7 +6315,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo]()\n\n[foo]: /url1\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"\">foo</a></p>\n")
     }
 
     @TestCase
@@ -6326,7 +6326,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo](not a link)\n\n[foo]: /url1\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url1\">foo</a>(not a link)</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url1\">foo</a>(not a link)</p>\n")
     }
 
     @TestCase
@@ -6337,7 +6337,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo][bar][baz]\n\n[baz]: /url\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo]<a href=\"/url\">bar</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo]<a href=\"/url\">bar</a></p>\n")
     }
 
     @TestCase
@@ -6348,7 +6348,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo][bar][baz]\n\n[baz]: /url1\n[bar]: /url2\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"/url2\">foo</a><a href=\"/url1\">baz</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"/url2\">foo</a><a href=\"/url1\">baz</a></p>\n")
     }
 
     @TestCase
@@ -6359,7 +6359,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("[foo][bar][baz]\n\n[baz]: /url1\n[foo]: /url2\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>[foo]<a href=\"/url1\">bar</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>[foo]<a href=\"/url1\">bar</a></p>\n")
     }
 
     @TestCase
@@ -6370,7 +6370,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![foo](/url \"title\")\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"/url\" alt=\"foo\" title=\"title\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"/url\" alt=\"foo\" title=\"title\" /></p>\n")
     }
 
     @TestCase
@@ -6381,7 +6381,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![foo *bar*]\n\n[foo *bar*]: train.jpg \"train & tracks\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"train.jpg\" alt=\"foo bar\" title=\"train &amp; tracks\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"train.jpg\" alt=\"foo bar\" title=\"train &amp; tracks\" /></p>\n")
     }
 
     @TestCase
@@ -6392,7 +6392,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![foo ![bar](/url)](/url2)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"/url2\" alt=\"foo bar\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"/url2\" alt=\"foo bar\" /></p>\n")
     }
 
     @TestCase
@@ -6403,7 +6403,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![foo [bar](/url)](/url2)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"/url2\" alt=\"foo bar\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"/url2\" alt=\"foo bar\" /></p>\n")
     }
 
     @TestCase
@@ -6414,7 +6414,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![foo *bar*][]\n\n[foo *bar*]: train.jpg \"train & tracks\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"train.jpg\" alt=\"foo bar\" title=\"train &amp; tracks\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"train.jpg\" alt=\"foo bar\" title=\"train &amp; tracks\" /></p>\n")
     }
 
     @TestCase
@@ -6425,7 +6425,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![foo *bar*][foobar]\n\n[FOOBAR]: train.jpg \"train & tracks\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"train.jpg\" alt=\"foo bar\" title=\"train &amp; tracks\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"train.jpg\" alt=\"foo bar\" title=\"train &amp; tracks\" /></p>\n")
     }
 
     @TestCase
@@ -6436,7 +6436,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![foo](train.jpg)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"train.jpg\" alt=\"foo\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"train.jpg\" alt=\"foo\" /></p>\n")
     }
 
     @TestCase
@@ -6447,7 +6447,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("My ![foo bar](/path/to/train.jpg  \"title\"   )\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>My <img src=\"/path/to/train.jpg\" alt=\"foo bar\" title=\"title\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>My <img src=\"/path/to/train.jpg\" alt=\"foo bar\" title=\"title\" /></p>\n")
     }
 
     @TestCase
@@ -6458,7 +6458,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![foo](<url>)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"url\" alt=\"foo\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"url\" alt=\"foo\" /></p>\n")
     }
 
     @TestCase
@@ -6469,7 +6469,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![](/url)\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"/url\" alt=\"\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"/url\" alt=\"\" /></p>\n")
     }
 
     @TestCase
@@ -6480,7 +6480,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![foo][bar]\n\n[bar]: /url\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"/url\" alt=\"foo\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"/url\" alt=\"foo\" /></p>\n")
     }
 
     @TestCase
@@ -6491,7 +6491,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![foo][bar]\n\n[BAR]: /url\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"/url\" alt=\"foo\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"/url\" alt=\"foo\" /></p>\n")
     }
 
     @TestCase
@@ -6502,7 +6502,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![foo][]\n\n[foo]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"/url\" alt=\"foo\" title=\"title\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"/url\" alt=\"foo\" title=\"title\" /></p>\n")
     }
 
     @TestCase
@@ -6513,7 +6513,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![*foo* bar][]\n\n[*foo* bar]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"/url\" alt=\"foo bar\" title=\"title\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"/url\" alt=\"foo bar\" title=\"title\" /></p>\n")
     }
 
     @TestCase
@@ -6524,7 +6524,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![Foo][]\n\n[foo]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"/url\" alt=\"Foo\" title=\"title\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"/url\" alt=\"Foo\" title=\"title\" /></p>\n")
     }
 
     @TestCase
@@ -6535,7 +6535,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![foo] \n[]\n\n[foo]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"/url\" alt=\"foo\" title=\"title\" />\n[]</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"/url\" alt=\"foo\" title=\"title\" />\n[]</p>\n")
     }
 
     @TestCase
@@ -6546,7 +6546,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![foo]\n\n[foo]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"/url\" alt=\"foo\" title=\"title\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"/url\" alt=\"foo\" title=\"title\" /></p>\n")
     }
 
     @TestCase
@@ -6557,7 +6557,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![*foo* bar]\n\n[*foo* bar]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"/url\" alt=\"foo bar\" title=\"title\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"/url\" alt=\"foo bar\" title=\"title\" /></p>\n")
     }
 
     @TestCase
@@ -6568,7 +6568,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![[foo]]\n\n[[foo]]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>![[foo]]</p>\n<p>[[foo]]: /url &quot;title&quot;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>![[foo]]</p>\n<p>[[foo]]: /url &quot;title&quot;</p>\n")
     }
 
     @TestCase
@@ -6579,7 +6579,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("![Foo]\n\n[foo]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><img src=\"/url\" alt=\"Foo\" title=\"title\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><img src=\"/url\" alt=\"Foo\" title=\"title\" /></p>\n")
     }
 
     @TestCase
@@ -6590,7 +6590,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("!\\[foo]\n\n[foo]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>![foo]</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>![foo]</p>\n")
     }
 
     @TestCase
@@ -6601,7 +6601,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("\\![foo]\n\n[foo]: /url \"title\"\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>!<a href=\"/url\" title=\"title\">foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>!<a href=\"/url\" title=\"title\">foo</a></p>\n")
     }
 
     @TestCase
@@ -6612,7 +6612,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<http://foo.bar.baz>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"http://foo.bar.baz\">http://foo.bar.baz</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"http://foo.bar.baz\">http://foo.bar.baz</a></p>\n")
     }
 
     @TestCase
@@ -6623,7 +6623,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<http://foo.bar.baz/test?q=hello&id=22&boolean>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"http://foo.bar.baz/test?q=hello&amp;id=22&amp;boolean\">http://foo.bar.baz/test?q=hello&amp;id=22&amp;boolean</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"http://foo.bar.baz/test?q=hello&amp;id=22&amp;boolean\">http://foo.bar.baz/test?q=hello&amp;id=22&amp;boolean</a></p>\n")
     }
 
     @TestCase
@@ -6634,7 +6634,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<irc://foo.bar:2233/baz>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"irc://foo.bar:2233/baz\">irc://foo.bar:2233/baz</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"irc://foo.bar:2233/baz\">irc://foo.bar:2233/baz</a></p>\n")
     }
 
     @TestCase
@@ -6645,7 +6645,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<MAILTO:FOO@BAR.BAZ>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"MAILTO:FOO@BAR.BAZ\">MAILTO:FOO@BAR.BAZ</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"MAILTO:FOO@BAR.BAZ\">MAILTO:FOO@BAR.BAZ</a></p>\n")
     }
 
     @TestCase
@@ -6656,7 +6656,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<a+b+c:d>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"a+b+c:d\">a+b+c:d</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"a+b+c:d\">a+b+c:d</a></p>\n")
     }
 
     @TestCase
@@ -6667,7 +6667,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<made-up-scheme://foo,bar>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"made-up-scheme://foo,bar\">made-up-scheme://foo,bar</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"made-up-scheme://foo,bar\">made-up-scheme://foo,bar</a></p>\n")
     }
 
     @TestCase
@@ -6678,7 +6678,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<http://../>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"http://../\">http://../</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"http://../\">http://../</a></p>\n")
     }
 
     @TestCase
@@ -6689,7 +6689,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<localhost:5001/foo>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"localhost:5001/foo\">localhost:5001/foo</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"localhost:5001/foo\">localhost:5001/foo</a></p>\n")
     }
 
     @TestCase
@@ -6700,7 +6700,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<http://foo.bar/baz bim>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>&lt;http://foo.bar/baz bim&gt;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>&lt;http://foo.bar/baz bim&gt;</p>\n")
     }
 
     @TestCase
@@ -6711,7 +6711,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<http://example.com/\\[\\>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"http://example.com/%5C%5B%5C\">http://example.com/\\[\\</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"http://example.com/%5C%5B%5C\">http://example.com/\\[\\</a></p>\n")
     }
 
     @TestCase
@@ -6722,7 +6722,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<foo@bar.example.com>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"mailto:foo@bar.example.com\">foo@bar.example.com</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"mailto:foo@bar.example.com\">foo@bar.example.com</a></p>\n")
     }
 
     @TestCase
@@ -6733,7 +6733,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<foo+special@Bar.baz-bar0.com>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"mailto:foo+special@Bar.baz-bar0.com\">foo+special@Bar.baz-bar0.com</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"mailto:foo+special@Bar.baz-bar0.com\">foo+special@Bar.baz-bar0.com</a></p>\n")
     }
 
     @TestCase
@@ -6744,7 +6744,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<foo\\+@bar.example.com>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>&lt;foo+@bar.example.com&gt;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>&lt;foo+@bar.example.com&gt;</p>\n")
     }
 
     @TestCase
@@ -6755,7 +6755,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>&lt;&gt;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>&lt;&gt;</p>\n")
     }
 
     @TestCase
@@ -6766,7 +6766,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("< http://foo.bar >\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>&lt; http://foo.bar &gt;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>&lt; http://foo.bar &gt;</p>\n")
     }
 
     @TestCase
@@ -6777,7 +6777,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<m:abc>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>&lt;m:abc&gt;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>&lt;m:abc&gt;</p>\n")
     }
 
     @TestCase
@@ -6788,7 +6788,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<foo.bar.baz>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>&lt;foo.bar.baz&gt;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>&lt;foo.bar.baz&gt;</p>\n")
     }
 
     @TestCase
@@ -6799,7 +6799,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("http://example.com\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>http://example.com</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>http://example.com</p>\n")
     }
 
     @TestCase
@@ -6810,7 +6810,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo@bar.example.com\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo@bar.example.com</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo@bar.example.com</p>\n")
     }
 
     @TestCase
@@ -6821,7 +6821,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("www.commonmark.org\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<p><a href=\"http://www.commonmark.org\">www.commonmark.org</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<p><a href=\"http://www.commonmark.org\">www.commonmark.org</a></p>\n")
     }
 
     @TestCase
@@ -6832,7 +6832,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Visit www.commonmark.org/help for more information.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<p>Visit <a href=\"http://www.commonmark.org/help\">www.commonmark.org/help</a> for more information.</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<p>Visit <a href=\"http://www.commonmark.org/help\">www.commonmark.org/help</a> for more information.</p>\n")
     }
 
     @TestCase
@@ -6843,7 +6843,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Visit www.commonmark.org.\n\nVisit www.commonmark.org/a.b.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<p>Visit <a href=\"http://www.commonmark.org\">www.commonmark.org</a>.</p>\n<p>Visit <a href=\"http://www.commonmark.org/a.b\">www.commonmark.org/a.b</a>.</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<p>Visit <a href=\"http://www.commonmark.org\">www.commonmark.org</a>.</p>\n<p>Visit <a href=\"http://www.commonmark.org/a.b\">www.commonmark.org/a.b</a>.</p>\n")
     }
 
     @TestCase
@@ -6854,7 +6854,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("www.google.com/search?q=Markup+(business)\n\n(www.google.com/search?q=Markup+(business))\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<p><a href=\"http://www.google.com/search?q=Markup+(business)\">www.google.com/search?q=Markup+(business)</a></p>\n<p>(<a href=\"http://www.google.com/search?q=Markup+(business)\">www.google.com/search?q=Markup+(business)</a>)</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<p><a href=\"http://www.google.com/search?q=Markup+(business)\">www.google.com/search?q=Markup+(business)</a></p>\n<p>(<a href=\"http://www.google.com/search?q=Markup+(business)\">www.google.com/search?q=Markup+(business)</a>)</p>\n")
     }
 
     @TestCase
@@ -6865,7 +6865,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("www.google.com/search?q=(business))+ok\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<p><a href=\"http://www.google.com/search?q=(business))+ok\">www.google.com/search?q=(business))+ok</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<p><a href=\"http://www.google.com/search?q=(business))+ok\">www.google.com/search?q=(business))+ok</a></p>\n")
     }
 
     @TestCase
@@ -6876,7 +6876,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("www.google.com/search?q=commonmark&hl=en\n\nwww.google.com/search?q=commonmark&hl;\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<p><a href=\"http://www.google.com/search?q=commonmark&amp;hl=en\">www.google.com/search?q=commonmark&amp;hl=en</a></p>\n<p><a href=\"http://www.google.com/search?q=commonmark\">www.google.com/search?q=commonmark</a>&amp;hl;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<p><a href=\"http://www.google.com/search?q=commonmark&amp;hl=en\">www.google.com/search?q=commonmark&amp;hl=en</a></p>\n<p><a href=\"http://www.google.com/search?q=commonmark\">www.google.com/search?q=commonmark</a>&amp;hl;</p>\n")
     }
 
     @TestCase
@@ -6887,7 +6887,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("www.commonmark.org/he<lp\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<p><a href=\"http://www.commonmark.org/he\">www.commonmark.org/he</a>&lt;lp</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<p><a href=\"http://www.commonmark.org/he\">www.commonmark.org/he</a>&lt;lp</p>\n")
     }
 
     @TestCase
@@ -6899,7 +6899,7 @@ class Gfm029ConformanceTest {
             .parse(
                 "http://commonmark.org\n\n(Visit https://encrypted.google.com/search?q=Markup+(business))\n\nAnonymous FTP is available at ftp://foo.bar.baz.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<p><a href=\"http://commonmark.org\">http://commonmark.org</a></p>\n<p>(Visit <a href=\"https://encrypted.google.com/search?q=Markup+(business)\">https://encrypted.google.com/search?q=Markup+(business)</a>)</p>\n<p>Anonymous FTP is available at <a href=\"ftp://foo.bar.baz\">ftp://foo.bar.baz</a>.</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<p><a href=\"http://commonmark.org\">http://commonmark.org</a></p>\n<p>(Visit <a href=\"https://encrypted.google.com/search?q=Markup+(business)\">https://encrypted.google.com/search?q=Markup+(business)</a>)</p>\n<p>Anonymous FTP is available at <a href=\"ftp://foo.bar.baz\">ftp://foo.bar.baz</a>.</p>\n")
     }
 
     @TestCase
@@ -6910,7 +6910,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo@bar.baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<p><a href=\"mailto:foo@bar.baz\">foo@bar.baz</a></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<p><a href=\"mailto:foo@bar.baz\">foo@bar.baz</a></p>\n")
     }
 
     @TestCase
@@ -6921,7 +6921,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("hello@mail+xyz.example isn't valid, but hello+xyz@mail.example is.\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<p>hello@mail+xyz.example isn't valid, but <a href=\"mailto:hello+xyz@mail.example\">hello+xyz@mail.example</a> is.</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<p>hello@mail+xyz.example isn't valid, but <a href=\"mailto:hello+xyz@mail.example\">hello+xyz@mail.example</a> is.</p>\n")
     }
 
     @TestCase
@@ -6932,7 +6932,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("a.b-c_d@a.b\n\na.b-c_d@a.b.\n\na.b-c_d@a.b-\n\na.b-c_d@a.b_\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<p><a href=\"mailto:a.b-c_d@a.b\">a.b-c_d@a.b</a></p>\n<p><a href=\"mailto:a.b-c_d@a.b\">a.b-c_d@a.b</a>.</p>\n<p>a.b-c_d@a.b-</p>\n<p>a.b-c_d@a.b_</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<p><a href=\"mailto:a.b-c_d@a.b\">a.b-c_d@a.b</a></p>\n<p><a href=\"mailto:a.b-c_d@a.b\">a.b-c_d@a.b</a>.</p>\n<p>a.b-c_d@a.b-</p>\n<p>a.b-c_d@a.b_</p>\n")
     }
 
     @TestCase
@@ -6943,7 +6943,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<a><bab><c2c>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a><bab><c2c></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a><bab><c2c></p>\n")
     }
 
     @TestCase
@@ -6954,7 +6954,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<a/><b2/>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a/><b2/></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a/><b2/></p>\n")
     }
 
     @TestCase
@@ -6965,7 +6965,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<a  /><b2\ndata=\"foo\" >\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a  /><b2\ndata=\"foo\" ></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a  /><b2\ndata=\"foo\" ></p>\n")
     }
 
     @TestCase
@@ -6976,7 +6976,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<a foo=\"bar\" bam = 'baz <em>\"</em>'\n_boolean zoop:33=zoop:33 />\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a foo=\"bar\" bam = 'baz <em>\"</em>'\n_boolean zoop:33=zoop:33 /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a foo=\"bar\" bam = 'baz <em>\"</em>'\n_boolean zoop:33=zoop:33 /></p>\n")
     }
 
     @TestCase
@@ -6987,7 +6987,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo <responsive-image src=\"foo.jpg\" />\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>Foo <responsive-image src=\"foo.jpg\" /></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>Foo <responsive-image src=\"foo.jpg\" /></p>\n")
     }
 
     @TestCase
@@ -6998,7 +6998,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<33> <__>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>&lt;33&gt; &lt;__&gt;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>&lt;33&gt; &lt;__&gt;</p>\n")
     }
 
     @TestCase
@@ -7009,7 +7009,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<a h*#ref=\"hi\">\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>&lt;a h*#ref=&quot;hi&quot;&gt;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>&lt;a h*#ref=&quot;hi&quot;&gt;</p>\n")
     }
 
     @TestCase
@@ -7020,7 +7020,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<a href=\"hi'> <a href=hi'>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>&lt;a href=&quot;hi'&gt; &lt;a href=hi'&gt;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>&lt;a href=&quot;hi'&gt; &lt;a href=hi'&gt;</p>\n")
     }
 
     @TestCase
@@ -7031,7 +7031,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("< a><\nfoo><bar/ >\n<foo bar=baz\nbim!bop />\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>&lt; a&gt;&lt;\nfoo&gt;&lt;bar/ &gt;\n&lt;foo bar=baz\nbim!bop /&gt;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>&lt; a&gt;&lt;\nfoo&gt;&lt;bar/ &gt;\n&lt;foo bar=baz\nbim!bop /&gt;</p>\n")
     }
 
     @TestCase
@@ -7042,7 +7042,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<a href='bar'title=title>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>&lt;a href='bar'title=title&gt;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>&lt;a href='bar'title=title&gt;</p>\n")
     }
 
     @TestCase
@@ -7053,7 +7053,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("</a></foo >\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p></a></foo ></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p></a></foo ></p>\n")
     }
 
     @TestCase
@@ -7064,7 +7064,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("</a href=\"foo\">\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>&lt;/a href=&quot;foo&quot;&gt;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>&lt;/a href=&quot;foo&quot;&gt;</p>\n")
     }
 
     @TestCase
@@ -7075,7 +7075,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo <!-- this is a\ncomment - with hyphen -->\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo <!-- this is a\ncomment - with hyphen --></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo <!-- this is a\ncomment - with hyphen --></p>\n")
     }
 
     @TestCase
@@ -7086,7 +7086,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo <!-- not a comment -- two hyphens -->\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo &lt;!-- not a comment -- two hyphens --&gt;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo &lt;!-- not a comment -- two hyphens --&gt;</p>\n")
     }
 
     @TestCase
@@ -7097,7 +7097,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo <!--> foo -->\n\nfoo <!-- foo--->\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo &lt;!--&gt; foo --&gt;</p>\n<p>foo &lt;!-- foo---&gt;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo &lt;!--&gt; foo --&gt;</p>\n<p>foo &lt;!-- foo---&gt;</p>\n")
     }
 
     @TestCase
@@ -7108,7 +7108,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo <?php echo $a; ?>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo <?php echo $a; ?></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo <?php echo $a; ?></p>\n")
     }
 
     @TestCase
@@ -7119,7 +7119,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo <!ELEMENT br EMPTY>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo <!ELEMENT br EMPTY></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo <!ELEMENT br EMPTY></p>\n")
     }
 
     @TestCase
@@ -7130,7 +7130,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo <![CDATA[>&<]]>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo <![CDATA[>&<]]></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo <![CDATA[>&<]]></p>\n")
     }
 
     @TestCase
@@ -7141,7 +7141,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo <a href=\"&ouml;\">\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo <a href=\"&ouml;\"></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo <a href=\"&ouml;\"></p>\n")
     }
 
     @TestCase
@@ -7152,7 +7152,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo <a href=\"\\*\">\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo <a href=\"\\*\"></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo <a href=\"\\*\"></p>\n")
     }
 
     @TestCase
@@ -7163,7 +7163,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<a href=\"\\\"\">\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>&lt;a href=&quot;&quot;&quot;&gt;</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>&lt;a href=&quot;&quot;&quot;&gt;</p>\n")
     }
 
     @TestCase
@@ -7175,7 +7175,7 @@ class Gfm029ConformanceTest {
             .parse(
                 "<strong> <title> <style> <em>\n\n<blockquote>\n  <xmp> is disallowed.  <XMP> is also disallowed.\n</blockquote>\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(document), "<p><strong> &lt;title> &lt;style> <em></p>\n<blockquote>\n  &lt;xmp> is disallowed.  &lt;XMP> is also disallowed.\n</blockquote>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() }).render(document), "<p><strong> &lt;title> &lt;style> <em></p>\n<blockquote>\n  &lt;xmp> is disallowed.  &lt;XMP> is also disallowed.\n</blockquote>\n")
     }
 
     @TestCase
@@ -7186,7 +7186,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo  \nbaz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo<br />\nbaz</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo<br />\nbaz</p>\n")
     }
 
     @TestCase
@@ -7197,7 +7197,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo\\\nbaz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo<br />\nbaz</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo<br />\nbaz</p>\n")
     }
 
     @TestCase
@@ -7208,7 +7208,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo       \nbaz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo<br />\nbaz</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo<br />\nbaz</p>\n")
     }
 
     @TestCase
@@ -7219,7 +7219,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo  \n     bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo<br />\nbar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo<br />\nbar</p>\n")
     }
 
     @TestCase
@@ -7230,7 +7230,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo\\\n     bar\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo<br />\nbar</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo<br />\nbar</p>\n")
     }
 
     @TestCase
@@ -7241,7 +7241,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo  \nbar*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo<br />\nbar</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo<br />\nbar</em></p>\n")
     }
 
     @TestCase
@@ -7252,7 +7252,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("*foo\\\nbar*\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>foo<br />\nbar</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>foo<br />\nbar</em></p>\n")
     }
 
     @TestCase
@@ -7263,7 +7263,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("`code \nspan`\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code>code  span</code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code>code  span</code></p>\n")
     }
 
     @TestCase
@@ -7274,7 +7274,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("`code\\\nspan`\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><code>code\\ span</code></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><code>code\\ span</code></p>\n")
     }
 
     @TestCase
@@ -7285,7 +7285,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<a href=\"foo  \nbar\">\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"foo  \nbar\"></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"foo  \nbar\"></p>\n")
     }
 
     @TestCase
@@ -7296,7 +7296,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("<a href=\"foo\\\nbar\">\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><a href=\"foo\\\nbar\"></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><a href=\"foo\\\nbar\"></p>\n")
     }
 
     @TestCase
@@ -7307,7 +7307,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo\\\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo\\</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo\\</p>\n")
     }
 
     @TestCase
@@ -7318,7 +7318,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo  \n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo</p>\n")
     }
 
     @TestCase
@@ -7329,7 +7329,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("### foo\\\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h3>foo\\</h3>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h3>foo\\</h3>\n")
     }
 
     @TestCase
@@ -7340,7 +7340,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("### foo  \n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<h3>foo</h3>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<h3>foo</h3>\n")
     }
 
     @TestCase
@@ -7351,7 +7351,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo\nbaz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo\nbaz</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo\nbaz</p>\n")
     }
 
     @TestCase
@@ -7362,7 +7362,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("foo \n baz\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>foo\nbaz</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>foo\nbaz</p>\n")
     }
 
     @TestCase
@@ -7373,7 +7373,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("hello $.;'there\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>hello $.;'there</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>hello $.;'there</p>\n")
     }
 
     @TestCase
@@ -7384,7 +7384,7 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Foo χρῆν\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>Foo χρῆν</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>Foo χρῆν</p>\n")
     }
 
     @TestCase
@@ -7395,6 +7395,6 @@ class Gfm029ConformanceTest {
             .build()
             .parse("Multiple     spaces\n")
             .document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p>Multiple     spaces</p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p>Multiple     spaces</p>\n")
     }
 }

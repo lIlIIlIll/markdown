@@ -2,18 +2,24 @@
 
 ## Final Status
 
-**COMPLETE** — 125/125 项均为 `pass`；canonical benchmark 与 branch-tip-bound 完整 release gate 均已通过。
+**INCOMPLETE** — 当前为 120/125 `pass`、5 项 `implemented_unverified`；本地 1508/1508 已通过，但冻结提交的 schema-v5 canonical benchmark 与完整 release-evidence bundle 尚未执行。
+
+## 2026-08-31 Current Audit Remediation
+
+确认的 runtime、renderer、artifact、resource-limit、RawBlock complexity 和 benchmark identity/semantic-gate 问题均已实现回归修复。二十三轮对抗审查进一步关闭了 range-before-limit、duplicate manifest、HTML/indented/DSL streaming/literal limits、SDK/native/environment/comparator/source/binary/runtime-DSO provenance、pipe drain、binary UTF-8 policy、ProfileKind identity、renderer/RawBlock/fused cancellation、false-ATX/fence incremental complexity、GFM tag boundary、Git-object provenance、buffered String preflight、paired-DSL closer 二次复杂度、native tool executable/environment 身份、CommonMark type-1 HTML 后继边界，以及 API package/member owner、annotation/comment/raw-string/interpolation masking、effective visibility、multiline/type-alias/import/package identity、split/wildcard import、token whitespace/operator/numeric/NFC、Unicode/escaped identifier、单行非空 body、实现体误入 identity、modifier/redef/const/implicit sealed surface、同名 constructor 参数成员与 generic/comparison 分界、direct-scope 同线多声明、token-separated declaration head、indent continuation、同线 package prefix、protected subclass surface 和 source-path false identity 缺口。第 21 轮关闭了 RawBlock unfinished fenced/HTML/indented 累计 literal limit 与 retained product Git object 离线复验；第 22 轮进一步用离线可复现重建绑定源码、工具链、命令和 retained executable/DSO bytes，并拒绝 nested Git source、replace refs、graft/shallow/alternates；第 23 轮修正文档中的旧 schema-v4 命令后，两名全新 reviewer 均返回 ACCEPTED/NO_MATERIAL_FINDINGS。当前本地 format/static/build、docs `44/23/4`、API checker `47/47`、public API snapshot `1436`、same-language schema-v5 verifier `111/111`、driver identity `18/18`、native contracts `10/10`，以及完整 Cangjie suite `1508/1508` 均通过。
+
+旧 same-language raw 仍是 schema v4，且 cmark/cmark-gfm raw 绑定旧 product tree。因此 `MD-SEC-002`、`MD-PERF-001`、`MD-PERF-002`、`MD-REL-001` 和 `MD-QUAL-001` 保持 `implemented_unverified`。下面的 2026-08-30 generated release evidence 是历史记录，不代表当前候选；固定提交的远端 canonical 与 clean release gate 完成后才能覆盖。
 
 <!-- release-evidence:start -->
 ## Generated Release Evidence
 
 - Version/status: `0.9.0` / `evidence-ready`.
-- Artifact commit: `ebf445cf66311fb2253ab7be0ec5517c79f0205d`.
-- Evidence subject commit: `ebf445cf66311fb2253ab7be0ec5517c79f0205d`; the retained execution manifest binds the clean gate commit and Git tree.
+- Artifact commit: `6e5a207d07903a60f8270c41badac1bb4cb104b5`.
+- Evidence subject commit: `6e5a207d07903a60f8270c41badac1bb4cb104b5`; the retained execution manifest binds the clean gate commit and Git tree.
 - Hosted CI verified at that HEAD: `False`; published: `False`.
-- Tests: `1457/1457` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `2.42x`, GFM `2.35x`, status `current`.
-- Raw digest: `2f4bd94efd0d486ccbdb301e8cc9f67b7a1684bd1c81d8b1d788c8bc72245f9e`.
+- Tests: `1511/1511` passed, `0` skipped, `0` failed.
+- Benchmark: CommonMark `2.36x`, GFM `1.79x`, status `current`.
+- Raw digest: `49e72c7b6049cddee2cb85dbb3d783a11b1c8a5652287dc9acf72ce1764bdef3`.
 
 All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->

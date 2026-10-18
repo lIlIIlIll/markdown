@@ -50,6 +50,13 @@ finish 会失败。session 不是线程安全对象。
 Resolved mode 会先建立 reference index。RawBlock mode 不提供后置 reference resolution。
 详细契约见 [Core API](api/core.md#source-events)。
 
+`RawBlockEventSession.feed()` 只扫描新增 bytes，并在收到 chunk 时立即检查
+`maximumInputBytes` 和 `maximumLineBytes`。session 通过共享 pending buffer 和游标保留
+未闭合 block。fenced code 和 paired DSL 的 opener/closer 都由增量状态跟踪；正文中看似
+新 block 的行或 closer 后的长尾随空白不会触发重复解析。实际字符比较会计入
+`OperationBudget`。即使调用者逐 byte feed，也不会每次复制或重扫全部历史输入或增长中的
+当前行。
+
 ## Parse limits
 
 `ParseLimits.safe()` 是默认值。构造自定义 limits 时，所有参数必须为正数。
@@ -59,7 +66,7 @@ Resolved mode 会先建立 reference index。RawBlock mode 不提供后置 refer
 | `maximumInputBytes` | 完整输入 |
 | `maximumLineBytes` | 单行 |
 | `maximumNestingDepth` | block/inline nesting |
-| `maximumAstNodes` | 内建、扩展和 SPI 生成节点 |
+| `maximumAstNodes` | 实际构造的内建、扩展和 SPI AST 节点 |
 | `maximumReferences` | reference definitions |
 | `maximumTableColumns` | table columns |
 | `maximumUrlBytes` | link/image destination |
@@ -71,7 +78,12 @@ Resolved mode 会先建立 reference index。RawBlock mode 不提供后置 refer
 `ParseLimits.trusted()` 提高 size limit，但不关闭 overflow、capacity、acyclic、stack 或
 output protection。
 
-节点和 literal 限制在构造/累计路径检查，不依赖 parse 后全树遍历。
+节点和 literal 限制在构造/累计路径检查，不依赖 parse 后全树遍历。fenced code、
+indented code 和 HTML literal 在追加每个片段前检查累计值。
+
+Fused HTML execution 不创建 AST，因此 `maximumAstNodes` 不模拟“等价节点数”。它仍执行
+input、line、literal 和 output limits。需要 AST node limit 参与执行结果时，选择
+`HtmlExecutionMode.FullAst`。
 
 ## Operation budget
 

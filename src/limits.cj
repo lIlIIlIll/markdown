@@ -45,19 +45,50 @@ internal class BoundedLiteralBuilder {
     }
 }
 
+/**
+ * 解析和渲染使用的结构上限集合。
+ *
+ * 所有构造参数必须为正数。`safe()` 是默认配置；`trusted()` 为可信、
+ * 较大输入提供更高上限，但不会改变解析语义。
+ */
 public class ParseLimits {
+    /** 输入的最大字节数。 */
     public let maximumInputBytes: Int64
+    /** 单行的最大字节数。 */
     public let maximumLineBytes: Int64
+    /** 最大嵌套深度。 */
     public let maximumNestingDepth: Int64
+    /** AST 节点总数上限。 */
     public let maximumAstNodes: Int64
+    /** 引用定义数量上限。 */
     public let maximumReferences: Int64
+    /** 表格列数上限。 */
     public let maximumTableColumns: Int64
+    /** URL 的最大字节数。 */
     public let maximumUrlBytes: Int64
+    /** 单个 literal 的最大字节数。 */
     public let maximumLiteralBytes: Int64
+    /** 输出的最大字节数。 */
     public let maximumOutputBytes: Int64
+    /** 扩展捕获内容的最大字节数。 */
     public let maximumExtensionCaptureBytes: Int64
+    /** 扩展向前查看的最大字节数。 */
     public let maximumExtensionLookaheadBytes: Int64
 
+    /**
+     * 创建限制集合；任一参数非正时抛出 `IllegalArgumentException`。
+     * @param maximumInputBytes 输入的最大字节数。
+     * @param maximumLineBytes 单行的最大字节数。
+     * @param maximumNestingDepth 最大嵌套深度。
+     * @param maximumAstNodes AST 节点总数上限。
+     * @param maximumReferences 引用定义数量上限。
+     * @param maximumTableColumns 表格列数上限。
+     * @param maximumUrlBytes URL 的最大字节数。
+     * @param maximumLiteralBytes 单个 literal 的最大字节数。
+     * @param maximumOutputBytes 输出的最大字节数。
+     * @param maximumExtensionCaptureBytes 扩展捕获内容的最大字节数。
+     * @param maximumExtensionLookaheadBytes 扩展向前查看的最大字节数。
+     */
     public init(
         maximumInputBytes: Int64,
         maximumLineBytes: Int64,
@@ -102,6 +133,10 @@ public class ParseLimits {
         this.maximumExtensionLookaheadBytes = maximumExtensionLookaheadBytes
     }
 
+    /**
+     * 返回面向不可信输入的默认限制。
+     * @return 面向不可信输入的默认限制。
+     */
     public static func safe(): ParseLimits {
         ParseLimits(
             32 * 1024 * 1024,
@@ -118,6 +153,10 @@ public class ParseLimits {
         )
     }
 
+    /**
+     * 返回面向可信大文档的宽松限制。
+     * @return 面向可信大文档的宽松限制。
+     */
     public static func trusted(): ParseLimits {
         ParseLimits(
             256 * 1024 * 1024,
@@ -155,6 +194,15 @@ public class OperationBudget {
     private var remainingRenderedNodes: Int64
     private var remainingOutputBytes: Int64
 
+    /**
+     * 创建操作预算；任一参数为负时抛出 `IllegalArgumentException`。
+     * @param maximumScanSteps 扫描步数上限。
+     * @param maximumDelimiterSteps delimiter 处理步数上限。
+     * @param maximumExtensionCallbacks 扩展回调次数上限。
+     * @param maximumTransformSteps transform 步数上限。
+     * @param maximumRenderedNodes 渲染节点数上限。
+     * @param maximumOutputBytes 输出字节数上限。
+     */
     public init(
         maximumScanSteps: Int64,
         maximumDelimiterSteps: Int64,
@@ -184,10 +232,19 @@ public class OperationBudget {
         remainingOutputBytes = maximumOutputBytes
     }
 
+    /**
+     * 返回默认的非负操作预算；每个 parse、render 或 transform 应独立创建。
+     * @return 默认的非负操作预算。
+     */
     public static func safe(): OperationBudget {
         OperationBudget(268435456, 67108864, 1000000, 1000000, 4000000, 134217728)
     }
 
+    /** 消费 scan 步数；超出剩余预算时抛出 `BudgetExceeded`。
+     * @param steps 要消费的步数。
+     * @throws IllegalArgumentException 消费量为负时。
+     * @throws MarkdownException 超出剩余预算时。
+     */
     public func consumeScan(steps!: Int64 = 1): Unit {
         if (steps < 0) {
             throw IllegalArgumentException("budget consumption must be non-negative")
@@ -199,41 +256,90 @@ public class OperationBudget {
         remainingScanSteps -= steps
     }
 
+    /** 消费 delimiter 解析预算。
+     * @param steps 要消费的步数。
+     * @throws IllegalArgumentException 消费量为负时。
+     * @throws MarkdownException 超出剩余预算时。
+     */
     public func consumeDelimiter(steps!: Int64 = 1): Unit {
         remainingDelimiterSteps = consume("delimiter_steps", remainingDelimiterSteps, steps)
     }
 
+    /** 消费扩展 callback 预算。
+     * @param count 要消费的次数。
+     * @throws IllegalArgumentException 消费量为负时。
+     * @throws MarkdownException 超出剩余预算时。
+     */
     public func consumeExtensionCallback(count!: Int64 = 1): Unit {
         remainingExtensionCallbacks = consume("extension_callbacks", remainingExtensionCallbacks, count)
     }
 
+    /** 消费 AST transform 预算。
+     * @param steps 要消费的步数。
+     * @throws IllegalArgumentException 消费量为负时。
+     * @throws MarkdownException 超出剩余预算时。
+     */
     public func consumeTransform(steps!: Int64 = 1): Unit {
         remainingTransformSteps = consume("transform_steps", remainingTransformSteps, steps)
     }
 
+    /** 消费 renderer 节点预算。
+     * @param count 要消费的节点数。
+     * @throws IllegalArgumentException 消费量为负时。
+     * @throws MarkdownException 超出剩余预算时。
+     */
     public func consumeRenderedNode(count!: Int64 = 1): Unit {
         remainingRenderedNodes = consume("rendered_nodes", remainingRenderedNodes, count)
     }
 
+    /** 消费输出 byte 预算。
+     * @param bytes 要消费的字节数。
+     * @throws IllegalArgumentException 消费量为负时。
+     * @throws MarkdownException 超出剩余预算时。
+     */
     public func consumeOutput(bytes!: Int64 = 1): Unit {
         remainingOutputBytes = consume("output_bytes", remainingOutputBytes, bytes)
     }
 
+    /**
+     * 返回已使用的扫描步数。
+     * @return 已使用的扫描步数。
+     */
     public func usedScanSteps(): Int64 {
         maximumScanSteps - remainingScanSteps
     }
+    /**
+     * 返回已使用的 delimiter 步数。
+     * @return 已使用的 delimiter 步数。
+     */
     public func usedDelimiterSteps(): Int64 {
         maximumDelimiterSteps - remainingDelimiterSteps
     }
+    /**
+     * 返回已使用的扩展回调次数。
+     * @return 已使用的扩展回调次数。
+     */
     public func usedExtensionCallbacks(): Int64 {
         maximumExtensionCallbacks - remainingExtensionCallbacks
     }
+    /**
+     * 返回已使用的 transform 步数。
+     * @return 已使用的 transform 步数。
+     */
     public func usedTransformSteps(): Int64 {
         maximumTransformSteps - remainingTransformSteps
     }
+    /**
+     * 返回已渲染的节点数。
+     * @return 已渲染的节点数。
+     */
     public func usedRenderedNodes(): Int64 {
         maximumRenderedNodes - remainingRenderedNodes
     }
+    /**
+     * 返回已输出的字节数。
+     * @return 已输出的字节数。
+     */
     public func usedOutputBytes(): Int64 {
         maximumOutputBytes - remainingOutputBytes
     }
@@ -253,6 +359,7 @@ public class OperationBudget {
     }
 }
 
+/** 可在线程间观察的取消标记；取消后下一次检查会抛出 `Cancelled`。 */
 public class CancellationToken {
     private let cancelled: AtomicBool
 
@@ -260,14 +367,26 @@ public class CancellationToken {
         this.cancelled = cancelled
     }
 
+    /**
+     * 返回未取消的独立 token。
+     * @return 未取消的独立 token。
+     */
     public static func none(): CancellationToken {
         CancellationToken(AtomicBool(false))
     }
 
+    /**
+     * 查询当前是否已请求取消。
+     * @return 已请求取消时为 `true`。
+     */
     public func isCancelled(): Bool {
         cancelled.load()
     }
 
+    /** 若已取消则以给定 phase 抛出 `MarkdownException`。
+     * @param phase 异常中报告的阶段名称。
+     * @throws MarkdownException 已取消时。
+     */
     public func throwIfCancelled(phase!: String = ""): Unit {
         if (cancelled.load()) {
             throw MarkdownException(MarkdownErrorCode.Cancelled, "operation cancelled", phase: phase)
@@ -275,14 +394,18 @@ public class CancellationToken {
     }
 }
 
+/** 创建并触发一个可共享的 `CancellationToken`。 */
 public class CancellationSource {
     private let flag = AtomicBool(false)
+    /** 由本 source 控制的取消 token。 */
     public let token: CancellationToken
 
+    /** 创建 source 和关联 token。 */
     public init() {
         token = CancellationToken(flag)
     }
 
+    /** 设置取消标记；重复调用保持幂等。 */
     public func cancel(): Unit {
         flag.store(true)
     }

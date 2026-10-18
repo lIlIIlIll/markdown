@@ -1,5 +1,6 @@
 package markdown
 
+import std.collection.*
 import std.unittest.*
 import std.unittest.testmacro.*
 
@@ -53,7 +54,9 @@ class DocumentSystemTest {
         let artifact = BinaryArtifactCodec.encode(snapshot)
         @Expect(artifact.schemaVersion, "markdown-snapshot-binary-2")
         match (BinaryArtifactCodec.decode(engine, artifact)) {
-            case BinaryArtifactLoadResult.Hit(value) => @Expect(HtmlRenderer().render(value.result.ast), HtmlRenderer().render(snapshot.result.ast))
+            case BinaryArtifactLoadResult.Hit(value) =>
+                @Expect(HtmlRenderer().render(value.result.ast), HtmlRenderer().render(snapshot.result.ast))
+                @Expect(engine.createArtifact(value.result).utf8PolicyId, "strict")
             case _ => @Expect(false)
         }
         let bytes = artifact.bytes()
@@ -70,6 +73,36 @@ class DocumentSystemTest {
             case _ => @Expect(false)
         }
         @Expect(engine.capabilities().serializationVersions[1], "markdown-snapshot-binary-2")
+    }
+
+    @TestCase
+    func binarySnapshotPreservesValidReplaceInvalidPolicyAndRejectsPolicyTampering(): Unit {
+        let engine = MarkdownEngine.builder().build()
+        let sourceBytes = "# Replace policy 😀\n".toArray()
+        let result = engine.parse(sourceBytes, utf8Policy: Utf8Policy.ReplaceInvalid)
+        let snapshot = DocumentSnapshot(engine, 1, result)
+        let artifact = BinaryArtifactCodec.encode(snapshot)
+
+        match (BinaryArtifactCodec.decode(engine, artifact)) {
+            case BinaryArtifactLoadResult.Hit(value) =>
+                @Expect(value.result.source.text(), result.source.text())
+                @Expect(value.result.ast.root().span, Some(SourceSpan(0, sourceBytes.size)))
+                @Expect(value.syntaxTree.losslessText(), result.source.text())
+                @Expect(engine.createArtifact(value.result).utf8PolicyId, "replace-invalid")
+            case _ => @Expect(false)
+        }
+
+        let unknownPolicy = binaryArtifactWithPolicy(artifact, "unknown-policy!")
+        match (BinaryArtifactCodec.decode(engine, unknownPolicy)) {
+            case BinaryArtifactLoadResult.CacheMiss(reason) => @Expect(reason, "UTF-8 policy")
+            case _ => @Expect(false)
+        }
+
+        let changedKnownPolicy = binaryArtifactWithPolicy(artifact, "strict")
+        match (BinaryArtifactCodec.decode(engine, changedKnownPolicy)) {
+            case BinaryArtifactLoadResult.CacheMiss(reason) => @Expect(reason, "offset mapping digest")
+            case _ => @Expect(false)
+        }
     }
 
     @TestCase
@@ -101,5 +134,36 @@ class DocumentSystemTest {
                 case _ => @Expect(false)
             }
         }
+    }
+}
+
+private func binaryArtifactWithPolicy(artifact: BinarySnapshotArtifact, replacement: String): BinarySnapshotArtifact {
+    let data = artifact.bytes()
+    var fieldOffset: Int64 = 4
+    for (_ in 0..3) {
+        fieldOffset += 8 + binaryArtifactFieldLength(data, fieldOffset)
+    }
+    let oldLength = binaryArtifactFieldLength(data, fieldOffset)
+    let oldValueStart = fieldOffset + 8
+    let oldValueEnd = oldValueStart + oldLength
+    let out = ArrayList<Byte>()
+    out.add(all: data[..fieldOffset])
+    binaryArtifactWriteLength(out, UInt64(replacement.size))
+    out.add(all: replacement.toArray())
+    out.add(all: data[oldValueEnd..])
+    BinarySnapshotArtifact(out.toArray())
+}
+
+private func binaryArtifactFieldLength(data: Array<Byte>, offset: Int64): Int64 {
+    var value: UInt64 = 0
+    for (index in 0..8) {
+        value = (value << 8) | UInt64(data[offset + index])
+    }
+    Int64(value)
+}
+
+private func binaryArtifactWriteLength(out: ArrayList<Byte>, value: UInt64): Unit {
+    for (shift in [56, 48, 40, 32, 24, 16, 8, 0]) {
+        out.add(UInt8((value >> UInt64(shift)) & 0xff))
     }
 }

@@ -1,10 +1,40 @@
 # markdown 当前进度
 
-更新时间：2026-08-30
-当前阶段：发布证据、固定 Server canonical 和同语言 merge gate 均已刷新。
-整体结论：**COMPLETE**。需求账本当前为 125 pass、0 pending、0 implemented_unverified、0 blocked。
+更新时间：2026-08-31
+当前阶段：深度审计修复已通过本地完整验证，正在冻结提交并刷新远端 canonical 与 release evidence。
+整体结论：**INCOMPLETE**。需求账本当前为 120 pass、0 pending、5 implemented_unverified、0 blocked。
 
-## 2026-08-30 同语言 required benchmark 刷新（当前）
+## 2026-08-31 深度审计修复与独立复核（当前）
+
+- 已确认并修复 artifact/AST source provenance、RawBlock 细粒度 chunk 二次复杂度、indented code 累计 literal limit、unsafe raw HTML、CustomHandler、external-link rewrite、renderer fingerprint、分段 output budget 和 GFM tagfilter 临时分配问题。
+- same-language gate 升级为 schema v5：计时前要求双方对每项计时语料产生逐 byte 相同的 spec HTML，并绑定 SDK archive、target、toolchain、native manifest、完整命令、产品源码和二进制身份；verifier 还从显式 checkout/bare/bundle 输入独立重算 markdown4cj core、完整 commonmark4cj dependency、ordered migrations、adapter manifest/driver/files 与 binary source identity。旧 schema v4 raw 被 fail closed 拒绝。
+- 第一轮独立 reviewer 找到未闭合 fence、renderer fingerprint 和 tagfilter 三个残余问题；修复后新增 unclosed-fence 线性 work、manifest/order/output-limit fingerprint 和 64 KiB tag-name 低预算回归。
+- 第二轮 reviewer 进一步找到 range slice 早于 output limit、duplicate manifest fingerprint 碰撞、未闭合 HTML/indented block 重复解析，以及声明 SDK archive 未必是实际 build toolchain 四项问题；现已分别改为 range-before-slice、duplicate ID fail-fast、HTML1-7/indented lexical checkpoint，以及 verified archive 的 fresh extraction + absolute SDK tools + fresh source builds。
+- 第三轮 reviewer 找到 pipe drain、DSL shadowing、native 产物/环境身份、benchmark 子进程环境、binary artifact UTF-8 policy 和 rewrite 复验缺口；全部已关闭。第四轮 reviewer 又确认 Git 报告身份、ProfileKind、paired DSL 实时字节上限、renderer cancellation 上界和 tagfilter boundary 五项问题；当前实现从 commit blobs 重算身份、绑定完整 profile identity、feed 时即时限额，并按固定 checkpoint/GFM 后继边界执行。第五轮 reviewer 发现 paired DSL closer 的尾随空白仍会逐 byte 重扫，以及 native child environment/tool executable identity 尚未完全封闭；现已改成增量 O(1) matcher、实际比较计费、最小 child environment 与工具 executable SHA-256 绑定。
+- 第六轮 reviewer 进一步确认 batch/RawBlock 把 `<scripture>` 等共享前缀标签误判为 type-1 HTML block，且 API snapshot 未绑定 owning type、会折叠不同类型的同签名成员。当前 batch/RawBlock 共用规范后继边界；API inventory 使用稳定 owner chain，并对重复记录 fail closed。
+- 第七轮 reviewer 又确认 owner-aware collector 仍会把 block comment 中的伪声明、private/internal owner 的不可达 public member 计入，并漏掉 multiline type/extend constraint identity。当前 collector 先生成 comment/string-aware lexical view，按 parent 链计算 effective visibility，并完整规范化 type/extend/interface-member/enum-variant header；误计的 11 条内部 helper 已从 snapshot 删除。
+- 第八轮 reviewer 发现 API lexer 未识别 `#"..."#`/多 hash raw string，且非空单行 type/extend body 会把 private 实现混入 type header 并漏掉公开 extension member。当前 lexer 按 hash 数量匹配 raw delimiter；单行 body 使用 comment/string mask 上的直接层级 tokenizer，分别记录公开成员、implicit interface member 和 enum variant，私有实现不入账，无法安全解析的跨行非空 opener fail closed。官方 Cangjie 1.1.3 已编译覆盖 1/2/4-hash raw string 与 class/struct/interface/enum/extend fixture。
+- 第九轮 reviewer 确认单行公开 callable/property 的实现体会造成 API false positive，且合法 package-level `public type` alias 未入账。当前 callable/property identity 在词法和括号层级上截断到真实结构性 body opener，不把参数 default closure 当 body；package-level public type alias 的 target、generic 与多行 identity 进入快照，private/internal alias 不入账。官方 Cangjie 1.1.3 编译覆盖 top-level/class/struct/extend、constructor、property、default/field closure 和普通/泛型/多行 alias；当前 SDK 拒绝 type-alias `where`，因此未将其宣称为支持语法。
+- 第十轮 reviewer 用真实 markdown consumer 与独立 provider/consumer 证明 `public open class MarkdownVisitor` 的 `protected open enter/exit` 是外部 override surface，但旧快照未记录。当前只对 effectively-public `open`/`abstract` class 收录 direct protected API；final/sealed 或 private/internal owner 不扩张。快照新增 `MarkdownVisitor.enter/exit` 与 `MarkdownException.getClassName` 三项，签名/modifier/删除变化会失败，实现体变化保持稳定。
+- 第十一轮 reviewer 证明 `public const func/init/static func` 与无显式 `public` 的 `sealed abstract class` 是编译器接受、consumer 可见的 API，却会被旧 collector 静默忽略；同时同 package 纯 `.cj` 文件移动被误判 breaking。当前 patterns 和 visibility 覆盖 const/implicit sealed-public，sealed 不扩张 protected surface；snapshot record 显式绑定 package，compat key 使用 package+owner+declaration，source path 只作定位。同 package 移动通过，跨 package/owner/signature 与 canonical duplicate fail closed。
+- 第十二轮 reviewer 进一步确认 modifier order/redef、class 同名 constructor 及 public/protected 参数成员、API annotations、comment trivia 和 raw-string constructor marker 五类结构性漏检/误报。collector 已改为共享词法器驱动的结构化声明头：modifier 按 token 集合解析，连续 annotation 绑定目标，comment trivia 排除，literal bytes/多行边界可逆保留，同名 constructor 与参数字段建账，constructor marker 复用 raw/triple-aware scanner；未知 direct visible declaration fail closed。
+- 第十三轮 reviewer 找到 ordinary interpolation 内 nested string 会提前闭合、同线 annotation target 被拒、constructor default closure 的 `<` comparison 被误当 generic 三个状态机边界。共享 lexer 现用 context stack 区分 interpolation code/nested literal/comment/brace；annotation prefix 将同线 remainder 重新送入声明状态机；参数分割按 type/default context 识别 generic angle 与 comparison。SDK 拒绝的 interpolation 内 hash-raw 仅作为 lexer regression，不伪称编译通过。
+- 第十四轮 reviewer 证明 package/type direct scope 同一物理行的后续声明可绕过 gate，例如 private 声明后跟 public 声明。当前结构分段器复用 comment/string/raw/interpolation mask 和全局/分组深度，只在 package 或 type direct scope 的真实 `;` 边界拆分；method/closure/object/collection/literal/comment 内分号不拆，不能安全分割的可见 remainder fail closed。
+- 第十五轮 reviewer 证明顶层任意缩进合法，旧 continuation heuristic 会把完整 alias/field 与后续缩进声明合并；同时合法 `package sample; public ...` 同线格式被拒。当前完全移除 indent/start-indent 语义，声明完成性只依赖 lexical/structural shape、required parts、delimiter balance、body marker 与明确 continuation token；package prefix 复用 direct segmenter，安全解析同线 remainder，0/多 package 和非法 tail fail closed。reviewer 观察到的中间态 3 项失败已在最终内容中修复，最新全套 36/36 通过。
+- 第十六轮 reviewer 使用官方 SDK 1.1.3 编译确认多行 `public import` 被截断、注解参数列表另起行被误当目标、声明头必需 token 跨行被拒，以及 dotted package 在点号处分行被拒。当前 collector 以词法和结构完成性继续 import/package/annotation/declaration-head，不恢复缩进启发式；4 组端到端回归同时证明真实 token 变化触发 diff、纯格式变化不触发。最新全套 40/40 通过，snapshot 仍为 1436。
+- 第十七轮 reviewer 进一步用官方 SDK 1.1.3 证明 bare `public import` 的路径以及完整路径后的 `as Alias` 均可跨行，旧状态会截断身份并让 alias 变化绕过兼容门禁。当前 import completion 显式要求 bare import 的 path，并只在下一结构片段以 `as` 开始时吸收 alias；split/one-line identity 一致，路径或 alias 变化可见，普通 sibling 不会被吞。最新全套 41/41 通过。
+- 第十八轮两名独立 reviewer 确认 wildcard import 会吞 sibling、代码空白 trivia 造成 API false positive、Unicode/escaped identifier 被 ASCII-only owner 拒绝、RawBlock 大 chunk 无固定取消上界、两个 String buffered session 在状态/限制前复制，以及 same-language comparator provenance 只验证 hash 形状。当前 API identity 已 token-canonical 且覆盖 Unicode/合法 escaped identifier；RawBlock 两段扫描每至多 1024 bytes 检查取消，String 入口在转换前执行 lifecycle/cancel/remaining-budget preflight；schema v5 从固定 Git objects 重放两套 comparator 源码与 migration，CI 上传并使用最小 bundles 复验。
+- 第十九轮 reviewer 进一步确认 `|>`/`~>` 后 RHS 被漏记、数字 scanner 混淆 member/range dot、标识符未按 NFC 统一、RawBlock 对 `#x` false ATX candidate 逐行重解析近 O(n²)，以及报告内同步伪造 product binary digest 仍可通过。当前 lexer 使用完整 longest-match operator token 与准确 numeric scanner，identifier/package/owner key 按 NFC；RawBlock 仅对 CommonMark 有效的 1-6 marker ATX 边界 early close，2048 行 storm 线性；verifier 从显式 binary root 重算三份实际执行 binary 并与 driver/build/adapter 三方绑定，CI 将 binaries 与 comparator bundles/raw/report 一同上传。
+- 第二十轮 reviewer 确认 RawBlock HTML/indented literal limit 延迟到 finish、单 marker backtick/tilde false fence candidate 仍近 O(n²)，以及 comparator 实际加载的 commonmark4cj DSO 未进入 retained evidence。当前 HTML type 1-7/indented bytes 在 offending feed 即时限制并原子回滚，false fence storms 线性；schema v5 从 ELF64 loader-authoritative PT_DYNAMIC/PT_LOAD 解析精确递归 DSO closure，拒绝 RPATH/RUNPATH 和恶意边界，测量只从 retained library root 加载并绑定 bytes/path/mode。
+- 第二十一轮 reviewer 确认三个残余缺口：fused preflight/长行输出在取消检查前可扫描整段输入；RawBlock 对 unfinished HTML/indented 和 fenced literal 未按累计路径实时执行 `maximumLiteralBytes`；下载的 same-language artifact 缺少产品 Git objects，离线复验仍依赖原工作树。当前 fused 入口先检查取消、所有扫描每至多 1024 bytes checkpoint 且 scan budget 按实际前缀消费；RawBlock fenced/HTML1-7/indented 对 whole/line/byte、LF/CRLF 和 rejected-feed retry 使用事务化 normalized literal 账本；verifier 强制显式 `--product-source` 并由 retained `markdown.bundle` 重算 commit/tree/product/harness，CI 在无 `.git` 的隔离源码树中复验。
+- 第二十二轮 runtime reviewer 对 RawBlock/fused 修复返回 ACCEPTED/NO_MATERIAL_FINDINGS；broad reviewer 随后确认 schema v5 仍允许同步替换 retained binary 与报告 digest、directory Git input 会向祖先发现 ambient `.git`、Git replace refs 会改变 pinned commit 的 tree/blob 解释。当前 verifier 只接受精确 worktree/bare root，隔离 replace refs 并拒绝 graft/shallow/alternates/symlink/external `.git`；它使用 retained product/comparator/commonmark objects、verified SDK archive、native tools/resource/runtime 在随机 fresh roots 以 attested `--trimpath` 重建 product driver/CLI/comparator/DSO，再对 retained bytes 逐字节比较。CI 保留全部重建输入并从无 `.git` tree 离线执行同一验证。
+- 第二十三轮 provenance reviewer 对 retained object/tool/runtime 重建、同步 binary/report 替换、Git/ELF/DSO 攻击面返回 ACCEPTED/NO_MATERIAL_FINDINGS。broad reviewer 仅发现 `CONTRIBUTING.md` 仍记录不可执行的 schema-v4 verifier 命令；当前文档已列出 schema-v5 所需 product/comparator bundles、binary root 和 SDK archive，解释 fresh rebuild/byte comparison，`scripts/check_docs.py` 同步锁定命令形状。修复后 broad reviewer 也返回 ACCEPTED/NO_MATERIAL_FINDINGS，并独立通过 1508/1508、111/111、18/18、47/47、API 1436、docs/format/build 门禁。
+- 冻结候选 `206405f5` 的首次 Server schema-v5 run 通过 12/12 shared behavior、11/11 timed corpus semantic gate 和 measurement，但 offline rebuild 发现固定 SDK 的动态 commonmark4cj 在 `--trimpath`、单 job、关闭 incremental 后仍会产生不同 `.text`/`.rodata` bytes，旧“动态 DSO 可重复”假设不成立。固定 `--obf-seed 0` 稳定 product driver/CLI；把 pinned dependency 规范化为非增量 static package 后，两次独立 comparator executable 均为 `70785dbed81846fa7ab737583b72d46b3d1015f819a422d642e4850c8ac55717`。冻结候选 `7b31a5f0` 的正式启动又在测量前 fail closed，确认 builder 生成 build identity schema 5 而 comparator 仍要求 schema 4；当前已统一为 schema 5 并增加跨脚本回归，focused verifier `113/113`、driver identity `21/21` 通过。新的冻结提交、same-language/cmark canonical 和 release bundle 仍待执行，两个失败 run 均不作为 canonical raw。
+- 旧 same-language schema v4 与 cmark/cmark-gfm canonical 均不证明当前 product/harness。`MD-SEC-002`、`MD-PERF-001-002`、`MD-REL-001` 和 `MD-QUAL-001` 保持 `implemented_unverified`，直到冻结提交的固定 Server schema v5 canonical、完整 release canonical 和 retained release bundle 全部通过。
+
+以下 2026-08-30 段落均为历史证据，不覆盖本节当前状态。
+
+## 2026-08-30 同语言 required benchmark 刷新（历史）
 
 - `benchmarks/compare_markdown4cj.py` 升级为 schema v3：绑定 product commit/tree、product tree、11 项 corpus inventory、harness 文件、官方 SDK 和两套固定 comparator commits；verifier 从 7 轮 raw samples 独立重算中位数、几何平均、RSS、protocol 和最终 gate。
 - 新增 8 项 Python 回归，覆盖伪造派生值、弱化门槛、缩短 protocol、非 canonical 迭代次数的 fail-fast、跨样本不稳定输出和 CPU affinity。GitHub Actions 的稳定 job 名为 `Same-language benchmark (current-1.1.3)`；它先验证 committed raw/report，再从干净 checkout 重建双方并实跑，结果无论成功或失败都上传。
@@ -12,7 +42,7 @@
 - README 文案属于 canonical `readme-api` corpus，因此同时刷新了 cmark/cmark-gfm 唯一 release evidence。精确提交 `ebf445cf` 的 Server raw SHA-256 为 `2f4bd94efd0d486ccbdb301e8cc9f67b7a1684bd1c81d8b1d788c8bc72245f9e`；CommonMark `2.415830x`、GFM `2.345149x`，ordinary、scaling、pathological 和 RSS gate 全部通过，独立派生误差为空。
 - 同语言比较仍只代表双方共同的完整 AST CommonMark parse-only 子集；cmark/cmark-gfm 继续作为 release canonical，不以同语言结果替换。
 
-## 2026-08-30 发布证据文档漂移修复（当前）
+## 2026-08-30 发布证据文档漂移修复（历史）
 
 - `scripts/release_evidence.py` 现在接管 README 验证状态、CHANGELOG Evidence 和性能页当前 canonical 三个完整章节，不再只替换表格内部的一部分。
 - README 的测试、规范和 API 数字已改为从 `release-evidence.json` 生成；CHANGELOG 和性能页的 ratio 也使用同一来源。
@@ -60,7 +90,7 @@
 
 ## 2026-08-29 历史发布审计修复
 
-- 逐项复核 `/home/elliot/Downloads/markdown-audit-package.zip` 后，确认九项报告均对应当时的真实仓库状态；当前切片修复代码、文档和本地发布证据问题，并保留 hosted repository 状态作为独立验收层。
+- 逐项复核 `$HOME/Downloads/markdown-audit-package.zip` 后，确认九项报告均对应当时的真实仓库状态；当前切片修复代码、文档和本地发布证据问题，并保留 hosted repository 状态作为独立验收层。
 - CI 不再依赖空仓库变量：minimum SDK `1.1.0` 与 current SDK `1.1.3` 使用官方固定 URL/SHA-256，`actions/checkout` 固定到 commit，两个矩阵任务均执行完整 `scripts/release_gate.sh`。
 - release gate 现在自动准备 pinned cmark、cmark-gfm 和 commonmark.js 差分工具；归档和新 runner 不再依赖开发机 `/tmp` 中的预装 reference checkout。
 - 删除会夸大执行模型的 `ChunkedParseSession` 与 `AsyncHtmlRenderSession`；`newSession` 返回 `BufferedInputSession`，异步 sink 只公开 `BufferedAsyncHtmlOutputSession`。迁移文档与 1309-declaration API snapshot 已同步。
@@ -347,7 +377,7 @@ GA 门槛。
 
 ## 2026-08-19 性能复核（本轮）
 
-- 固定环境：授权 SSH `Server`、CPU 24、Linux 5.15、Xeon Gold 6248R、Cangjie SDK `/home/chenqian/fastjson-bench-sdk-20260803/cangjie`（`1.1.0-alpha.20260803040049`）、`-O2`、`cjHeapSize=2GB`。该 SDK 与 2026-08-18 的远端快照不同，因此只做同一 SDK 内的配对比较，不把绝对比率跨 SDK 直接合并。
+- 固定环境：授权 SSH `Server`、CPU 24、Linux 5.15、Xeon Gold 6248R、Cangjie SDK `<sdk>/cangjie`（`1.1.0-alpha.20260803040049`）、`-O2`、`cjHeapSize=2GB`。该 SDK 与 2026-08-18 的远端快照不同，因此只做同一 SDK 内的配对比较，不把绝对比率跨 SDK 直接合并。
 - PMU 仍不可用：服务器 `perf_event_paranoid=4`，`perf stat` 明确拒绝；没有伪造 cycles/instructions 证据。分析使用固定 CPU、12 轮交替测量、RSS 和完整 release harness。
 - 保留的候选位于 `src/parser.cj`：解析会话为有效 reference definition 建立 `HashMap<String, ReferenceDefinition>`；reference lookup 和 delimiter 中的 reference 判断均复用 O(1) 索引；ASCII 小写且无空白/非 ASCII 标签走无分配规范化快路径。重复标签仍只索引首个 effective definition。
 - 候选源码归档 SHA-256：`1162a0350b22efbeb969279ad89d2b4898b3a8612cbcb5aedbdf26abfd072845`（cjfmt 后最终工作树）；交替 A/B JSON SHA-256：`4df43fc1dba76d6189bd690252e65fbd08b0aea05110501bb75734a1331682f8`。12 轮、CPU 24 的 1 MiB 语料结果：CommonMark ordinary `1.162x`、many-references `1.268x`、large-table `1.035x`、pathological `1.010x`、CJK `1.016x`；GFM ordinary `1.032x`、many-references `1.157x`、large-table `0.996x`、pathological `1.017x`、CJK `1.002x`（candidate speedup）。所有 stdout checksums 相同。
@@ -619,3 +649,11 @@ GA 门槛。
 - Found and fixed a concrete unusable example: `AstQuery.headings()` returns `HeadingNodeView`, whose span is `heading.node.span`; the former direct member access did not compile. `scripts/check_docs.py` now rejects that invalid spelling and requires both runnable example projects.
 - Replaced the stale R79 performance page with the current unique canonical evidence: CommonMark `2.380950x` and GFM `2.454213x`, both within the `2.5x` limit. The historical markdown4cj comparison is clearly separated from current cmark/cmark-gfm release evidence.
 - Validation: docs check `43` Markdown files / `23` required API entry points / `4` runnable example files; API snapshot `1311` declarations; release evidence; format; root check/build; cookbook build/run; quickstart build/run; full suite `1455/1455`, 0 skipped/error/failed. All commands exited `0`.
+
+## 2026-09-01 Frozen candidate and canonical startup audit
+
+- Frozen product candidate `ebb35d3852a7a6388bde01b09e1774985855d757` (tree `3c4d8385bcd521ffa6aa63e950b773dd41b6f2bf`) retained the sparse-arena allocation improvement. Local format/check passed and the complete Cangjie suite passed `1510/1510` with zero skipped/error/failed.
+- The exact candidate's schema-v5 same-language benchmark passed on Server CPU 24 with geometric mean speedup `12.417326x`; raw SHA-256 `b3740a5a11a2d116369de715cb9f17a707571d3231f6b12a955184b59e4d6455`. Offline verification rebuilt product driver, CLI and comparator from the retained product/comparator Git bundles plus SDK archive and byte-verified all measured executables.
+- The exact candidate then ran the old 3-iteration cmark/cmark-gfm canonical once. Raw SHA-256 `711ec7beb0a57041dfe74b281996055e07e207309995afc39e2d08f034d453d8`: CommonMark `2.726232x` failed, GFM `2.364585x` passed, and every ordinary/scaling/pathological/RSS gate passed. The failing raw was not promoted or copied over repository canonical evidence.
+- A fixed-CPU diagnostic using the same binaries, corpora, pairing and seven samples but 12 in-process iterations measured CommonMark `2.399245x`. The ordinary process median was `26.134 ms` for the old 3 parses but `22.452 ms` for 12 parses, demonstrating that the old short matrix primarily measured executable/runtime startup. A-053 therefore freezes 12 iterations for the library-throughput matrix without changing thresholds, semantic profiles, AST construction or reference binaries.
+- Focused verification after the harness correction: benchmark input-profile tests `8/8`, format pass and `cjpm check` pass. A new exact candidate commit and complete canonical run are still required; the overall status remains **INCOMPLETE**.

@@ -2,9 +2,15 @@ package markdown
 
 import std.collection.*
 
+/** 原始输入中的 UTF-8 byte offset。 */
 public struct SourceOffset <: Equatable<SourceOffset> {
+    /** 原始输入中的 UTF-8 byte offset 值。 */
     public let byteOffset: Int64
 
+    /**
+     * 创建 offset；负值抛出 `IllegalArgumentException`。
+     * @param byteOffset 原始输入中的 UTF-8 byte offset。
+     */
     public init(byteOffset: Int64) {
         if (byteOffset < 0) {
             throw IllegalArgumentException("source offset must be non-negative")
@@ -12,15 +18,27 @@ public struct SourceOffset <: Equatable<SourceOffset> {
         this.byteOffset = byteOffset
     }
 
+    /** 按字节值比较两个 offset。
+     * @param other 参与比较的另一个 offset。
+     * @return 两个 offset 字节值是否相等。
+     */
     public operator func ==(other: SourceOffset): Bool {
         byteOffset == other.byteOffset
     }
 }
 
+/** 原始输入中的半开 UTF-8 byte range `[startByte, endByte)`。 */
 public struct SourceSpan <: Equatable<SourceSpan> {
+    /** span 起始 byte（含）。 */
     public let startByte: Int64
+    /** span 结束 byte（不含）。 */
     public let endByte: Int64
 
+    /**
+     * 创建 span；区间非法时抛出 `IllegalArgumentException`。
+     * @param startByte span 起始 byte（含）。
+     * @param endByte span 结束 byte（不含）。
+     */
     public init(startByte: Int64, endByte: Int64) {
         if (startByte < 0 || endByte < startByte) {
             throw IllegalArgumentException("source span must be a non-negative half-open interval")
@@ -29,31 +47,59 @@ public struct SourceSpan <: Equatable<SourceSpan> {
         this.endByte = endByte
     }
 
+    /**
+     * 返回 span 的 byte 长度。
+     * @return span 的 byte 长度。
+     */
     public func length(): Int64 {
         endByte - startByte
     }
 
+    /**
+     * 返回起止位置是否相同。
+     * @return 起止位置相同时为 `true`。
+     */
     public func isEmpty(): Bool {
         startByte == endByte
     }
 
+    /** 判断 offset 是否落在半开 span 内。
+     * @param offset 待判断的 offset。
+     * @return offset 落在 span 内时为 `true`。
+     */
     public func contains(offset: SourceOffset): Bool {
         offset.byteOffset >= startByte && offset.byteOffset < endByte
     }
 
+    /** 判断另一个 span 是否完全包含于当前 span。
+     * @param other 待判断的 span。
+     * @return other 完全包含于当前 span 时为 `true`。
+     */
     public func containsSpan(other: SourceSpan): Bool {
         other.startByte >= startByte && other.endByte <= endByte
     }
 
+    /** 按起止字节比较两个 span。
+     * @param other 参与比较的另一个 span。
+     * @return 两个 span 起止是否相同。
+     */
     public operator func ==(other: SourceSpan): Bool {
         startByte == other.startByte && endByte == other.endByte
     }
 }
 
+/** 一基的行号和 UTF-8 byte column。 */
 public struct SourcePosition <: Equatable<SourcePosition> {
+    /** 一基行号。 */
     public let line: Int64
+    /** 一基 UTF-8 byte column。 */
     public let byteColumn: Int64
 
+    /**
+     * 创建 position；参数小于 1 时抛出 `IllegalArgumentException`。
+     * @param line 一基行号。
+     * @param byteColumn 一基 UTF-8 byte column。
+     */
     public init(line: Int64, byteColumn: Int64) {
         if (line < 1 || byteColumn < 1) {
             throw IllegalArgumentException("source positions are one-based")
@@ -62,15 +108,27 @@ public struct SourcePosition <: Equatable<SourcePosition> {
         this.byteColumn = byteColumn
     }
 
+    /** 按行号和列比较两个 position。
+     * @param other 参与比较的另一个 position。
+     * @return 两个位置是否相等。
+     */
     public operator func ==(other: SourcePosition): Bool {
         line == other.line && byteColumn == other.byteColumn
     }
 }
 
+/** 一基的行号和显示列。 */
 public struct VisualPosition <: Equatable<VisualPosition> {
+    /** 一基行号。 */
     public let line: Int64
+    /** 一基显示列。 */
     public let visualColumn: Int64
 
+    /**
+     * 创建 position；参数小于 1 时抛出 `IllegalArgumentException`。
+     * @param line 一基行号。
+     * @param visualColumn 一基显示列。
+     */
     public init(line: Int64, visualColumn: Int64) {
         if (line < 1 || visualColumn < 1) {
             throw IllegalArgumentException("visual positions are one-based")
@@ -79,15 +137,27 @@ public struct VisualPosition <: Equatable<VisualPosition> {
         this.visualColumn = visualColumn
     }
 
+    /** 按行号和显示列比较两个 position。
+     * @param other 参与比较的另一个 position。
+     * @return 两个位置是否相等。
+     */
     public operator func ==(other: VisualPosition): Bool {
         line == other.line && visualColumn == other.visualColumn
     }
 }
 
+/** LSP 风格的零基行号和 UTF-16 code-unit character。 */
 public struct Utf16Position <: Equatable<Utf16Position> {
+    /** 零基行号。 */
     public let line: Int64
+    /** 零基 UTF-16 code-unit character。 */
     public let character: Int64
 
+    /**
+     * 创建 position；参数为负时抛出 `IllegalArgumentException`。
+     * @param line 零基行号。
+     * @param character 零基 UTF-16 code-unit character。
+     */
     public init(line: Int64, character: Int64) {
         if (line < 0 || character < 0) {
             throw IllegalArgumentException("UTF-16 positions must be non-negative")
@@ -96,32 +166,51 @@ public struct Utf16Position <: Equatable<Utf16Position> {
         this.character = character
     }
 
+    /** 按行号和 character 比较两个 position。
+     * @param other 参与比较的另一个 position。
+     * @return 两个位置是否相等。
+     */
     public operator func ==(other: Utf16Position): Bool {
         line == other.line && character == other.character
     }
 }
 
+/** 对外暴露的位置编码。 */
 public enum PositionEncoding {
+    /** 一基 UTF-8 byte 位置。 */
     | Utf8Byte
+    /** LSP 风格零基 UTF-16 位置。 */
     | Utf16CodeUnit
+    /** 一基 visual 位置。 */
     | Visual
 }
 
+/** visual column 的 Unicode scalar 和 tab 计算策略。 */
 public enum DisplayWidthPolicy {
     // Every Unicode scalar, including tab, advances one column.
+    /** 每个 Unicode scalar（含 tab）前进一列。 */
     | UnicodeScalar
     // Every Unicode scalar advances one column and tab advances to tabStop.
+    /** 每个 scalar 前进一列，tab 前进到下一个 tab stop。 */
     | UnicodeScalarWithTabStops
 }
 
+/**
+ * 一次性 UTF-8 输入所有权容器。
+ *
+ * `take` 是 unsafe factory：调用方必须保证 bytes 已是有效 UTF-8，并放弃所有
+ * mutable alias；输入只允许被 engine 消费一次。
+ */
 public class OwnedUtf8Input {
     private var bytes: ?Array<Byte>
     private init(bytes: Array<Byte>) {
         this.bytes = Some(bytes)
     }
 
-    // The caller guarantees that bytes contain valid UTF-8 and must not retain
-    // or mutate aliases after transferring ownership.
+    /** 转移唯一 bytes 所有权；调用方不得在返回后保留或修改 alias。
+     * @param bytes 已确认为有效 UTF-8 的字节序列。
+     * @return 持有唯一所有权的输入容器。
+     */
     public static unsafe func take(bytes: Array<Byte>): OwnedUtf8Input {
         OwnedUtf8Input(bytes)
     }
@@ -136,14 +225,20 @@ public class OwnedUtf8Input {
     }
 }
 
-/** An immutable UTF-8 input whose validation and backing storage can be
- * reused across parses. Construction takes a defensive copy; the unsafe
- * ownership-transfer factory avoids that copy when the caller can guarantee
- * valid UTF-8 and relinquishes every mutable alias. */
+/**
+ * 可重复使用的不可变 UTF-8 输入。
+ *
+ * 普通构造会防御性复制并校验 bytes；unsafe `take` 在调用方保证有效 UTF-8 且放弃
+ * mutable alias 时避免复制。
+ */
 public class ReusableUtf8Input {
     private let value: String
     private let bytes: Array<Byte>
 
+    /**
+     * 防御性复制并校验 bytes 构造输入。
+     * @param bytes 待复制的 UTF-8 字节序列。
+     */
     public init(bytes: Array<Byte>) {
         let owned = bytes.clone()
         value = String.fromUtf8(owned)
@@ -155,6 +250,10 @@ public class ReusableUtf8Input {
         this.bytes = bytes
     }
 
+    /** 转移唯一 bytes 所有权，之后可被多次 parse。
+     * @param bytes 已确认为有效 UTF-8 的字节序列。
+     * @return 可重复解析的输入。
+     */
     public static unsafe func take(bytes: Array<Byte>): ReusableUtf8Input {
         ReusableUtf8Input(String.withRawData(bytes), bytes)
     }
@@ -168,6 +267,12 @@ public class ReusableUtf8Input {
     }
 }
 
+/**
+ * 与 parse result 绑定的 source 文本和原始 byte 映射。
+ *
+ * `slice`、位置转换和 `sourceSlice` 都以原始 UTF-8 byte offset 为边界；非法 UTF-8
+ * 被替换时，只有 decoded boundary 才能创建 slice。
+ */
 public class SourceBuffer {
     private let value: String
     private let decodedBytes: Array<Byte>
@@ -177,6 +282,10 @@ public class SourceBuffer {
     private let valueBackedIdentity: Bool
     private let utf8Policy: Utf8Policy
 
+    /**
+     * 从文本构造 identity-mapped 的 source buffer。
+     * @param value 解码后的源文本。
+     */
     public init(value: String) {
         this.value = value
         this.decodedBytes = []
@@ -245,10 +354,18 @@ public class SourceBuffer {
         this.utf8Policy = Utf8Policy.Strict
     }
 
+    /**
+     * 返回原始输入的 byte 长度。
+     * @return 原始输入的字节长度。
+     */
     public func byteLength(): Int64 {
         originalLength()
     }
 
+    /**
+     * 返回完整解码文本。
+     * @return 完整源文本。
+     */
     public func text(): String {
         value
     }
@@ -280,6 +397,11 @@ public class SourceBuffer {
         }
     }
 
+    /** 返回 span 对应文本；span 必须在 source 内且落在解码边界。
+     * @param span 目标 source span。
+     * @return span 对应文本。
+     * @throws IllegalArgumentException span 越界或未落在解码边界时。
+     */
     public func slice(span: SourceSpan): String {
         ensureSpan(span)
         if (mappingIsIdentity) {
@@ -290,6 +412,11 @@ public class SourceBuffer {
         String.fromUtf8(decodedBytes.slice(start, end - start))
     }
 
+    /** 返回节点 source span 对应文本；无 span 的节点会失败。
+     * @param node 目标节点。
+     * @return 节点 span 对应文本。
+     * @throws IllegalArgumentException 节点无 span 或 span 越界时。
+     */
     public func text(node: NodeRef): String {
         match (node.span) {
             case Some(span) => slice(span)
@@ -297,10 +424,19 @@ public class SourceBuffer {
         }
     }
 
+    /** 返回 document root 的 source 文本。
+     * @param document 目标 Document。
+     * @return document root 的源文本。
+     */
     public func text(document: Document): String {
         text(document.root())
     }
 
+    /** 创建延迟读取的 `SourceSlice`，并立即校验 span。
+     * @param span 目标 source span。
+     * @return 延迟文本视图。
+     * @throws IllegalArgumentException span 越界或未落在解码边界时。
+     */
     public func sourceSlice(span: SourceSpan): SourceSlice {
         validateSliceSpan(span)
         SourceSlice(this, span)
@@ -314,6 +450,11 @@ public class SourceBuffer {
         decodedOffset(span.endByte)
     }
 
+    /** 返回一基行号对应的文本，不含行结束符。
+     * @param lineNumber 一基行号。
+     * @return 该行文本（不含行结束符）。
+     * @throws IllegalArgumentException 行号小于 1 时。
+     */
     public func line(lineNumber: Int64): String {
         if (lineNumber < 1) {
             throw IllegalArgumentException("line number must be one-based")
@@ -344,6 +485,10 @@ public class SourceBuffer {
         throw IllegalArgumentException("line number is outside source")
     }
 
+    /**
+     * 返回 source 行数；空 source 也有一行。
+     * @return 输入行数。
+     */
     public func lineCount(): Int64 {
         var count: Int64 = 1
         var index: Int64 = 0
@@ -359,6 +504,11 @@ public class SourceBuffer {
         count
     }
 
+    /** 将原始 byte offset 转为一基 UTF-8 byte 位置。
+     * @param byteOffset 原始输入中的字节偏移。
+     * @return 一基 UTF-8 byte 位置。
+     * @throws IllegalArgumentException offset 越界时。
+     */
     public func position(byteOffset: Int64): SourcePosition {
         ensureOffset(byteOffset)
         var line: Int64 = 1
@@ -382,6 +532,11 @@ public class SourceBuffer {
         SourcePosition(line, column)
     }
 
+    /** 将原始 byte offset 转为零基 UTF-16 位置。
+     * @param byteOffset 原始输入中的字节偏移。
+     * @return 零基 UTF-16 位置。
+     * @throws IllegalArgumentException offset 越界时。
+     */
     public func utf16Position(byteOffset: Int64): Utf16Position {
         ensureOffset(byteOffset)
         let decodedLimit = decodedOffset(byteOffset)
@@ -420,6 +575,12 @@ public class SourceBuffer {
         Utf16Position(line, character)
     }
 
+    /** 将原始 byte offset 转为一基 visual position；tabStop 默认是 4。
+     * @param byteOffset 原始输入中的字节偏移。
+     * @param tabStop tab 展开宽度，必须为正。
+     * @return 一基 visual 位置。
+     * @throws IllegalArgumentException offset 越界或 tabStop 非正时。
+     */
     public func visualPosition(byteOffset: Int64, tabStop!: Int64 = 4): VisualPosition {
         if (tabStop <= 0) {
             throw IllegalArgumentException("tab stop must be positive")
@@ -459,6 +620,11 @@ public class SourceBuffer {
         VisualPosition(line, column)
     }
 
+    /** 将 UTF-16 位置转回原始 byte offset；位于 surrogate pair 中间会失败。
+     * @param position 目标 UTF-16 位置。
+     * @return 对应的原始 byte offset。
+     * @throws IllegalArgumentException 位置越界或拆分 surrogate pair 时。
+     */
     public func byteOffset(position: Utf16Position): Int64 {
         var line: Int64 = 0
         var character: Int64 = 0
@@ -622,10 +788,18 @@ private func utf8Width(first: Byte): Int64 {
     }
 }
 
+/** 绑定 source buffer 和 span 的延迟文本视图。 */
 public class SourceSlice {
+    /** 绑定的 source buffer。 */
     public let source: SourceBuffer
+    /** 绑定的 source span。 */
     public let span: SourceSpan
 
+    /**
+     * 创建延迟文本视图并立即校验 span。
+     * @param source 绑定的 source buffer。
+     * @param span 绑定的 source span。
+     */
     public init(source: SourceBuffer, span: SourceSpan) {
         // Validate eagerly so a SourceSlice is always safe to read.
         source.validateSliceSpan(span)
@@ -633,20 +807,35 @@ public class SourceSlice {
         this.span = span
     }
 
+    /**
+     * 读取 slice 文本。
+     * @return slice 文本。
+     */
     public func text(): String {
         source.slice(span)
     }
+    /**
+     * 读取并返回独立 String。
+     * @return 独立 String 副本。
+     */
     public func detach(): String {
         text()
     }
 }
 
+/** AST literal 的复制存储或 source-backed 延迟存储。 */
 public enum LiteralStorage {
+    /** 复制存储：携带独立 String。 */
     | Copy(String)
+    /** 延迟存储：按 span 从 source 读取。 */
     | Slice(SourceSlice)
 }
 
 extend LiteralStorage {
+    /**
+     * 读取当前 literal 文本。
+     * @return literal 文本。
+     */
     public func text(): String {
         match (this) {
             case LiteralStorage.Copy(value) => value
@@ -654,6 +843,10 @@ extend LiteralStorage {
         }
     }
 
+    /**
+     * 将当前 literal 转为独立的 `Copy` 存储。
+     * @return 独立的 `Copy` 存储。
+     */
     public func detach(): LiteralStorage {
         LiteralStorage.Copy(text())
     }
@@ -821,12 +1014,26 @@ internal struct SourceCheckpoint {
     }
 }
 
+/**
+ * 为大量位置查询预建的 line/checkpoint 索引。
+ *
+ * 默认使用 tab stop 4 和 `UnicodeScalarWithTabStops`；也可以显式选择 display width
+ * policy。
+ */
 public class SourcePositionMap {
+    /** 绑定的 source buffer。 */
     public let source: SourceBuffer
+    /** tab 展开宽度。 */
     public let tabStop: Int64
+    /** visual column 计算策略。 */
     public let displayWidthPolicy: DisplayWidthPolicy
     private let index: SourceIndex
 
+    /**
+     * 使用默认 display width policy 构建索引。
+     * @param source 绑定的 source buffer。
+     * @param tabStop tab 展开宽度，必须为正。
+     */
     public init(source: SourceBuffer, tabStop!: Int64 = 4) {
         if (tabStop <= 0) {
             throw IllegalArgumentException("tab stop must be positive")
@@ -837,6 +1044,12 @@ public class SourcePositionMap {
         index = SourceIndex(source, tabStop, DisplayWidthPolicy.UnicodeScalarWithTabStops)
     }
 
+    /**
+     * 显式指定 display width policy 构建索引。
+     * @param source 绑定的 source buffer。
+     * @param tabStop tab 展开宽度，必须为正。
+     * @param displayWidthPolicy visual column 计算策略。
+     */
     public init(source: SourceBuffer, tabStop: Int64, displayWidthPolicy: DisplayWidthPolicy) {
         if (tabStop <= 0) {
             throw IllegalArgumentException("tab stop must be positive")
@@ -847,12 +1060,22 @@ public class SourcePositionMap {
         index = SourceIndex(source, tabStop, displayWidthPolicy)
     }
 
+    /** 通过索引计算一基 UTF-8 byte position。
+     * @param byteOffset 原始输入中的字节偏移。
+     * @return 一基 UTF-8 byte 位置。
+     * @throws IllegalArgumentException offset 越界时。
+     */
     public func sourcePosition(byteOffset: Int64): SourcePosition {
         ensureOffset(byteOffset)
         let line = index.originalLine(byteOffset)
         let contentStart = index.originalContentStarts[line]
         SourcePosition(line + 1, max(1, byteOffset - contentStart + 1))
     }
+    /** 通过索引计算 visual position。
+     * @param byteOffset 原始输入中的字节偏移。
+     * @return 一基 visual 位置。
+     * @throws IllegalArgumentException offset 越界时。
+     */
     public func visualPosition(byteOffset: Int64): VisualPosition {
         ensureOffset(byteOffset)
         let decodedLimit = source.decodedOffset(byteOffset)
@@ -878,6 +1101,11 @@ public class SourcePositionMap {
         }
         VisualPosition(line + 1, column)
     }
+    /** 通过索引计算 UTF-16 position。
+     * @param byteOffset 原始输入中的字节偏移。
+     * @return 零基 UTF-16 位置。
+     * @throws IllegalArgumentException offset 越界时。
+     */
     public func utf16Position(byteOffset: Int64): Utf16Position {
         ensureOffset(byteOffset)
         let decodedLimit = source.decodedOffset(byteOffset)
@@ -902,6 +1130,11 @@ public class SourcePositionMap {
         }
         Utf16Position(line, character)
     }
+    /** 通过索引将 UTF-16 position 转回 byte offset。
+     * @param position 目标 UTF-16 位置。
+     * @return 对应的原始 byte offset。
+     * @throws IllegalArgumentException 位置越界时。
+     */
     public func byteOffset(position: Utf16Position): Int64 {
         if (position.line >= index.decodedLineStarts.size) {
             throw IllegalArgumentException("UTF-16 position is outside source")

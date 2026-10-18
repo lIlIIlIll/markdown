@@ -6,3 +6,4 @@ public import markdown.{AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, B
     InlineEscapePolicy, LinkUriPolicy, MissingRendererPolicy, PlainTextOptions, PlainTextRenderer, RawHtmlPolicyKind, 
     RenderStatistics, RenderedOutput, RenderedSourceMapEntry, SinkError, SinkFailureException, SinkWriteResult, 
     StringTextSink, TextSink, TrustedHtml}
+public import markdown.{ExternalLinkRewriterPort, RawHtmlHandlerPort}

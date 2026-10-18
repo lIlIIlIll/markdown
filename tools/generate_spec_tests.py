@@ -72,7 +72,11 @@ def main() -> int:
         profile = "MarkdownProfile.gfm029()" if extension_case else (
             "MarkdownProfile.gfm029CommonMarkBase()" if args.profile == "gfm" else "MarkdownProfile.commonMark0312()"
         )
-        html_options = "HtmlOptions.gfmCompatible()" if extension_case else "HtmlOptions.specCompatible()"
+        html_options = (
+            "unsafe { HtmlOptions.gfmCompatible() }"
+            if extension_case
+            else "unsafe { HtmlOptions.specCompatible() }"
+        )
         markdown = cj_string(str(example["markdown"]))
         html = cj_string(str(example["html"]))
         lines.extend(

@@ -5,21 +5,46 @@ import std.convert.*
 import std.io.InputStream
 import std.unicode.*
 
+/** 将 byte 输入解码为文本时采用的 UTF-8 错误策略。 */
 public enum Utf8Policy {
+    /** 遇到无效 UTF-8 序列时解析失败。 */
     | Strict
+    /** 将无效 UTF-8 序列替换为 U+FFFD 后继续。 */
     | ReplaceInvalid
 }
 
+/**
+ * 一次完整解析的结果。
+ *
+ * `document` 为 arena AST，`source` 携带原始输入与位置映射，`diagnostics`
+ * 保留可恢复诊断。
+ */
 public class ParseResult {
-    /** Complete immutable arena Document produced by the parser. */
+    /** 完整且不可变的 arena AST；失败的 `tryParse` 结果包含空文档。 */
     public let document: Document
+    /** 与结果对应的原始文本、byte range 和位置映射。 */
     public let source: SourceBuffer
+    /** 解析过程中保留的可恢复诊断。 */
     public let diagnostics: ImmutableArray<Diagnostic>
+    /** 是否完成了完整解析；正常 `parse` 结果为 true。 */
     public let isComplete: Bool
+    /** `tryParse` 失败时可用的停止位置。 */
     public let stoppedAt: ?SourceSpan
+    /** `tryParse` 失败时记录的阶段名称。 */
     public let unfinishedPhase: String
+    /** `tryParse` 捕获的异常；正常结果为空。 */
     public let errors: ImmutableArray<MarkdownException>
 
+    /**
+     * 创建解析结果。
+     * @param document 完整且不可变的 arena AST。
+     * @param source 与结果对应的原始文本和位置映射。
+     * @param diagnostics 解析过程中保留的可恢复诊断。
+     * @param isComplete 是否完成了完整解析。
+     * @param stoppedAt `tryParse` 失败时的停止位置。
+     * @param unfinishedPhase `tryParse` 失败时记录的阶段名称。
+     * @param errors `tryParse` 捕获的异常。
+     */
     public init(document: Document, source: SourceBuffer, diagnostics: Array<Diagnostic>, isComplete!: Bool = true,
         stoppedAt!: ?SourceSpan = None, unfinishedPhase!: String = "", errors!: Array<MarkdownException> = []) {
         this.document = document
@@ -31,6 +56,7 @@ public class ParseResult {
         this.errors = ImmutableArray<MarkdownException>(errors)
     }
 
+    /** 兼容别名：返回解析得到的 `Document`。 */
     public prop ast: Document {
         get() {
             document
@@ -38,6 +64,13 @@ public class ParseResult {
     }
 }
 
+/**
+ * 构造不可变 `MarkdownEngine` 的 fluent builder。
+ *
+ * 默认 profile 是 CommonMark 0.31.2，默认限制是 `ParseLimits.safe()`。
+ * 设置 `dialect` 会采用其 base profile；只有调用方已经显式设置 limits 时才保留
+ * builder 中的 limits。
+ */
 public class MarkdownEngineBuilder {
     private var profileValue = MarkdownProfile.commonMark0312()
     private var limitsValue = ParseLimits.safe()
@@ -45,20 +78,33 @@ public class MarkdownEngineBuilder {
     private var limitsExplicit = false
     private var nativeScannerEnabledValue = true
 
+    /** 创建默认配置的 builder。 */
     public init() {}
 
+    /** 选择 profile，并清除之前设置的 dialect。
+     * @param profile 要使用的 profile。
+     * @return 同一 builder，支持链式调用。
+     */
     public func profile(profile: MarkdownProfile): MarkdownEngineBuilder {
         profileValue = profile
         dialectValue = None
         this
     }
 
+    /** 覆盖 parser 和 renderer 使用的结构限制。
+     * @param limits 要使用的结构限制。
+     * @return 同一 builder，支持链式调用。
+     */
     public func limits(limits: ParseLimits): MarkdownEngineBuilder {
         limitsValue = limits
         limitsExplicit = true
         this
     }
 
+    /** 安装待编译的 dialect；未显式设置 limits 时同步采用 dialect limits。
+     * @param dialect 要安装的 dialect 定义。
+     * @return 同一 builder，支持链式调用。
+     */
     public func dialect(dialect: MarkdownDialect): MarkdownEngineBuilder {
         dialectValue = Some(dialect)
         profileValue = dialect.baseProfile
@@ -68,11 +114,20 @@ public class MarkdownEngineBuilder {
         this
     }
 
+    /** 允许或禁止已经注入的 native scanner；不会自动链接 native library。
+     * @param enabled 是否启用 native scanner。
+     * @return 同一 builder，支持链式调用。
+     */
     public func nativeScannerEnabled(enabled: Bool): MarkdownEngineBuilder {
         nativeScannerEnabledValue = enabled
         this
     }
 
+    /**
+     * 编译 dialect 并返回不可变 engine。
+     * @return 编译完成的不可变 engine。
+     * @throws MarkdownException dialect 编译失败时。
+     */
     public func build(): MarkdownEngine {
         let compiled = match (dialectValue) {
             case Some(dialect) => DialectCompiler.compile(dialect)
@@ -82,9 +137,18 @@ public class MarkdownEngineBuilder {
     }
 }
 
+/**
+ * Markdown 解析 engine。
+ *
+ * engine 持有 profile、limits 和已编译 dialect，可重复用于多个操作；每个操作的
+ * cancellation token 与 `OperationBudget` 默认独立创建。
+ */
 public class MarkdownEngine {
+    /** engine 使用的 profile。 */
     public let profile: MarkdownProfile
+    /** engine 使用的结构限制。 */
     public let limits: ParseLimits
+    /** engine 的已编译 dialect。 */
     public let dialect: CompiledMarkdownDialect
     internal let nativeScannerEnabledValue: Bool
 
@@ -96,10 +160,23 @@ public class MarkdownEngine {
         this.nativeScannerEnabledValue = nativeScannerEnabled
     }
 
+    /**
+     * 返回新的 builder。
+     * @return 新的 builder。
+     */
     public static func builder(): MarkdownEngineBuilder {
         MarkdownEngineBuilder()
     }
 
+    /**
+     * 从 String 构造完整 AST；失败会抛出 `MarkdownException`。
+     * @param value 要解析的 Markdown 文本。
+     * @param cancellation 可选取消 token。
+     * @param budget 可选 operation budget。
+     * @return 完整的 `ParseResult`。
+     * @throws LimitExceededException 输入超过 `maximumInputBytes` 时。
+     * @throws MarkdownException 取消或预算耗尽时。
+     */
     public func parse(
         value: String,
         cancellation!: CancellationToken = CancellationToken.none(),
@@ -113,6 +190,13 @@ public class MarkdownEngine {
         parseSource(SourceBuffer(value), [], cancellation, budget, noAccelerator)
     }
 
+    /**
+     * `tryParse` 的兼容名称；失败时返回不完整结果和空文档。
+     * @param value 要解析的 Markdown 文本。
+     * @param cancellation 可选取消 token。
+     * @param budget 可选 operation budget。
+     * @return 完整或不完整的 `ParseResult`。
+     */
     public func parsePartial(
         value: String,
         cancellation!: CancellationToken = CancellationToken.none(),
@@ -122,8 +206,11 @@ public class MarkdownEngine {
     }
 
     /**
-     * Returns either a complete parse or a failure result with an empty
-     * document. It does not expose a completed AST prefix.
+     * 捕获 `MarkdownException` 并返回 `isComplete=false` 的结果，不暴露 AST 前缀。
+     * @param value 要解析的 Markdown 文本。
+     * @param cancellation 可选取消 token。
+     * @param budget 可选 operation budget。
+     * @return 成功结果或包含 `errors` 的不完整结果。
      */
     public func tryParse(
         value: String,
@@ -141,6 +228,16 @@ public class MarkdownEngine {
         }
     }
 
+    /**
+     * 从 UTF-8 bytes 解析；默认 `Utf8Policy.Strict`，保留原始 byte offset 语义。
+     * @param bytes 原始 UTF-8 bytes。
+     * @param utf8Policy 非法 UTF-8 的处理策略。
+     * @param cancellation 可选取消 token。
+     * @param budget 可选 operation budget。
+     * @return 完整的 `ParseResult`。
+     * @throws LimitExceededException 输入超过 `maximumInputBytes` 时。
+     * @throws MarkdownException 取消、预算耗尽或解码失败时。
+     */
     public func parse(
         bytes: Array<Byte>,
         utf8Policy!: Utf8Policy = Utf8Policy.Strict,
@@ -166,6 +263,15 @@ public class MarkdownEngine {
         parseSource(decoded.source, decoded.diagnostics, cancellation, budget, accelerator)
     }
 
+    /**
+     * 消费一次性 `OwnedUtf8Input`；输入所有权转移后不再复制或重复校验。
+     * @param input 已转移所有权的 UTF-8 输入。
+     * @param cancellation 可选取消 token。
+     * @param budget 可选 operation budget。
+     * @return 完整的 `ParseResult`。
+     * @throws LimitExceededException 输入超过 `maximumInputBytes` 时。
+     * @throws MarkdownException 取消、预算耗尽或解码失败时。
+     */
     public func parse(
         input: OwnedUtf8Input,
         cancellation!: CancellationToken = CancellationToken.none(),
@@ -175,6 +281,15 @@ public class MarkdownEngine {
         parseOwnedWithAccelerator(input, cancellation, budget, noAccelerator)
     }
 
+    /**
+     * 解析可重复使用的 `ReusableUtf8Input`。
+     * @param input 可重复使用的 UTF-8 输入。
+     * @param cancellation 可选取消 token。
+     * @param budget 可选 operation budget。
+     * @return 完整的 `ParseResult`。
+     * @throws LimitExceededException 输入超过 `maximumInputBytes` 时。
+     * @throws MarkdownException 取消、预算耗尽或解码失败时。
+     */
     public func parse(
         input: ReusableUtf8Input,
         cancellation!: CancellationToken = CancellationToken.none(),
@@ -215,6 +330,17 @@ public class MarkdownEngine {
         parseSource(SourceBuffer(value, bytes, true), [], cancellation, budget, accelerator)
     }
 
+    /**
+     * 全量读取 `InputStream` 后解析；stream 路径不会降低峰值内存。
+     * @param input 输入流。
+     * @param utf8Policy 非法 UTF-8 的处理策略。
+     * @param cancellation 可选取消 token。
+     * @param budget 可选 operation budget。
+     * @return 完整的 `ParseResult`。
+     * @throws InputReadFailureException 输入流抛出非 Markdown 异常时。
+     * @throws LimitExceededException 输入超过 `maximumInputBytes` 时。
+     * @throws MarkdownException 取消、预算耗尽或解码失败时。
+     */
     public func parse(
         input: InputStream,
         utf8Policy!: Utf8Policy = Utf8Policy.Strict,
@@ -259,6 +385,13 @@ public class MarkdownEngine {
         parseBytesWithAccelerator(bytes.toArray(), utf8Policy, cancellation, budget, accelerator)
     }
 
+    /**
+     * 创建只在 `finish()` 时解析的 buffered input session。
+     * @param utf8Policy 输入解码策略。
+     * @param cancellation 可选取消 token。
+     * @param budget 可选 operation budget。
+     * @return 新的 `BufferedInputSession`。
+     */
     public func newSession(
         utf8Policy!: Utf8Policy = Utf8Policy.Strict,
         cancellation!: CancellationToken = CancellationToken.none(),
@@ -267,7 +400,12 @@ public class MarkdownEngine {
         BufferedInputSession(this, utf8Policy, cancellation, budget)
     }
 
-    /** Creates a session that buffers all input and parses only at finish(). */
+    /** 创建 `feed` 只累计输入、`finish()` 才执行解析的 session。
+     * @param utf8Policy 输入解码策略。
+     * @param cancellation 协作式取消信号。
+     * @param budget 单次解析的操作预算。
+     * @return 新的 buffered input session。
+     */
     public func newBufferedInputSession(
         utf8Policy!: Utf8Policy = Utf8Policy.Strict,
         cancellation!: CancellationToken = CancellationToken.none(),
@@ -288,7 +426,11 @@ public class MarkdownEngine {
     }
 }
 
-/** Buffers all input and parses only when finish() is called. */
+/**
+ * 缓冲全部输入并在 `finish()` 时解析。
+ *
+ * `feed` 在完成前可接受 String 或 bytes；调用 `finish()` 后 session 不能再次使用。
+ */
 public class BufferedInputSession {
     private let engine: MarkdownEngine
     private let utf8Policy: Utf8Policy
@@ -309,22 +451,53 @@ public class BufferedInputSession {
         this.budget = budget
     }
 
+    /** 追加 UTF-8 bytes；只累计输入，不提前产生 AST。
+     * @param chunk 要追加的字节块。
+     * @throws IllegalStateException session 已 finish 后调用时。
+     * @throws LimitExceededException 输入超过上限时。
+     */
     public func feed(chunk: Array<Byte>): Unit {
+        preflightFeed(chunk.size)
+        appendValidatedBytes(chunk)
+    }
+
+    /** 追加 String 的 UTF-8 bytes；只累计输入，不提前产生 AST。
+     * @param chunk 要追加的文本块。
+     * @throws IllegalStateException session 已 finish 后调用时。
+     * @throws LimitExceededException 输入超过上限时。
+     */
+    public func feed(chunk: String): Unit {
+        // String.size is its UTF-8 byte length. Validate the session state and
+        // remaining input budget before materializing another byte array.
+        preflightFeed(chunk.size)
+        appendValidatedBytes(chunk.toArray())
+    }
+
+    private func preflightFeed(chunkBytes: Int64): Unit {
         if (finished) {
             throw IllegalStateException("buffered input session is already finished")
         }
         cancellation.throwIfCancelled(phase: "input")
-        if (bytes.size + chunk.size > engine.limits.maximumInputBytes) {
-            throw LimitExceededException("input_bytes", engine.limits.maximumInputBytes, bytes.size + chunk.size,
-                "input")
+        let maximumInputBytes = engine.limits.maximumInputBytes
+        if (chunkBytes > maximumInputBytes - bytes.size) {
+            let observed = if (chunkBytes > Int64.Max - bytes.size) {
+                Int64.Max
+            } else {
+                bytes.size + chunkBytes
+            }
+            throw LimitExceededException("input_bytes", maximumInputBytes, observed, "input")
         }
+    }
+
+    private func appendValidatedBytes(chunk: Array<Byte>): Unit {
         bytes.add(all: chunk)
     }
 
-    public func feed(chunk: String): Unit {
-        feed(chunk.toArray())
-    }
-
+    /**
+     * 结束输入并执行一次完整解析；重复 finish 或后续 feed 会失败。
+     * @return 完整的解析结果。
+     * @throws IllegalStateException session 已 finish 后调用时。
+     */
     public func finish(): ParseResult {
         if (finished) {
             throw IllegalStateException("buffered input session is already finished")
@@ -569,6 +742,8 @@ internal class ParserSession {
     private var suppressedInlineRule = ""
     private var suppressedBlockRule = ""
     private var eventBlockCheckpoint: ?AstArenaCheckpoint = None
+    private var normalizedInlineOffsets: ?Array<Int64> = None
+    private var normalizedInlineBase: Int64 = 0
 
     init(profile: MarkdownProfile, limits: ParseLimits, cancellation: CancellationToken, budget: OperationBudget,
         source: SourceBuffer, dialect: CompiledMarkdownDialect, nativeScannerEnabled: Bool,
@@ -1301,8 +1476,7 @@ internal class ParserSession {
                     break
                 }
             }
-            let rawParagraph = source.text()[firstLine.startByte..last.endByte]
-            let children = parseInline(rawParagraph, firstLine.startByte, 0)
+            let children = parseCombinedInlineLines(lines, start, end)
             return (nodes.paragraph(children, mappedSpan(firstLine.startByte, last.endByte)), end)
         }
         let checkpoint = nodes.checkpoint()
@@ -1352,19 +1526,20 @@ internal class ParserSession {
             }
         }
         if (index - start > 1) {
-            let firstText = lines[start].text
             let sourceText = source.text()
             let paragraphStart = lines[start].startByte
             let paragraphEnd = last.endByte
             let needsCombinedInline = containsByteInRange(sourceText, b'`', paragraphStart, paragraphEnd) ||
-                firstText.contains("*") || firstText.contains("_") || (firstText.contains("[") && containsByteInRange(
-                sourceText, b')', paragraphStart, paragraphEnd)) || (firstText.contains("<") && containsByteInRange(
-                sourceText, b'>', paragraphStart, paragraphEnd))
+                containsByteInRange(sourceText, b'*', paragraphStart, paragraphEnd) || containsByteInRange(sourceText,
+                b'_', paragraphStart, paragraphEnd) || (containsByteInRange(sourceText, b'[', paragraphStart,
+                paragraphEnd) && containsByteInRange(sourceText, b')', paragraphStart, paragraphEnd)) || (containsByteInRange(
+                sourceText, b'<', paragraphStart, paragraphEnd) && containsByteInRange(sourceText, b'>', paragraphStart,
+                paragraphEnd))
             if (needsCombinedInline) {
-                let rawParagraph = sourceText[paragraphStart..paragraphEnd]
                 nodes.rollback(checkpoint)
                 children.clear()
-                for (child in parseInline(rawParagraph, lines[start].startByte, 0)) {
+                let combinedChildren = parseCombinedInlineLines(lines, start, index)
+                for (child in combinedChildren) {
                     children.add(child)
                 }
             }
@@ -1431,6 +1606,8 @@ internal class ParserSession {
             }
             if (contentStart < 0) {
                 contentStart = lines[index].startByte
+            } else if (lines[index].startByte != lines[index - 1].endWithNewline) {
+                literalCanUseSourceSlice = false
             }
             if (lines[index].endWithNewline > lines[index].endByte) {
                 if (source.text()[lines[index].endByte] != 10) {
@@ -1462,27 +1639,53 @@ internal class ParserSession {
     }
 
     private func parseIndentedCode(lines: Array<LineRecord>, start: Int64): (Int64, Int64) {
-        let parts = ArrayList<String>()
+        let literal = BoundedLiteralBuilder(limits.maximumLiteralBytes, budget, cancellation, "block_parse")
+        var literalBytes: Int64 = 0
+        var hasContent = false
+        var pendingEmptyLines: Int64 = 0
         var index = start
         var last = lines[start]
         while (index < lines.size && (isIndentedCode(lines[index].text) || isBlank(lines[index].text))) {
-            if (isIndentedCode(lines[index].text)) {
-                parts.add(stripIndentColumns(lines[index].text, 4)[0])
+            cancellation.throwIfCancelled(phase: "block_parse")
+            let line = lines[index].text
+            let (contentStart, syntheticSpaces) = if (isIndentedCode(line)) {
+                strippedIndentLayout(line, 4)
             } else {
-                parts.add("")
+                (line.size, 0)
+            }
+            let contentBytes = syntheticSpaces + line.size - contentStart
+            if (contentBytes == 0) {
+                if (hasContent) {
+                    pendingEmptyLines++
+                }
+            } else {
+                let separators = if (hasContent) {
+                    pendingEmptyLines + 1
+                } else {
+                    0
+                }
+                // Check the cumulative literal size before materializing a
+                // normalized line slice or synthetic indentation. The
+                // BoundedLiteralBuilder repeats this check while accounting
+                // for the operation budget as bytes are appended.
+                ensureLiteralAppendFits(literalBytes, separators + contentBytes, "block_parse")
+                for (_ in 0..separators) {
+                    literal.appendByte(b'\n')
+                }
+                if (syntheticSpaces > 0) {
+                    literal.append(repeatSpaces(syntheticSpaces))
+                }
+                if (contentStart < line.size) {
+                    literal.append(line[contentStart..])
+                }
+                literalBytes += separators + contentBytes
+                hasContent = true
+                pendingEmptyLines = 0
             }
             last = lines[index]
             index++
         }
-        while (!parts.isEmpty() && parts[0].isEmpty()) {
-            parts.remove(at: 0)
-        }
-        while (!parts.isEmpty() && parts[parts.size - 1].isEmpty()) {
-            parts.remove(at: parts.size - 1)
-        }
-        let literal = joinStrings(parts.toArray(), "\n")
-        ensureLiteralBytes(literal.size, "block_parse")
-        (nodes.codeBlock(CodeBlockKind.Indented, LiteralStorage.Copy(literal),
+        (nodes.codeBlock(CodeBlockKind.Indented, LiteralStorage.Copy(literal.finish()),
                 mappedSpan(lines[start].startByte, last.endByte)), index)
     }
 
@@ -3265,7 +3468,77 @@ internal class ParserSession {
     }
 
     private func mappedSpan(decodedStart: Int64, decodedEnd: Int64): SourceSpan {
+        if (let Some(offsets) <- normalizedInlineOffsets) {
+            let localStart = decodedStart - normalizedInlineBase
+            let localEnd = decodedEnd - normalizedInlineBase
+            if (localStart >= 0 && localEnd >= localStart && localEnd < offsets.size) {
+                return SourceSpan(source.originalOffset(offsets[localStart]), source.originalOffset(offsets[localEnd]))
+            }
+        }
         SourceSpan(source.originalOffset(decodedStart), source.originalOffset(decodedEnd))
+    }
+
+    private func inlineLinesAreContiguousSource(lines: Array<LineRecord>, start: Int64, end: Int64): Bool {
+        for (index in start..end) {
+            let contentStart = leadingWhitespace(lines[index].text)
+            if (index > start && lines[index].startByte + contentStart != lines[index - 1].endWithNewline) {
+                return false
+            }
+        }
+        true
+    }
+
+    private func parseCombinedInlineLines(lines: Array<LineRecord>, start: Int64, end: Int64): Array<Int64> {
+        if (!inlineLinesAreContiguousSource(lines, start, end)) {
+            return parseNormalizedInlineLines(lines, start, end)
+        }
+        let first = lines[start]
+        let last = lines[end - 1]
+        let contentStart = leadingWhitespace(first.text)
+        let trailingBytes = last.text.size - stripTrailingSpaces(last.text).size
+        let sourceStart = first.startByte + contentStart
+        let sourceEnd = last.endByte - trailingBytes
+        parseInline(source.text()[sourceStart..sourceEnd], sourceStart, 0)
+    }
+
+    private func parseNormalizedInlineLines(lines: Array<LineRecord>, start: Int64, end: Int64): Array<Int64> {
+        let combined = StringBuilder()
+        let offsets = ArrayList<Int64>()
+        for (index in start..end) {
+            let line = lines[index]
+            let contentStart = leadingWhitespace(line.text)
+            let sourceStart = line.startByte + contentStart
+            if (index == start) {
+                offsets.add(sourceStart)
+            } else {
+                combined.append("\n")
+                offsets.add(sourceStart)
+            }
+            let rawContent = line.text[contentStart..]
+            let content = if (index + 1 == end) {
+                stripTrailingSpaces(rawContent)
+            } else {
+                rawContent
+            }
+            combined.append(content)
+            for (offset in 1..content.size + 1) {
+                offsets.add(sourceStart + offset)
+            }
+        }
+        let previousOffsets = normalizedInlineOffsets
+        let previousBase = normalizedInlineBase
+        normalizedInlineOffsets = Some(offsets.toArray())
+        normalizedInlineBase = 0
+        try {
+            let parsed = parseInline(combined.toString(), 0, 0, sourceIdentity: false)
+            normalizedInlineOffsets = previousOffsets
+            normalizedInlineBase = previousBase
+            parsed
+        } catch (error: Exception) {
+            normalizedInlineOffsets = previousOffsets
+            normalizedInlineBase = previousBase
+            throw error
+        }
     }
 
     private func parsedText(raw: String, value: String, decodedStart: Int64, decodedEnd: Int64): Int64 {
@@ -3522,6 +3795,14 @@ internal class ParserSession {
         }
     }
 
+    private func ensureLiteralAppendFits(current: Int64, additional: Int64, phase: String): Unit {
+        cancellation.throwIfCancelled(phase: phase)
+        let observed = current + additional
+        if (observed > limits.maximumLiteralBytes) {
+            throw LimitExceededException("literal_bytes", limits.maximumLiteralBytes, observed, phase)
+        }
+    }
+
     private func isLegacyGfmComment(text: String, start: Int64): Bool {
         if (profile.standardVersion != "0.29-gfm" || !startsAt(text, "<!--", start)) {
             return false
@@ -3741,10 +4022,16 @@ private func findReferenceLabelClose(text: String): Int64 {
 private func normalizeReferenceLabel(label: String): String {
     let text = trimAscii(label)
     var needsNormalization = false
+    var hasNonAscii = false
     var index: Int64 = 0
     while (index < text.size) {
         let byte = text[index]
-        if (byte == b' ' || byte == b'\t' || byte == 10 || byte == 13 || (byte >= b'A' && byte <= b'Z') || byte >= 0x80) {
+        if (byte >= 0x80) {
+            hasNonAscii = true
+            needsNormalization = true
+            break
+        }
+        if (byte == b' ' || byte == b'\t' || byte == 10 || byte == 13 || (byte >= b'A' && byte <= b'Z')) {
             needsNormalization = true
             break
         }
@@ -3770,13 +4057,21 @@ private func normalizeReferenceLabel(label: String): String {
                 out.appendFromUtf8([byte + 32])
                 index++
             } else {
+                if (byte >= 0x80) {
+                    hasNonAscii = true
+                }
                 let next = nextRuneOffset(text, index)
                 out.append(text[index..next])
                 index = next
             }
         }
     }
-    out.toString().toLower().replace("ß", "ss")
+    let normalized = out.toString()
+    if (hasNonAscii) {
+        normalized.toLower().replace("ß", "ss")
+    } else {
+        normalized
+    }
 }
 
 private func isBlank(text: String): Bool {
@@ -4169,6 +4464,18 @@ private func isHtmlBlock(text: String): Bool {
     htmlBlockType(text) > 0
 }
 
+internal func isHtmlTypeOneTagBoundary(byte: Byte): Bool {
+    byte == b' ' || byte == b'\t' || byte == b'>'
+}
+
+private func startsHtmlTypeOneTag(text: String, tag: String): Bool {
+    if (!text.startsWith(tag)) {
+        return false
+    }
+    let boundary = tag.size
+    boundary == text.size || isHtmlTypeOneTagBoundary(text[boundary])
+}
+
 private func htmlBlockType(text: String): Int64 {
     let leading = leadingSpaces(text)
     if (leading > 3 || leading >= text.size || text[leading] != b'<') {
@@ -4179,8 +4486,8 @@ private func htmlBlockType(text: String): Int64 {
         return 0
     }
     let lower = lowerAsciiValue(trimmed)
-    if (lower.startsWith("<script") || lower.startsWith("<pre") || lower.startsWith("<style") || lower.startsWith(
-        "<textarea")) {
+    if (startsHtmlTypeOneTag(lower, "<script") || startsHtmlTypeOneTag(lower, "<pre") || startsHtmlTypeOneTag(lower,
+        "<style") || startsHtmlTypeOneTag(lower, "<textarea")) {
         return 1
     }
     if (trimmed.startsWith("<!--")) {
@@ -4347,6 +4654,11 @@ private func visualColumnAt(text: String, end: Int64): Int64 {
 
 // Returns normalized text, consumed source bytes, and synthetic leading spaces.
 private func stripIndentColumns(text: String, target: Int64): (String, Int64, Int64) {
+    let (index, residual) = strippedIndentLayout(text, target)
+    (repeatSpaces(residual) + text[index..], index, residual)
+}
+
+private func strippedIndentLayout(text: String, target: Int64): (Int64, Int64) {
     var column: Int64 = 0
     var index: Int64 = 0
     while (index < text.size && (text[index] == b' ' || text[index] == b'\t')) {
@@ -4357,8 +4669,7 @@ private func stripIndentColumns(text: String, target: Int64): (String, Int64, In
         }
         index++
     }
-    let residual = max(0, column - target)
-    (repeatSpaces(residual) + text[index..], index, residual)
+    (index, max(0, column - target))
 }
 
 private func repeatSpaces(count: Int64): String {
@@ -4400,17 +4711,6 @@ private func joinLineRecords(lines: Array<LineRecord>, start: Int64, end: Int64)
             out.append("\n")
         }
         out.append(lines[index].text)
-    }
-    out.toString()
-}
-
-private func joinStrings(values: Array<String>, separator: String): String {
-    let out = StringBuilder()
-    for (index in 0..values.size) {
-        if (index > 0) {
-            out.append(separator)
-        }
-        out.append(values[index])
     }
     out.toString()
 }

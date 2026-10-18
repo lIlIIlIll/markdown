@@ -154,12 +154,13 @@ class InputBehaviorTest {
     func arbitraryChunkBoundariesMatchAllAtOnce(): Unit {
         let input = "# 😀\r\n\r\nA **bold**"
         let engine = MarkdownEngine.builder().build()
-        let expected = HtmlRenderer(options: HtmlOptions.specCompatible()).render(engine.parse(input).document)
+        let expected = HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(
+            engine.parse(input).document)
         let session = engine.newSession()
         for (byte in input.toArray()) {
             session.feed([byte])
         }
-        let actual = HtmlRenderer(options: HtmlOptions.specCompatible()).render(session.finish().document)
+        let actual = HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(session.finish().document)
         @Expect(actual, expected)
     }
 
@@ -246,7 +247,7 @@ class InputBehaviorTest {
         let input = "# title\r\n\r\nText *em* 😀".toArray()
         let nativeEngine = MarkdownEngine.builder().nativeScannerEnabled(true).build()
         let cangjieEngine = MarkdownEngine.builder().nativeScannerEnabled(false).build()
-        let renderer = HtmlRenderer(options: HtmlOptions.specCompatible())
+        let renderer = HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() })
         let nativeHtml = renderer.render(nativeEngine.parse(input).document)
         let cangjieHtml = renderer.render(cangjieEngine.parse(input).document)
         @Expect(cangjieHtml, nativeHtml)
@@ -279,6 +280,59 @@ class InputBehaviorTest {
     }
 
     @TestCase
+    func bufferedStringFeedChecksLifecycleAndCancellationBeforeEncoding(): Unit {
+        let large = bufferedInputText(262144)
+        let finished = MarkdownEngine.builder().build().newBufferedInputSession()
+        finished.finish()
+        try {
+            finished.feed(large)
+            @Expect(false)
+        } catch (_: IllegalStateException) {
+            @Expect(true)
+        }
+
+        let cancellation = CancellationSource()
+        cancellation.cancel()
+        let cancelled = MarkdownEngine.builder().build().newBufferedInputSession(cancellation: cancellation.token)
+        try {
+            cancelled.feed(large)
+            @Expect(false)
+        } catch (error: MarkdownException) {
+            match (error.code) {
+                case MarkdownErrorCode.Cancelled => @Expect(error.phase, "input")
+                case _ => @Expect(false)
+            }
+        }
+    }
+
+    @TestCase
+    func bufferedStringFeedChecksWholeAndRemainingInputBudgetsBeforeEncoding(): Unit {
+        let large = bufferedInputText(262144)
+        let oneByte = MarkdownEngine.builder().limits(bufferedInputLimits(1)).build().newBufferedInputSession()
+        try {
+            oneByte.feed(large)
+            @Expect(false)
+        } catch (error: LimitExceededException) {
+            @Expect(error.limitKind, "input_bytes")
+            @Expect(error.configuredLimit, 1)
+            @Expect(error.observedValue, large.size)
+            @Expect(error.phase, "input")
+        }
+
+        let remaining = MarkdownEngine.builder().limits(bufferedInputLimits(8)).build().newBufferedInputSession()
+        remaining.feed("x")
+        try {
+            remaining.feed(large)
+            @Expect(false)
+        } catch (error: LimitExceededException) {
+            @Expect(error.limitKind, "input_bytes")
+            @Expect(error.configuredLimit, 8)
+            @Expect(error.observedValue, large.size + 1)
+            @Expect(error.phase, "input")
+        }
+    }
+
+    @TestCase
     func rejectsMalformedThirdPartyScannerRecordsBeforeSlicing(): Unit {
         let engine = MarkdownEngine.builder().build().acceleratedBy(InvalidScannerAccelerator())
         try {
@@ -301,7 +355,7 @@ class InputBehaviorTest {
     func preservesLegacyScannerSemanticsAndRejectsUnknownFormats(): Unit {
         let legacy = MarkdownEngine.builder().build().acceleratedBy(LegacyV1ScannerAccelerator())
         let document = legacy.parse("*legacy*".toArray()).document
-        @Expect(HtmlRenderer(options: HtmlOptions.specCompatible()).render(document), "<p><em>legacy</em></p>\n")
+        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>legacy</em></p>\n")
 
         // Version 2 has no text-lowering bit. It must therefore retain the
         // conservative coalescing path for escape/entity/code markers.
@@ -358,4 +412,16 @@ class InputBehaviorTest {
             @Expect(longPositions.visualPosition(offset), longResult.source.visualPosition(offset, tabStop: 4))
         }
     }
+}
+
+private func bufferedInputText(size: Int64): String {
+    let out = StringBuilder()
+    for (_ in 0..size) {
+        out.append("x")
+    }
+    out.toString()
+}
+
+private func bufferedInputLimits(maximumInputBytes: Int64): ParseLimits {
+    ParseLimits(maximumInputBytes, 1024 * 1024, 32, 1024, 32, 32, 1024, 1024 * 1024, 1024 * 1024, 1024, 1024)
 }

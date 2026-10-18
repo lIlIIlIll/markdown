@@ -26,11 +26,17 @@ import markdown.core.{
 | --- | --- | --- |
 | `parse(source, profile)` | `ParseResult` | 构造完整 AST |
 | `toSafeHtml(source, profile)` | `String` | 使用安全 HTML 默认值 |
-| `toSpecHtml(source, profile)` | `String` | 使用 CommonMark 兼容 raw HTML 行为 |
+| `unsafe toSpecHtml(source, profile)` | `String` | 使用 CommonMark 兼容 raw HTML 行为 |
 | `toText(source, profile)` | `String` | 输出纯文本 |
 | `format(source, profile)` | `String` | 输出 canonical Markdown |
 
 需要自定义限制、方言、取消或 budget 时，使用 `MarkdownEngine`。
+
+`toSpecHtml` 会原样输出规范允许的 raw HTML，因此必须显式放在 unsafe context 中：
+
+```cangjie
+let html = unsafe { Markdown.toSpecHtml(source) }
+```
 
 ## `MarkdownEngineBuilder`
 
@@ -143,7 +149,8 @@ for (event in events.events.toArray()) {
 | `RawBlockEventMode` | 跳过全局 reference resolution，事件标记为非最终 |
 
 `newRawBlockEventSession` 接收 String 或 byte chunks。它会在后续输入证明 block 已闭合时
-返回事件，`finish()` 发出最后一个 block 和 `DocumentEnd`。
+返回事件，`finish()` 发出最后一个 block 和 `DocumentEnd`。`feed()` 只扫描新增 bytes，
+并立即检查 input 和 line limits。逐 byte feed 不会反复复制或扫描全部 pending input。
 
 Event 值不持有 `Document` 或 `NodeRef`。配置 document processor 的 dialect 需要
 完整 AST，因此 Event preflight 会失败。
@@ -165,6 +172,9 @@ let output = engine.renderHtml(
 | `RequireFused` | 无法证明等价时抛出 RenderFailure |
 
 Fused path 不会静默关闭扩展、processor 或安全策略。
+FullAst 和 fused path 都执行 input、line、literal、output、cancellation 和 operation
+budget。`maximumAstNodes` 只统计实际 AST 分配；fused path 不创建 AST，因此不会模拟
+逻辑节点数。需要该限制参与执行结果时，使用 `FullAst`。
 
 ## Profile
 

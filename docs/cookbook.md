@@ -35,8 +35,8 @@ let html = Markdown.toSafeHtml("# Hello\n\n<script>blocked</script>")
 println(html)
 ```
 
-需要 CommonMark 规范兼容输出，而不是面向不信任输入的默认策略时，显式调用
-`Markdown.toSpecHtml`。不要对用户输入使用该入口。
+需要 CommonMark 规范兼容输出，而不是面向不信任输入的默认策略时，在 unsafe context
+中显式调用 `unsafe { Markdown.toSpecHtml(source) }`。不要对用户输入使用该入口。
 
 > [!WARNING]
 > `toSpecHtml` 追求规范输出，不是未信任内容的安全边界。面向用户输入时使用 `toSafeHtml`。

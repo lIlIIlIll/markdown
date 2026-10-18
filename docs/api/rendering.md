@@ -23,6 +23,8 @@ let html = renderer.render(
 | `sanitizer` | `?HtmlSanitizerPort` | `None` |
 | `extensionManifests` | `Array<ExtensionManifest>` | `[]` |
 | `extensionFallbacks` | `Array<ExtensionRendererFallback>` | `[]` |
+| `rawHtmlHandler` | `?RawHtmlHandlerPort` | `None` |
+| `maximumOutputBytes` | `?Int64` | `None` |
 
 使用扩展方言时，优先通过 engine 创建 renderer：
 
@@ -37,11 +39,11 @@ let renderer = engine.htmlRenderer(options: HtmlOptions.safe())
 | Factory | Raw HTML | URI 行为 | 用途 |
 | --- | --- | --- | --- |
 | `HtmlOptions.safe()` | 转义 | 安全 link policy；remote/data image 默认关闭 | 不可信输入 |
-| `HtmlOptions.specCompatible()` | pass-through | CommonMark 兼容 | 规范对比或可信输入 |
-| `HtmlOptions.gfmCompatible()` | pass-through + GFM tagfilter | GFM 兼容 | GFM 规范对比 |
+| `unsafe { HtmlOptions.specCompatible() }` | pass-through | CommonMark 兼容 | 规范对比或可信输入 |
+| `unsafe { HtmlOptions.gfmCompatible() }` | pass-through + GFM tagfilter | GFM 兼容 | GFM 规范对比 |
 
 `specCompatible()` 和 `gfmCompatible()` 不是 sanitizer。不要用于未经信任且会直接
-插入网页的输入。
+插入网页的输入。两个 factory 都是 `unsafe`，因为它们会原样输出规范允许的 raw HTML。
 
 ## 自定义 `HtmlOptions`
 
@@ -72,6 +74,29 @@ let options = HtmlOptions(
 `Sanitize` 需要提供 `HtmlSanitizerPort`。adapter 抛错时 renderer 会传播错误，不会
 回退到未清理 HTML。
 
+普通 `HtmlOptions` 构造器拒绝 `PassThrough`。可信输入必须通过
+`unsafe { HtmlOptions.passThrough(...) }`、`specCompatible()` 或 `gfmCompatible()`
+显式启用。
+
+`CustomHandler` 需要 `RawHtmlHandlerPort`。handler 接收 raw literal 和 block 标记，
+并返回 `TrustedHtml`。缺少 handler 时 renderer 以 `RenderFailure` 失败。handler 的
+`identity` 必须非空，并进入 renderer fingerprint。
+
+```cangjie
+public class MyRawHtmlHandler <: RawHtmlHandlerPort {
+    public prop identity: String {
+        get() { "my-raw-html-handler-v1" }
+    }
+
+    public func renderRawHtml(_: String, block: Bool): TrustedHtml {
+        let replacement = if (block) { "<div>raw HTML removed</div>" } else { "<span>raw HTML removed</span>" }
+        unsafe { TrustedHtml.fromString(replacement) }
+    }
+}
+```
+
+该示例丢弃 raw literal，并返回固定的宿主可信标记。库不会替 handler 判断输出是否安全。
+
 ### `LinkUriPolicy`
 
 ```cangjie
@@ -85,6 +110,35 @@ LinkUriPolicy(
 
 `safe()` 允许 relative、HTTP、HTTPS 和 mailto，拒绝
 `javascript:`、`vbscript:`、`file:` 等 scheme。
+
+### `ExternalLinkRewriterPort`
+
+`rewriteExternalLinks` 只处理已经解析的 HTTP 或 HTTPS destination。renderer 先调用
+rewriter，再对返回值执行 URI policy 和 attribute escaping。relative URL 和 `mailto:`
+保持不变。返回危险 scheme 时，renderer 不生成 `href`。
+
+```cangjie
+public class Redirector <: ExternalLinkRewriterPort {
+    public prop identity: String {
+        get() { "docs-redirector-v1" }
+    }
+
+    public func rewriteExternalLink(uri: String): String {
+        "https://redirect.example/?url=${uri}"
+    }
+}
+
+let options = HtmlOptions(
+    HtmlPolicy.safe(),
+    RawHtmlPolicyKind.Escape,
+    LinkUriPolicy.safe(),
+    ImageUriPolicy.safe(),
+    rewriteExternalLinks: Some(Redirector())
+)
+```
+
+`identity` 必须稳定且非空。更改 rewrite 语义时，也要更改 identity。identity 进入
+renderer fingerprint。
 
 ### `ImageUriPolicy`
 
@@ -108,15 +162,40 @@ ImageUriPolicy(
 public class MySink <: TextSink {
     public func write(slice: String): SinkWriteResult {
         // 将 slice 写入调用者控制的目标。
-        SinkWriteResult.Continue
+        SinkWriteResult.Success
     }
 }
 
 renderer.renderTo(document, MySink())
 ```
 
-`write` 返回 `Continue` 或 `Failed(SinkError)`。失败会转换为
+`write` 返回 `Success` 或 `Failure(SinkError)`。失败会转换为
 `SinkFailureException`。每次写入前都会检查 output budget。
+
+`maximumOutputBytes` 是 renderer 的固定上限。`MarkdownEngine.htmlRenderer()` 自动使用
+engine 的 `ParseLimits.maximumOutputBytes`。显式构造 `HtmlRenderer` 时，可以传入独立
+上限。renderer 在写出每个 escape、URI 和 GFM tagfilter segment 前检查固定上限和
+`OperationBudget`，不会先构造节点大小的 escaped output。
+
+Renderer 在入口、退出、每 256 个辅助节点和长 text、attribute、URI、escape、tagfilter
+扫描的至多 1024 bytes 间隔检查 cancellation。已经观察到取消后不会继续写 Sink；空文档
+同样执行入口与退出检查。
+
+固定 output limit 属于 renderer 可观察语义，因此进入 renderer fingerprint。extension
+manifest 会按稳定身份规范化顺序；每个 manifest 的 `missingRendererPolicy` 进入
+fingerprint，而 renderer rule 的声明顺序仍按语义保留。
+
+同一个 `HtmlRenderer` 不能注册重复的 extension ID；构造器会 fail fast。这样运行时的
+manifest 选择与规范化 fingerprint 保持一一对应。
+
+Sanitizer、raw HTML handler 和 extension fallback 是宿主代码。它们返回的完整 String
+会在写入 sink 前受 output limit 约束，但库不能限制 adapter 内部如何分配该 String。
+
+对内建 text、attribute、URI 和 fused source range，renderer 会先按原始 range 计算并
+消费预算，再创建 substring。低 output limit 因此不会先分配与攻击者输入等长的临时值。
+
+GFM tagfilter 只在 denylist 名称后为输入结束、HTML 空白、`/` 或 `>` 时匹配。
+`<script>` 会被过滤，而 `<script-x>`、`<script1>` 和 `<script_>` 保持普通自定义标签。
 
 `StringTextSink` 是内置 String 收集器。
 
@@ -204,6 +283,11 @@ let trusted = unsafe { TrustedHtml.fromString(value) }
 
 `TrustedHtml` 不会绕过 output budget、取消或 sink error。不要把普通扩展字符串包装
 成 TrustedHtml。
+
+`HtmlSanitizerPort.identity`、`RawHtmlHandlerPort.identity` 和
+`ExternalLinkRewriterPort.identity` 参与 renderer fingerprint。
+`ExtensionRendererFallback` 还必须提供 `implementationVersion`。语义或实现发生变化时，
+请同步更新这些稳定身份字段，避免 artifact 或 renderer cache 复用旧输出。
 
 ## 错误
 

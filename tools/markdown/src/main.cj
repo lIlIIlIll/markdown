@@ -114,10 +114,12 @@ func runRender(engine: MarkdownEngine, source: String, args: Array<String>, canc
     let document = engine.parse(source, cancellation: cancellation).document
     let target = argValue(args, "--to", "safe-html")
     if (target == "spec-html") {
-        let options = match (engine.profile.kind) {
-            case ProfileKind.Gfm029 => HtmlOptions.gfmCompatible()
-            case ProfileKind.GfmModernV1 => HtmlOptions.gfmCompatible()
-            case _ => HtmlOptions.specCompatible()
+        let options = unsafe {
+            match (engine.profile.kind) {
+                case ProfileKind.Gfm029 => HtmlOptions.gfmCompatible()
+                case ProfileKind.GfmModernV1 => HtmlOptions.gfmCompatible()
+                case _ => HtmlOptions.specCompatible()
+            }
         }
         print(HtmlRenderer(options: options).render(document))
         return 0

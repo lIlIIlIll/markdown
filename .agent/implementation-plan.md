@@ -1,30 +1,40 @@
 # markdown 实施计划
 
-## Current completion state (2026-08-30)
+## Current completion state (2026-08-31)
 
-The 2026-08-30 P0-P2 audit and release-documentation remediations are verified.
-The authoritative ledger is 125 pass, 0 pending, 0 implemented_unverified and
-0 blocked. Earlier benchmark runs remain historical when either the product tree,
-corpus, or measurement harness changed.
+The 2026-08-31 audit remediation is locally verified but not yet release-qualified.
+The authoritative ledger is 120 pass, 0 pending, 5 implemented_unverified and
+0 blocked. Earlier benchmark runs remain historical because the product tree and
+same-language measurement harness changed.
 
 The active dependency order is:
 
-1. Complete fail-closed runtime/build changes: bounded incremental isolation
-   responses and content/toolchain/target-bound native cache manifests. Completed.
-2. Complete evidence derivation: recompute benchmark statistics from samples,
-   bind declared commits to Git blob product trees, derive JUnit/API metrics, and
-   create checksummed CI artifacts. Completed and focused-tested.
-3. Lock the commonmark.js npm graph and publish supported-version/security response
-   policy. Completed.
-4. Make README, CHANGELOG, performance and acceptance projections derive their
-   current numbers from `release-evidence.json`; fail on any drift. Completed.
-5. Commit the corpus-changing documentation slice, then build a fresh checkout on
-   Server and run the full fixed-CPU canonical measurement. Completed; the latest
-   complete run passes CommonMark `2.368184x` and GFM `2.367749x`.
-6. Replace raw/report/README/ledger/acceptance only from that latest complete run,
-   execute the branch-tip-bound clean full release gate, and verify its retained
-   manifest and checksums. Completed; all 26 steps pass and the retained bundle
-   verifies.
+1. Close confirmed artifact provenance, RawBlock complexity, literal/output-limit,
+   unsafe raw HTML, renderer fingerprint and link-rewrite findings. Completed.
+2. Upgrade the same-language protocol to schema v5 with exact untimed spec-HTML
+   parity; complete SDK/toolchain/source/binary identity; and independently
+   replayed markdown4cj/commonmark4cj Git objects and adapter migrations.
+   Completed and adversarially tested.
+3. Run format/docs/API/build/CLI/consumer/full tests. Completed for the current
+   code candidate; full suite is `1508/1508` and the comment-aware,
+   effective-visibility API snapshot contains `1436` declarations.
+4. Complete fresh independent code reviews and fix every material finding.
+   Twenty-three review rounds have closed artifact/profile identity, RawBlock DSL limits
+   and closer complexity, CommonMark HTML opener boundaries, renderer
+   cancellation/tagfilter, Git-object provenance, native tool/environment identity,
+   comparator/source/binary/runtime-DSO provenance, retained product-source provenance
+   and reproducible source-to-binary binding,
+   RawBlock unfinished fenced/HTML/indented literal limits and false-ATX/fence
+   incremental complexity, fused-render fixed-interval cancellation, buffered String
+   preflight, and API package/owner/comment/interpolation/annotation/visibility/modifier/
+   constructor/continuation/statement/import/alias/operator/numeric/NFC findings; the
+   two uninvolved round-23 reviewers now report ACCEPTED/NO_MATERIAL_FINDINGS.
+5. Freeze the candidate commit, build only from a minimal source archive on Server,
+   and run the fixed-CPU schema-v5 same-language and cmark/cmark-gfm canonicals.
+6. Project only those raw results into reports/ledger/acceptance, run the clean full
+   release gate, and verify retained manifest plus `SHA256SUMS`.
+7. Run a final uninvolved review over the fixed commit and evidence; repeat the
+   repair/review cycle until it reports no material findings.
 
 The retained parser architecture is unchanged: one shared parsing core with
 explicit full-AST, source-event and fused-render execution models. Canonical

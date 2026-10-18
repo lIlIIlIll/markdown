@@ -2,6 +2,30 @@ package markdown
 
 import std.collection.*
 
+private func parserInitialArenaCapacity(estimatedInputBytes: Int64, source: ?SourceBuffer): Int64 {
+    var bytesPerNode: Int64 = 16
+    if (estimatedInputBytes >= 4096) {
+        if (let Some(buffer) <- source) {
+            if (let Some(bytes) <- buffer.decodedBytesForNative()) {
+                var index: Int64 = 0
+                let probeEnd = min(bytes.size, 256)
+                var foundLineBreak = false
+                while (index < probeEnd) {
+                    if (bytes[index] == b'\n' || bytes[index] == b'\r') {
+                        foundLineBreak = true
+                        break
+                    }
+                    index++
+                }
+                if (!foundLineBreak) {
+                    bytesPerNode = 1024
+                }
+            }
+        }
+    }
+    max(16, estimatedInputBytes / bytesPerNode)
+}
+
 /** The only node-construction boundary used by the parser. It centralizes
  * limits, schema validation, origin handling and deterministic record order.
  */
@@ -14,7 +38,7 @@ internal class ParserNodeFactory {
     init(maximumAstNodes: Int64, estimatedInputBytes!: Int64 = 0, source!: ?SourceBuffer = None) {
         this.maximumAstNodes = maximumAstNodes
         this.source = source
-        let estimatedNodes = max(16, estimatedInputBytes / 16)
+        let estimatedNodes = parserInitialArenaCapacity(estimatedInputBytes, source)
         arena = AstArenaBuilder(maximumNodes: maximumAstNodes, trustedParserConstruction: true,
             initialNodeCapacity: min(AST_NODE_CHUNK_SIZE, estimatedNodes),
             initialChildCapacity: min(AST_CHILD_CHUNK_SIZE, estimatedNodes), sourceBuffer: source)

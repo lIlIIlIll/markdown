@@ -6,7 +6,7 @@
 
 从安全 HTML 和完整 AST，到精确源码位置、扩展 DSL、格式化与编辑器工具。
 
-[![Cangjie 1.1.0](https://img.shields.io/badge/Cangjie-1.1.0-7B61FF?style=for-the-badge)](cjpm.toml)
+[![Cangjie 1.2.0](https://img.shields.io/badge/Cangjie-1.2.0-7B61FF?style=for-the-badge)](cjpm.toml)
 [![CommonMark 0.31.2](https://img.shields.io/badge/CommonMark-0.31.2-2F6F9F?style=for-the-badge)](docs/profiles.md)
 [![GFM 0.29](https://img.shields.io/badge/GFM-0.29-24292F?style=for-the-badge)](docs/profiles.md)
 [![Status pre-GA](https://img.shields.io/badge/Status-0.9_preview-F59E0B?style=for-the-badge)](docs/versioning-and-compatibility.md)
@@ -36,7 +36,7 @@
 
 ## 两分钟运行
 
-你需要 Cangjie SDK 1.1 和当前仓库的本地路径。基础包不要求 C 编译器。
+你需要 Cangjie STS SDK 1.2.0 和当前仓库的本地路径。基础包不要求 C 编译器。
 
 在消费工程的 `cjpm.toml` 中添加依赖：
 
@@ -211,16 +211,16 @@ markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、�
 | Offline evidence ready | `ready` |
 | CI verified at evidence repository HEAD | `no` |
 | Published release | `no` |
-| Tests | `1457/1457` passed; `0` skipped; `0` failed |
+| Tests | `1511/1511` passed; `0` skipped; `0` failed |
 | CommonMark conformance | `652/652` |
 | GFM conformance | `671/671` |
-| Public API snapshot | `1323` declarations |
-| Artifact commit | `ebf445cf66311fb2253ab7be0ec5517c79f0205d` |
-| Evidence subject commit | `ebf445cf66311fb2253ab7be0ec5517c79f0205d` |
+| Public API snapshot | `1436` declarations |
+| Artifact commit | `6e5a207d07903a60f8270c41badac1bb4cb104b5` |
+| Evidence subject commit | `6e5a207d07903a60f8270c41badac1bb4cb104b5` |
 | Execution identity | `target/release-evidence/manifest.json` records and verifies the clean gate commit/tree |
-| CommonMark / cmark | `2.42x` / limit `2.5x` |
-| GFM HTML / cmark-gfm | `2.35x` / limit `2.5x` |
-| Benchmark identity | `current`; commit `ebf445cf66311fb2253ab7be0ec5517c79f0205d`; SDK `Cangjie Compiler: 1.1.3 (cjnative)` |
+| CommonMark / cmark | `2.36x` / limit `2.5x` |
+| GFM HTML / cmark-gfm | `1.79x` / limit `2.5x` |
+| Benchmark identity | `current`; commit `6e5a207d07903a60f8270c41badac1bb4cb104b5`; SDK `Cangjie Compiler: 1.2.0 (cjnative)` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
 `evidenceReady` describes reproducible offline artifacts and gates only. It does not claim that

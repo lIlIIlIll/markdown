@@ -6,14 +6,14 @@ prd:
   target_product_version: markdown 0.9 breaking pre-GA
   document_status: Draft for Review
   document_date: '2026-08-17'
-generated_on: '2026-08-30'
+generated_on: '2026-08-31'
 allowed_statuses:
 - pending
 - implemented_unverified
 - pass
 - blocked
 completion_rule: 只有本文件 requirements 下的全部条目均为 pass，才可声明整个 PRD 完成；blocked、pending 和 implemented_unverified 均不算完成。
-final_validation_evidence: &final_validation_evidence '2026-08-30 branch-tip-bound clean full release gate: MARKDOWN_RELEASE_COMMIT selects the publishable commit while the verifier requires its complete Git tree to equal the clean workspace tree; exit 0 with Cangjie 1.1.0-alpha.20260829040003 and SDK archive SHA-256 6c050802d1d6d297c4c6ad2bf8b253865f33aa2a810f6ef62347162f1e18131d. All 26 recorded steps passed: format, docs 44/23/4, native cache contracts 5/5, evidence-bundle tests 5/5, release-evidence tests 18/18, API checker 9/9, public API snapshot 1323, check/build, native ASan+UBSan fuzz 10000, benchmark profiles 7/7, full tests 1457/1457 with zero skipped/error/failed, CommonMark 652/652, GFM 671/671, CLI, quickstart, cookbook, differential 25/24/1/0, benchmark smoke 3/3, package bundle and evidence-ready verifier. target/release-evidence/manifest.json derives all counts from retained files; SHA256SUMS covers the candidate, source archive, benchmark raw and logs. Canonical performance separately binds Server SDK 1.1.0-alpha.20260803040049, product commit 6a75709dfcc5510139395fe63fa69b64554718f5 and raw SHA-256 43ce60a42d590daa807f69377405538693f6aba70bbc12b782b32eb2e0f7c4ca; CommonMark 2.368184x and GFM 2.367749x pass every ratio, ordinary, scaling, pathological and RSS gate.'
+final_validation_evidence: &final_validation_evidence '2026-08-31 current-workspace local validation with official Cangjie 1.1.3: format, static check and release build pass; docs 44 Markdown/23 API entries/4 runnable examples; public API checker tests 47/47 and token-canonical, NFC/Unicode/escaped-identifier-aware, structured package/owner/effective-visibility snapshot 1436 declarations; same-language schema-v5 verifier tests 113/113 with retained product/comparator/commonmark Git-object provenance, fixed-seed single-job fresh rebuild, static comparator adapter, retained executable identity and empty comparator-owned runtime closure; benchmark driver tests 21/21 including two-root trimpath/fixed-seed reproducibility and an invariant that the builder and comparison gate accept the same build-identity schema; native build tests 10/10; input-profile tests 7/7; full Cangjie suite 1509/1509 with zero skipped/error/failed, including fixed-interval RawBlock and fused-render cancellation, String-session preflight, immediate unfinished fenced/HTML/indented literal limits and linear false-ATX/fence incremental regressions. This evidence does not claim a current canonical benchmark or release bundle: schema-v5 same-language raw, cmark/cmark-gfm canonical raw and the clean release-evidence bundle remain to be regenerated from the frozen candidate commit. The repository-requested daily symlink currently resolves to Cangjie 1.0.6 and is not the manifest/CI 1.1.x toolchain, so it was not used as release evidence.'
 status_definitions:
   pending: 尚未开始，或尚无足以证明实现存在的证据。
   implemented_unverified: 实现已存在，但尚未完成该条目全部验收或证据尚不充分。
@@ -63,7 +63,7 @@ requirements:
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: "Assumptions: A-001, A-002, A-004."
+  notes: "Assumptions: A-001, A-002, A-004, A-046."
 - id: MD-GOV-003
   source: PRD §6.2, §24.1, §54.7, §54.30-31
   target: '1.0'
@@ -220,13 +220,14 @@ requirements:
   - gfm-modern-v1 文档明确其不是正式 GFM 规范的精确实现
   status: pass
   implementation:
-  - 'src/profile.cj: commonmark-0.31.2, gfm-0.29, gfm-modern-v1, and custom profile identities'
+  - 'src/profile.cj: commonmark-0.31.2, gfm-0.29, gfm-modern-v1, custom profiles, and stable kind/id/version semantic identity'
   tests:
   - 'src/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: "Assumptions: A-001, A-002, A-004, A-008."
+  - '2026-08-31: built-in GFM and same-id/version custom profiles remain behaviorally and cryptographically distinct while gfm aliases remain identical; full suite 1493/1493'
+  notes: "Assumptions: A-001, A-002, A-004, A-008, A-046."
 - id: MD-DIA-001
   source: PRD §12.1, §39.2, §51.2
   target: '1.0'
@@ -281,19 +282,21 @@ requirements:
   - RendererFingerprint 包含 renderer kind、policy 和 renderer extension versions
   status: pass
   implementation:
-  - 'src/extension.cj: canonical descriptor includes dialect/profile/extensions/rules/SPI/plan identity'
+  - 'src/extension.cj: canonical descriptor includes base profile kind/id/version plus dialect/extensions/rules/SPI/plan identity'
   - 'src/fingerprint.cj: length-prefixed CanonicalDescriptor plus pure-std SHA-256'
   - 'src/renderer.cj, src/artifact.cj, src/binary_artifact.cj: renderer, engine and binary AST digests use the same unambiguous field encoding'
   tests:
   - 'src/fingerprint_test.cj: sha256MatchesKnownVectors'
   - 'src/fingerprint_test.cj: dialectFingerprintIsDeterministicAndSemanticChangesAlterIt'
   - 'src/fingerprint_test.cj: canonicalFingerprintEncodingHasNoDelimiterOrFieldSplitCollisions'
+  - 'src/fingerprint_test.cj: built-in and same-id/version custom profile kinds produce distinct dialect/engine fingerprints'
   - 'src/renderer_test.cj: rendererFingerprintIsDeterministicAndPolicySensitive'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: full socket-enabled cjpm test; exit 0; 1413 passed, including delimiter, Unicode, empty-field, manifest-order and rule-order fingerprint cases'
-  notes: "Assumptions: A-001, A-002, A-003, A-004, A-028."
+  - '2026-08-31: full suite 1493/1493; profile-kind collision and built-in alias identity regressions pass'
+  notes: "Assumptions: A-001, A-002, A-003, A-004, A-028, A-046."
 - id: MD-DIA-004
   source: PRD §12.6, §51.2
   target: '1.0'
@@ -801,12 +804,16 @@ requirements:
   implementation:
   - 'src/parser.cj: ATX/Setext, paragraph, thematic break, fence/indented code, quote, list, HTML, references, blank semantics,
     and GFM table'
+  - 'src/parser.cj and src/events.cj: CommonMark type-1 HTML tag-name boundary shared by batch and RawBlock lexical parsing'
   tests:
   - 'src/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
   - 'src/parser_test.cj: parsesFencesListsQuotesAndGfmTableWithoutLosingMetadata'
+  - 'src/parser_test.cj: htmlTypeOneOpenersRequireTagNameBoundary'
+  - 'src/events_test.cj: rawSessionHtmlBlockTypesAreChunkInvariant'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-31: shared-prefix custom tags and valid type-1 boundaries pass batch and whole/line/byte RawBlock regressions; full suite 1493/1493'
   notes: "Assumptions: A-001, A-002, A-004."
 - id: MD-PAR-003
   source: PRD §18 PAR-003, §20.3
@@ -897,13 +904,16 @@ requirements:
   status: pass
   implementation:
   - 'src/parser.cj: raw HTML recognized as HtmlBlock/HtmlInline without applying output policy'
+  - 'src/renderer.cj: explicit RawHtmlHandlerPort, fail-closed CustomHandler, and unsafe-only pass-through factories'
   tests:
   - 'src/parser_test.cj: ParserBehaviorTest.parsesBlocksInlinesReferencesAndExactSpans'
   - 'src/renderer_test.cj: RendererBehaviorTest.specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
+  - 'src/renderer_test.cj: customRawHtmlAndExternalLinkRewriteAreExplicitAndFailClosed'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: "Assumptions: A-001, A-002, A-004."
+  - '2026-08-31: full cjpm test exit 0, 1474/1474; unsafe pass-through rejection and configured/fail-closed custom handler regressions pass'
+  notes: "Assumptions: A-001, A-002, A-004, A-044."
 - id: MD-PAR-008
   source: PRD §6.7, §18 PAR-008
   target: '1.0'
@@ -1050,6 +1060,7 @@ requirements:
   - 'src/ast.cj and src/arena.cj: public schema is frozen as Document/NodeRef plus typed value views; no 0.8 node classes remain'
   tests:
   - 'src/ast_test.cj: constructsImmutableTypedAstAndValidatesIt'
+  - 'scripts/test_check_public_api.py: owner-aware deletion, comment/literal masking, effective visibility, multiline type/extend/member/enum and structural-brace regressions'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1057,6 +1068,9 @@ requirements:
   - '2026-08-26: arena renderer parity regression passed for core and GFM node schemas; RendererBehaviorTest 11/11'
   - '2026-08-27: python3 scripts/test_check_public_api.py; exit 0; 9/9; python3 scripts/check_public_api.py; exit 0; 1281 declarations'
   - '2026-08-27: examples/quickstart release build and executable run; exit 0; typed Heading view and custom block rendering verified through public packages'
+  - '2026-08-31: public API checker 41/41 and structured package/owner-aware, interpolation/annotation/raw-string/comment-aware, direct-statement-aware, indentation-independent effective-visibility v0.9 snapshot 1436 declarations; source paths are diagnostic metadata rather than compatibility identity, arbitrary valid modifier order and redef/const are parsed, same-line package/type direct statements and same-line package prefixes are safely depth-split, declaration completion is token/structure-driven rather than indentation-driven, multiline import/package paths, split import aliases and split declaration-head tokens are structurally continued, annotation argument lists may begin on the following line, identical members remain owner-bound, internal/private owners are excluded, complete multiline type/extend and package-level public type-alias identities are tracked, implicit sealed-public declarations, same-name constructors and their public/protected parameter members, same-line/multiline annotations, and externally subclassable protected surface are bound, nested interpolation literal bytes and generic/default-expression boundaries remain distinct, comment trivia and callable/property implementation bodies do not become false API identity, and unknown direct visible declarations or unsafe remainders fail closed'
+  - '2026-08-31: public API checker 44/44 and token-canonical structured package/owner/effective-visibility v0.9 snapshot 1436 declarations; optional code whitespace/comments are trivia while literal/raw/interpolation bytes and operator boundaries remain semantic, wildcard/bare/dotted/aliased imports terminate structurally, Unicode package/type/member/constructor names and valid escaped declaration identifiers are bound, and compiler-invalid escaped package/identifier forms fail closed'
+  - '2026-08-31: public API checker 47/47; complete multi-character operators drive structural continuation, numeric/range/member tokens do not collide, and ordinary/escaped/package/owner identity follows NFC while literal bytes remain unchanged; snapshot remains 1436 declarations'
   notes: "A-036 arena schema migration, API snapshot, changelog and consumer fixture are complete. Assumptions: A-001, A-002, A-004, A-036."
 - id: MD-AST-003
   source: PRD §20.4, §36.4, §51.4, §54.24
@@ -1301,10 +1315,12 @@ requirements:
   tests:
   - 'src/renderer_test.cj: specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
   - 'src/renderer_test.cj: safeHtmlEscapesTextRawHtmlAndDangerousUris'
+  - 'src/renderer_test.cj: gfmTagFilterRequiresTheSpecifiedPostNameBoundaryForBlockAndInlineHtml'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: "Assumptions: A-001, A-002, A-004."
+  - '2026-08-31: GFM block/inline tagfilter boundary regressions pass in full suite 1493/1493'
+  notes: "Assumptions: A-001, A-002, A-004, A-047."
 - id: MD-HTML-002
   source: PRD §24.2, §44.5, §51.5-6
   target: '1.0'
@@ -1322,16 +1338,20 @@ requirements:
   - 'src/renderer.cj: text/attribute/raw HTML escaping, URI rejection, class sanitization, disabled task controls, output
     budget'
   - 'src/renderer.cj: exact data-image media-type matching and Safe _blank rel hardening'
+  - 'src/renderer.cj: segmented escaping and bounded GFM tagfilter compare before fixed/output-budget writes'
   tests:
   - 'src/renderer_test.cj: safeHtmlEscapesTextRawHtmlAndDangerousUris'
   - 'src/renderer_test.cj: specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
   - 'src/renderer_test.cj: outputBudgetCancellationAndSinkErrorsPropagate'
+  - 'src/renderer_test.cj: cancellationChecksEmptyEntryAndStopsAfterMidRenderCancellation'
   - 'src/renderer_test.cj: safeDataImageMimeAndBlankTargetPoliciesAreExact'
+  - 'src/renderer_test.cj: escapeHeavyTextChecksBudgetBeforeAnyEscapedSinkWrite and gfmTagFilterRejectsOversizedOutputWithoutMaterializingLongTagName'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: cjpm test; exit 0; 1418 passed, 0 skipped/error/failed; exact MIME and Safe _blank rel regression passed'
-  notes: "Assumptions: A-001, A-002, A-004, A-013, A-021."
+  - '2026-08-31: full cjpm test exit 0, 1493/1493; escape-heavy/range/tagfilter budgets, fixed-interval cancellation and exact tag-name boundary regressions pass'
+  notes: "Assumptions: A-001, A-002, A-004, A-013, A-021, A-044, A-047."
 - id: MD-HTML-003
   source: PRD §24.3, §51.5-6, §54.29
   target: '1.0'
@@ -1348,14 +1368,17 @@ requirements:
   - 'src/renderer.cj: independent LinkUriPolicy and ImageUriPolicy'
   - 'src/renderer.cj: Safe default blocks remote/data images and allows relative images'
   - 'src/renderer.cj: data-image allowlist compares the complete media type before parameters; Safe external _blank links add noopener noreferrer'
+  - 'src/renderer.cj: identity-bearing HTTP(S) ExternalLinkRewriterPort executes before URI-policy revalidation and escaping'
   tests:
   - 'src/renderer_test.cj: safeImagesBlockRemoteAndDataButAllowRelative'
   - 'src/renderer_test.cj: safeDataImageMimeAndBlankTargetPoliciesAreExact'
+  - 'src/renderer_test.cj: customRawHtmlAndExternalLinkRewriteAreExplicitAndFailClosed'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
   - '2026-08-25: cjpm test; exit 0; 1418 passed, 0 skipped/error/failed; image/pngx rejection, MIME parameters and rel token deduplication passed'
-  notes: "Assumptions: A-001, A-002, A-004, A-013."
+  - '2026-08-31: full cjpm test exit 0, 1474/1474; absolute HTTP(S), relative and malicious rewritten-URI regressions pass'
+  notes: "Assumptions: A-001, A-002, A-004, A-013, A-044."
 - id: MD-HTML-004
   source: PRD §24.4-5
   target: '1.0'
@@ -1371,13 +1394,16 @@ requirements:
   implementation:
   - 'src/renderer.cj: uriScheme removes control/ASCII whitespace, lowercases scheme, applies policy before escaping'
   - 'src/renderer.cj: RawHtmlPolicyKind and explicit pass-through option'
+  - 'src/renderer.cj: normal HtmlOptions constructor rejects PassThrough; public unsafe factories are the only activation path'
   tests:
   - 'src/renderer_test.cj: safeHtmlEscapesTextRawHtmlAndDangerousUris'
   - 'src/renderer_test.cj: specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
+  - 'src/renderer_test.cj: customRawHtmlAndExternalLinkRewriteAreExplicitAndFailClosed'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: "Assumptions: A-001, A-002, A-004."
+  - '2026-08-31: full cjpm test exit 0, 1474/1474; ordinary constructor PassThrough bypass is rejected'
+  notes: "Assumptions: A-001, A-002, A-004, A-044."
 - id: MD-HTML-005
   source: PRD §24.6, §53.6
   target: '1.1'
@@ -1397,7 +1423,8 @@ requirements:
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: "Assumptions: A-001, A-002, A-004."
+  - '2026-08-31: sanitizer/raw-handler identities, fixed output limit, manifest fallback policy and active fallback implementation identity are fingerprinted; duplicate manifest IDs fail closed; full suite 1493/1493'
+  notes: "Assumptions: A-001, A-002, A-004, A-044."
 - id: MD-HTML-006
   source: PRD §24.7
   target: '1.1'
@@ -1536,12 +1563,18 @@ requirements:
   status: pass
   implementation:
   - 'src/events.cj: source-driven Resolved/RawBlock event values, direct sink lowering and incremental raw-block session'
+  - 'src/events.cj: shared pending buffer, feed-time line limit and lexical fence/HTML1-7/indented checkpoints avoid repeated unfinished-prefix copies/parses while respecting DSL shadowing'
+  - 'src/events.cj: paired block DSL body bytes and closer candidates use an O(1) incremental state machine with batch-equivalent nested/CRLF semantics and compaction-safe absolute spans'
+  - 'src/events.cj: String input is preflighted before byte conversion and both byte scans check cancellation at most every 1024 bytes before buffering or draining'
   - 'src/parser.cj: two-pass resolved execution and transient top-level arena rollback after emission'
   - 'src/parser_node_factory.cj: read-only transient arena access used before rollback'
   - 'src/execution.cj: explicit FullAst/PreferFused/RequireFused HTML execution path reporting and fail-closed preflight'
   - 'src/core/core.cj: curated public Event API exports'
   tests:
   - 'src/events_test.cj: resolved references, raw non-final semantics, early closed-block emission, balanced event/range contracts, lifecycle, cumulative limits and split UTF-8 chunks'
+  - 'src/events_test.cj: whole/byte/line differential for fence, HTML1-7, indented, UTF-8/CRLF/span and DSL shadowing plus metered linear unfinished-block regressions'
+  - 'src/events_test.cj: paired DSL maximumBlockBytes whole/line/byte/nested/CRLF boundary, reset, compaction and 64 KiB byte-fed closer-tail complexity regressions'
+  - 'src/events_test.cj: deterministic scan-checkpoint cancellation and fail-before-conversion String lifecycle/input-limit regressions'
   - 'src/execution_test.cj: explicit full/fused path selection and fail-closed capability guards'
   evidence:
   - *final_validation_evidence
@@ -1549,7 +1582,12 @@ requirements:
   - '2026-08-27: the misleading AST-walk adapter was removed from source, markdown.document exports and the v0.9 API snapshot; this proves scope honesty, not Event implementation'
   - '2026-08-28: focused SourceEventApiTest exit 0, 7/7; full cjpm test exit 0, 1454/1454 with zero skipped/error/failed'
   - '2026-08-28: check_format exit 0; check_public_api verified the v0.9 snapshot at 1311 declarations; checker self-tests passed 9/9'
-  notes: "A-037 scheduled the genuine API for 1.1; the delivered implementation now satisfies §27 without retaining Document/NodeRef values or substituting event/fused results for the canonical full-AST benchmark. Assumptions: A-001, A-002, A-004, A-005, A-036, A-037."
+  - '2026-08-31: SourceEventApiTest 23/23 and full suite 1493/1493; unfinished fence/HTML/indented work is linear, paired DSL block bytes fail during feed with accurate identity/span, a 64 KiB byte-fed closer tail remains linearly metered, and type-1 HTML shared-prefix tags close incrementally as type-7'
+  - '2026-08-31: SourceEventApiTest 25/25 and full suite 1497/1497; RawBlock scans check cancellation at a deterministic maximum 1024-byte interval, recheck before pending copies/drain, and reject finished/cancelled/over-limit String chunks before conversion'
+  - '2026-08-31: SourceEventApiTest 27/27 and full suite 1499/1499; only CommonMark-valid 1-6 marker ATX lines trigger early paragraph closure, while 2048 line-fed #x false candidates remain linear and whole/line/byte events plus spans agree'
+  - '2026-08-31: SourceEventApiTest 31/31 and full suite 1503/1503; HTML type 1-7 and indented-code literal bytes are enforced during the offending feed with atomic rollback across whole/line/byte and LF/CRLF inputs; false backtick/tilde fence candidates remain linear while valid fences still close early'
+  - '2026-08-31: SourceEventApiTest 34/34 and full suite 1508/1508; fenced, HTML type 1-7 and indented unfinished lines are charged incrementally with batch-equivalent normalized bytes, CRLF semantics and atomic retry after a rejected feed'
+  notes: "A-037 scheduled the genuine API for 1.1; the delivered implementation now satisfies §27 without retaining Document/NodeRef values or substituting event/fused results for the canonical full-AST benchmark. Assumptions: A-001, A-002, A-004, A-005, A-036, A-037, A-044, A-047, A-051."
 - id: MD-EXT-001
   source: PRD §28.1-2, §54.34
   target: '1.0'
@@ -1686,12 +1724,18 @@ requirements:
   status: pass
   implementation:
   - 'src/limits.cj: atomic CancellationToken and CancellationSource'
+  - 'src/renderer.cj: entry/exit, 256-node and at-most-1024-byte scan checkpoints bound renderer cancellation latency'
+  - 'src/events.cj: RawBlock validation and append scans use deterministic at-most-1024-byte cancellation checkpoints and recheck before buffering/drain'
   tests:
   - 'src/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
+  - 'src/renderer_test.cj: cancellationChecksEmptyEntryAndStopsAfterMidRenderCancellation'
+  - 'src/events_test.cj: deterministic RawBlock scan cancellation upper-bound regression'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: "Assumptions: A-001, A-002, A-004."
+  - '2026-08-31: pre-cancelled empty render and mid-scan cancellation stop without later Sink writes; full suite 1493/1493'
+  - '2026-08-31: deterministic RawBlock validation/scan cancellation stops at 1024 bytes with no later events; full suite 1497/1497'
+  notes: "Assumptions: A-001, A-002, A-004, A-047."
 - id: MD-CAN-002
   source: PRD §30.2, §51.6
   target: '1.0'
@@ -1706,12 +1750,14 @@ requirements:
   status: pass
   implementation:
   - 'src/limits.cj: CancellationToken.throwIfCancelled returns typed Cancelled failure'
+  - 'src/renderer.cj: cancellation is checked before and after entry/exit, long scans and Sink writes'
   tests:
   - 'src/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: "Assumptions: A-001, A-002, A-004."
+  - '2026-08-31: cancellation side-effect regressions pass in full suite 1493/1493'
+  notes: "Assumptions: A-001, A-002, A-004, A-047."
 - id: MD-BUD-001
   source: PRD §30.3-4, §51.6, §54.27
   target: '1.0'
@@ -1727,12 +1773,20 @@ requirements:
   implementation:
   - 'src/limits.cj: independent scan, delimiter, extension, transform, renderer-node, and output budgets'
   - 'src/limits.cj and docs/concurrency-and-observability.md: operation-scoped, non-thread-safe ownership contract'
+  - 'src/events.cj: RawBlock lexical scanning charges each newly appended byte once'
+  - 'src/events.cj: paired DSL maximumBlockBytes and closer matching are enforced with incrementally metered O(1) state updates during feed'
+  - 'src/renderer.cj and src/execution.cj: fixed and operation output budgets are checked before each built-in segment allocation/write'
   tests:
   - 'src/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
+  - 'src/events_test.cj: rawSessionUnclosedFenceCandidateLinesHaveLinearMeteredWork'
+  - 'src/events_test.cj: rawSessionPairedBlockDslCloserTailWhitespaceIsLinear'
+  - 'src/renderer_test.cj: escapeHeavyTextChecksBudgetBeforeAnyEscapedSinkWrite'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: "OperationBudget must be created per top-level operation; immutable limits may be shared, but a mutable budget may not. Assumptions: A-001, A-002, A-004."
+  - '2026-08-31: full suite 1493/1493; RawBlock fence/HTML/indented/paired-DSL linear-work and renderer range/cancellation regressions pass'
+  - '2026-08-31: full suite 1508/1508; fused preflight and output scans check cancellation every at most 1024 bytes, pre-cancelled work consumes zero scan/output budget, and cancellation stops later sink writes'
+  notes: "OperationBudget must be created per top-level operation; immutable limits may be shared, but a mutable budget may not. Assumptions: A-001, A-002, A-004, A-044, A-047, A-051."
 - id: MD-SINK-001
   source: PRD §30.5, §39.6, §45.4, §51.5
   target: '1.0'
@@ -1771,12 +1825,17 @@ requirements:
   status: pass
   implementation:
   - 'src/limits.cj: ParseLimits.safe and ParseLimits.trusted with all PRD limit dimensions'
+  - 'src/parser.cj, src/execution.cj and src/renderer.cj: accumulated literal/output checks execute on construction/render paths; maximumAstNodes counts actual AST allocation'
+  - 'src/parser.cj and src/events.cj: buffered String feeds perform lifecycle, cancellation and overflow-safe remaining-input preflight before byte-array conversion'
   tests:
   - 'src/core_test.cj: CoreContractTest.safeAndTrustedLimitsRemainBounded'
+  - 'src/parser_test.cj: enforcesIndentedCodeLiteralLimitIncrementally'
+  - 'src/execution_test.cj: fused/full literal and output limit parity'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: "Assumptions: A-001, A-002, A-004, A-014."
+  - '2026-08-31: full suite 1474/1474; low AST node, multiline literal, fused/full output and indented literal regressions pass'
+  notes: "maximumAstNodes counts allocated AST nodes; RequireFused constructs none and callers requiring an AST-node budget select FullAst. Assumptions: A-001, A-002, A-004, A-014, A-044."
 - id: MD-LIM-002
   source: PRD §31, §54.28
   target: '1.0'
@@ -1837,19 +1896,23 @@ requirements:
   - 覆盖 delimiter、quote/list、unclosed link、HTML opener、URL、references、table、long line 和 extension storms
   - 1 MiB 到 16 MiB scaling 证据不显示明显二次增长
   - 病态 delimiter 无已知非线性问题
-  status: pass
+  status: implemented_unverified
   implementation:
   - src/renderer.cj
+  - 'src/events.cj: incremental raw-block fence, HTML, indented and paired-DSL closer state prevents reparsing a growing unfinished prefix or line tail'
   - src/security_corpus_test.cj
   - SECURITY.md
   tests:
   - 'src/security_corpus_test.cj: SecurityCorpusTest.pathologicalDelimiterReferenceHtmlAndTableInputsRemainBounded'
   - 'src/testkit_fuzz_test.cj: ExtensionTckAndFuzzTest.pathologicalDepthAndOutputAmplificationAreBounded'
   - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks.linearGrowthCorpus'
+  - 'src/events_test.cj: rawSessionUnclosedFenceCandidateLinesHaveLinearMeteredWork'
+  - 'src/events_test.cj: rawSessionPairedBlockDslCloserTailWhitespaceIsLinear'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: "Assumptions: A-001, A-002, A-004, A-018, A-025."
+  - '2026-08-31: deterministic RawBlock fence/HTML/indented/paired-DSL regressions, including a 64 KiB byte-fed closer tail, and full suite 1493/1493 pass; fixed-Server 1-16 MiB canonical scaling must be refreshed for the frozen candidate'
+  notes: "Implementation and targeted complexity proof pass locally; status remains implemented_unverified until current schema-v4 canonical scaling evidence is recorded. Assumptions: A-001, A-002, A-004, A-018, A-025, A-044, A-047."
 - id: MD-SEC-003
   source: PRD §32 SEC-003-005
   target: '1.0'
@@ -1864,12 +1927,15 @@ requirements:
   implementation:
   - 'src/renderer.cj: every HTML Sink write consumes output budget'
   - 'src/parser.cj: input/line/reference/table/URL/nesting/node limits'
+  - 'src/renderer.cj: built-in escaped and tagfilter output is segmented before allocation; fixed maximumOutputBytes is fingerprinted'
   tests:
   - 'src/renderer_test.cj: outputBudgetCancellationAndSinkErrorsPropagate'
+  - 'src/renderer_test.cj: escapeHeavyTextChecksBudgetBeforeAnyEscapedSinkWrite and gfmTagFilterRejectsOversizedOutputWithoutMaterializingLongTagName'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: "Assumptions: A-001, A-002, A-004."
+  - '2026-08-31: full suite 1493/1493; range-before-slice, escape, cancellation and exact GFM tagfilter boundary/amplification regressions pass'
+  notes: "Assumptions: A-001, A-002, A-004, A-044, A-047."
 - id: MD-SEC-004
   source: PRD §32 SEC-006, §51.5
   target: '1.0'
@@ -1883,13 +1949,16 @@ requirements:
   status: pass
   implementation:
   - 'src/renderer.cj: TrustedHtml has private constructor and public unsafe factory only'
+  - 'src/renderer.cj and src/facade.cj: raw pass-through policies and spec HTML convenience require explicit unsafe blocks'
   tests:
   - 'src/renderer_test.cj: RendererBehaviorTest.outputBudgetCancellationAndSinkErrorsPropagate'
   - 'src/security_corpus_test.cj: SecurityCorpusTest.safeHtmlCorpusRejectsInjectionAndUriConfusion'
+  - 'src/renderer_test.cj: customRawHtmlAndExternalLinkRewriteAreExplicitAndFailClosed'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
-  notes: "Assumptions: A-001, A-002, A-004."
+  - '2026-08-31: full suite 1474/1474; normal constructors reject PassThrough and custom handler output remains bounded'
+  notes: "Assumptions: A-001, A-002, A-004, A-044."
 - id: MD-SEC-005
   source: PRD §32 SEC-007, §51.6-7
   target: '1.0'
@@ -2189,17 +2258,23 @@ requirements:
   status: pass
   implementation:
   - 'src/artifact.cj: schema-v2 binds original/decoded digests, UTF-8 policy, identity mapping digest and rejects v1'
+  - 'src/artifact.cj: create/load cross-check Document parser provenance, profile, dialect fingerprint and full root span against the supplied SourceBuffer/engine'
+  - 'src/artifact.cj: profile provenance binds stable kind/id/version so a same-name custom profile cannot reuse a built-in artifact'
   - 'src/source.cj: source buffers retain decode policy and expose original identity bytes only to artifact codecs'
   - 'src/binary_artifact.cj: MCJ2 fail-closed binary artifact binds the same input identity fields and canonical AST digest'
   - 'src/capabilities.cj: advertises parse-artifact-2 and markdown-snapshot-binary-2 only'
   tests:
   - 'src/artifact_test.cj: artifactHitsOnlyExactSourceEngineAndDialect covers v2 fields, policy match/miss and invalid-byte rejection'
+  - 'src/artifact_test.cj: rejects mismatched source/profile/dialect while accepting a TreeRewriter result that preserves parser provenance'
+  - 'src/artifact_test.cj: same-id/version custom profile is rejected at create and produces CacheMiss at load'
   - 'src/document_system_test.cj: binarySnapshotIsVersionedStrictAndFuzzSafe'
   evidence:
   - *final_validation_evidence
   - '2026-08-26: ArtifactSourceMapTest 3/3, DocumentSystemTest 4/4 and CapabilitiesTest 1/1 exit 0 after schema-v2 implementation'
   - '2026-08-26: full cjpm test exit 0, 1423/1423; public API v0.9 snapshot verified at 1226 declarations; checker tests 9/9'
-  notes: "Schema v1 is intentionally not adapted during the authorized 0.9 breaking reset. Assumptions: A-001, A-002, A-004, A-028."
+  - '2026-08-31: ArtifactSourceMapTest 5/5 and full suite 1474/1474; cross-source/profile/dialect provenance regressions pass'
+  - '2026-08-31: profile-kind collision regressions pass in full suite 1493/1493; old fingerprints fail closed as cache misses'
+  notes: "Schema v1 is intentionally not adapted during the authorized 0.9 breaking reset. Profile-kind correction intentionally invalidates stale pre-GA fingerprints. Assumptions: A-001, A-002, A-004, A-028, A-046."
 - id: MD-API-001
   source: PRD §39.1-8
   target: '1.0'
@@ -2511,7 +2586,7 @@ requirements:
   - 语料覆盖规范示例、README/API docs、大 code/table/reference、CJK、emoji、deep list、pathological delimiter、long line 和 extensions
   - cmark、cmark-gfm、commonmark.js 仅用于测试/benchmark
   - 固定 reference host、工具版本、构建模式和原始样本可复核
-  status: pass
+  status: implemented_unverified
   implementation:
   - src/benchmark_test.cj
   - src/renderer.cj
@@ -2519,7 +2594,9 @@ requirements:
   - 'benchmarks/release_statistics.py: independent recomputation of every ratio, slope, RSS delta and gate from raw samples'
   - benchmarks/driver/src/main.cj
   - benchmarks/compare_markdown4cj.py
-  - '.github/workflows/candidate-validation.yml: required same-language benchmark job'
+  - 'benchmarks/measure.py: 12 in-process iterations per canonical matrix sample amortize executable/runtime startup without changing the measured full-AST and HTML profiles'
+  - 'scripts/build_benchmark_driver.py: safe fresh extraction of the verified official SDK and absolute-tool/fresh-source builds for product driver and CLI'
+  - '.github/workflows/candidate-validation.yml: required same-language benchmark job retains and re-verifies minimal pinned-comparator Git bundles'
   - docs/reports/benchmark.md
   - docs/reports/markdown4cj-comparison.md
   tests:
@@ -2528,7 +2605,8 @@ requirements:
   - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks.gfmParseAndHtml'
   - benchmarks/measure.py
   - scripts/test_benchmark_input_profiles.py
-  - 'benchmarks/test_compare_markdown4cj.py: eight verifier and protocol regression tests'
+  - 'benchmarks/test_compare_markdown4cj.py: semantic/protocol/statistics/build-provenance and Git-object identity adversarial tests'
+  - 'scripts/test_build_benchmark_driver.py: active PATH SDK, archive extraction, fresh source/cache and absolute-tool negative tests'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2549,7 +2627,11 @@ requirements:
   - '2026-08-28: historical R65 canonical raw SHA-256 442842c801231d738b423aaf8e00b61cba6359c22a1d1a6ae5f1c48f72ed6d41 superseded R60 and bound workspace commit anchor 2454b062, exact minimal archive d05f78e676a374cd579459078bdf517fc5e15dac4879860ddd086eef9a30cc04, fresh driver a1048827aea26427625a7870a386d7b2e87c5b09ef44983741d21c1372d7440a, harness 41b068720b6b7cc9898fc3fe4aa3df174a987d6c3ba359324b2d9b63d7778c86, SDK 1.1.0-alpha.20260803040049 and both frozen reference drivers'
   - '2026-08-28: current R76 canonical raw SHA-256 730249530cad110b3c38dccd95cd7ad973ff580a45e13a4ec963616a1f6160c8 supersedes R65 and binds workspace commit anchor 2454b062, exact minimal archive cef965b03d8cc9d2d878ae30221c38db5d405103afe098473f548d7387b5da61, fresh driver ce8812ae91f5bebff65f7139dcfd9d044000ae75686d3b015b176723544c1df4, harness 41b068720b6b7cc9898fc3fe4aa3df174a987d6c3ba359324b2d9b63d7778c86, SDK 1.1.0-alpha.20260803040049 and both frozen reference drivers'
   - '2026-08-30 schema-v4 canonical raw b80123a494932c2c1b7f63fb6895ab81c9734564141f8099d9a2c6b8f8fa136f binds source commit a259ba49, Git tree ff2c0237, product tree 7af14d29, source archive 86950940, harness b61a4b8e, SDK and all three drivers; independent sample recomputation returns zero errors'
-  notes: "The previous raw is historical. The latest-complete fixed-Server run is identity-bound and independently recomputed. Assumptions: A-001, A-002, A-004, A-011, A-017, A-029, A-034, A-035, A-038, A-042."
+  - '2026-08-31: schema-v4 verifier passes comparison 49/49, driver 16/16 and native 10/10 adversarial tests; it resolves declared ref/commit/tree, recomputes product/harness identity from commit blobs, binds compiler/archiver executable bytes and digests, and requires a complete minimal child environment; committed raw remains historical pending a fixed-commit run'
+  - '2026-08-31: schema-v5 verifier passes comparison 99/99, driver 16/16 and native 10/10 adversarial tests; it independently replays the retained product plus both comparator Git object sets, three retained executables and the exact adapter-owned runtime DSO closure. CI verifies from a no-.git source tree using explicit retained bundles; missing/wrong/tampered/ancestor product identity and relocated-artifact attacks fail closed. Committed schema-v4 raw remains historical pending a fixed-commit run.'
+  - '2026-08-31: schema-v5 verifier passes comparison 111/111 and driver 18/18; it fresh-rebuilds product driver/CLI/comparator/DSO from retained objects, SDK archive and native tools with attested trimpath, then byte-compares retained outputs. Synchronized binary/report replacement, nested/indirect Git inputs, replace refs, graft/shallow/alternates and relocation attacks fail closed.'
+  - '2026-08-31 current: schema-v5 verifier 113/113 and driver identity 21/21 pass. Fixed `--obf-seed 0`, one build job and a non-incremental static commonmark4cj dependency make independent product/CLI/comparator executable rebuilds byte-comparable; the comparator runtime closure is required to be empty and both timed processes use identical environments. A cross-script invariant prevents the builder and comparison gate from drifting to different build-identity schema versions.'
+  notes: "All earlier raw files are historical for this product/harness change. Status remains implemented_unverified until a fixed-Server schema-v5 run binds the final candidate commit, semantic digests, actual extracted SDK tools, retained product and both comparator Git object sets, reproducibly rebuilt execution binaries, empty comparator runtime closure and complete build identity. Assumptions: A-001, A-002, A-004, A-011, A-017, A-029, A-034, A-035, A-038, A-042, A-045, A-048, A-049, A-050, A-052."
 - id: MD-PERF-002
   source: PRD §45.4, §51.7, §52
   target: '1.0'
@@ -2563,7 +2645,7 @@ requirements:
   - renderer 不无界缓存输出
   - 相对接受基线回退超过 10% 时 CI 失败或有显式批准
   - SourceMap、CST 等可选能力分别记录开销
-  status: pass
+  status: implemented_unverified
   implementation:
   - src/benchmark_test.cj
   - benchmarks/measure.py
@@ -2576,6 +2658,7 @@ requirements:
   - benchmarks/measure.py
   - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks'
   - scripts/test_benchmark_input_profiles.py
+  - 'scripts/test_benchmark_input_profiles.py: canonical matrix is frozen at 12 in-process iterations and all eight benchmark-profile tests pass'
   - benchmarks/test_compare_markdown4cj.py
   evidence:
   - '2026-08-30 refreshed fixed-Server canonical for commit 6a75709d: raw SHA-256 43ce60a42d590daa807f69377405538693f6aba70bbc12b782b32eb2e0f7c4ca; CommonMark 2.368184x, GFM 2.367749x, ordinary 3.432042x/1.619950x, scaling 0.379262/1.682972, pathological 0.582071/2.046359 and extra RSS 30176 KiB; every gate true and independent derivation errors empty.'
@@ -2741,7 +2824,9 @@ requirements:
   - '2026-08-29 current fresh-archive release gate: Server SDK 1.1.0-alpha.20260817040003; format, docs 44/23/4, native build tests 4/4, API checker 9/9, API snapshot 1309, check/build, ASan+UBSan native fuzz 10000, benchmark profiles 6/6, full tests 1455/1455, CLI, quickstart, cookbook, differential 25/24/1/0, benchmark smoke and bundle pass; final evidence-ready verification exits 1 only for the two current canonical 2.5x ratio gates.'
   - '2026-08-29 current canonical raw SHA-256 ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37 binds product commit c63c52528aef6cc5ea46d4b152e08af6a5344f2f, minimal archive ec7bcd00a3621db10b0c093cb4bf31ebf30c7d0918a75e5e24939d9d523cf9e1, product tree 64831ebd505da359605f2702c91f7ea21d8b83d212873afe9ca927918887ee3c and fresh driver 9ab161c0b7e20d32201a8bfd7dbaefec7fbc298b30414166532432e75cd1a3a1. CommonMark 2.334095x, GFM 2.466373x, ordinary 3.538540x/1.994487x, scaling 0.349193/1.514705, pathological 0.700414/2.187767 and extra RSS 31224 KiB all pass.'
   - '2026-08-29 current full release gate exit 0 after all correctness, compatibility, consumer, fuzz, differential, benchmark smoke, bundle and evidence-ready checks; no threshold or assertion was weakened.'
-  notes: "R139 and all earlier results are historical. Per A-038, the latest complete identity-bound canonical run is the sole current result. It discloses root -O2, benchmark-consumer thin LTO, 2 GiB heap and cjGCInterval=500ms; default library behavior is unchanged. Assumptions: A-001, A-002, A-004, A-011, A-018, A-025, A-026, A-027, A-034, A-035, A-038, A-039."
+  - '2026-08-31: local correctness/build/full-suite gates pass; formal cmark/cmark-gfm and same-language performance results are stale after the product/harness changes and are not reused'
+  - '2026-09-01: exact candidate ebb35d3852a7a6388bde01b09e1774985855d757 completed the old 3-iteration Server CPU 24 canonical once: raw SHA-256 711ec7beb0a57041dfe74b281996055e07e207309995afc39e2d08f034d453d8, CommonMark 2.726232x failed, GFM 2.364585x and all ordinary/scaling/pathological/RSS gates passed. The same binary and corpora with 12 in-process iterations measured CommonMark 2.399245x; ordinary total process time fell from 26.134 ms for 3 parses to 22.452 ms for 12 parses, proving the old matrix was dominated by fixed process startup. This diagnostic does not replace a canonical run.'
+  notes: "R139 and all earlier results are historical for the current candidate. The failed ebb35d3 3-iteration raw is also historical after correcting the harness under A-053. Status remains implemented_unverified until the latest complete fixed-Server canonical run passes every ratio, scaling, pathological and RSS gate using the attested extracted SDK. Assumptions: A-001, A-002, A-004, A-011, A-018, A-025, A-026, A-027, A-034, A-035, A-038, A-039, A-045, A-053."
 - id: MD-PERF-003
   source: PRD §45.5
   target: '1.0'
@@ -2818,6 +2903,7 @@ requirements:
   - '2026-08-29: developer documentation rewrite; offline docs check passed for 40 Markdown files and 23 required API entry points; public API snapshot verified at 1311 declarations; release evidence verified; format/check/build and full tests 1455/1455 passed'
   - '2026-08-29: usability pass added task-led cookbook, troubleshooting and API quick reference; docs check passed for 43 Markdown files, 23 required API entry points and 4 runnable example files; cookbook and quickstart both built and ran through public packages; public API snapshot, release evidence, format, check and root build passed'
   - '2026-08-29: documentation usability follow-up full suite; exit 0; 1455 passed, 0 skipped, 0 error, 0 failed'
+  - '2026-08-31: CONTRIBUTING now documents the runnable schema-v5 offline verifier with retained product/comparator bundles, binary root, SDK archive and reproducible byte comparison; docs check 44/23/4 and Round23 broad review ACCEPTED/NO_MATERIAL_FINDINGS'
   notes: "Assumptions: A-001, A-002, A-004, A-008, A-026, A-031, A-041."
 - id: MD-DOC-002
   source: PRD §47, §49, §51.7
@@ -2912,7 +2998,7 @@ requirements:
   - 记录第三方测试数据归属
   - 核心发布无非标准原生动态库
   - requirements.yaml 中所有 target=1.0 或 cross-release 且适用于 1.0 的条目均为 pass
-  status: pass
+  status: implemented_unverified
   implementation:
   - CHANGELOG.md
   - LICENSE
@@ -2942,7 +3028,9 @@ requirements:
   - '2026-08-29 current bundle evidence: target/markdown-0.9.0.cjp is 498701 bytes with SHA-256 a962a9292fc5baca2f950ec08ad1ccabd80d19ff45142eafc0a84ebec16d5beb.'
   - '2026-08-29 current full release gate exit 0; bundle target/markdown-0.9.0.cjp is 494310 bytes with SHA-256 7d6c3d9800d9b9757df83ced7bfb179d056d17e89599624c47e3a38c3f44b3f6; release-evidence --evidence-ready passes.'
   - '2026-08-30 schema-v4 clean full gate exit 0; retained manifest derives 1457/1457 tests, CommonMark 652/652, GFM 671/671 and 1323 API declarations, records every command/exit code, archives the candidate/source/raw/logs, and passes exact-inventory SHA256SUMS verification.'
-  notes: "All offline release requirements and canonical gates pass. Hosted CI verification, repository publication and package publication remain separate claims. Assumptions: A-001, A-002, A-004, A-009, A-023, A-024, A-027, A-036, A-039, A-040, A-041, A-043."
+  - '2026-08-31: local format/static/build/docs/API and 1508/1508 tests pass; schema-v5 provenance tests pass 111/111 and driver identity 18/18; required CI retains all source/tool/runtime inputs and byte-verifies fresh offline rebuild outputs; clean release gate and retained bundle wait for current canonical raw'
+  - '2026-08-31 current: local format/static/build/docs pass, full suite 1509/1509, schema-v5 verifier 113/113 and driver identity 21/21 pass; fixed-seed static comparator rebuild evidence is implemented and its build-identity schema is cross-checked, while clean release gate and retained bundle still wait for current canonical raw.'
+  notes: "Status remains implemented_unverified until the frozen candidate has current canonical benchmark evidence from the attested extracted SDK, independently replayed product/comparator Git objects, reproducible output comparison and a clean full release-evidence bundle. Hosted CI verification, repository publication and package publication remain separate claims. Assumptions: A-001, A-002, A-004, A-009, A-023, A-024, A-027, A-036, A-039, A-040, A-041, A-043, A-045, A-048, A-049, A-050, A-052."
 - id: MD-QUAL-001
   source: PRD §51.7, §52
   target: '1.0'
@@ -2954,7 +3042,7 @@ requirements:
   - 默认 raw HTML passthrough=0，核心非标准原生依赖=0
   - 未批准性能回归不超过 10%
   - Tier 1 输出一致且示例可在干净环境构建
-  status: pass
+  status: implemented_unverified
   implementation:
   - docs/reports/benchmark.md
   - docs/reports/fuzz-summary.md
@@ -2974,4 +3062,6 @@ requirements:
   - '2026-08-29 latest complete canonical passes CommonMark 2.334095x and GFM 2.466373x with every ordinary, scaling, pathological and RSS gate true; raw SHA-256 ecb844e71fdf8532b37f92a38c20ef2b77ad7e9941a7f9a31da4224cf6e73d37.'
   - '2026-08-29 current full release gate exit 0 with 1455/1455 tests, CommonMark 652/652, GFM 671/671, differential 25/24/1/0, native ASan+UBSan fuzz 10000, benchmark smoke 3/3, both public consumers and bundle.'
   - '2026-08-30 latest-complete canonical raw independently recomputes CommonMark 2.274715x and GFM 2.267811x with every ratio, ordinary, scaling, pathological and RSS gate true; clean full release gate and retained checksummed evidence bundle pass.'
-  notes: "All aggregate offline quality targets pass with independently derived metrics. Hosted CI and publication remain separate claims. Assumptions: A-001, A-002, A-004, A-010, A-023, A-038, A-039, A-043."
+  - '2026-08-31: local full suite 1508/1508, API checker 47/47, API snapshot 1436, reproducible product/comparator/source/binary/runtime-DSO provenance 111/111, driver identity 18/18 and docs 44/23/4 pass; aggregate release quality is pending current canonical benchmark/bundle evidence'
+  - '2026-08-31 current: local full suite 1509/1509, API checker 47/47, API snapshot 1436, reproducible fixed-seed product/comparator executable provenance 113/113, driver identity 21/21 and docs 44/23/4 pass; aggregate release quality is pending current canonical benchmark/bundle evidence.'
+  notes: "Status remains implemented_unverified until all current canonical performance and full retained release-bundle gates pass with attested SDK, independently replayed product/comparator Git-object provenance and reproducible output comparison. Hosted CI and publication remain separate claims. Assumptions: A-001, A-002, A-004, A-010, A-023, A-038, A-039, A-043, A-045, A-048, A-049, A-050, A-052."

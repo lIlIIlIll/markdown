@@ -24,7 +24,9 @@ class MarkdownReleaseBenchmarks {
     @Bench
     @Configure[batchSize: 1, minBatches: 3, warmup: 0]
     func gfmParseAndHtml(): Unit {
-        observed = HtmlRenderer(options: HtmlOptions.gfmCompatible()).render(gfmEngine.parse(gfm).document).size
+        observed = HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() })
+            .render(gfmEngine.parse(gfm).document)
+            .size
     }
 
     @Bench

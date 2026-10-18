@@ -30,7 +30,13 @@ REPORT_JSON = ROOT / "docs/reports/benchmark-raw.json"
 REPORT_MD = ROOT / "docs/reports/benchmark.md"
 CPU = os.environ.get("MARKDOWN_BENCH_CPU", "2")
 MATRIX_BYTES = 256 * 1024
-MATRIX_ITERATIONS = 3
+# A canonical matrix process must spend most of its measured interval in the
+# parser/renderer, not in runtime and executable startup. Three iterations left
+# the 256 KiB cases dominated by a roughly 20 ms fixed Cangjie process cost and
+# made the ratio depend on which side's launcher crossed the sample median.
+# Twelve iterations is the smallest already-used phase protocol that amortizes
+# that cost while keeping each paired sample short enough for the release gate.
+MATRIX_ITERATIONS = 12
 PATHOLOGICAL_SIZES = (64, 128, 256, 512)
 GFM_PHASE_BYTES = 1024 * 1024
 GFM_PHASE_ITERATIONS = 1
@@ -289,7 +295,8 @@ def main() -> int:
             for name, value in corpora.items()},
         "comparisonProtocol": {"iterationsPerProcess": MATRIX_ITERATIONS, "samples": 7,
             "ordering": "per-corpus alternating pair with reversed order on odd samples",
-            "statistic": "geometric mean of per-corpus median ratios"},
+            "statistic": "geometric mean of per-corpus median ratios",
+            "startupPolicy": "twelve in-process iterations amortize executable and runtime startup"},
         "commonmark": {"corpora": common_matrix, "geometricMeanRatio": common_ratio},
         "gfm": {"corpora": gfm_matrix, "geometricMeanRatio": gfm_ratio},
         "phaseProfiles": {"gfm": gfm_phases},

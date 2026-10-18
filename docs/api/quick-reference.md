@@ -23,7 +23,7 @@
 | --- | --- | --- |
 | `Markdown.parse(source, profile: commonMark0312())` | `ParseResult` | 构造完整 AST、源码映射和诊断 |
 | `Markdown.toSafeHtml(source, profile: commonMark0312())` | `String` | 不信任输入转安全 HTML |
-| `Markdown.toSpecHtml(source, profile: commonMark0312())` | `String` | 可信输入的规范兼容 HTML |
+| `unsafe { Markdown.toSpecHtml(source, profile: commonMark0312()) }` | `String` | 可信输入的规范兼容 HTML |
 | `Markdown.toText(source, profile: commonMark0312())` | `String` | 提取纯文本 |
 | `Markdown.format(source, profile: commonMark0312())` | `String` | 输出 canonical Markdown |
 
@@ -103,11 +103,12 @@ let html = renderer.render(result.document)
 | 入口 | 用途 |
 | --- | --- |
 | `HtmlOptions.safe()` | 默认安全策略；转义 raw HTML，限制 URI |
-| `HtmlOptions.specCompatible()` | CommonMark 规范兼容输出 |
-| `HtmlOptions.gfmCompatible()` | GFM 规范兼容输出 |
+| `unsafe { HtmlOptions.specCompatible() }` | CommonMark 规范兼容输出 |
+| `unsafe { HtmlOptions.gfmCompatible() }` | GFM 规范兼容输出 |
+| `HtmlOptions(..., rewriteExternalLinks: Some(port))` | 重写 HTTP(S) 后重新执行 URI policy |
 | `renderer.render(document, cancellation:, budget:)` | 返回 `String` |
 | `renderer.renderTo(document, sink, cancellation:, budget:)` | 写入有界 sink |
-| `engine.htmlRenderer(options:, sanitizer:, fallbacks:)` | 使用 dialect renderer rules |
+| `engine.htmlRenderer(options:, sanitizer:, fallbacks:, rawHtmlHandler:)` | 使用 dialect renderer rules |
 
 ## Editor
 

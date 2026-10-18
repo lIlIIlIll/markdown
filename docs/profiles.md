@@ -3,6 +3,11 @@
 Profile 固定 parser 的标准版本和扩展集合。选择 profile 后，同一输入在相同 dialect
 和 limits 下得到确定的 AST 和 renderer 行为。
 
+Profile identity 同时包含稳定的 profile kind、ID 和标准版本。`custom(id, version)` 即使
+复用内建 profile 的 ID 与版本，也不会冒充内建 CommonMark/GFM 语义；这种差异会进入
+dialect、engine 和 artifact identity。`gfm()` 与 `gfmModernV1()` 则是同一内建 profile
+的别名，身份保持一致。
+
 ## 可用 profile
 
 | Factory | ID | 行为 |
@@ -33,7 +38,7 @@ let engine = MarkdownEngine.builder()
 Parser profile 和 HTML policy 是两个选择：
 
 - `MarkdownProfile.gfm029()` 控制 parser。
-- `HtmlOptions.gfmCompatible()` 控制 GFM HTML compatibility。
+- `unsafe { HtmlOptions.gfmCompatible() }` 控制 GFM HTML compatibility，并允许 raw HTML pass-through。
 - `HtmlOptions.safe()` 控制不可信输出。
 
 使用 GFM parser 不会自动启用 raw HTML pass-through。
@@ -51,4 +56,3 @@ Parser profile 和 HTML policy 是两个选择：
 - [Core API](api/core.md)
 - [安全 HTML](security.md)
 - [版本与兼容性](versioning-and-compatibility.md)
-

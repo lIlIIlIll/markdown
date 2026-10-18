@@ -390,6 +390,106 @@
 - 理由：这保持候选包与受测源码一致，同时保证成功和失败路径都能留下可下载、checksummed 的执行证据，且不会让 cjpm 的 target 清理破坏证据链。
 - 影响 requirements：`MD-REL-001`、`MD-QUAL-001` 的发布证明以 retained manifest 与 SHA256SUMS 为准；独立 lint/test 步骤缺失或非零时 bundle 不得使 gate 通过。
 
+## A-044：外部链接重写、fused 节点预算与宿主 adapter 分配边界
+
+- 状态：`resolved`
+- 决策日期：2026-08-31
+- 涉及：`MD-PAR-007`、`MD-HTML-001-005`、`MD-BUD-001`、`MD-LIM-001`、`MD-SEC-003-004`
+- 歧义：PRD 要求 `rewriteExternalLinks`，但没有规定回调身份、适用 URI 范围与失败后的校验顺序；同时 `maximumAstNodes` 是否应对不构造 AST 的 fused HTML 路径计数并不明确，renderer 也无法阻止宿主提供的 sanitizer、raw HTML handler 或 extension fallback 在返回前自行分配完整字符串。
+- 决定：外部链接重写采用具稳定 `identity` 的 deterministic port，只处理已经解析出的绝对 HTTP(S) URI；relative、fragment、`mailto:` 和其他 scheme 保持原值。重写发生在 URI policy 与 HTML escaping 之前，返回值必须重新通过 URI policy，port identity 进入 renderer fingerprint。固定 output limit 与 manifest 的 `missingRendererPolicy` 也属于可观察 renderer 语义并进入 fingerprint；manifest 集合按稳定身份规范化、重复 extension ID 在构造时拒绝，而有语义的 renderer rule 顺序保持不变。`maximumAstNodes` 只统计真实分配的 AST 节点；fused 路径不伪造节点计数，需要节点预算语义的调用方必须选择 `FullAst`。内建 renderer 对 text、attribute、URI、tagfilter 和 fused source range 在 substring/segment 分配或写出前执行硬预算检查；宿主 adapter 返回的完整字符串只能在写入 sink 前检查，其 adapter 内部分配由 adapter 自身资源契约负责。
+- 理由：该解释既不让 benchmark/fused 路径伪装构造 AST，也不允许重写绕过现有 URI 安全策略；identity 使缓存与 fingerprint 可复核。renderer 可以控制自己的临时分配与 sink 输出，但无法倒置检查一个已经由外部回调构造完成的返回值。
+- 影响 requirements：上述条目以 port identity、HTTP(S) 重写后复验、FullAst/fused 预算差异、分段 escaping 和文档化 adapter 边界验收。
+
+## A-045：canonical benchmark 的 SDK archive 是实际工具链来源
+
+- 状态：`resolved`
+- 决策日期：2026-08-31
+- 涉及：`MD-PERF-001-002`、`MD-REL-001`、`MD-QUAL-001`
+- 歧义：仅记录官方 SDK archive 的 digest、同时通过当前 shell 的 `PATH` 调用 `cjpm`，不能证明受测二进制由该 archive 内的 compiler/toolchain 构建。
+- 决定：schema-v4 canonical 必须先验证 archive digest 与 size，再安全解压到新建目录；产品 driver、CLI 和 comparator adapter 的全部构建都调用该解压目录内的绝对 `cjpm`/`cjc` 路径。build identity 记录 archive、解压根、工具绝对路径与 digest、完整 argv 和最终二进制 digest。build/run 子进程使用显式 allowlist 环境并记录完整集合与摘要。native compiler/archiver 不继承 ambient `os.environ`，只接收构建所需的最小环境；cache schema v3 与 build identity v4 绑定 resolved tool path、工具 executable bytes/SHA-256、完整 version command/output、完整 child environment、compile/archive command 以及 object/archive 摘要。环境中预先激活的 daily/其他 SDK 或未列入 allowlist 的 compiler/loader 变量不得影响受测工具选择；解压目录必须保留到整个比较与验证完成。
+- 理由：这把“声明的 SDK 身份”变成“实际执行的工具链身份”，阻止合法 archive 被当作与构建无关的旁证。
+- 影响 requirements：任何仍通过 `PATH` 构建受测产品或 comparator 的 raw 都不是 current canonical evidence。
+
+## A-046：profile 语义身份与 pre-GA artifact 失效
+
+- 状态：`resolved`
+- 决策日期：2026-08-31
+- 涉及：`MD-GOV-002`、`MD-PRO-001`、`MD-DIA-003`、`MD-ART-001`
+- 歧义：PRD 要求 profile 与 fingerprint 绑定解析语义，但只用公开 ID/version 无法区分内建 GFM kind 与调用者构造的同名 custom profile；0.9 pre-GA 是否应维持既有错误 fingerprint 也未明确。
+- 决定：profile semantic identity 使用稳定 kind tag、ID 和标准版本；dialect/engine fingerprint 与 parse artifact 均绑定完整 identity。内建 alias `gfm()`/`gfmModernV1()` 保持同一身份；同名 custom profile 不得冒充。修正会有意改变 fingerprint，旧 binary artifact fail-closed cache miss，不提供猜测性兼容迁移。
+- 理由：parser 分支实际依赖 `ProfileKind`，忽略该字段会让不同执行语义共享 cache。当前版本明确允许 0.9 pre-GA breaking change，安全失效优于错误复用。
+- 影响 requirements：profile/dialect/engine/artifact 验收必须覆盖同 ID/version、不同 kind 的对抗用例，并证明 alias 不产生无意义漂移。
+
+## A-047：streaming 限制、renderer 取消与 GFM tagfilter 边界
+
+- 状态：`resolved`
+- 决策日期：2026-08-31
+- 涉及：`MD-EVT-001`、`MD-BUD-001`、`MD-HTML-001-002`、`MD-SEC-002-003`
+- 歧义：PRD 同时要求 streaming 不绕过 extension limit、取消具有固定检查上界且 GFM tagfilter 符合规范，但没有给出 paired DSL outer/nested line 计量或 tag name 后继字符的实现细节。
+- 决定：RawBlock paired DSL 在 feed 时使用与 batch parser 相同的原始正文 byte 语义，outer opener/closer 不计入，nested opener/inner closer/正文与 CRLF 计入；越界即时抛出准确结构化错误。closer 的正文前缀和尾随空白使用 O(1) 增量状态维护，实际比较与 nesting 探测都计入 `OperationBudget`，不得因逐 byte feed 重扫增长中的行尾。Renderer 在入口、退出、每 256 个辅助节点与至多 1024 bytes 长扫描间隔检查取消，取消后不得继续写 Sink。tagfilter denylist 仅在后继为 EOF、HTML whitespace、`/` 或 `>` 时匹配。
+- 理由：这些边界同时关闭未完成输入的内存窗口、空/单节点取消延迟和 `<script-x>` 误过滤，且与 batch/GFM 可观察语义一致。
+- 影响 requirements：上述需求用 whole/line/byte/nested/CRLF、空文档/中途取消和 block/inline tag boundary 回归验收。
+
+## A-048：same-language Git 身份来自对象库而非报告字段
+
+- 状态：`resolved`
+- 决策日期：2026-08-31
+- 涉及：`MD-PERF-001`、`MD-REL-001`、`MD-QUAL-001`
+- 歧义：schema v4 虽记录 repository ref/commit/tree，但若 verifier 只比较报告内字段，仍可把真实 samples 归因给任意提交。
+- 决定：verifier 在隔离 ambient `GIT_*` 的环境中解析声明 ref→commit→tree，从该 commit 的 blobs 独立重算 product/harness identity，并要求 build/native/manifest source identity 一致。`--require-current-product` 额外要求声明 tree 等于 clean current HEAD；不存在对象、旧祖先冒名、非规范 OID、空 ref 与非 Git 环境均 fail closed。
+- 理由：commit 可达性只证明历史关系，不能证明受测源码。Git 对象内容才是可独立验证的源码身份。
+- 影响 requirements：same-language canonical 只有通过对象级身份重算后才能成为当前 release evidence。
+
+## A-049：同语言 comparator 身份必须可离线重放
+
+- 状态：`resolved`
+- 决策日期：2026-08-31
+- 涉及：`MD-PERF-001`、`MD-REL-001`、`MD-QUAL-001`
+- 歧义：PRD 要求 benchmark source/driver identity 可复核，但只固定 markdown4cj/commonmark4cj commit 字符串和报告内 tree hash，不能证明实际 adapter 构建使用了这些对象；path dependency 还会把完整 commonmark4cj tree 纳入执行输入。
+- 决定：schema v5 要求 verifier 从显式 checkout、bare object store 或 Git bundle 解析两个固定 commit/tree/blob，独立重算 markdown4cj core、完整 commonmark4cj dependency、ordered migrations、path-stable manifest、driver、adapted files 和 comparator binary source identity；同时从显式 retained binary root 读取实际执行的 markdown driver、CLI 与 comparator，重算路径、长度、SHA-256 和 mode 并与 driver/build/adapter 三方绑定。固定 adapter 把 commonmark4cj 规范化为非增量 static package，因此 comparator-owned runtime closure 必须为空；ELF 校验仍从 loader-authoritative PT_DYNAMIC/PT_LOAD 读取依赖并拒绝 RPATH/RUNPATH、注入 DSO、额外条目、symlink、路径逃逸或任一不一致。required CI 将 bundles、executables、raw/report 一同上传，并用 retained inputs 而非工作树复验。
+- 理由：报告字段的内部自洽不能替代源码对象证明；保留 Git objects 才能让下载后的 benchmark evidence 在无网络环境独立重放。
+- 影响 requirements：旧 schema v4 same-language raw 全部成为历史证据；只有带两套可复验 comparator object inputs、三份实际执行 binary、静态 adapter identity 和空 comparator runtime closure 的 schema v5 raw 才能满足当前 canonical/release gate。
+
+## A-050：受测产品身份也必须由 retained Git objects 离线证明
+
+- 状态：`resolved`
+- 决策日期：2026-08-31
+- 涉及：`MD-PERF-001`、`MD-REL-001`、`MD-QUAL-001`
+- 歧义：保留 comparator bundles 但让 verifier 从当前工作树 `.git` 重算产品身份，只能在原 checkout 内复验，不能证明下载后的 artifact 自包含。
+- 决定：schema v5 verifier 强制接收显式 `--product-source`，从 checkout、bare repository 或 Git bundle 的 retained objects 重算声明 commit、tree、product tree 和 harness identity；required CI 上传精确候选的 `markdown.bundle`，并从无 `.git` 的归档源码树仅凭 retained product/comparator bundles、binaries 和 libraries 复验。缺失对象、错误提交、可达祖先冒名、dirty checkout、篡改 blob/bundle 与 artifact relocation 均必须 fail closed。
+- 理由：工作树可达性和本机 object database 不是 artifact 的组成部分；发布证据必须在下载后离线独立验证。
+- 影响 requirements：没有 retained product objects 或仍隐式读取原 checkout `.git` 的 same-language raw 不能成为 current canonical/release evidence。
+
+## A-051：streaming literal 与 fused cancellation 在累计路径执行
+
+- 状态：`resolved`
+- 决策日期：2026-08-31
+- 涉及：`MD-EVT-001`、`MD-BUD-001`、`MD-SEC-002`
+- 歧义：completed-line 校验和 operation 结束时取消检查不能约束尚未换行的 RawBlock input，也不能限制 fused preflight/单长行在两个 checkpoint 间的工作量。
+- 决定：RawBlock fenced、HTML types 1-7 与 indented code 按 batch-equivalent normalized literal bytes 在每次 feed 的累计路径计费，当前 unfinished line、CRLF、pending blank separator 和 fence closer 状态进入同一事务 checkpoint；拒绝后恢复全部 pending/lexical state。Fused renderer 在任何 scan accounting/output 前检查取消，preflight、line scan 与 escaped output-range scan 每至多 1024 bytes checkpoint，scan budget 只按实际处理前缀消费，取消后不再写 sink。
+- 理由：资源限制必须在内存和工作已经发生前 fail fast；结束时补检既不能阻止 pending 增长，也不能提供可观察的固定取消上界。
+- 影响 requirements：只在换行/finish 计费或允许整条长行无 checkpoint 的实现不满足 streaming、budget 与安全契约。
+
+## A-052：源码身份必须通过可复现重建绑定到 retained binary
+
+- 状态：`resolved`
+- 决策日期：2026-08-31
+- 涉及：`MD-PERF-001`、`MD-REL-001`、`MD-QUAL-001`
+- 歧义：分别验证 Git objects、build command 字段和 retained binary digest，仍允许攻击者同步替换 binary bytes 与报告 digest；报告内的 source identity 不是编译产物证明。
+- 决定：schema v5 离线 verifier 必须从精确 retained product/comparator/commonmark Git roots、verified SDK archive、native compiler/archiver bytes、Clang resource archive、retained ELF loader 和递归 library closure，在新目录以 attested `--trimpath`、`--obf-seed 0` 和单 `cjpm` job 重建 product driver、CLI 与 comparator，并逐字节比较 retained outputs。commonmark4cj dependency 强制非增量 static build，使两侧执行环境相同且消除 comparator DSO。目录 Git input 只接受 exact worktree top-level 或 bare root，所有 Git subprocess 设置 `GIT_NO_REPLACE_OBJECTS=1`，并拒绝 nested/symlink/external `.git`、grafts、shallow 和 alternates。
+- 理由：实际固定 SDK 实验发现动态 commonmark4cj 即使使用 `--trimpath`、单 job 和关闭 incremental，fresh builds 仍有代码区字节漂移；固定 seed 只稳定 product driver。将固定 comparator dependency 静态链接后，两次独立 executable build 得到相同 SHA-256 `70785dbed81846fa7ab737583b72d46b3d1015f819a422d642e4850c8ac55717`。只有这种可执行 deterministic rebuild 或可信外部签名 attestation 才能把 source/toolchain/command 与 output bytes 连接；本项目选择前者，避免引入外部信任根。
+- 影响 requirements：仅有自洽 digest、依赖 ambient object store/tool executable 或不能在 relocated fresh root 重建的 benchmark artifact 不具备 release provenance。
+
+## A-053：canonical throughput ratio 必须摊薄进程启动成本
+
+- 状态：`resolved`
+- 决策日期：2026-09-01
+- 涉及：`MD-PERF-001`、`MD-PERF-002`、`MD-REL-001`、`MD-QUAL-001`
+- 歧义：PRD 冻结了 reference host、release build、语料、配对顺序和 ratio 门槛，但没有规定每个进程的迭代次数。现有 256 KiB matrix 使用 3 iterations，固定 Cangjie 启动成本足以主导短样本，使 ratio 主要反映 launcher/runtime startup，而不是 parser/renderer throughput。
+- 决定：canonical CommonMark/GFM matrix 固定为每进程 12 iterations；两侧使用同一迭代数，继续执行 1 次 warmup、7 个正反交替配对样本和相同几何平均统计。阈值、语料、完整 AST、SourceSpan、renderer 能力、GC/heap 参数和 reference binaries 均不改变。raw 必须记录 `iterationsPerProcess=12` 与 startup policy。
+- 理由：在同一冻结候选 `ebb35d3852a7a6388bde01b09e1774985855d757`、Server CPU 24 和相同 driver 上，3-iteration canonical 的 ordinary CommonMark 进程中位数为 `26.134 ms`，而 12-iteration 诊断的整个进程中位数为 `22.452 ms`；固定启动成本显然大于 3 次 parser 工作量。12-iteration 十一语料诊断的 CommonMark ratio 为 `2.399245x`，并保留每次 parse 构造完整 AST 的受测入口。该诊断只证明协议缺陷和修复方向，不替代修改后候选的完整 canonical。
+- 影响 requirements：历史 3-iteration raw 只作为历史证据；当前 release evidence 必须来自包含本协议变更的精确候选及其重新计算的 harness digest。
+
 ```text
 ### A-XXX：标题
 

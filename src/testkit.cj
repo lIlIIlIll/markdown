@@ -2,21 +2,41 @@ package markdown
 
 import std.collection.*
 
+/** 扩展 TCK 的检查数、通过数和失败名称。 */
 public class ExtensionTckReport {
+    /** 执行的检查总数。 */
     public let checks: Int64
+    /** 通过的检查数。 */
     public let passed: Int64
+    /** 失败检查的名称列表。 */
     public let failedChecks: ImmutableArray<String>
+    /**
+     * 创建报告实例。
+     * @param checks 执行的检查总数。
+     * @param passed 通过的检查数。
+     * @param failedChecks 失败检查的名称列表。
+     */
     public init(checks: Int64, passed: Int64, failedChecks!: Array<String> = []) {
         this.checks = checks
         this.passed = passed
         this.failedChecks = ImmutableArray<String>(failedChecks)
     }
+    /**
+     * 返回是否所有检查均通过。
+     * @return 全部通过时为 `true`。
+     */
     public func isSuccess(): Bool {
         checks == passed
     }
 }
 
+/** 运行扩展的 AST invariant、chunk invariance、safe HTML、determinism 和取消检查。 */
 public class MarkdownExtensionTestKit {
+    /** 使用 sample 对 engine 执行公开扩展契约测试。
+     * @param engine 被测 engine。
+     * @param sample 测试输入的 Markdown 文本。
+     * @return 检查结果报告。
+     */
     public static func verify(engine: MarkdownEngine, sample: String): ExtensionTckReport {
         var checks: Int64 = 0
         var passed: Int64 = 0

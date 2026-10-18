@@ -42,6 +42,7 @@ run_step release-evidence-consistency python3 scripts/release_evidence.py
 run_step release-evidence-bundle-tests python3 scripts/test_release_evidence_bundle.py
 run_step release-evidence-tests python3 scripts/test_release_evidence.py
 run_step benchmark-driver-tests python3 scripts/test_build_benchmark_driver.py
+run_step link-input-tests python3 benchmarks/test_link_inputs.py
 run_step build cjpm build
 run_step native-build env CC="${CC:-clang}" AR="${AR:-ar}" \
     python3 scripts/build_native_scanner.py --enable

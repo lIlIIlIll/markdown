@@ -56,8 +56,9 @@ let dialect = MarkdownDialect
 
 ## Fingerprint
 
-编译结果使用 canonical length-prefixed encoding 计算 SHA-256 fingerprint。base profile、
-dialect identity、extension identity、规范化 rule 和语义相关顺序都会参与 fingerprint；
+编译结果使用 canonical length-prefixed encoding 计算 SHA-256 fingerprint。base profile
+的 kind、ID 与版本、dialect identity、extension identity、规范化 rule 和语义相关顺序
+都会参与 fingerprint；
 内部 hash table 或 dispatch 布局不会参与。
 
 engine fingerprint 还绑定影响结果的 parser limits。不同语义配置不能共享 parse
@@ -70,4 +71,3 @@ Lists、Heading IDs 和 Smart Punctuation 组合。它们不会被 CommonMark/GF
 profile 自动启用。使用 `OfficialExtensions.catalog()` 查询版本与启用矩阵。
 
 完整 builder 方法和默认值见 [Extensions API](api/extensions.md)。
-

@@ -8,7 +8,7 @@ class FacadeTest {
     @TestCase
     func convenienceApisAreProfileAwareAndSafeByDefault(): Unit {
         @Expect(Markdown.toSafeHtml("<script>x</script>").contains("&lt;script&gt;"), true)
-        @Expect(Markdown.toSpecHtml("# H"), "<h1>H</h1>\n")
+        @Expect(unsafe { Markdown.toSpecHtml("# H") }, "<h1>H</h1>\n")
         @Expect(Markdown.toText("**x**"), "x")
         @Expect(Markdown.toSafeHtml("~~x~~", profile: MarkdownProfile.gfmModernV1()).contains("<del>"), true)
     }

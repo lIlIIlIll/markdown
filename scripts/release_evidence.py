@@ -149,7 +149,7 @@ def performance_block(data: dict[str, object]) -> str:
         )
         gfm_status = "pass" if benchmark["gfmRatio"] <= benchmark["ratioLimit"] else "fail"
     return f"""<!-- release-evidence:start -->
-当前 release benchmark 使用固定 Server CPU、Cangjie SDK
+当前 release benchmark 使用固定 CPU、Cangjie SDK
 `{benchmark['sdkVersion']}` 和 release 构建。
 
 | Profile | 对比对象 | 当前 ratio | 门槛 | 状态 |
@@ -425,7 +425,7 @@ def validate_execution_manifest(data: dict[str, object], path: Path) -> list[str
         "format", "docs", "native-build-tests", "api-checker-tests", "api",
         "static-check", "release-evidence-consistency", "release-evidence-bundle-tests",
         "release-evidence-tests",
-        "benchmark-driver-tests", "build", "native-build", "benchmark-driver",
+        "benchmark-driver-tests", "link-input-tests", "build", "native-build", "benchmark-driver",
         "native-fuzz", "benchmark-profile-tests", "tests", "cli-build", "cli-smoke",
         "quickstart", "cookbook", "differential-setup", "differential",
         "benchmark-smoke", "bundle",

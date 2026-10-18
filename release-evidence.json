@@ -10,18 +10,21 @@
     "published": false
   },
   "identity": {
-    "artifactCommit": "ebf445cf66311fb2253ab7be0ec5517c79f0205d",
-    "evidenceCommit": "ebf445cf66311fb2253ab7be0ec5517c79f0205d",
+    "artifactCommit": "6e5a207d07903a60f8270c41badac1bb4cb104b5",
+    "evidenceCommit": "6e5a207d07903a60f8270c41badac1bb4cb104b5",
     "repositoryHeadAtGeneration": null,
     "repositoryGitTreeAtGeneration": null,
     "treeStateAtGeneration": "validated-by-execution-manifest",
-    "reason": "The schema-v4 evidence subject is product commit ebf445cf66311fb2253ab7be0ec5517c79f0205d. Its source Git tree, benchmark product tree, source archive, harness and drivers are bound independently. The retained release-gate manifest records the clean execution commit/tree, derives JUnit/API/benchmark facts and verifies SHA256SUMS without a self-referential commit field. Hosted CI verification and publication remain separate claims."
+    "reason": "The evidence subject is the measured product commit. Its Git tree, benchmark product tree, source archive, harness and drivers are bound independently. The retained release-gate manifest validates the clean execution commit/tree, JUnit/API/benchmark facts and SHA256SUMS. Hosted CI and publication are separate claims."
   },
   "toolchain": {
-    "cangjieCompiler": "1.1.3",
+    "cangjieCompiler": "1.2.0",
     "backend": "cjnative",
     "targetTriple": "x86_64-unknown-linux-gnu",
-    "compilerFlags": ["-O2", "-O2 --lto thin"]
+    "compilerFlags": [
+      "-O2",
+      "-O2 --lto thin"
+    ]
   },
   "conformance": {
     "commonmark": {
@@ -41,12 +44,12 @@
   },
   "api": {
     "snapshotPath": "api/public-api-v0.9.txt",
-    "declarations": 1323,
-    "sha256": "09f3c787ceda351f1d013a10b681241665e33a6f0fbf749aac10c68d5e5d2572"
+    "declarations": 1436,
+    "sha256": "d056c91147c54e8afb0388fae47b9b6509714ab726646bca3135306f03051722"
   },
   "tests": {
-    "passed": 1457,
-    "total": 1457,
+    "total": 1511,
+    "passed": 1511,
     "skipped": 0,
     "errors": 0,
     "failed": 0
@@ -54,21 +57,21 @@
   "benchmark": {
     "status": "current",
     "rawPath": "docs/reports/benchmark-raw.json",
-    "rawSha256": "2f4bd94efd0d486ccbdb301e8cc9f67b7a1684bd1c81d8b1d788c8bc72245f9e",
-    "sourceCommit": "ebf445cf66311fb2253ab7be0ec5517c79f0205d",
-    "sourceGitTree": "a87795fe167ff1660f0f22f9330ce9b0014e2aef",
-    "sdkVersion": "Cangjie Compiler: 1.1.3 (cjnative)",
-    "productSourceArchiveSha256": "d15bee327d7e095a8addcc207fb28918b695fec567f0c25b1e356675c839c4fd",
-    "productTreeSha256": "7af14d294c9aef023be4353d1bb1fdf985b7d836171dad4e07f4e08467535aff",
-    "benchmarkHarnessSha256": "b61a4b8e0204662a3242d61b191582a82fdb222084907ef3f358e9932f209073",
-    "markdownDriverSha256": "b42438f293d766d06ce8438270c848a3297ed77a016a3824a033f9248456d497",
-    "cmarkDriverSha256": "385d4f1842b2a85211de914a5e6600ba195e3203bd4f3e91531cbed216d7a95e",
-    "cmarkGfmDriverSha256": "74ac2c94e6207ec61cfe6f63b7edca2e9f138aba38886a7c6c95a24e62578f67",
-    "commonmarkRatio": 2.4158302631073227,
-    "gfmRatio": 2.3451487251223155,
+    "rawSha256": "49e72c7b6049cddee2cb85dbb3d783a11b1c8a5652287dc9acf72ce1764bdef3",
+    "sourceCommit": "6e5a207d07903a60f8270c41badac1bb4cb104b5",
+    "sourceGitTree": "0979d233f8c3e30436f71e5d60d7564572004382",
+    "sdkVersion": "Cangjie Compiler: 1.2.0 (cjnative)",
+    "productSourceArchiveSha256": "6ac0f505e809a70d5d4d7a7ebe23e174f83a8357d2acacfc9aea65970eaf831b",
+    "productTreeSha256": "23055eea1568b2155794f0ed442b641ce3a33a9c3d5611e81e0a3eac85de1564",
+    "benchmarkHarnessSha256": "ba095c3ed6464805959a2af907d18c16023f605ab172253c47e0b78872de5a4a",
+    "markdownDriverSha256": "21967044f6439a8ca5fded8eab99e1b030494ed82052507e32547bfe632ef07a",
+    "cmarkDriverSha256": "ade49af75b9eac2371dc65f2712262d6b0834997b39d2d60488a45de068cf88e",
+    "cmarkGfmDriverSha256": "c2160a6ccb910e5357ad3d56090dc19c9847136836c6e32da44b34aacd55570b",
+    "commonmarkRatio": 2.361586034975156,
+    "gfmRatio": 1.7880103789446966,
     "ratioLimit": 2.5,
     "cmark": "0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8",
     "cmarkGfm": "0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b",
-    "note": "Canonical 2026-08-30 latest-complete fixed-Server run for product commit ebf445cf66311fb2253ab7be0ec5517c79f0205d. The exact Git archive excludes untracked caches and build products. Xeon Gold 6248R CPU 24, official Cangjie 1.1.3, root -O2, benchmark consumer -O2 --lto thin, 2 GiB heap, cjGCInterval=500ms and seven alternating paired samples measured CommonMark 2.415830x and GFM 2.345149x. Ordinary ratios were 3.497505x/1.930463x, scaling slope/max-adjacent 0.430979/1.822906, pathological 0.588456/1.940353 and extra RSS 31132 KiB; all raw gates are true. Independent recomputation returned no derivation errors."
+    "note": "Canonical local Linux run at 2026-10-18T01:40:46.839212+00:00 with the official STS 1.2.0 SDK, a pinned CPU, root -O2, benchmark consumer -O2 --lto thin, a 2 GiB heap, cjGCInterval=500ms and seven alternating paired samples. All frozen ratio, growth and memory gates passed. Environment, raw samples, corpus identities and executable digests are retained in the raw report; this is local execution evidence, not hosted CI or publication proof."
   }
 }

@@ -2,20 +2,48 @@ package markdown
 
 import std.collection.*
 
+/** canonical Markdown renderer 的确定性格式选项。 */
 public class MarkdownFormatOptions {
+    /** 输出换行符：`"\n"` 或 `"\r\n"`。 */
     public let newline: String
+    /** 无序列表标记：`-`、`*` 或 `+`。 */
     public let bulletMarker: String
+    /** 有序列表定界符：`.` 或 `)`。 */
     public let orderedDelimiter: String
+    /** ATX 标题前缀字符。 */
     public let headingMarker: String
+    /** emphasis 标记：`*` 或 `_`。 */
     public let emphasisMarker: String
+    /** strong 标记：`**` 或 `__`。 */
     public let strongMarker: String
+    /** 代码块围栏字符。 */
     public let fenceMarker: String
+    /** 围栏最小长度，至少为 3。 */
     public let minimumFenceLength: Int64
+    /** 是否对齐表格单元格内边距。 */
     public let tablePadding: Bool
+    /** 输出末尾是否补换行。 */
     public let finalNewline: Bool
+    /** 文本折行的最大行宽。 */
     public let maximumLineWidth: Int64
+    /** 是否对段落重新折行。 */
     public let reflowParagraphs: Bool
 
+    /**
+     * 创建格式选项，各参数校验失败时抛出 `IllegalArgumentException`。
+     * @param newline 输出换行符。
+     * @param bulletMarker 无序列表标记。
+     * @param orderedDelimiter 有序列表定界符。
+     * @param headingMarker ATX 标题前缀字符。
+     * @param emphasisMarker emphasis 标记。
+     * @param strongMarker strong 标记。
+     * @param fenceMarker 代码块围栏字符。
+     * @param minimumFenceLength 围栏最小长度。
+     * @param tablePadding 是否对齐表格内边距。
+     * @param finalNewline 输出末尾是否补换行。
+     * @param maximumLineWidth 文本折行的最大行宽。
+     * @param reflowParagraphs 是否对段落重新折行。
+     */
     public init(
         newline!: String = "\n",
         bulletMarker!: String = "-",
@@ -68,15 +96,27 @@ internal enum FormatAction {
     | NodeValue(NodeRef)
 }
 
+/** 将 AST 输出为确定性的 canonical Markdown。 */
 public class CanonicalMarkdownRenderer {
+    /** 格式选项。 */
     public let options: MarkdownFormatOptions
     private let extensionRules: ImmutableArray<RendererRule>
 
+    /**
+     * 创建 canonical Markdown renderer。
+     * @param options 格式选项。
+     * @param extensionRules 参与格式化的扩展 renderer 规则。
+     */
     public init(options!: MarkdownFormatOptions = MarkdownFormatOptions(), extensionRules!: Array<RendererRule> = []) {
         this.options = options
         this.extensionRules = ImmutableArray<RendererRule>(extensionRules)
     }
 
+    /**
+     * 格式化完整文档；默认使用 LF、最终换行和关闭 paragraph reflow。
+     * @param document 要格式化的 Document。
+     * @return canonical Markdown 文本。
+     */
     public func render(document: Document): String {
         let out = StringBuilder()
         let stack = ArrayList<FormatAction>()

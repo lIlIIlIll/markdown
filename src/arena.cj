@@ -154,9 +154,7 @@ private func compactNodeIdentity(kind: NodeKind, originKind: NodeOriginKind, ori
     UInt32((metadataTag << 8) | (originKindTag(originKind) << 5) | nodeKindTag(kind))
 }
 
-/** Compact semantic header stored in the node arena. Kind-specific payloads
- * are stored separately so traversing the tree does not trace payload objects.
- */
+/** arena 中的紧凑语义 header；kind-specific payload 单独存储。 */
 public struct ArenaNodeRecord {
     private let identityDescriptorValue: UInt32
     private let spanStartByteValue: UInt32
@@ -181,30 +179,35 @@ public struct ArenaNodeRecord {
         payloadIndexValue = compactPayloadIndex(payloadIndex)
     }
 
+    /** 第一个 child 的物理 arena index。 */
     public prop firstChild: Int64 {
         get() {
             Int64(firstChildValue)
         }
     }
 
+    /** 节点种类。 */
     public prop kind: NodeKind {
         get() {
             nodeKindFromTag(Int64(identityDescriptorValue & 0x1Fu32))
         }
     }
 
+    /** child 数量。 */
     public prop childCount: Int64 {
         get() {
             Int64(childCountValue)
         }
     }
 
+    /** payload 的 arena index。 */
     public prop payloadIndex: Int64 {
         get() {
             Int64(payloadIndexValue) + ARENA_PAYLOAD_INLINE_MIN
         }
     }
 
+    /** 节点的 source span；无 span 时为 `None`。 */
     public prop span: ?SourceSpan {
         get() {
             if (spanStartByteValue == UInt32.Max) {
@@ -215,6 +218,7 @@ public struct ArenaNodeRecord {
         }
     }
 
+    /** block/inline 分类。 */
     public prop category: NodeCategory {
         get() {
             match (kind) {
@@ -227,12 +231,14 @@ public struct ArenaNodeRecord {
         }
     }
 
+    /** 节点来源类别。 */
     public prop originKind: NodeOriginKind {
         get() {
             originKindFromTag(Int64((identityDescriptorValue >> 5) & 0x7u32))
         }
     }
 
+    /** 非 parsed 来源的 metadata index；parsed 节点为 -1。 */
     public prop originMetadataIndex: Int64 {
         get() {
             if (let NodeOriginKind.Parsed <- originKind) {
@@ -342,8 +348,11 @@ internal struct AstArenaCheckpoint {
     }
 }
 
-/** Immutable owner of node and child chunks. NodeRef values are valid only
- * while this snapshot remains reachable and are rejected by other snapshots.
+/**
+ * 不可变 arena AST snapshot 的 owner。
+ *
+ * `NodeRef` 只对所属 Document 有效；把其他 snapshot 的 NodeRef 传入访问器会被拒绝。
+ * `nodeCount` 和 `childCount` 描述从 root 可达的逻辑结构。
  */
 public class Document {
     private let documentIdentity: Int64
@@ -356,7 +365,9 @@ public class Document {
     private let physicalChildCount: Int64
     private let rootRecordIndex: Int64
     private let logicalNodeIndexes: Array<Int64>
+    /** 逻辑节点总数。 */
     public let nodeCount: Int64
+    /** 逻辑 child 总数。 */
     public let childCount: Int64
 
     internal init(documentIdentity: Int64, nodeChunks: Array<ArenaNodeChunk>, childChunks: Array<ArenaChildChunk>,
@@ -389,6 +400,11 @@ public class Document {
         }
     }
 
+    /** 返回逻辑 arena index 对应的 NodeRef。
+     * @param index 逻辑 arena index。
+     * @return 对应的 `NodeRef`。
+     * @throws IndexOutOfBoundsException index 越界时。
+     */
     public func nodeAt(index: Int64): NodeRef {
         if (index < 0 || index >= nodeCount) {
             throw IndexOutOfBoundsException("node arena index is outside the snapshot")
@@ -401,6 +417,11 @@ public class Document {
         nodeRefAtPhysical(physicalIndex)
     }
 
+    /**
+     * 返回 Document root。
+     * @return document root 节点。
+     * @throws IllegalStateException arena 为空时。
+     */
     public func root(): NodeRef {
         if (nodeCount == 0 || rootRecordIndex < 0) {
             throw IllegalStateException("AST arena has no root node")
@@ -408,37 +429,49 @@ public class Document {
         nodeRefAtPhysical(rootRecordIndex)
     }
 
-    /** Convenience accessors for the arena root. They preserve the snapshot
-     * ownership model while keeping common document-level reads concise. */
+    /** 返回 root 的 NodeId。 */
     public prop nodeId: NodeId {
         get() {
             root().nodeId
         }
     }
+    /** root 节点的 source span。 */
     public prop span: ?SourceSpan {
         get() {
             root().span
         }
     }
+    /** document 使用的 profile。 */
     public prop profile: MarkdownProfile {
         get() {
             root().asDocument().getOrThrow().profile
         }
     }
+    /** document 使用的 dialect fingerprint。 */
     public prop dialectFingerprint: String {
         get() {
             root().asDocument().getOrThrow().dialectFingerprint
         }
     }
+    /** 文档级引用定义。 */
     public prop references: ImmutableArray<ReferenceDefinition> {
         get() {
             root().asDocument().getOrThrow().references
         }
     }
+    /**
+     * 返回 root 的零复制 child view。
+     * @return root 的零复制 child view。
+     */
     public func children(): NodeChildren {
         root().children()
     }
 
+    /** 返回指定节点的零复制 child view；node 必须属于当前 Document。
+     * @param node 目标节点。
+     * @return 指定节点的零复制 child view。
+     * @throws IllegalArgumentException node 不属于当前 Document 时。
+     */
     public func children(node: NodeRef): NodeChildren {
         requireOwned(node)
         let record = recordAt(node.index)
@@ -551,8 +584,10 @@ public class Document {
     }
 }
 
-/** Lightweight identity and typed-view anchor. It deliberately contains no
- * child array or origin object.
+/**
+ * 绑定 Document snapshot 的轻量节点引用和 typed-view anchor。
+ *
+ * 引用不包含 child array 或 origin 对象；通过 properties 和 `as*` 方法读取它们。
  */
 public struct NodeRef <: Equatable<NodeRef> {
     private let snapshot: Document
@@ -565,37 +600,47 @@ public struct NodeRef <: Equatable<NodeRef> {
         this.index = index
     }
 
+    /** 节点 id（物理 index + 1）。 */
     public prop nodeId: NodeId {
         get() {
             NodeId(index + 1)
         }
     }
+    /** 节点种类。 */
     public prop kind: NodeKind {
         get() {
             snapshot.recordAt(index).kind
         }
     }
+    /** block/inline 分类。 */
     public prop category: NodeCategory {
         get() {
             snapshot.recordAt(index).category
         }
     }
+    /** 节点的 source span。 */
     public prop span: ?SourceSpan {
         get() {
             snapshot.recordAt(index).span
         }
     }
+    /** 节点来源类别。 */
     public prop originKind: NodeOriginKind {
         get() {
             snapshot.recordAt(index).originKind
         }
     }
+    /** 节点来源详情。 */
     public prop origin: NodeOrigin {
         get() {
             snapshot.originAt(index)
         }
     }
 
+    /**
+     * 返回该节点的零复制 child view。
+     * @return 该节点的零复制 child view。
+     */
     public func children(): NodeChildren {
         snapshot.children(this)
     }
@@ -604,6 +649,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         snapshot.payloadAt(index)
     }
 
+    /**
+     * 若节点是 Heading，则返回带 level 的 view。
+     * @return 对应的 `HeadingNodeView`；节点类别不符时为 `None`。
+     */
     public func asHeading(): ?HeadingNodeView {
         match (snapshot.payloadAt(index)) {
             case ArenaNodePayload.HeadingValue(level) => Some(HeadingNodeView(this, level))
@@ -611,6 +660,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         }
     }
 
+    /**
+     * 若节点是 DocumentNode，则返回 document view。
+     * @return 对应的 `DocumentNodeView`；节点类别不符时为 `None`。
+     */
     public func asDocument(): ?DocumentNodeView {
         match (snapshot.payloadAt(index)) {
             case ArenaNodePayload.DocumentValue(profile, dialectFingerprint, references) => Some(
@@ -619,6 +672,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         }
     }
 
+    /**
+     * 若节点是 Text，则返回 raw、value 和 normalized view。
+     * @return 对应的 `TextNodeView`；节点类别不符时为 `None`。
+     */
     public func asText(): ?TextNodeView {
         match (snapshot.payloadAt(index)) {
             case ArenaNodePayload.TextValue(raw, value, normalized) => Some(TextNodeView(this, raw, value, normalized))
@@ -630,6 +687,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         }
     }
 
+    /**
+     * 若节点是 List，则返回 list metadata view。
+     * @return 对应的 `ListNodeView`；节点类别不符时为 `None`。
+     */
     public func asList(): ?ListNodeView {
         match (snapshot.payloadAt(index)) {
             case ArenaNodePayload.ListValue(kind, start, delimiter, tight) => Some(
@@ -638,6 +699,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         }
     }
 
+    /**
+     * 若节点是 ListItem，则返回 task state view。
+     * @return 对应的 `ListItemNodeView`；节点类别不符时为 `None`。
+     */
     public func asListItem(): ?ListItemNodeView {
         match (snapshot.payloadAt(index)) {
             case ArenaNodePayload.ListItemValue(taskState, markerSpan) => Some(
@@ -646,6 +711,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         }
     }
 
+    /**
+     * 若节点是 ThematicBreak，则返回 marker view。
+     * @return 对应的 `ThematicBreakNodeView`；节点类别不符时为 `None`。
+     */
     public func asThematicBreak(): ?ThematicBreakNodeView {
         match (snapshot.payloadAt(index)) {
             case ArenaNodePayload.ThematicBreakValue(marker) => Some(ThematicBreakNodeView(this, marker))
@@ -653,6 +722,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         }
     }
 
+    /**
+     * 若节点是 CodeBlock，则返回 fenced/indented 和 literal metadata。
+     * @return 对应的 `CodeBlockNodeView`；节点类别不符时为 `None`。
+     */
     public func asCodeBlock(): ?CodeBlockNodeView {
         match (snapshot.payloadAt(index)) {
             case ArenaNodePayload.CodeBlockValue(kind, literal, fenceCharacter, fenceLength, openingFenceSpan, closingFenceSpan, infoRaw, language, attributesRaw) => Some(
@@ -662,6 +735,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         }
     }
 
+    /**
+     * 若节点是 HtmlBlock，则返回 raw literal view。
+     * @return 对应的 `HtmlBlockNodeView`；节点类别不符时为 `None`。
+     */
     public func asHtmlBlock(): ?HtmlBlockNodeView {
         match (snapshot.payloadAt(index)) {
             case ArenaNodePayload.HtmlBlockValue(literal, blockType) => Some(HtmlBlockNodeView(this, literal, blockType))
@@ -669,6 +746,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         }
     }
 
+    /**
+     * 若节点是 Link，则返回 raw/normalized destination view。
+     * @return 对应的 `LinkNodeView`；节点类别不符时为 `None`。
+     */
     public func asLink(): ?LinkNodeView {
         match (snapshot.payloadAt(index)) {
             case ArenaNodePayload.LinkValue(destinationRaw, destination, titleRaw, title, syntaxKind) =>
@@ -681,6 +762,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         }
     }
 
+    /**
+     * 若节点是 Image，则返回 raw/normalized destination view。
+     * @return 对应的 `ImageNodeView`；节点类别不符时为 `None`。
+     */
     public func asImage(): ?ImageNodeView {
         match (snapshot.payloadAt(index)) {
             case ArenaNodePayload.LinkValue(destinationRaw, destination, titleRaw, title, syntaxKind) =>
@@ -693,6 +778,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         }
     }
 
+    /**
+     * 若节点是 Table，则返回列对齐 view。
+     * @return 对应的 `TableNodeView`；节点类别不符时为 `None`。
+     */
     public func asTable(): ?TableNodeView {
         match (snapshot.payloadAt(index)) {
             case ArenaNodePayload.TableValue(alignments) => Some(TableNodeView(this, alignments))
@@ -700,6 +789,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         }
     }
 
+    /**
+     * 若节点是 TableRow，则返回 header 标记 view。
+     * @return 对应的 `TableRowNodeView`；节点类别不符时为 `None`。
+     */
     public func asTableRow(): ?TableRowNodeView {
         match (snapshot.payloadAt(index)) {
             case ArenaNodePayload.TableRowValue(header) => Some(TableRowNodeView(this, header))
@@ -707,6 +800,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         }
     }
 
+    /**
+     * 若节点是 TableCell，则返回 alignment view。
+     * @return 对应的 `TableCellNodeView`；节点类别不符时为 `None`。
+     */
     public func asTableCell(): ?TableCellNodeView {
         match (snapshot.payloadAt(index)) {
             case ArenaNodePayload.TableCellValue(alignment) => Some(TableCellNodeView(this, alignment))
@@ -714,6 +811,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         }
     }
 
+    /**
+     * 若节点是 HardBreak，则返回语法来源 view。
+     * @return 对应的 `HardBreakNodeView`；节点类别不符时为 `None`。
+     */
     public func asHardBreak(): ?HardBreakNodeView {
         match (snapshot.payloadAt(index)) {
             case ArenaNodePayload.HardBreakValue(syntaxKind) => Some(HardBreakNodeView(this, syntaxKind))
@@ -721,6 +822,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         }
     }
 
+    /**
+     * 若节点是 CodeSpan，则返回 literal 和 delimiter view。
+     * @return 对应的 `CodeSpanNodeView`；节点类别不符时为 `None`。
+     */
     public func asCodeSpan(): ?CodeSpanNodeView {
         match (snapshot.payloadAt(index)) {
             case ArenaNodePayload.CodeSpanValue(literal, delimiterRaw) => Some(
@@ -729,6 +834,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         }
     }
 
+    /**
+     * 若节点是 HtmlInline，则返回 raw literal view。
+     * @return 对应的 `HtmlInlineNodeView`；节点类别不符时为 `None`。
+     */
     public func asHtmlInline(): ?HtmlInlineNodeView {
         match (snapshot.payloadAt(index)) {
             case ArenaNodePayload.HtmlInlineValue(literal) => Some(HtmlInlineNodeView(this, literal))
@@ -736,6 +845,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         }
     }
 
+    /**
+     * 若节点是 CustomBlock，则返回扩展身份和 payload view。
+     * @return 对应的 `CustomNodeView`；节点类别不符时为 `None`。
+     */
     public func asCustomBlock(): ?CustomNodeView {
         if (let NodeKind.CustomBlock <- kind) {
             customView()
@@ -744,6 +857,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         }
     }
 
+    /**
+     * 若节点是 CustomInline，则返回扩展身份和 payload view。
+     * @return 对应的 `CustomNodeView`；节点类别不符时为 `None`。
+     */
     public func asCustomInline(): ?CustomNodeView {
         if (let NodeKind.CustomInline <- kind) {
             customView()
@@ -752,6 +869,10 @@ public struct NodeRef <: Equatable<NodeRef> {
         }
     }
 
+    /** 按文档身份和物理 index 比较两个节点引用。
+     * @param other 参与比较的另一个节点引用。
+     * @return 两个引用是否指向同一 snapshot 的同一节点。
+     */
     public operator func ==(other: NodeRef): Bool {
         documentIdentity == other.documentIdentity && index == other.index
     }
@@ -765,10 +886,11 @@ public struct NodeRef <: Equatable<NodeRef> {
     }
 }
 
-/** Zero-copy view over one node's contiguous child-index range. */
+/** 一个节点连续 child-index range 的零复制 view。 */
 public struct NodeChildren {
     private let snapshot: Document
     private let firstChild: Int64
+    /** child 数量。 */
     public let size: Int64
 
     internal init(snapshot: Document, firstChild: Int64, size: Int64) {
@@ -777,10 +899,19 @@ public struct NodeChildren {
         this.size = size
     }
 
+    /**
+     * 返回 child 数量是否为零。
+     * @return child 数量是否为零。
+     */
     public func isEmpty(): Bool {
         size == 0
     }
 
+    /** 按 child index 读取 NodeRef；越界时抛出异常。
+     * @param index 目标 child index。
+     * @return 对应的 child `NodeRef`。
+     * @throws IndexOutOfBoundsException index 越界时。
+     */
     public operator func [](index: Int64): NodeRef {
         if (index < 0 || index >= size) {
             throw IndexOutOfBoundsException("child index is outside the node range")
@@ -788,6 +919,10 @@ public struct NodeChildren {
         snapshot.nodeRefAtPhysical(snapshot.childIndexAt(firstChild + index))
     }
 
+    /**
+     * 将 child view materialize 为数组。
+     * @return 物化后的 child 数组。
+     */
     public func toArray(): Array<NodeRef> {
         let values = ArrayList<NodeRef>()
         var index: Int64 = 0
@@ -799,10 +934,15 @@ public struct NodeChildren {
     }
 }
 
+/** Document root 的 profile、dialect fingerprint 和 reference view。 */
 public struct DocumentNodeView {
+    /** 锚定的 document root 节点。 */
     public let node: NodeRef
+    /** document 使用的 profile。 */
     public let profile: MarkdownProfile
+    /** document 使用的 dialect fingerprint。 */
     public let dialectFingerprint: String
+    /** 文档级引用定义。 */
     public let references: ImmutableArray<ReferenceDefinition>
     internal init(node: NodeRef, profile: MarkdownProfile, dialectFingerprint: String,
         references: ImmutableArray<ReferenceDefinition>) {
@@ -813,8 +953,11 @@ public struct DocumentNodeView {
     }
 }
 
+/** Heading 节点及其 level。 */
 public struct HeadingNodeView {
+    /** 锚定的 Heading 节点。 */
     public let node: NodeRef
+    /** 标题级别（1-6）。 */
     public let level: Int64
     internal init(node: NodeRef, level: Int64) {
         this.node = node
@@ -822,10 +965,13 @@ public struct HeadingNodeView {
     }
 }
 
+/** Text 节点的 raw、semantic value 和可选 normalized value。 */
 public struct TextNodeView {
+    /** 锚定的 Text 节点。 */
     public let node: NodeRef
     private let rawStorage: LiteralStorage
     private let valueStorage: LiteralStorage
+    /** 规范化后的文本；不存在时为 `None`。 */
     public let normalized: ?String
     internal init(node: NodeRef, raw: LiteralStorage, value: LiteralStorage, normalized: ?String) {
         this.node = node
@@ -833,11 +979,13 @@ public struct TextNodeView {
         valueStorage = value
         this.normalized = normalized
     }
+    /** 原始文本。 */
     public prop raw: String {
         get() {
             rawStorage.text()
         }
     }
+    /** 语义文本。 */
     public prop value: String {
         get() {
             valueStorage.text()
@@ -851,11 +999,17 @@ public struct TextNodeView {
     }
 }
 
+/** List 节点的 kind、起始编号、delimiter 和 tight 状态。 */
 public struct ListNodeView {
+    /** 锚定的 List 节点。 */
     public let node: NodeRef
+    /** bullet 或 ordered 类别。 */
     public let listKind: ListKind
+    /** ordered list 的起始编号。 */
     public let start: Int64
+    /** ordered delimiter 形式。 */
     public let delimiter: ListDelimiter
+    /** 是否为 tight list。 */
     public let tight: Bool
     internal init(node: NodeRef, listKind: ListKind, start: Int64, delimiter: ListDelimiter, tight: Bool) {
         this.node = node
@@ -866,9 +1020,13 @@ public struct ListNodeView {
     }
 }
 
+/** ListItem 节点的 task state 和 marker span。 */
 public struct ListItemNodeView {
+    /** 锚定的 ListItem 节点。 */
     public let node: NodeRef
+    /** task list 状态。 */
     public let taskState: TaskState
+    /** list marker 的 source span。 */
     public let markerSpan: ?SourceSpan
     internal init(node: NodeRef, taskState: TaskState, markerSpan: ?SourceSpan) {
         this.node = node
@@ -877,8 +1035,11 @@ public struct ListItemNodeView {
     }
 }
 
+/** ThematicBreak 节点及其 marker byte。 */
 public struct ThematicBreakNodeView {
+    /** 锚定的 ThematicBreak 节点。 */
     public let node: NodeRef
+    /** 使用的 marker 字符。 */
     public let marker: Byte
     internal init(node: NodeRef, marker: Byte) {
         this.node = node
@@ -886,16 +1047,26 @@ public struct ThematicBreakNodeView {
     }
 }
 
+/** CodeBlock 节点的 fence、language、attributes 和 literal view。 */
 public struct CodeBlockNodeView {
+    /** 锚定的 CodeBlock 节点。 */
     public let node: NodeRef
+    /** fenced 或 indented 形态。 */
     public let codeKind: CodeBlockKind
     private let literalStorage: LiteralStorage
+    /** 围栏字符；indented 块为 `None`。 */
     public let fenceCharacter: ?Byte
+    /** 围栏长度。 */
     public let fenceLength: Int64
+    /** 开始围栏的 source span。 */
     public let openingFenceSpan: ?SourceSpan
+    /** 结束围栏的 source span；未闭合时为 `None`。 */
     public let closingFenceSpan: ?SourceSpan
+    /** 原始 info string。 */
     public let infoRaw: String
+    /** 解析出的 language 标识。 */
     public let language: String
+    /** 原始 attributes 文本。 */
     public let attributesRaw: String
     internal init(node: NodeRef, codeKind: CodeBlockKind, literalStorage: LiteralStorage, fenceCharacter: ?Byte,
         fenceLength: Int64, openingFenceSpan: ?SourceSpan, closingFenceSpan: ?SourceSpan, infoRaw: String,
@@ -911,6 +1082,7 @@ public struct CodeBlockNodeView {
         this.language = language
         this.attributesRaw = attributesRaw
     }
+    /** 代码块文本。 */
     public prop literal: String {
         get() {
             literalStorage.text()
@@ -921,15 +1093,19 @@ public struct CodeBlockNodeView {
     }
 }
 
+/** HtmlBlock 节点的 HTML block type 和 literal view。 */
 public struct HtmlBlockNodeView {
+    /** 锚定的 HtmlBlock 节点。 */
     public let node: NodeRef
     private let literalStorage: LiteralStorage
+    /** HTML block type（0-7）。 */
     public let blockType: Int64
     internal init(node: NodeRef, literalStorage: LiteralStorage, blockType: Int64) {
         this.node = node
         this.literalStorage = literalStorage
         this.blockType = blockType
     }
+    /** 原始 HTML literal 文本。 */
     public prop literal: String {
         get() {
             literalStorage.text()
@@ -940,12 +1116,19 @@ public struct HtmlBlockNodeView {
     }
 }
 
+/** Link 节点的 raw/normalized destination、title 和语法来源。 */
 public struct LinkNodeView {
+    /** 锚定的 Link 节点。 */
     public let node: NodeRef
+    /** 原始 destination 文本。 */
     public let destinationRaw: String
+    /** 解析后的 destination。 */
     public let destination: String
+    /** 原始 title 文本。 */
     public let titleRaw: String
+    /** 解析后的 title。 */
     public let title: String
+    /** destination 的语法来源。 */
     public let syntaxKind: LinkSyntaxKind
     internal init(node: NodeRef, destinationRaw: String, destination: String, titleRaw: String, title: String,
         syntaxKind: LinkSyntaxKind) {
@@ -958,12 +1141,19 @@ public struct LinkNodeView {
     }
 }
 
+/** Image 节点的 raw/normalized destination、title 和语法来源。 */
 public struct ImageNodeView {
+    /** 锚定的 Image 节点。 */
     public let node: NodeRef
+    /** 原始 destination 文本。 */
     public let destinationRaw: String
+    /** 解析后的 destination。 */
     public let destination: String
+    /** 原始 title 文本。 */
     public let titleRaw: String
+    /** 解析后的 title。 */
     public let title: String
+    /** destination 的语法来源。 */
     public let syntaxKind: LinkSyntaxKind
     internal init(node: NodeRef, destinationRaw: String, destination: String, titleRaw: String, title: String,
         syntaxKind: LinkSyntaxKind) {
@@ -976,8 +1166,11 @@ public struct ImageNodeView {
     }
 }
 
+/** Table 节点及其列对齐信息。 */
 public struct TableNodeView {
+    /** 锚定的 Table 节点。 */
     public let node: NodeRef
+    /** 各列的对齐方式。 */
     public let alignments: ImmutableArray<TableAlignment>
     internal init(node: NodeRef, alignments: ImmutableArray<TableAlignment>) {
         this.node = node
@@ -985,8 +1178,11 @@ public struct TableNodeView {
     }
 }
 
+/** TableRow 节点及其 header 标记。 */
 public struct TableRowNodeView {
+    /** 锚定的 TableRow 节点。 */
     public let node: NodeRef
+    /** 是否为表头行。 */
     public let header: Bool
     internal init(node: NodeRef, header: Bool) {
         this.node = node
@@ -994,8 +1190,11 @@ public struct TableRowNodeView {
     }
 }
 
+/** TableCell 节点及其 alignment。 */
 public struct TableCellNodeView {
+    /** 锚定的 TableCell 节点。 */
     public let node: NodeRef
+    /** 单元格对齐方式。 */
     public let alignment: TableAlignment
     internal init(node: NodeRef, alignment: TableAlignment) {
         this.node = node
@@ -1003,8 +1202,11 @@ public struct TableCellNodeView {
     }
 }
 
+/** HardBreak 节点及其语法来源。 */
 public struct HardBreakNodeView {
+    /** 锚定的 HardBreak 节点。 */
     public let node: NodeRef
+    /** 硬换行的语法来源。 */
     public let syntaxKind: HardBreakKind
     internal init(node: NodeRef, syntaxKind: HardBreakKind) {
         this.node = node
@@ -1012,9 +1214,13 @@ public struct HardBreakNodeView {
     }
 }
 
+/** CodeSpan 节点的 literal 和 delimiter raw spelling。 */
 public struct CodeSpanNodeView {
+    /** 锚定的 CodeSpan 节点。 */
     public let node: NodeRef
+    /** 代码文本。 */
     public let literal: String
+    /** 原始 delimiter spelling。 */
     public let delimiterRaw: String
     internal init(node: NodeRef, literal: String, delimiterRaw: String) {
         this.node = node
@@ -1023,8 +1229,11 @@ public struct CodeSpanNodeView {
     }
 }
 
+/** HtmlInline 节点的 raw literal。 */
 public struct HtmlInlineNodeView {
+    /** 锚定的 HtmlInline 节点。 */
     public let node: NodeRef
+    /** 原始 HTML 文本。 */
     public let literal: String
     internal init(node: NodeRef, literal: String) {
         this.node = node
@@ -1032,11 +1241,17 @@ public struct HtmlInlineNodeView {
     }
 }
 
+/** custom node 的扩展身份、local kind 和 typed payload。 */
 public struct CustomNodeView {
+    /** 锚定的 custom 节点。 */
     public let node: NodeRef
+    /** 定义该节点的扩展 id。 */
     public let extensionId: String
+    /** 扩展的语义版本。 */
     public let extensionSemanticVersion: String
+    /** 扩展内的 local kind id。 */
     public let localKindId: String
+    /** 扩展提供的 typed payload。 */
     public let payload: CustomPayload
     internal init(node: NodeRef, extensionId: String, extensionSemanticVersion: String, localKindId: String,
         payload: CustomPayload) {
@@ -1340,17 +1555,17 @@ internal class AstArenaBuilder {
             retainedChildChunks) {
             let retainedNodeTail = checkpoint.nodeCount % AST_NODE_CHUNK_SIZE
             let retainedChildTail = checkpoint.childCount % AST_CHILD_CHUNK_SIZE
-            while (nodeTail.size > retainedNodeTail) {
-                nodeTail.remove(at: nodeTail.size - 1)
+            if (nodeTail.size > retainedNodeTail) {
+                nodeTail.remove(retainedNodeTail..nodeTail.size)
             }
-            while (childTail.size > retainedChildTail) {
-                childTail.remove(at: childTail.size - 1)
+            if (childTail.size > retainedChildTail) {
+                childTail.remove(retainedChildTail..childTail.size)
             }
-            while (payloads.size > checkpoint.payloadCount) {
-                payloads.remove(at: payloads.size - 1)
+            if (payloads.size > checkpoint.payloadCount) {
+                payloads.remove(checkpoint.payloadCount..payloads.size)
             }
-            while (originMetadata.size > checkpoint.originMetadataCount) {
-                originMetadata.remove(at: originMetadata.size - 1)
+            if (originMetadata.size > checkpoint.originMetadataCount) {
+                originMetadata.remove(checkpoint.originMetadataCount..originMetadata.size)
             }
             nodeCountValue = checkpoint.nodeCount
             childCountValue = checkpoint.childCount
@@ -1380,25 +1595,25 @@ internal class AstArenaBuilder {
         }
 
         let fullNodeChunks = checkpoint.nodeCount / AST_NODE_CHUNK_SIZE
-        while (frozenNodeChunks.size > fullNodeChunks) {
-            frozenNodeChunks.remove(at: frozenNodeChunks.size - 1)
+        if (frozenNodeChunks.size > fullNodeChunks) {
+            frozenNodeChunks.remove(fullNodeChunks..frozenNodeChunks.size)
         }
         nodeTail = retainedNodes
         let fullChildChunks = checkpoint.childCount / AST_CHILD_CHUNK_SIZE
-        while (frozenChildChunks.size > fullChildChunks) {
-            frozenChildChunks.remove(at: frozenChildChunks.size - 1)
+        if (frozenChildChunks.size > fullChildChunks) {
+            frozenChildChunks.remove(fullChildChunks..frozenChildChunks.size)
         }
         childTail = retainedChildren
 
-        while (payloads.size > checkpoint.payloadCount) {
-            payloads.remove(at: payloads.size - 1)
+        if (payloads.size > checkpoint.payloadCount) {
+            payloads.remove(checkpoint.payloadCount..payloads.size)
         }
-        while (originMetadata.size > checkpoint.originMetadataCount) {
-            originMetadata.remove(at: originMetadata.size - 1)
+        if (originMetadata.size > checkpoint.originMetadataCount) {
+            originMetadata.remove(checkpoint.originMetadataCount..originMetadata.size)
         }
         if (!trustedParserConstruction) {
-            while (parentIndexes.size > checkpoint.nodeCount) {
-                parentIndexes.remove(at: parentIndexes.size - 1)
+            if (parentIndexes.size > checkpoint.nodeCount) {
+                parentIndexes.remove(checkpoint.nodeCount..parentIndexes.size)
             }
             // A surviving node may have been attached to a speculative parent.
             // Reconstruct only the retained parent relation instead of walking

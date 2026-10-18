@@ -3,32 +3,62 @@ package markdown
 import std.collection.*
 
 // cjlint-ignore -start !G.ENU.01 Stable syntax kinds intentionally mirror semantic type names.
+/** lossless CST 中的 token、节点、trivia 和无效输入类别。 */
 public enum SyntaxKind {
+    /** 文档根节点。 */
     | DocumentNode
+    /** 文本 token。 */
     | Text
+    /** 空白 token。 */
     | Whitespace
+    /** 换行 token。 */
     | Newline
+    /** ATX 标题 marker。 */
     | HeadingMarker
+    /** 列表 marker。 */
     | ListMarker
+    /** block quote marker。 */
     | BlockQuoteMarker
+    /** 代码围栏行。 */
     | Fence
+    /** 围栏 info string。 */
     | InfoString
+    /** emphasis/delimiter run。 */
     | Delimiter
+    /** link label。 */
     | LinkLabel
+    /** link destination。 */
     | LinkDestination
+    /** raw HTML 片段。 */
     | Html
+    /** 字符实体。 */
     | Entity
+    /** 扩展注册的 token。 */
     | ExtensionToken
+    /** 无法分类的无效输入。 */
     | Invalid
+    /** block 语法节点。 */
     | BlockNode
+    /** inline 语法节点。 */
     | InlineNode
+    /** 不参与语义的 trivia token。 */
     | Trivia
 }
 
+/** 保留 raw text 和原始 source span 的 CST token。 */
 public class SyntaxToken {
+    /** token 类别。 */
     public let kind: SyntaxKind
+    /** token 原文。 */
     public let raw: String
+    /** token 覆盖的 source span。 */
     public let span: SourceSpan
+    /**
+     * 创建 token。
+     * @param kind token 类别。
+     * @param raw token 原文。
+     * @param span token 覆盖的 source span。
+     */
     public init(kind: SyntaxKind, raw: String, span: SourceSpan) {
         this.kind = kind
         this.raw = raw
@@ -36,9 +66,17 @@ public class SyntaxToken {
     }
 }
 
+/** 不参与语义树的空白或换行 token。 */
 public class Trivia {
+    /** trivia 原文。 */
     public let raw: String
+    /** trivia 覆盖的 source span。 */
     public let span: SourceSpan
+    /**
+     * 创建 trivia。
+     * @param raw trivia 原文。
+     * @param span trivia 覆盖的 source span。
+     */
     public init(raw: String, span: SourceSpan) {
         this.raw = raw
         this.span = span
@@ -46,16 +84,39 @@ public class Trivia {
 }
 // cjlint-ignore -end Stable syntax kinds intentionally mirror semantic type names.
 
+/**
+ * lossless CST 节点。
+ *
+ * 节点保留 token range、children、leading/trailing trivia，并可选地绑定 semantic
+ * `NodeId`；不会复制共享 token arena。
+ */
 public class SyntaxNode {
+    /** 语法节点类别。 */
     public let kind: SyntaxKind
+    /** 节点覆盖的 source span。 */
     public let span: SourceSpan
+    /** 节点包含的 token 列表。 */
     public let tokens: ImmutableArray<SyntaxToken>
+    /** 子语法节点列表。 */
     public let children: ImmutableArray<SyntaxNode>
+    /** 节点前的 trivia。 */
     public let leadingTrivia: ImmutableArray<Trivia>
+    /** 节点后的 trivia。 */
     public let trailingTrivia: ImmutableArray<Trivia>
+    /** 关联的 semantic NodeId。 */
     public let semanticNodeId: ?NodeId
     internal let firstTokenIndex: Int64
     internal let tokenCount: Int64
+    /**
+     * 创建拥有独立 token 列表的语法节点。
+     * @param kind 语法节点类别。
+     * @param span 节点覆盖的 source span。
+     * @param tokens 节点包含的 token 列表。
+     * @param children 子语法节点列表。
+     * @param leadingTrivia 节点前的 trivia。
+     * @param trailingTrivia 节点后的 trivia。
+     * @param semanticNodeId 关联的 semantic NodeId。
+     */
     public init(kind: SyntaxKind, span: SourceSpan, tokens: Array<SyntaxToken>, children!: Array<SyntaxNode> = [],
         leadingTrivia!: Array<Trivia> = [], trailingTrivia!: Array<Trivia> = [], semanticNodeId!: ?NodeId = None) {
         this.kind = kind
@@ -83,8 +144,22 @@ public class SyntaxNode {
     }
 }
 
+/**
+ * 从 `SourceBuffer` 构造的 lossless concrete syntax tree。
+ *
+ * `losslessText()` 应与输入文本相同；传入 Document 时会建立带 semantic NodeId 的树。
+ *
+ * ## Example
+ *
+ * ```cj
+ * let syntax = SyntaxTree.parse(result.source, document: Some(result.document))
+ * let original = syntax.losslessText()
+ * ```
+ */
 public class SyntaxTree {
+    /** 构造树的 source buffer。 */
     public let source: SourceBuffer
+    /** CST 根节点。 */
     public let root: SyntaxNode
     private let tokenArena: Array<SyntaxToken>
 
@@ -94,6 +169,12 @@ public class SyntaxTree {
         this.tokenArena = tokenArena
     }
 
+    /**
+     * 词法化 source；可选绑定一个 semantic Document。
+     * @param source 要词法化的 source buffer。
+     * @param document 可选的 semantic Document。
+     * @return lossless `SyntaxTree`。
+     */
     public static func parse(source: SourceBuffer, document!: ?Document = None): SyntaxTree {
         let value = source.text()
         let tokens = ArrayList<SyntaxToken>()
@@ -185,6 +266,10 @@ public class SyntaxTree {
         }
     }
 
+    /**
+     * 按 token 原文重建输入文本。
+     * @return 按 token 原文重建的输入文本。
+     */
     public func losslessText(): String {
         let out = StringBuilder()
         for (token in tokenArena) {
@@ -193,6 +278,10 @@ public class SyntaxTree {
         out.toString()
     }
 
+    /** 返回 semantic node 对应的原始 token。
+     * @param node 目标 semantic 节点。
+     * @return 节点对应的原始 token 数组；无 span 时为空数组。
+     */
     public func originatingTokens(node: NodeRef): Array<SyntaxToken> {
         match (node.span) {
             case Some(span) =>
@@ -202,6 +291,10 @@ public class SyntaxTree {
         }
     }
 
+    /** 查询包含原始 byte offset 的 token；空白区或越界返回 None。
+     * @param byteOffset 原始输入中的字节偏移。
+     * @return 覆盖该偏移的 token；空白区或越界为 `None`。
+     */
     public func tokenAt(byteOffset: Int64): ?SyntaxToken {
         if (byteOffset < 0 || byteOffset >= source.byteLength()) {
             return None
@@ -243,12 +336,20 @@ public class SyntaxTree {
     }
 }
 
+/** 在 lossless CST 和 semantic AST 之间建立双向关联的映射。 */
 public class SyntaxToAstMap {
+    /** 关联的 lossless CST。 */
     public let syntaxTree: SyntaxTree
+    /** 关联的 semantic Document。 */
     public let document: Document
     private let syntaxNodesById: HashMap<Int64, SyntaxNode>
     private let semanticNodesById: HashMap<Int64, NodeRef>
     private let semanticNodeIdsByToken: Array<Int64>
+    /**
+     * 构建双向映射。
+     * @param syntaxTree 关联的 lossless CST。
+     * @param document 关联的 semantic Document。
+     */
     public init(syntaxTree: SyntaxTree, document: Document) {
         this.syntaxTree = syntaxTree
         this.document = document
@@ -285,18 +386,34 @@ public class SyntaxToAstMap {
             }
         }
     }
+    /** 返回 semantic node 对应的原始 token。
+     * @param node 目标 semantic 节点。
+     * @return 节点对应的原始 token 数组。
+     */
     public func originatingTokens(node: NodeRef): Array<SyntaxToken> {
         syntaxTree.originatingTokens(node)
     }
+    /** 返回 semantic node 对应的最小 syntax node。
+     * @param node 目标 semantic 节点。
+     * @return 对应的最小 syntax node；无绑定时为 `None`。
+     */
     public func originatingSyntaxNode(node: NodeRef): ?SyntaxNode {
         syntaxNodesById.get(node.nodeId.value)
     }
+    /** 将带 semantic id 的 syntax node 映射回 NodeRef。
+     * @param node 目标 syntax 节点。
+     * @return 对应的 `NodeRef`；无绑定时为 `None`。
+     */
     public func semanticNode(node: SyntaxNode): ?NodeRef {
         match (node.semanticNodeId) {
             case Some(id) => semanticNodesById.get(id.value)
             case None => None
         }
     }
+    /** 将 token 映射到其最小拥有 semantic node。
+     * @param token 目标 token。
+     * @return 拥有该 token 的最小 semantic 节点；无归属时为 `None`。
+     */
     public func semanticNode(token: SyntaxToken): ?NodeRef {
         match (syntaxTree.tokenIndex(token)) {
             case Some(index) =>
@@ -408,39 +525,77 @@ private func isTriviaToken(token: SyntaxToken): Bool {
     }
 }
 
+/** 使用原始 UTF-8 byte range 描述的一次文本替换。 */
 public class SourceEdit {
+    /** 被替换的原始 UTF-8 byte range。 */
     public let range: SourceSpan
+    /** 替换后的文本。 */
     public let replacement: String
+    /**
+     * 创建文本替换。
+     * @param range 被替换的原始 UTF-8 byte range。
+     * @param replacement 替换后的文本。
+     */
     public init(range: SourceSpan, replacement: String) {
         this.range = range
         this.replacement = replacement
     }
 }
 
+/** 一次 reparse 中受影响的 NodeId 集合。 */
 public class ChangedNodeSet {
+    /** 受影响的 NodeId 列表。 */
     public let nodeIds: ImmutableArray<NodeId>
+    /**
+     * 创建受影响节点集合。
+     * @param nodeIds 受影响的 NodeId 列表。
+     */
     public init(nodeIds: Array<NodeId>) {
         this.nodeIds = ImmutableArray<NodeId>(nodeIds)
     }
 }
 
+/** 可跨 snapshot 关联节点的内容和路径身份；不替代 snapshot 内的 NodeId。 */
 public struct StableNodeId <: Equatable<StableNodeId> {
+    /** 稳定身份字符串。 */
     public let value: String
+    /**
+     * 创建稳定 id。
+     * @param value 稳定身份字符串。
+     */
     public init(value: String) {
         this.value = value
     }
+    /** 按字符串值比较两个稳定 id。
+     * @param other 参与比较的另一个稳定 id。
+     * @return 两个稳定 id 是否相等。
+     */
     public operator func ==(other: StableNodeId): Bool {
         value == other.value
     }
 }
 
+/** 编辑后的 snapshot、changed range、节点集合和增量路径标记。 */
 public class ReparseResult {
+    /** 编辑后的 snapshot。 */
     public let snapshot: DocumentSnapshot
+    /** 本次编辑影响的 source span。 */
     public let changedRange: SourceSpan
+    /** 受影响的节点集合。 */
     public let changedNodes: ChangedNodeSet
+    /** 是否使用了 block-local 增量路径。 */
     public let wasIncremental: Bool
+    /** 诊断受影响的 source span。 */
     public let diagnosticsChangedRange: SourceSpan
+    /** source map 受影响的 source span。 */
     public let sourceMapChangedRange: SourceSpan
+    /**
+     * 创建 reparse 结果。
+     * @param snapshot 编辑后的 snapshot。
+     * @param changedRange 本次编辑影响的 source span。
+     * @param changedNodes 受影响的节点集合。
+     * @param wasIncremental 是否使用了增量路径。
+     */
     public init(snapshot: DocumentSnapshot, changedRange: SourceSpan, changedNodes: ChangedNodeSet, wasIncremental: Bool) {
         this.snapshot = snapshot
         this.changedRange = changedRange
@@ -451,12 +606,24 @@ public class ReparseResult {
     }
 }
 
+/**
+ * 将 engine、ParseResult、lossless CST 和双向映射绑定在一起的编辑 snapshot。
+ *
+ * `applyEdits` 使用原始 UTF-8 byte range；满足纯文本、等 byte 长度、顶层 paragraph
+ * 或 heading 等条件时可使用 block-local incremental path，否则回退完整解析。
+ */
 public class DocumentSnapshot {
+    /** 创建 snapshot 的 engine。 */
     public let engine: MarkdownEngine
+    /** 单调递增的 snapshot 版本。 */
     public let version: Int64
+    /** 绑定的 parse 结果。 */
     public let result: ParseResult
+    /** lossless CST。 */
     public let syntaxTree: SyntaxTree
+    /** CST 与 AST 的双向映射。 */
     public let syntaxMap: SyntaxToAstMap
+    /** 当前文本的 SHA-256 digest。 */
     public let sourceDigest: String
     private let stableIds: HashMap<Int64, StableNodeId>
 
@@ -470,6 +637,12 @@ public class DocumentSnapshot {
         stableIds = buildStableNodeIds(result)
     }
 
+    /**
+     * 应用不重叠的 byte-range edits，并返回新的 snapshot。
+     * @param edits 使用原始 UTF-8 byte range 的替换列表。
+     * @return 包含 changed range、NodeIds 和增量标记的 `ReparseResult`。
+     * @throws IllegalArgumentException edit 越界或重叠时。
+     */
     public func applyEdits(edits: Array<SourceEdit>): ReparseResult {
         if (edits.isEmpty()) {
             return ReparseResult(this, SourceSpan(0, 0), ChangedNodeSet([]), false)
@@ -514,6 +687,10 @@ public class DocumentSnapshot {
             false)
     }
 
+    /** 返回当前 snapshot 中 NodeId 对应的 stable identity。
+     * @param nodeId 目标 NodeId。
+     * @return 对应的 stable identity；不存在时为 `None`。
+     */
     public func stableNodeId(nodeId: NodeId): ?StableNodeId {
         stableIds.get(nodeId.value)
     }
@@ -584,22 +761,50 @@ public class DocumentSnapshot {
         Some(ReparseResult(nextSnapshot, edit.range, ChangedNodeSet(changed.toArray()), true))
     }
 
+    /**
+     * 将 UTF-16 编辑位置转换为 byte range 后应用编辑。
+     * @param start 编辑起点。
+     * @param end 编辑终点。
+     * @param replacement 替换文本。
+     * @return 新的 `ReparseResult`。
+     */
     public func applyUtf16Edit(start: Utf16Position, end: Utf16Position, replacement: String): ReparseResult {
         applyEdits([SourceEdit(SourceSpan(result.source.byteOffset(start), result.source.byteOffset(end)), replacement)])
     }
 }
 
 extend MarkdownEngine {
+    /**
+     * 解析 source 并创建同时包含 AST、CST 和映射的初始 snapshot。
+     * @param source 要解析的 Markdown 文本。
+     * @return version 为 1 的 `DocumentSnapshot`。
+     */
     public func parseSnapshot(source: String): DocumentSnapshot {
         DocumentSnapshot(this, 1, parse(source))
     }
 }
 
+/** 在指定范围内格式化，同时尽量保留未触及源码的 byte-for-byte 内容。 */
 public class PreservingFormatter {
+    /** 应用 formatter 产生的 edits。
+     * @param snapshot 目标 snapshot。
+     * @param edits 要应用的替换列表。
+     * @return 新的 `ReparseResult`。
+     * @throws IllegalArgumentException edit 越界或重叠时。
+     */
     public static func applyEdits(snapshot: DocumentSnapshot, edits: Array<SourceEdit>): ReparseResult {
         snapshot.applyEdits(edits)
     }
 
+    /**
+     * 格式化 source range；不支持的 custom syntax 按 fallback 处理。
+     * @param snapshot 要编辑的 snapshot。
+     * @param range 使用原始 UTF-8 byte range 的目标范围。
+     * @param fallback 无 Markdown lowering 时的策略。
+     * @return 可应用到 snapshot 的 source edits。
+     * @throws IllegalArgumentException range 越界时。
+     * @throws MarkdownException fallback 为 `Error` 且范围内有不支持的 custom syntax 时。
+     */
     public static func formatRange(snapshot: DocumentSnapshot, range: SourceSpan,
         fallback!: RangeFormatFallback = RangeFormatFallback.PreserveSource): Array<SourceEdit> {
         if (range.endByte > snapshot.result.source.byteLength()) {
@@ -621,6 +826,13 @@ public class PreservingFormatter {
         }
     }
 
+    /** 按 NodeId 定位 span 并格式化该节点。
+     * @param snapshot 要编辑的 snapshot。
+     * @param nodeId 目标节点 id。
+     * @param fallback 无 Markdown lowering 时的策略。
+     * @return 可应用到 snapshot 的 source edits。
+     * @throws IllegalArgumentException 节点不存在或无 source range 时。
+     */
     public static func formatNode(snapshot: DocumentSnapshot, nodeId: NodeId,
         fallback!: RangeFormatFallback = RangeFormatFallback.PreserveSource): Array<SourceEdit> {
         match (AstQuery.byNodeId(snapshot.result.document, nodeId)) {
@@ -632,6 +844,12 @@ public class PreservingFormatter {
         }
     }
 
+    /** 格式化 reparse result 的 changed range。
+     * @param reparse 上一次 reparse 的结果。
+     * @param fallback 无 Markdown lowering 时的策略。
+     * @return 可应用到 snapshot 的 source edits。
+     * @throws MarkdownException fallback 为 `Error` 且 changed range 内有不支持的 custom syntax 时。
+     */
     public static func formatChangedRanges(reparse: ReparseResult,
         fallback!: RangeFormatFallback = RangeFormatFallback.PreserveSource): Array<SourceEdit> {
         formatRange(reparse.snapshot, reparse.changedRange, fallback: fallback)
@@ -781,8 +999,11 @@ private func preservingFormatLine(line: String): String {
     line[..markerEnd] + " " + line[content..]
 }
 
+/** preserving formatter 遇到没有 Markdown lowering 的 custom node 时的策略。 */
 public enum RangeFormatFallback {
+    /** 保留 custom node 的原始源码。 */
     | PreserveSource
+    /** 抛出 `UnsupportedNode` 异常。 */
     | Error
 }
 

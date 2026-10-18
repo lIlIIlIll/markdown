@@ -109,6 +109,25 @@ let session = engine.newBufferedInputSession()
 `AsyncHtmlRenderSession` 构造替换为 `BufferedAsyncHtmlOutputSession`。这些 API 都会先
 缓冲完整输入或输出，不是增量 parser 或 renderer。
 
+## 10. 显式选择可信 HTML adapter
+
+当前 0.9 candidate 收紧了 raw HTML 与 renderer cache identity。重新编译并完成以下修改：
+
+- 将 `Markdown.toSpecHtml(source)` 改为 `unsafe { Markdown.toSpecHtml(source) }`。
+- 将 `HtmlOptions.specCompatible()` 和 `gfmCompatible()` 放入 unsafe context。
+- 不要向普通 `HtmlOptions` 构造器传入 `PassThrough`。改用
+  `unsafe { HtmlOptions.passThrough(...) }`。
+- 为 `HtmlSanitizerPort` 和 `RawHtmlHandlerPort` 实现稳定且非空的 `identity`。
+- 为 `ExtensionRendererFallback` 实现 `implementationVersion`。
+- 需要改写外部 HTTP(S) destination 时，实现 `ExternalLinkRewriterPort`，并通过
+  `rewriteExternalLinks` 传入。
+
+这些 identity 进入 renderer fingerprint。adapter 的输出语义变化时，也必须更改对应
+identity 或 implementation version。
+
+Artifact 创建和加载现在都验证 AST 保留的 parser source provenance。不要把来自不同
+parse result 的 `Document` 和 `SourceBuffer` 组合成一个 artifact。
+
 ## 验证迁移
 
 ```sh

@@ -5,10 +5,12 @@
 
 ## 准备环境
 
-仓库使用仓颉 1.1 SDK。进入仓库后启用环境：
+仓库使用官方仓颉 STS 1.2.0 SDK。将 SDK 安装到下面的目录，或按实际安装目录调整变量，再启用环境：
 
 ```sh
+export CANGJIE_SDK_ROOT="$HOME/cangjie_sdk/sts1.2.0"
 cangjie_env
+cjc -v
 cjpm check
 ```
 
@@ -54,15 +56,30 @@ example、fuzz smoke、benchmark smoke、bundle 和 evidence 校验。
 
 ```sh
 python3 benchmarks/compare_markdown4cj.py \
+  --source target/same-language-benchmark/comparator-sources/markdown4cj.bundle \
+  --commonmark4cj-source target/same-language-benchmark/comparator-sources/commonmark4cj.bundle \
+  --product-source target/same-language-benchmark/product-source/markdown.bundle \
+  --binary-root target/same-language-benchmark/binaries \
+  --sdk-archive target/same-language-benchmark/toolchain/cangjie-sdk-linux-x64-1.2.0.tar.gz \
   --verify-report docs/reports/markdown4cj-comparison-raw.json \
   --markdown-report docs/reports/markdown4cj-comparison.md \
   --require-current-product
 ```
 
-`Same-language benchmark (current-1.1.3)` 会在每个 PR 上重新测量固定的
-`markdown4cj` CommonMark parse-only 子集。它要求共享行为 `12/12`、几何平均加速至少
-`1.20×`、任何单语料回退不超过 `10%`，并且最大峰值 RSS 不超过 comparator 的
-`1.20×`。该 job 是 `main` 的 required check，不能以本地 smoke 或手工编辑 report 代替。
+这些路径是 canonical job 保留并上传的 evidence；如果本地尚未生成它们，请按
+[`benchmarks/README.md`](benchmarks/README.md) 的 canonical measurement 流程构建，不能用
+当前 checkout、`PATH` 工具或手写 digest 代替 retained input。
+
+`Same-language benchmark (sts-1.2.0)` 会在每个 PR 上重新测量固定的
+`markdown4cj` CommonMark parse-only 子集。计时前，每个语料还必须通过 exact spec-HTML
+byte length 和 SHA-256 对比。门禁要求共享行为 `12/12`、几何平均加速至少 `1.20×`、
+任何单语料回退不超过 `10%`，并且最大峰值 RSS 不超过 comparator 的 `1.20×`。
+schema v6 同时绑定 SDK archive、target、工具、build 命令、源码和 binary。verifier 从
+retained product、markdown4cj 和 commonmark4cj Git objects 重算源码身份，再使用保留的
+toolchain/runtime 在 fresh root 可复现重建 driver、CLI、comparator 与 DSO，并逐字节比较
+retained outputs；旧祖先冒名、nested/indirect Git source、replace refs、工具或 binary
+漂移都会 fail closed。该 job 是
+`main` 的 required check，不能以本地 smoke 或手工编辑 report 代替。
 
 普通 Git checkout 会将 release evidence 绑定到 `HEAD`。GitButler 等使用合成
 workspace commit 的环境必须将 `MARKDOWN_RELEASE_COMMIT` 设为可推送分支 tip：

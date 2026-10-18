@@ -2,24 +2,43 @@ package markdown
 
 import std.collection.*
 
+/** `DocumentSnapshot` 的二进制快照容器；`bytes()` 返回独立副本。 */
 public class BinarySnapshotArtifact {
+    /** 快照二进制格式的 schema 版本标识。 */
     public let schemaVersion: String
     private let data: Array<Byte>
+    /**
+     * 用原始字节构造快照容器。
+     * @param data 快照的完整二进制内容，构造时会复制一份。
+     */
     public init(data: Array<Byte>) {
         this.schemaVersion = "markdown-snapshot-binary-2"
         this.data = data.clone()
     }
+    /**
+     * 返回快照的二进制副本。
+     * @return 快照二进制的独立副本。
+     */
     public func bytes(): Array<Byte> {
         data.clone()
     }
 }
 
+/** 二进制快照解码结果。 */
 public enum BinaryArtifactLoadResult {
+    /** 快照命中，携带解码出的 `DocumentSnapshot`。 */
     | Hit(DocumentSnapshot)
+    /** 快照未命中，携带原因说明文本。 */
     | CacheMiss(String)
 }
 
+/** 编解码包含 AST、CST 和身份 digest 的 binary snapshot。 */
 public class BinaryArtifactCodec {
+    /** 编码完整且 identity-preserving 的 snapshot；不支持非 identity UTF-8 mapping。
+     * @param snapshot 要编码的完整 snapshot。
+     * @return 编码后的二进制快照。
+     * @throws MarkdownException snapshot 的 UTF-8 mapping 非 identity 时。
+     */
     public static func encode(snapshot: DocumentSnapshot): BinarySnapshotArtifact {
         if (!snapshot.result.source.hasIdentityMapping()) {
             throw MarkdownException(MarkdownErrorCode.InvalidArtifact,
@@ -35,13 +54,19 @@ public class BinaryArtifactCodec {
         binaryWriteString(out, binaryUtf8PolicyId(snapshot.result.source.decodePolicy()))
         binaryWriteString(out, Sha256.digestBytes(originalBytes))
         binaryWriteString(out, Sha256.digest(snapshot.result.source.text()))
-        binaryWriteString(out, binaryIdentityOffsetMappingDigest(originalBytes.size))
+        binaryWriteString(out,
+            binaryIdentityOffsetMappingDigest(originalBytes.size, snapshot.result.source.decodePolicy()))
         binaryWriteString(out, binaryAstDigest(snapshot.result.ast))
         binaryWriteString(out, Sha256.digest(snapshot.syntaxTree.losslessText()))
         binaryWriteString(out, snapshot.result.source.text())
         BinarySnapshotArtifact(out.toArray())
     }
 
+    /** 按 engine 身份、digest 和 schema 校验并解码 snapshot；失败返回 `CacheMiss`。
+     * @param engine 用于身份校验并提供解析限制的目标 engine。
+     * @param artifact 待解码的二进制快照。
+     * @return `Hit` 或带原因的 `CacheMiss`。
+     */
     public static func decode(engine: MarkdownEngine, artifact: BinarySnapshotArtifact): BinaryArtifactLoadResult {
         let data = artifact.bytes()
         if (data.size > engine.limits.maximumInputBytes + 1024 * 1024) {
@@ -74,8 +99,10 @@ public class BinaryArtifactCodec {
             if (engineFingerprint != binaryEngineFingerprint(engine)) {
                 return BinaryArtifactLoadResult.CacheMiss("engine fingerprint")
             }
-            if (utf8PolicyId != "strict" && utf8PolicyId != "replace-invalid") {
-                return BinaryArtifactLoadResult.CacheMiss("UTF-8 policy")
+            let utf8Policy = match (utf8PolicyId) {
+                case "strict" => Utf8Policy.Strict
+                case "replace-invalid" => Utf8Policy.ReplaceInvalid
+                case _ => return BinaryArtifactLoadResult.CacheMiss("UTF-8 policy")
             }
             let sourceBytes = source.toArray()
             if (originalBytesDigest != Sha256.digestBytes(sourceBytes)) {
@@ -84,10 +111,10 @@ public class BinaryArtifactCodec {
             if (decodedTextDigest != Sha256.digest(source)) {
                 return BinaryArtifactLoadResult.CacheMiss("decoded text digest")
             }
-            if (offsetMappingDigest != binaryIdentityOffsetMappingDigest(sourceBytes.size)) {
+            if (offsetMappingDigest != binaryIdentityOffsetMappingDigest(sourceBytes.size, utf8Policy)) {
                 return BinaryArtifactLoadResult.CacheMiss("offset mapping digest")
             }
-            let snapshot = engine.parseSnapshot(source)
+            let snapshot = DocumentSnapshot(engine, 1, engine.parse(sourceBytes, utf8Policy: utf8Policy))
             if (astDigest != binaryAstDigest(snapshot.result.ast)) {
                 return BinaryArtifactLoadResult.CacheMiss("AST digest")
             }
@@ -108,10 +135,11 @@ private func binaryUtf8PolicyId(policy: Utf8Policy): String {
     }
 }
 
-private func binaryIdentityOffsetMappingDigest(byteLength: Int64): String {
+private func binaryIdentityOffsetMappingDigest(byteLength: Int64, utf8Policy: Utf8Policy): String {
     let descriptor = CanonicalDescriptor()
     descriptor.append("identity-offset-mapping")
     descriptor.append(byteLength)
+    descriptor.append(binaryUtf8PolicyId(utf8Policy))
     Sha256.digest(descriptor.toString())
 }
 

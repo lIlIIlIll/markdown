@@ -22,6 +22,35 @@ class FingerprintTest {
     }
 
     @TestCase
+    func profileKindAndVersionArePartOfDialectAndEngineIdentity(): Unit {
+        let builtinProfile = MarkdownProfile.gfmModernV1()
+        let customAlias = MarkdownProfile.custom(builtinProfile.id, builtinProfile.standardVersion)
+        let builtin = DialectCompiler.compile(MarkdownDialect.define("profile-kind", "1").base(builtinProfile).build())
+        let custom = DialectCompiler.compile(MarkdownDialect.define("profile-kind", "1").base(customAlias).build())
+        @Expect(builtin.fingerprint == custom.fingerprint, false)
+
+        let otherVersion = DialectCompiler.compile(
+            MarkdownDialect
+                .define("profile-kind", "1")
+                .base(MarkdownProfile.custom(builtinProfile.id, "different-version"))
+                .build())
+        @Expect(custom.fingerprint == otherVersion.fingerprint, false)
+
+        let builtinEngine = MarkdownEngine.builder().profile(builtinProfile).build()
+        let customEngine = MarkdownEngine.builder().profile(customAlias).build()
+        let builtinArtifact = builtinEngine.createArtifact(builtinEngine.parse("~~identity~~"))
+        let customArtifact = customEngine.createArtifact(customEngine.parse("~~identity~~"))
+        @Expect(builtinArtifact.engineFingerprint == customArtifact.engineFingerprint, false)
+
+        let gfmAlias = MarkdownEngine.builder().profile(MarkdownProfile.gfm()).build()
+        let gfmVersioned = MarkdownEngine.builder().profile(MarkdownProfile.gfmModernV1()).build()
+        @Expect(gfmAlias.dialect.fingerprint, gfmVersioned.dialect.fingerprint)
+        let aliasArtifact = gfmAlias.createArtifact(gfmAlias.parse("~~identity~~"))
+        let versionedArtifact = gfmVersioned.createArtifact(gfmVersioned.parse("~~identity~~"))
+        @Expect(aliasArtifact.engineFingerprint, versionedArtifact.engineFingerprint)
+    }
+
+    @TestCase
     func canonicalFingerprintEncodingHasNoDelimiterOrFieldSplitCollisions(): Unit {
         let emptyFirst = CanonicalDescriptor()
         emptyFirst.append("")

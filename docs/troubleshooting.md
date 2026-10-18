@@ -59,7 +59,9 @@ Markdown.toSafeHtml(source, profile: MarkdownProfile.gfm029())
 ### raw HTML 变成转义文本
 
 这是 `Markdown.toSafeHtml` 的安全默认行为。只有输入可信并且确实需要规范兼容输出时，
-才使用 `Markdown.toSpecHtml` 或显式的 `HtmlOptions.specCompatible()`。
+才使用 `unsafe { Markdown.toSpecHtml(source) }` 或
+`unsafe { HtmlOptions.specCompatible() }`。普通 `HtmlOptions` 构造器不能启用
+`RawHtmlPolicyKind.PassThrough`。
 
 ### `HeadingNodeView` 不能直接读取源码范围
 

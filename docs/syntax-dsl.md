@@ -41,6 +41,14 @@ let note = BlockSyntax
 语法，`documentStartOnly()` 只允许在文档开头匹配。默认 local kind 来自 opener 后的第一
 个单词；`kindFromFirstWord(false)` 使用固定 rule ID。
 
+`maximumBlockBytes` 在 batch parser 和 `RawBlockEventSession.feed()` 中使用相同的正文
+字节语义实时执行。paired block 的外层 opener/closer 不计入正文；嵌套 opener、内层
+closer、普通正文和 CRLF 按原始字节计入。超过上限的 feed 立即抛出带 extension identity
+与准确原始 span 的结构化限制错误，不会等到 `finish()` 才拒绝。
+
+paired closer 的前缀和尾随空白由增量状态机处理，逐 byte feed 不会反复扫描当前行；实际
+字符比较和 nesting 探测都会计入 `OperationBudget`。
+
 参数支持 `StringValue`、`IntegerValue`、`BooleanValue` 和 `IdentifierValue`。quoted value
 和 backslash escape 只解码一次。unknown、duplicate、required missing、unclosed 或类型
 错误产生 `MD3003_INVALID_EXTENSION_PARAMETER`。
