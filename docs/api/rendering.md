@@ -25,6 +25,8 @@ let html = renderer.render(
 | `extensionFallbacks` | `Array<ExtensionRendererFallback>` | `[]` |
 | `rawHtmlHandler` | `?RawHtmlHandlerPort` | `None` |
 | `maximumOutputBytes` | `?Int64` | `None` |
+| `codeGroups` | `CodeGroupHtmlOptions` | `CodeGroupHtmlOptions.defaults()` |
+| `prepared` | `?RichContentPreparation` | `None` |
 
 使用扩展方言时，优先通过 engine 创建 renderer：
 
@@ -33,6 +35,9 @@ let renderer = engine.htmlRenderer(options: HtmlOptions.safe())
 ```
 
 这会自动安装 compiled dialect 的 manifest 和 renderer rules。
+
+`prepared` 接收[显式富内容准备](../rich-content.md)的结果，并验证文档 revision。
+准备结果与原文、语义 AST 和持久化缓存分离；安全默认值不会启动外部后端。
 
 ## HTML policy
 

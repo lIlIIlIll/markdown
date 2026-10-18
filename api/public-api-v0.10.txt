@@ -1359,6 +1359,7 @@ profile.cj:package=markdown:public enum HtmlPolicyKind {
 profile.cj:package=markdown:public enum ProfileKind {
 render/render.cj:package=markdown.render:public import markdown.{AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, HtmlOutputSession, CodeGroupHtmlOptions, CanonicalMarkdownRenderer, ExtensionRendererFallback, HtmlFidelityPolicy, HtmlInputPolicy, HtmlOptions, HtmlPolicy, HtmlPolicyKind, HtmlRenderer, HtmlSanitizerPort, HtmlToMarkdownConverter, HtmlToMarkdownOptions, ImageUriPolicy, InlineEscapePolicy, LinkUriPolicy, MissingRendererPolicy, PlainTextOptions, PlainTextRenderer, RawHtmlPolicyKind, RenderStatistics, RenderedOutput, RenderedSourceMapEntry, SinkError, SinkFailureException, SinkWriteResult, StringTextSink, TextSink, TrustedHtml}
 render/render.cj:package=markdown.render:public import markdown.{ExternalLinkRewriterPort, RawHtmlHandlerPort}
+render/render.cj:package=markdown.render:public import markdown.{RichContentKind, RichContentFailure, RichContentRequest, MathMlAttribute, MathMlNode, CodeHighlightToken, RichPngImage, RichContentProduct, RichContentOutcome, RichContentBackend, RichContentOptions, RichContentLimits, RichContentCache, RichPreparedEntry, RichContentPreparation, RichContentPreparer}
 renderer.cj:package=markdown:owner=class/HtmlOptions:public init(policy: HtmlPolicy, rawHtmlPolicy: RawHtmlPolicyKind, linkUriPolicy: LinkUriPolicy, imageUriPolicy: ImageUriPolicy, rewriteExternalLinks!: ?ExternalLinkRewriterPort = None, externalLinkRel!: String = "", externalLinkTarget!: String = "") {
 renderer.cj:package=markdown:owner=class/HtmlOptions:public let externalLinkRel: String
 renderer.cj:package=markdown:owner=class/HtmlOptions:public let externalLinkTarget: String
@@ -1374,7 +1375,7 @@ renderer.cj:package=markdown:owner=class/HtmlOptions:public static unsafe func s
 renderer.cj:package=markdown:owner=class/HtmlRenderer:public func fingerprint(): String {
 renderer.cj:package=markdown:owner=class/HtmlRenderer:public func render(ast: Document, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): String {
 renderer.cj:package=markdown:owner=class/HtmlRenderer:public func renderTo(ast: Document, sink: TextSink, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): Unit {
-renderer.cj:package=markdown:owner=class/HtmlRenderer:public init(options!: HtmlOptions = HtmlOptions.safe(), extensionRules!: Array<RendererRule> = [], sanitizer!: ?HtmlSanitizerPort = None, extensionManifests!: Array<ExtensionManifest> = [], extensionFallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None, maximumOutputBytes!: ?Int64 = None, codeGroups!: CodeGroupHtmlOptions = CodeGroupHtmlOptions.defaults()) {
+renderer.cj:package=markdown:owner=class/HtmlRenderer:public init(options!: HtmlOptions = HtmlOptions.safe(), extensionRules!: Array<RendererRule> = [], sanitizer!: ?HtmlSanitizerPort = None, extensionManifests!: Array<ExtensionManifest> = [], extensionFallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None, maximumOutputBytes!: ?Int64 = None, codeGroups!: CodeGroupHtmlOptions = CodeGroupHtmlOptions.defaults(), prepared!: ?RichContentPreparation = None) {
 renderer.cj:package=markdown:owner=class/HtmlRenderer:public let options: HtmlOptions
 renderer.cj:package=markdown:owner=class/ImageUriPolicy:public init(allowRelative: Bool, allowRemoteImages: Bool, allowDataImages: Bool, allowedDataMimeTypes!: Array<String> = []) {
 renderer.cj:package=markdown:owner=class/ImageUriPolicy:public let allowDataImages: Bool
@@ -1415,7 +1416,7 @@ renderer.cj:package=markdown:owner=enum/RawHtmlPolicyKind:enum-variant | PassThr
 renderer.cj:package=markdown:owner=enum/RawHtmlPolicyKind:enum-variant | Sanitize
 renderer.cj:package=markdown:owner=enum/SinkWriteResult:enum-variant | Failure(SinkError)
 renderer.cj:package=markdown:owner=enum/SinkWriteResult:enum-variant | Success
-renderer.cj:package=markdown:owner=extend/extend%20MarkdownEngine%20%7B:public func htmlRenderer(options!: HtmlOptions = HtmlOptions.safe(), sanitizer!: ?HtmlSanitizerPort = None, fallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None, codeGroups!: CodeGroupHtmlOptions = CodeGroupHtmlOptions.defaults()): HtmlRenderer {
+renderer.cj:package=markdown:owner=extend/extend%20MarkdownEngine%20%7B:public func htmlRenderer(options!: HtmlOptions = HtmlOptions.safe(), sanitizer!: ?HtmlSanitizerPort = None, fallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None, codeGroups!: CodeGroupHtmlOptions = CodeGroupHtmlOptions.defaults(), prepared!: ?RichContentPreparation = None): HtmlRenderer {
 renderer.cj:package=markdown:owner=interface/AsyncTextSink:interface-member func write(slice: String): AsyncSinkWriteResult
 renderer.cj:package=markdown:owner=interface/ExtensionRendererFallback:interface-member func renderHtml(node: NodeRef): TrustedHtml
 renderer.cj:package=markdown:owner=interface/ExtensionRendererFallback:interface-member prop extensionId: String
@@ -1459,6 +1460,90 @@ rewrite.cj:package=markdown:owner=enum/RewriteAction:enum-variant | ReplaceChild
 rewrite.cj:package=markdown:owner=enum/RewriteAction:enum-variant | ReplaceText(String, String)
 rewrite.cj:package=markdown:public class TreeRewriter {
 rewrite.cj:package=markdown:public enum RewriteAction {
+rich_content.cj:package=markdown:owner=class/CodeHighlightToken:public init(span: SourceSpan, color: String, fontStyle!: Int64 = 0) {
+rich_content.cj:package=markdown:owner=class/CodeHighlightToken:public let color: String
+rich_content.cj:package=markdown:owner=class/CodeHighlightToken:public let fontStyle: Int64
+rich_content.cj:package=markdown:owner=class/CodeHighlightToken:public let span: SourceSpan
+rich_content.cj:package=markdown:owner=class/MathMlAttribute:public init(name: String, value: String) {
+rich_content.cj:package=markdown:owner=class/MathMlAttribute:public let name: String
+rich_content.cj:package=markdown:owner=class/MathMlAttribute:public let value: String
+rich_content.cj:package=markdown:owner=class/MathMlNode:public init(tag: String, text!: String = "", attributes!: Array<MathMlAttribute> = [], children!: Array<MathMlNode> = []) {
+rich_content.cj:package=markdown:owner=class/MathMlNode:public let attributes: ImmutableArray<MathMlAttribute>
+rich_content.cj:package=markdown:owner=class/MathMlNode:public let children: ImmutableArray<MathMlNode>
+rich_content.cj:package=markdown:owner=class/MathMlNode:public let tag: String
+rich_content.cj:package=markdown:owner=class/MathMlNode:public let text: String
+rich_content.cj:package=markdown:owner=class/RichContentCache:public func clear(): Unit {
+rich_content.cj:package=markdown:owner=class/RichContentCache:public init(maximumEntries!: Int64 = 128, maximumBytes!: Int64 = 8388608) {
+rich_content.cj:package=markdown:owner=class/RichContentCache:public prop entryCount: Int64 {
+rich_content.cj:package=markdown:owner=class/RichContentCache:public prop productBytes: Int64 {
+rich_content.cj:package=markdown:owner=class/RichContentLimits:public init(maximumRequests!: Int64 = 128, maximumInputBytes!: Int64 = 1048576, maximumTotalInputBytes!: Int64 = 4194304, maximumOutputBytes!: Int64 = 8388608, maximumTotalOutputBytes!: Int64 = 33554432, maximumTreeNodes!: Int64 = 65536, maximumTreeDepth!: Int64 = 128, maximumTokens!: Int64 = 131072, maximumImagePixels!: Int64 = 4194304, maximumTimeMilliseconds!: Int64 = 30000) {
+rich_content.cj:package=markdown:owner=class/RichContentLimits:public let maximumImagePixels: Int64
+rich_content.cj:package=markdown:owner=class/RichContentLimits:public let maximumInputBytes: Int64
+rich_content.cj:package=markdown:owner=class/RichContentLimits:public let maximumOutputBytes: Int64
+rich_content.cj:package=markdown:owner=class/RichContentLimits:public let maximumRequests: Int64
+rich_content.cj:package=markdown:owner=class/RichContentLimits:public let maximumTimeMilliseconds: Int64
+rich_content.cj:package=markdown:owner=class/RichContentLimits:public let maximumTokens: Int64
+rich_content.cj:package=markdown:owner=class/RichContentLimits:public let maximumTotalInputBytes: Int64
+rich_content.cj:package=markdown:owner=class/RichContentLimits:public let maximumTotalOutputBytes: Int64
+rich_content.cj:package=markdown:owner=class/RichContentLimits:public let maximumTreeDepth: Int64
+rich_content.cj:package=markdown:owner=class/RichContentLimits:public let maximumTreeNodes: Int64
+rich_content.cj:package=markdown:owner=class/RichContentOptions:public init(math!: Bool = false, diagrams!: Bool = false, highlight!: Bool = false, strict!: Bool = false) {
+rich_content.cj:package=markdown:owner=class/RichContentOptions:public let diagrams: Bool
+rich_content.cj:package=markdown:owner=class/RichContentOptions:public let highlight: Bool
+rich_content.cj:package=markdown:owner=class/RichContentOptions:public let math: Bool
+rich_content.cj:package=markdown:owner=class/RichContentOptions:public let strict: Bool
+rich_content.cj:package=markdown:owner=class/RichContentPreparation:public func entry(node: NodeRef): ?RichPreparedEntry {
+rich_content.cj:package=markdown:owner=class/RichContentPreparation:public let documentRevision: Int64
+rich_content.cj:package=markdown:owner=class/RichContentPreparation:public let entries: ImmutableArray<RichPreparedEntry>
+rich_content.cj:package=markdown:owner=class/RichContentPreparation:public let fingerprint: String
+rich_content.cj:package=markdown:owner=class/RichContentRequest:public init(kind: RichContentKind, source: String, language!: String = "", display!: Bool = false) {
+rich_content.cj:package=markdown:owner=class/RichContentRequest:public let display: Bool
+rich_content.cj:package=markdown:owner=class/RichContentRequest:public let kind: RichContentKind
+rich_content.cj:package=markdown:owner=class/RichContentRequest:public let language: String
+rich_content.cj:package=markdown:owner=class/RichContentRequest:public let source: String
+rich_content.cj:package=markdown:owner=class/RichPngImage:public init(data: Array<Byte>) {
+rich_content.cj:package=markdown:owner=class/RichPngImage:public let data: ImmutableArray<Byte>
+rich_content.cj:package=markdown:owner=class/RichPngImage:public prop height: Int64 {
+rich_content.cj:package=markdown:owner=class/RichPngImage:public prop width: Int64 {
+rich_content.cj:package=markdown:owner=class/RichPreparedEntry:public let kind: RichContentKind
+rich_content.cj:package=markdown:owner=class/RichPreparedEntry:public let nodeId: NodeId
+rich_content.cj:package=markdown:owner=class/RichPreparedEntry:public let outcome: RichContentOutcome
+rich_content.cj:package=markdown:owner=class/RichPreparedEntry:public let sourceParts: ImmutableArray<SourceSpan>
+rich_content.cj:package=markdown:owner=enum/RichContentFailure:enum-variant | Disabled
+rich_content.cj:package=markdown:owner=enum/RichContentFailure:enum-variant | Failed
+rich_content.cj:package=markdown:owner=enum/RichContentFailure:enum-variant | Limited
+rich_content.cj:package=markdown:owner=enum/RichContentFailure:enum-variant | Missing
+rich_content.cj:package=markdown:owner=enum/RichContentFailure:enum-variant | TimedOut
+rich_content.cj:package=markdown:owner=enum/RichContentFailure:enum-variant | Unsupported
+rich_content.cj:package=markdown:owner=enum/RichContentFailure:public func code(): String {
+rich_content.cj:package=markdown:owner=enum/RichContentKind:enum-variant | Diagram
+rich_content.cj:package=markdown:owner=enum/RichContentKind:enum-variant | Highlight
+rich_content.cj:package=markdown:owner=enum/RichContentKind:enum-variant | Math
+rich_content.cj:package=markdown:owner=enum/RichContentKind:public func id(): String {
+rich_content.cj:package=markdown:owner=enum/RichContentOutcome:enum-variant | Ready(RichContentProduct)
+rich_content.cj:package=markdown:owner=enum/RichContentOutcome:enum-variant | Unavailable(RichContentFailure)
+rich_content.cj:package=markdown:owner=enum/RichContentProduct:enum-variant | Diagram(RichPngImage)
+rich_content.cj:package=markdown:owner=enum/RichContentProduct:enum-variant | Highlight(ImmutableArray<CodeHighlightToken>)
+rich_content.cj:package=markdown:owner=enum/RichContentProduct:enum-variant | MathMl(MathMlNode)
+rich_content.cj:package=markdown:owner=interface/RichContentBackend:interface-member func identity(kind: RichContentKind): String
+rich_content.cj:package=markdown:owner=interface/RichContentBackend:interface-member func prepare(requests: Array<RichContentRequest>, limits: RichContentLimits, budget: OperationBudget, cancellation: CancellationToken): Array<RichContentOutcome>
+rich_content.cj:package=markdown:public class CodeHighlightToken {
+rich_content.cj:package=markdown:public class MathMlAttribute {
+rich_content.cj:package=markdown:public class MathMlNode {
+rich_content.cj:package=markdown:public class RichContentCache {
+rich_content.cj:package=markdown:public class RichContentLimits {
+rich_content.cj:package=markdown:public class RichContentOptions {
+rich_content.cj:package=markdown:public class RichContentPreparation {
+rich_content.cj:package=markdown:public class RichContentRequest {
+rich_content.cj:package=markdown:public class RichPngImage {
+rich_content.cj:package=markdown:public class RichPreparedEntry {
+rich_content.cj:package=markdown:public enum RichContentFailure {
+rich_content.cj:package=markdown:public enum RichContentKind {
+rich_content.cj:package=markdown:public enum RichContentOutcome {
+rich_content.cj:package=markdown:public enum RichContentProduct {
+rich_content.cj:package=markdown:public interface RichContentBackend {
+rich_preparation.cj:package=markdown:owner=class/RichContentPreparer:public static func prepare(result: ParseResult, options!: RichContentOptions = RichContentOptions(), backend!: ?RichContentBackend = None, limits!: RichContentLimits = RichContentLimits(), cache!: ?RichContentCache = None, budget!: OperationBudget = OperationBudget.safe(), cancellation!: CancellationToken = CancellationToken.none()): RichContentPreparation {
+rich_preparation.cj:package=markdown:public class RichContentPreparer {
 scanner_accelerator.cj:package=markdown:owner=class/AcceleratedMarkdownEngine:public func capabilities(): EngineCapabilities {
 scanner_accelerator.cj:package=markdown:owner=class/AcceleratedMarkdownEngine:public func executionModels(): ExecutionModelCapabilities {
 scanner_accelerator.cj:package=markdown:owner=class/AcceleratedMarkdownEngine:public func parse(bytes: Array<Byte>, utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): ParseResult {

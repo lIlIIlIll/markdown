@@ -6,17 +6,17 @@ import std.collection.*
 public class RenderedSourceMapEntry {
     /** 输出中的 byte range。 */
     public let outputRange: SourceSpan
-    /** 对应的 source span；generated 内容为 `None`。 */
+    /** 对应的粗粒度 source span；纯结构标记为 None，派生展示可保留来源。 */
     public let sourceSpan: ?SourceSpan
-    /** 产生该输出的 AST 节点 id；generated 内容为 `None`。 */
+    /** 产生该输出的 AST 节点 id；纯结构标记为 None，派生展示可保留节点。 */
     public let nodeId: ?NodeId
-    /** 是否为 renderer 生成的非 source 内容。 */
+    /** 是否为生成内容；true 且带来源表示派生展示，不表示字符级映射。 */
     public let generated: Bool
     /**
      * 创建 source map 记录。
      * @param outputRange 输出中的 byte range。
-     * @param sourceSpan 对应的 source span，generated 内容为 `None`。
-     * @param nodeId 产生该输出的节点 id，generated 内容为 `None`。
+     * @param sourceSpan 粗粒度来源；纯结构标记为 None，派生展示可保留来源。
+     * @param nodeId 原始节点；纯结构标记为 None，派生展示可保留节点。
      * @param generated 是否为 renderer 生成的非 source 内容。
      */
     public init(outputRange: SourceSpan, sourceSpan: ?SourceSpan, nodeId: ?NodeId, generated: Bool) {
@@ -45,7 +45,7 @@ public class RenderedOutput {
 
     /** 查询 output byte 对应的 source span；无 source 对应的 generated 片段返回 None。
      * @param outputByte 输出中的字节偏移。
-     * @return 对应的 source span；generated 片段为 `None`。
+     * @return 粗粒度来源；没有来源的结构标记为 None。
      * @throws IllegalArgumentException outputByte 越界时。
      */
     public func sourceSpanAt(outputByte: Int64): ?SourceSpan {
@@ -55,9 +55,9 @@ public class RenderedOutput {
         findEntry(outputByte).sourceSpan
     }
 
-    /** 查询 output byte 对应的 NodeId；generated 片段返回 None。
+    /** 查询 output byte 对应的 NodeId；无来源的结构标记返回 None。
      * @param outputByte 输出中的字节偏移。
-     * @return 对应的 `NodeId`；generated 片段为 `None`。
+     * @return 对应的 NodeId；没有来源的结构标记为 None。
      * @throws IllegalArgumentException outputByte 越界时。
      */
     public func nodeIdAt(outputByte: Int64): ?NodeId {

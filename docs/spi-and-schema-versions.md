@@ -11,6 +11,8 @@
 | Parser plan | `5` | parse artifact cache miss |
 | Binary artifact | schema `3` | 拒绝或 cache miss，不猜测恢复 |
 | Public API snapshot | `v0.10` | `check_public_api.py` 报告差异 |
+| Rich content product / preparation | `1` | 类型、来源版本或产物验证失败；原文 fallback 或显式严格失败 |
+| HTML renderer fingerprint | `5` | 旧渲染缓存失效 |
 
 `ExtensionManifest.semanticVersion` 必须是完整 SemVer，并按 prerelease 规则比较。
 `implementationVersion` 是构建身份；它可以参与缓存/实现身份，但不参与 dependency 的
@@ -27,6 +29,9 @@ dialect fingerprint 绑定 base profile、dialect identity、extension identity�
 错误地混入 parse-only cache key。
 AST transform 和 document analysis 的 ID、版本、优先级及对应能力参与 fingerprint。
 analysis 在绑定后执行，返回诊断；它不能替代 transform 修改 AST。
+
+富内容准备在完整语义结果之后显式执行，不能改变 parse artifact。其 source/config key、
+状态和已验证产物参与 renderer fingerprint；注解还单独绑定不可变 Document revision。
 
 canonical descriptor 使用长度前缀编码，不使用未转义的 `@`、`|` 或 `:` 拼接，因此字段中
 包含 delimiter 或 Unicode 不会造成序列化歧义。

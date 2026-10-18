@@ -10,7 +10,7 @@ for automatic merge or publication.
 | Required checks | Replaced the three obsolete SDK contexts with the two passing STS 1.2.0 contexts; all other protection values verified equal | PASS |
 | MD-00.3 / EDT-T01 identity | NodeId lineage plus nonrecycled serial, distinct immutable revisions, bounded shared-arena reservations, distributed identity hashes, persistent-fork allocation and stale CST/NodeRef/fix rejection | Correctness/resource regression PASS in 1566-case run; final performance cost not yet qualified |
 | MD-00.4 / MD-00.5 / ARC-T02 | Success-only ParseResult, explicit ParseOutcome, removed aliases and content-hash StableNodeId; consumers migrated | PASS in the 1517-case full run |
-| MD-00.7 / ART-T01 | 0.10 API boundary, SPI 3, plan 5, artifact schema 3; no old reader; explicit unsupported-version error | Current code-group checkpoint: 1600/1600 full tests and 70 API/evidence Python tests PASS |
+| MD-00.7 / ART-T01 | 0.10 API boundary, SPI 3, plan 5, artifact schema 3; no old reader; explicit unsupported-version error | Current preparation checkpoint: 1611/1611 full tests and 70 API/evidence Python tests PASS |
 | MD-00.1/.2, MD-01 batch | Typed footnote payloads, reachable-definition binding, first-definition/numbering/unique-anchor/backlink decisions, shared HTML/Text/Markdown output, exact source and snapshot/config identity; DocumentBindingTests | Batch and public append implemented; complete output-resource qualification pending |
 | MD-03 batch | Heading-only typed suffix, explicit-ID reservation, shared anchor allocator, authoritative heading/fragment queries, structured TOC, source/Markdown/snapshot preservation; HeadingBindingTests | Batch and public append implemented; edit dependency qualification pending |
 | MD-02 / EXT-T03 | Definition Lists 2.0 with typed List/Entry/Term/Definition, ordinary block bodies, source markers, full binding validation and shared HTML/Text/Markdown/snapshot/append/output traversal | Implemented; 1564-case full run and consumer gates PASS |
@@ -19,7 +19,7 @@ for automatic merge or publication.
 | MD-06.8 | Public append scaling tests for long loose lists, deferred-reference paragraphs, unclosed fences and many closed blocks; real scan/node-construction/patch counters | Correctness and work growth PASS; latency, peak RSS and release performance qualification pending |
 | MD-04 / EXT-T05..06 | Versioned official capability matrix, exact enable/disable/profile output, literal Front Matter boundaries and bounded deterministic smart punctuation | Correctness verified; final release gates pending |
 | MD-00.6 | Actual AST transform → binding → read-only analysis, shared batch/append pipeline, early whole-document execution gates and meaningful capability validation | Implemented; 1585-case run, consumers and API/evidence gates PASS |
-| MD-05 | Math 2.0 typed TeX/provenance and Code Groups 1.0 with safe static output and opt-in controls | Source models/UI PASS; shared preparation boundary and real optional backends pending |
+| MD-05 | Math 2.0, Code Groups 1.0 and explicit typed preparation with revision/source/config binding, validation, Ready-only cache and shared resumable rendering | Shared preparation/model/UI correctness PASS; installable real optional backends and end-to-end resource qualification pending |
 | MD-05.7 / code-group portion of RND-T02 | Group/Item with ordinary fenced children, titles, line ranges and exact copy text; optional localized tabs/copy and static fallback | 1600-case Cangjie run, all normal consumers and actual Chrome clipboard/keyboard/AX checks PASS |
 | MD-07..08 | Existing editor/artifact phase baseline and real process/backend capability probes retained privately; no optimization verdict yet | Pending |
 | DONE-02..06 | Complete task-to-test ledger, new performance qualification, docs/consumer gates and core hosted evidence | Pending |
@@ -240,3 +240,47 @@ The final 1600-case tree above also passed all nine normal consumer steps and 70
 API/evidence Python tests. The newly generated cookbook fixture matches the hash
 recorded above, and the actual browser gate was rerun. Its runner hash is
 `b204f782ff7cb53c0396b0ce2c7a7766b0941f6d13aa154d8213812998117c00`.
+
+## Shared rich preparation checkpoint
+
+Official STS 1.2.0, formatted product tree
+`cfb10b735a826eab269e6623c17fa279165677e7289d1a0a0b1340c107120ae0`
+matches the actual disk-backed test tree. Full suite: 1611/1611, zero skips,
+errors or failures. Public API: 1705 declarations. Nine normal consumer steps,
+70 API/evidence Python tests, format/docs/API/evidence and privacy checks PASS.
+The cookbook actually reports `math preparation=missing` and retains full TeX.
+
+MD-05.1/.4/.5/.6/.8 now have a shared typed boundary: immutable MathML trees,
+UTF-8 color/font tokens and RGB/RGBA PNG containers; fixed tag/attribute/value
+validation, token order/scalar boundaries, PNG bounds/chunks/CRC/end, explicit
+disabled/missing/unsupported/timeout/failure/limit states and strict opt-in.
+No third-party HTML/SVG is promoted to TrustedHtml. PNG display additionally
+requires an explicit PNG data-image policy; otherwise full source is rendered.
+Prepared entries reject another Document revision before output. Text/Markdown
+and source AST remain unchanged. Derived MathML/PNG maps are marked generated
+with coarse provenance; expression source parts remain available separately.
+HTML fingerprint is 5; no prepared data is persisted in parser artifacts.
+
+RichContentTests exercise default/missing behavior, hostile structured outputs,
+Unicode/ranges, raw CRLF code-group copy, explicit image policy, source/config/
+actual-theme cache keys, non-cached failures, current stricter limits, total
+output/cache capacity, stale identities, cancellation and resumed byte equality.
+The boundary fixtures are explicitly not real-engine qualification. The real
+KaTeX/Mermaid/Shiki adapter remains pending.
+
+A real first run crashed all nine new cases while the prior 1600 passed. A
+standalone std-only probe isolates STS 1.2.0: direct tuple destructuring of
+ArrayList.remove returns a corrupt reference at -O2; -O0 and a named popped
+frame at -O2 pass. The preparation and validator use the existing repository's
+named-frame pattern. No SDK or optimization flag changed. Two compile-only test
+type errors and two incorrect output expectations were also corrected; retained
+logs distinguish those from the actual runtime failure.
+
+Separate Linux supervision probes cover exact 256 KiB simultaneous binary pipes,
+worker crash, detached descendants retaining pipes and ignoring TERM, timeout,
+output-limit cancellation and launcher death. Actual Chrome 155.0.8059.84 creates
+nine descendants; Node crash and cancellation both terminate and reap all nine.
+The STS 1.2.0 bridge passes concurrent pipe/timeout/limit checks. This establishes
+a viable Linux optional-adapter mechanism, not a production backend or an OS
+sandbox. Frozen performance, editor/cache decisions and hosted core gates remain
+pending. Core changes remain local; no push, PR or release is authorized.

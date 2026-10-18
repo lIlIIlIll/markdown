@@ -212,10 +212,10 @@ markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、�
 | Offline evidence ready | `not ready` |
 | CI verified at evidence repository HEAD | `no` |
 | Published release | `no` |
-| Tests | `1600/1600` passed; `0` skipped; `0` failed |
+| Tests | `1611/1611` passed; `0` skipped; `0` failed |
 | CommonMark conformance | `652/652` |
 | GFM conformance | `671/671` |
-| Public API snapshot | `1620` declarations |
+| Public API snapshot | `1705` declarations |
 | Artifact commit | `6e5a207d07903a60f8270c41badac1bb4cb104b5` |
 | Evidence subject commit | `6e5a207d07903a60f8270c41badac1bb4cb104b5` |
 | Execution identity | `target/release-evidence/manifest.json` records and verifies the clean gate commit/tree |

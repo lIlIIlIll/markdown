@@ -99,6 +99,12 @@ public class StringTextSink <: TextSink {
         SinkWriteResult.Success
     }
 
+    internal func writeDerivedFromNode(slice: String, node: NodeRef): SinkWriteResult {
+        record(slice, node.span, Some(node.nodeId), true)
+        builder.append(slice)
+        SinkWriteResult.Success
+    }
+
     /** 返回目前已收集的 HTML 或其他文本。 */
     public func content(): String {
         builder.toString()
@@ -451,6 +457,7 @@ public class HtmlRenderer {
     private let extensionFallbacks: ImmutableArray<ExtensionRendererFallback>
     private let maximumOutputBytes: ?Int64
     private let codeGroups: CodeGroupHtmlOptions
+    private let prepared: ?RichContentPreparation
 
     /**
      * 创建 HTML renderer。
@@ -462,11 +469,13 @@ public class HtmlRenderer {
      * @param rawHtmlHandler 宿主提供的 raw HTML handler。
      * @param maximumOutputBytes 输出字节数上限。
      * @param codeGroups 可选代码组渐进增强数据和复制上限。
+     * @param prepared 仅属于目标 Document revision 的已校验富内容注解。
      */
     public init(options!: HtmlOptions = HtmlOptions.safe(), extensionRules!: Array<RendererRule> = [],
         sanitizer!: ?HtmlSanitizerPort = None, extensionManifests!: Array<ExtensionManifest> = [],
         extensionFallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None,
-        maximumOutputBytes!: ?Int64 = None, codeGroups!: CodeGroupHtmlOptions = CodeGroupHtmlOptions.defaults()) {
+        maximumOutputBytes!: ?Int64 = None, codeGroups!: CodeGroupHtmlOptions = CodeGroupHtmlOptions.defaults(),
+        prepared!: ?RichContentPreparation = None) {
         for (rule in extensionRules) {
             validateRendererRuleForRuntime(rule)
         }
@@ -504,12 +513,13 @@ public class HtmlRenderer {
         }
         this.maximumOutputBytes = maximumOutputBytes
         this.codeGroups = codeGroups
+        this.prepared = prepared
     }
 
     /** 返回包含策略、扩展和 adapter identity 的稳定 renderer fingerprint。 */
     public func fingerprint(): String {
         let out = CanonicalDescriptor()
-        out.append("html-renderer-v4|")
+        out.append("html-renderer-v5|")
         match (options.policy.kind) {
             case HtmlPolicyKind.SpecCompatible => out.append("spec")
             case HtmlPolicyKind.GfmCompatible => out.append("gfm")
@@ -587,6 +597,11 @@ public class HtmlRenderer {
             out.append(codeGroups.copyFailedLabel)
             out.append(codeGroups.copyUnavailableLabel)
             out.append(codeGroups.maximumCopyBytes)
+        }
+        out.append("|rich-content/1=")
+        match (prepared) {
+            case Some(value) => out.append(value.fingerprint)
+            case None => out.append("none")
         }
         for (manifest in rendererCanonicalManifests(extensionManifests)) {
             out.append("|manifest=")
@@ -688,6 +703,189 @@ public class HtmlRenderer {
         cancellation.throwIfCancelled(phase: "render")
         renderArenaTo(ast, sink, cancellation, budget)
         cancellation.throwIfCancelled(phase: "render")
+    }
+
+    internal func requirePreparedDocument(document: Document): Unit {
+        if (let Some(value) <- prepared) {
+            value.requireRevision(document.revision)
+        }
+    }
+
+    private func preparedProduct(node: NodeRef): ?RichContentProduct {
+        if (let Some(value) <- prepared) {
+            if (let Some(entry) <- value.entry(node)) {
+                if (let RichContentOutcome.Ready(product) <- entry.outcome) {
+                    return Some(product)
+                }
+            }
+        }
+        None
+    }
+
+    private func allowsPreparedPng(): Bool {
+        if (!options.imageUriPolicy.allowDataImages) {
+            return false
+        }
+        for (mime in rendererNormalizedMimeTypes(options.imageUriPolicy.allowedDataMimeTypes)) {
+            if (mime == "image/png") {
+                return true
+            }
+        }
+        false
+    }
+
+    private func writeRichDerived(value: String, node: NodeRef, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget, escaped!: Bool = false): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.output(if (escaped) {
+                7
+            } else {
+                6
+            }, value, node: Some(node))
+            return
+        }
+        let mapped = RichDerivedSink(sink, node)
+        if (escaped) {
+            writeEscapedTextFromNode(value, node, mapped, cancellation, budget)
+        } else {
+            write(value, mapped, cancellation, budget)
+        }
+    }
+
+    internal func expandRichMath(state: RichMathRenderState, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        cancellation.throwIfCancelled(phase: "render")
+        budget.consumeScan()
+        match (state.actions.remove(at: state.actions.size - 1)) {
+            case RichMathAction.Close(tag) => writeRichDerived("</${tag}>", state.sourceNode, sink, cancellation, budget)
+            case RichMathAction.Children(node, index) =>
+                if (index < node.children.size) {
+                    state.actions.add(RichMathAction.Children(node, index + 1))
+                    state.actions.add(RichMathAction.Node(node.children[index]))
+                }
+            case RichMathAction.Node(node) =>
+                if (node.tag.isEmpty()) {
+                    writeRichDerived(node.text, state.sourceNode, sink, cancellation, budget, escaped: true)
+                    return
+                }
+                writeRichDerived("<${node.tag}", state.sourceNode, sink, cancellation, budget)
+                if (node.tag == "math") {
+                    let mode = if (state.display) {
+                        "block"
+                    } else {
+                        "inline"
+                    }
+                    writeRichDerived(" xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"${mode}\"",
+                        state.sourceNode, sink, cancellation, budget)
+                }
+                for (attribute in node.attributes.toArray()) {
+                    if (attribute.name != "xmlns" && attribute.name != "display") {
+                        // Values already passed a fixed ASCII value grammar;
+                        // no style, URI, event or arbitrary attribute is allowed.
+                        writeRichDerived(" ${attribute.name}=\"${attribute.value}\"", state.sourceNode, sink,
+                            cancellation, budget)
+                    }
+                }
+                writeRichDerived(">", state.sourceNode, sink, cancellation, budget)
+                state.actions.add(RichMathAction.Close(node.tag))
+                state.actions.add(RichMathAction.Children(node, 0))
+        }
+    }
+
+    internal func expandRichPng(state: RichPngRenderState, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        cancellation.throwIfCancelled(phase: "render")
+        let end = min(state.offset + 96, state.image.data.size)
+        budget.consumeScan(steps: end - state.offset)
+        writeRichDerived(richBase64(state.image, state.offset, end), state.node, sink, cancellation, budget)
+        state.offset = end
+    }
+
+    private func writeRichCode(state: RichCodeRenderState, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.emit(HtmlCursorAction.RichCode(state))
+        } else {
+            while (state.offset < state.code.size || state.stage != 0) {
+                expandRichCode(state, sink, cancellation, budget)
+            }
+        }
+    }
+
+    internal func expandRichCode(state: RichCodeRenderState, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        cancellation.throwIfCancelled(phase: "render")
+        budget.consumeScan()
+        if (state.stage == 0) {
+            if (state.offset == state.code.size) {
+                return
+            }
+            state.lineEnd = state.offset
+            while (state.lineEnd < state.code.size && state.code[state.lineEnd] != b'\n') {
+                state.lineEnd++
+                if (state.lineEnd % 1024 == 0) {
+                    cancellation.throwIfCancelled(phase: "render")
+                }
+            }
+            budget.consumeScan(steps: state.lineEnd - state.offset)
+            while (state.rangeIndex < state.ranges.size && state.ranges[state.rangeIndex].lastLine < state.line) {
+                state.rangeIndex++
+            }
+            state.selected = state.rangeIndex < state.ranges.size && state.ranges[state.rangeIndex].firstLine <= state
+                .line
+            if (state.selected) {
+                write("<mark class=\"code-line\">", sink, cancellation, budget)
+            }
+            state.stage = 1
+            return
+        }
+        if (state.stage == 1 && state.offset < state.lineEnd) {
+            while (state.tokenIndex < state.tokens.size && state.tokens[state.tokenIndex].span.endByte <= state.offset) {
+                state.tokenIndex++
+                budget.consumeScan()
+            }
+            var end = state.lineEnd
+            var colored = false
+            if (state.tokenIndex < state.tokens.size) {
+                let token = state.tokens[state.tokenIndex]
+                if (token.span.startByte <= state.offset) {
+                    colored = true
+                    end = min(end, token.span.endByte)
+                    write("<span style=\"color:${token.color}", sink, cancellation, budget)
+                    if ((token.fontStyle & 1) != 0) {
+                        write(";font-style:italic", sink, cancellation, budget)
+                    }
+                    if ((token.fontStyle & 2) != 0) {
+                        write(";font-weight:bold", sink, cancellation, budget)
+                    }
+                    if ((token.fontStyle & 4) != 0) {
+                        write(";text-decoration:underline", sink, cancellation, budget)
+                    }
+                    write("\">", sink, cancellation, budget)
+                } else {
+                    end = min(end, token.span.startByte)
+                }
+            }
+            if (let Some(plan) <- htmlOutputPlanner(sink)) {
+                plan.output(1, state.code, node: Some(state.node), start: state.offset, end: end)
+            } else {
+                writeEscapedTextFromNode(state.code[state.offset..end], state.node, sink, cancellation, budget)
+            }
+            if (colored) {
+                write("</span>", sink, cancellation, budget)
+            }
+            state.offset = end
+            return
+        }
+        if (state.selected) {
+            write("</mark>", sink, cancellation, budget)
+        }
+        if (state.offset < state.code.size) {
+            writeFromNode("\n", state.node, sink, cancellation, budget)
+            state.offset++
+        }
+        state.line++
+        state.stage = 0
     }
 
     private func writeCodeGroupAttribute(name: String, value: String, sink: TextSink, cancellation: CancellationToken,
@@ -795,6 +993,10 @@ public class HtmlRenderer {
             case 4 => writeGfmTagFilteredRange(emission.value, start, end, emission.node.getOrThrow(), sink,
                 cancellation, budget)
             case 5 => writeCodeCopyHex(emission.value, start, end, sink, cancellation, budget)
+            case 6 => writeRichDerived(emission.value[start..end], emission.node.getOrThrow(), sink, cancellation,
+                budget)
+            case 7 => writeRichDerived(emission.value[start..end], emission.node.getOrThrow(), sink, cancellation,
+                budget, escaped: true)
             case _ => throw IllegalStateException("unknown cursor encoding")
         }
         sink.content()
@@ -821,6 +1023,7 @@ public class HtmlRenderer {
     }
 
     private func renderArenaTo(ast: Document, sink: TextSink, cancellation: CancellationToken, budget: OperationBudget): Unit {
+        requirePreparedDocument(ast)
         renderArenaSubtree(ast.root(), sink, cancellation, budget)
         renderFootnoteSection(ast, sink, cancellation, budget)
     }
@@ -958,6 +1161,24 @@ public class HtmlRenderer {
             case NodeKind.ThematicBreak => write("<hr />\n", sink, cancellation, budget)
             case NodeKind.CodeBlock =>
                 let code = node.asCodeBlock().getOrThrow()
+                if (let Some(RichContentProduct.Diagram(image)) <- preparedProduct(node)) {
+                    if (allowsPreparedPng()) {
+                        writeRichDerived(
+                            "<img class=\"diagram\" width=\"${image.width}\" height=\"${image.height}\" alt=\"Mermaid diagram\"",
+                            node, sink, cancellation, budget)
+                        writeRichDerived(" src=\"data:image/png;base64,", node, sink, cancellation, budget)
+                        let state = RichPngRenderState(node, image)
+                        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+                            plan.emit(HtmlCursorAction.RichPng(state))
+                        } else {
+                            while (state.offset < image.data.size) {
+                                expandRichPng(state, sink, cancellation, budget)
+                            }
+                        }
+                        writeRichDerived("\" />\n", node, sink, cancellation, budget)
+                        return
+                    }
+                }
                 write("<pre><code", sink, cancellation, budget)
                 if (!code.language.isEmpty()) {
                     write(" class=\"language-", sink, cancellation, budget)
@@ -965,7 +1186,11 @@ public class HtmlRenderer {
                     write("\"", sink, cancellation, budget)
                 }
                 write(">", sink, cancellation, budget)
-                writeEscapedTextFromNode(code.literal, node, sink, cancellation, budget)
+                match (preparedProduct(node)) {
+                    case Some(RichContentProduct.Highlight(tokens)) => writeRichCode(
+                        RichCodeRenderState(node, code.literal, tokens), sink, cancellation, budget)
+                    case _ => writeEscapedTextFromNode(code.literal, node, sink, cancellation, budget)
+                }
                 if (!code.literal.isEmpty() && !code.literal.endsWith("\n")) {
                     writeFromNode("\n", node, sink, cancellation, budget)
                 }
@@ -1162,13 +1387,19 @@ public class HtmlRenderer {
                     write("\"", sink, cancellation, budget)
                 }
                 write(">", sink, cancellation, budget)
-                let state = CodeGroupLineState(code.node, code.literal, value.highlightedLines)
-                if (let Some(plan) <- htmlOutputPlanner(sink)) {
-                    plan.emit(HtmlCursorAction.CodeGroupLines(state))
-                } else {
-                    while (state.offset < state.code.size) {
-                        expandCursorCodeGroupLine(state, sink, cancellation, budget)
-                    }
+                match (preparedProduct(code.node)) {
+                    case Some(RichContentProduct.Highlight(tokens)) => writeRichCode(
+                        RichCodeRenderState(code.node, code.literal, tokens, ranges: value.highlightedLines), sink,
+                        cancellation, budget)
+                    case _ =>
+                        let state = CodeGroupLineState(code.node, code.literal, value.highlightedLines)
+                        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+                            plan.emit(HtmlCursorAction.CodeGroupLines(state))
+                        } else {
+                            while (state.offset < state.code.size) {
+                                expandCursorCodeGroupLine(state, sink, cancellation, budget)
+                            }
+                        }
                 }
                 write("</code></pre>\n</figure>\n", sink, cancellation, budget)
             }
@@ -1186,7 +1417,18 @@ public class HtmlRenderer {
                 "inline"
             }
             write("<${tag} class=\"math-${kind}\">", sink, cancellation, budget)
-            writeEscapedTextFromNode(value.expression, node, sink, cancellation, budget)
+            match (preparedProduct(node)) {
+                case Some(RichContentProduct.MathMl(root)) =>
+                    let state = RichMathRenderState(node, root, value.display)
+                    if (let Some(plan) <- htmlOutputPlanner(sink)) {
+                        plan.emit(HtmlCursorAction.RichMath(state))
+                    } else {
+                        while (!state.actions.isEmpty()) {
+                            expandRichMath(state, sink, cancellation, budget)
+                        }
+                    }
+                case _ => writeEscapedTextFromNode(value.expression, node, sink, cancellation, budget)
+            }
             write("</${tag}>", sink, cancellation, budget)
             return
         }
@@ -2067,14 +2309,16 @@ extend MarkdownEngine {
      * @param fallbacks custom node 的 fallback 列表。
      * @param rawHtmlHandler CustomHandler 使用的 handler。
      * @param codeGroups 可选代码组渐进增强数据和复制上限。
+     * @param prepared 仅属于目标 Document revision 的已校验富内容注解。
      * @return 配置好的 `HtmlRenderer`。
      */
     public func htmlRenderer(options!: HtmlOptions = HtmlOptions.safe(), sanitizer!: ?HtmlSanitizerPort = None,
         fallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None,
-        codeGroups!: CodeGroupHtmlOptions = CodeGroupHtmlOptions.defaults()): HtmlRenderer {
+        codeGroups!: CodeGroupHtmlOptions = CodeGroupHtmlOptions.defaults(), prepared!: ?RichContentPreparation = None): HtmlRenderer {
         HtmlRenderer(options: options, extensionRules: dialect.rendererRules.toArray(), sanitizer: sanitizer,
             extensionManifests: dialect.manifests.toArray(), extensionFallbacks: fallbacks,
-            rawHtmlHandler: rawHtmlHandler, maximumOutputBytes: Some(limits.maximumOutputBytes), codeGroups: codeGroups)
+            rawHtmlHandler: rawHtmlHandler, maximumOutputBytes: Some(limits.maximumOutputBytes), codeGroups: codeGroups,
+            prepared: prepared)
     }
 }
 

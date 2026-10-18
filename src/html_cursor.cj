@@ -30,6 +30,9 @@ internal enum HtmlCursorAction {
     | TableRow(NodeRef, Bool)
     | TableCells(NodeRef, Int64, Bool)
     | CodeGroupLines(CodeGroupLineState)
+    | RichMath(RichMathRenderState)
+    | RichPng(RichPngRenderState)
+    | RichCode(RichCodeRenderState)
     | ImageAlt(NodeRef)
     | ImageChildren(NodeRef, Int64)
     | Footnotes(Document, Int64, Int64, Int64)
@@ -76,6 +79,7 @@ internal class HtmlOutputCursor {
 
     init(renderer: HtmlRenderer, document: Document, chunkBytes: Int64, cancellation: CancellationToken,
         budget: OperationBudget) {
+        renderer.requirePreparedDocument(document)
         if (chunkBytes < 4) {
             throw IllegalArgumentException("HTML output chunk size must be at least four bytes")
         }
@@ -186,6 +190,21 @@ internal class HtmlOutputCursor {
                 renderer.expandCursorCodeGroupLine(state, planner, cancellation, budget)
                 if (state.offset < state.code.size) {
                     planner.emit(HtmlCursorAction.CodeGroupLines(state))
+                }
+            case HtmlCursorAction.RichMath(state) =>
+                renderer.expandRichMath(state, planner, cancellation, budget)
+                if (!state.actions.isEmpty()) {
+                    planner.emit(HtmlCursorAction.RichMath(state))
+                }
+            case HtmlCursorAction.RichPng(state) =>
+                renderer.expandRichPng(state, planner, cancellation, budget)
+                if (state.offset < state.image.data.size) {
+                    planner.emit(HtmlCursorAction.RichPng(state))
+                }
+            case HtmlCursorAction.RichCode(state) =>
+                renderer.expandRichCode(state, planner, cancellation, budget)
+                if (state.offset < state.code.size || state.stage != 0) {
+                    planner.emit(HtmlCursorAction.RichCode(state))
                 }
             case HtmlCursorAction.ImageAlt(node) => expandImageAlt(node)
             case HtmlCursorAction.ImageChildren(parent, index) =>

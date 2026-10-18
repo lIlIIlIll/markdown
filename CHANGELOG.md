@@ -9,6 +9,9 @@
 
 ### Changed
 
+- 显式富内容准备：有界 MathML/token/PNG 校验、独立失败状态、Ready 缓存与 revision 绑定。
+  同步/可恢复 HTML 共用产物；默认保留原文。正式可选引擎适配器仍在开发。
+
 - Code Groups 1.0：普通 fenced code、标题、行高亮、原始换行复制与可选的本地化 tabs。
 
 - Math 2.0 typed payload：TeX、精确来源片段与 delimiter 分离，默认可读输出。
@@ -37,8 +40,8 @@
 - benchmark evidence status `stale`；
 - CommonMark `652/652`；
 - GFM `671/671`；
-- 测试 `1600/1600`，`0` skipped，`0` failed；
-- public API snapshot `1620` declarations；
+- 测试 `1611/1611`，`0` skipped，`0` failed；
+- public API snapshot `1705` declarations；
 - last complete CommonMark ratio `2.361586x`；
 - last complete GFM ratio `1.788010x`。
 

@@ -71,3 +71,11 @@ p1Dialect 组合。代码组有 Group/Item payload 和普通 CodeBlock children�
 资产；见[代码组](code-groups.md)。结构化 literal 容器的引用收集复用实际 block 边界，
 不会让公式或代码正文中的伪定义成为外部链接目标。parser plan 5 的 descriptor、engine
 fingerprint 与 parse artifact 使用同一版本常量，旧配置缓存失效；binary layout 保持 3。
+
+## 富内容准备
+
+在完整 ParseResult 上显式调用 `RichContentPreparer.prepare`，再通过 renderer 的
+`prepared` 参数提供注解。默认关闭；缺后端或准备失败时仍输出完整原文语义。注解绑定
+不可变 revision，不能跨 snapshot 使用。派生 MathML/PNG 的 source map 使用
+`generated: true` 并保留粗粒度来源；不能再用 generated 判断 sourceSpan 必为 None。
+renderer fingerprint 升为 5，派生数据不进入 parse artifact。见[富内容准备](rich-content.md)。

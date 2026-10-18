@@ -7,7 +7,7 @@ import markdown.editor.AstQuery
 import markdown.extensions.{DefinitionListPayload, DefinitionListRole, MathPayload, BlockSyntax, ExtensionCapabilities, 
     ExtensionDocumentAnalysis, ExtensionManifest, MarkdownDialect, OfficialExtensions, RendererRule}
 import markdown.render.{CodeGroupHtmlOptions, AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, HtmlOptions, 
-    HtmlRenderer}
+    HtmlRenderer, RichContentPreparer, RichContentOptions, RichContentOutcome}
 
 class CookbookOutputSink <: AsyncTextSink {
     private let out = StringBuilder()
@@ -117,6 +117,15 @@ main(): Int64 {
         }
     }
     println(mathEngine.htmlRenderer().render(formula.document))
+
+    println("== rich-preparation ==")
+    let prepared = RichContentPreparer.prepare(formula, options: RichContentOptions(math: true))
+    for (entry in prepared.entries.toArray()) {
+        if (let RichContentOutcome.Unavailable(reason) <- entry.outcome) {
+            println("math preparation=${reason.code()}")
+        }
+    }
+    println(mathEngine.htmlRenderer(prepared: Some(prepared)).render(formula.document))
 
     println("== code-groups ==")
     let groupEngine = MarkdownEngine
