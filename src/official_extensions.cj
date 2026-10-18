@@ -37,61 +37,6 @@ public class OfficialExtensionDescriptor {
     }
 }
 
-internal class SmartPunctuationProcessor <: ExtensionDocumentProcessor {
-    /** 返回扩展 id。 */
-    public prop extensionId: String {
-        get() {
-            "smart-punctuation"
-        }
-    }
-    /** 返回 processor id。 */
-    public prop processorId: String {
-        get() {
-            "smart-punctuation"
-        }
-    }
-    /** 返回 processor 版本。 */
-    public prop version: String {
-        get() {
-            "1"
-        }
-    }
-    /** 返回处理阶段：AST transform。 */
-    public prop phase: ExtensionProcessingPhase {
-        get() {
-            ExtensionProcessingPhase.AstTransform
-        }
-    }
-    /** 返回处理优先级。 */
-    public prop priority: Int64 {
-        get() {
-            100
-        }
-    }
-    /** 返回转换是否确定性。 */
-    public prop deterministic: Bool {
-        get() {
-            true
-        }
-    }
-    /** 将 Text 节点中的省略号和 em/en dash 替换为对应 Unicode 标点。
-     * @param document 输入 Document。
-     * @param budget transform 操作预算。
-     * @param cancellation 协作式取消信号。
-     * @return 处理后的 `Document`。
-     */
-    public func process(document: Document, budget: OperationBudget, cancellation: CancellationToken): Document {
-        TreeRewriter.rewrite(document, {
-            node => match (node.kind) {
-                case NodeKind.Text =>
-                    let text = node.asText().getOrThrow()
-                    RewriteAction.MapText(text.value.replace("...", "…").replace("---", "—").replace("--", "–"))
-                case _ => RewriteAction.Keep
-            }
-        }, budget: budget, cancellation: cancellation)
-    }
-}
-
 /** 提供版本化、可选启用的官方扩展和组合 dialect。 */
 public class OfficialExtensions {
     /**
@@ -105,11 +50,11 @@ public class OfficialExtensions {
             OfficialExtensionDescriptor("gfm-strikethrough", "1.0", true, defaultProfiles: ["gfm-0.29", "gfm-modern-v1"]),
             OfficialExtensionDescriptor("gfm-autolink", "1.0", true, defaultProfiles: ["gfm-0.29", "gfm-modern-v1"]),
             OfficialExtensionDescriptor("footnotes", "2.0", false),
-            OfficialExtensionDescriptor("front-matter", "1.1", false),
-            OfficialExtensionDescriptor("math", "1.1", false),
+            OfficialExtensionDescriptor("front-matter", "1.0", false),
+            OfficialExtensionDescriptor("math", "1.0", false),
             OfficialExtensionDescriptor("definition-lists", "2.0", false),
             OfficialExtensionDescriptor("heading-ids", "2.0", false),
-            OfficialExtensionDescriptor("smart-punctuation", "1.1", false),
+            OfficialExtensionDescriptor("smart-punctuation", "2.0", false),
             OfficialExtensionDescriptor("github-alerts", "future", false),
             OfficialExtensionDescriptor("wikilinks", "future", false)
         ]
@@ -235,8 +180,8 @@ public class OfficialExtensions {
     public static func smartPunctuation(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
         builder
             .enable(
-                ExtensionManifest("smart-punctuation", "1.0.0", "builtin-1",
-                    capabilities: ExtensionCapabilities(transform: true)))
+                ExtensionManifest("smart-punctuation", "2.0.0", "builtin-2",
+                    capabilities: ExtensionCapabilities(parse: false, transform: true)))
             .documentProcessor(SmartPunctuationProcessor())
     }
 

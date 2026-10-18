@@ -18,6 +18,7 @@
 - 实际分块解析的追加会话、带身份与版本的原子更新、参考消费端与最终后置引用绑定。
 - 修正多行 setext 的 CRLF/container 来源映射、未闭合单 fence 的 EOF 范围和 Front Matter 起点。
 - 定义列表 2.0 的完整分组、普通块正文、各输出和分块支持；修复容器 Markdown 续行归属。
+- 智能标点 2.0 保护自动链接 URI、保留无变化节点身份，并累计扫描预算；补齐官方能力矩阵。
 - 结构化脚注绑定、可达定义脚注区、独立引用锚点和完整回链。
 - 标题显式 ID、自动 slug 和结构化 TOC，共用文档作用域及锚点冲突决策。
 - 校验 Document 与 SourceBuffer 的来源归属；修正 GFM 表格转义后的来源映射和 Markdown
@@ -31,7 +32,7 @@
 - benchmark evidence status `stale`；
 - CommonMark `652/652`；
 - GFM `671/671`；
-- 测试 `1566/1566`，`0` skipped，`0` failed；
+- 测试 `1573/1573`，`0` skipped，`0` failed；
 - public API snapshot `1573` declarations；
 - last complete CommonMark ratio `2.361586x`；
 - last complete GFM ratio `1.788010x`。

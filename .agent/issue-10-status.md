@@ -17,7 +17,8 @@ for automatic merge or publication.
 | MD-00.8 / MD-06.1..6 | Shared block/inline parser, final binder and document processors; actual feed-time closed AST fragments, atomic identity/version updates and replica, terminal failure, cumulative limits | Public append implemented; full phase/lifecycle redesign remains pending |
 | MD-06.7 | Real resumable HTML cursor over shared renderer rules; UTF-8 prefix acknowledgement, lazy tables/footnotes/escaping, terminal failure and cumulative output budgets; old buffered implementation removed | Implemented and correctness verified; final release performance/RSS qualification pending |
 | MD-06.8 | Public append scaling tests for long loose lists, deferred-reference paragraphs, unclosed fences and many closed blocks; real scan/node-construction/patch counters | Correctness and work growth PASS; latency, peak RSS and release performance qualification pending |
-| MD-00.6, MD-04..05 | Lifecycle cleanup, remaining extension acceptance and real optional rich rendering | In progress |
+| MD-04 / EXT-T05..06 | Versioned official capability matrix, exact enable/disable/profile output, literal Front Matter boundaries and bounded deterministic smart punctuation | Correctness verified in 1573-case run; lifecycle and final release gates pending |
+| MD-00.6 / MD-05 | Lifecycle cleanup and real optional rich rendering | In progress |
 | MD-07..08 | Existing editor/artifact phase baseline and real process/backend capability probes retained privately; no optimization verdict yet | Pending |
 | DONE-02..06 | Complete task-to-test ledger, new performance qualification, docs/consumer gates and core hosted evidence | Pending |
 
@@ -111,3 +112,24 @@ the finite 32-bit exhaustion remains explicit. Distribution and lookup regressio
 cover sparse serials and distinct lineage/serial pairs; the actual SDK HashMap
 probe preserves checksums before/after. Exploratory process timings are not the
 frozen performance gate or evidence of end-to-end throughput/RSS qualification.
+
+The official-extension checkpoint uses official STS 1.2.0 and formatted product
+tree `194f6e67bb1322678dfde0a1edcac4f238a0032084d208e34f786655a481c1f2`
+(workspace and disk-backed test tree verified equal). Full tests: 1573/1573 PASS,
+zero skips/errors/failures. The actual old smart-punctuation implementation failed
+the new automatic-link, unchanged-identity and scan-budget regressions; all now
+pass. Smart Punctuation 2.0 preserves automatic URI labels, code/raw HTML/literal
+payloads, destinations and titles; it uses longest matches within semantic Text,
+preserves raw source, keeps unchanged revisions and checks cumulative work/cancel.
+Entities/escapes are decoded before this transform; no quote engine is claimed.
+
+The matrix checks six optional extensions under both supported profiles with
+exact HTML, versions, lossless source, enable/disable and builder immutability.
+Duplicate registrations and the declared unsupported GFM 0.29 combinations are
+explicitly rejected, rather than expanding profile declarations to fit the test.
+Front Matter additionally covers CRLF/BOM ranges, normalized literal content,
+ordinary body separators, canonical output and single-byte/mixed/whole append.
+The combined punctuation/footnote/heading/definition/math/front-matter fixture
+checks batch/append, source maps, diagnostics, canonical output and snapshots.
+The API remains at 1573 declarations. Frozen performance, full lifecycle, real
+rich backends, edit/cache work, final consumers and hosted core gates are pending.

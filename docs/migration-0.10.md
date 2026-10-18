@@ -19,6 +19,7 @@
 - 标题 ID 位于 `hN`，显式 ID 先预留，标题与脚注共用冲突分配。拼装片段使用
   `BindingOptions(idScope: ...)`；具体规则见[文档绑定](semantic-binding.md)。
 - `SourceBuffer.text(node/document)` 和 `ParseResult` 校验实际来源归属。
+- 智能标点升为 2.0；保护自动链接的显示 URI，无内容变化时保留节点身份，并累计文本扫描预算。
 - `InlineSyntaxMatch` 增加 `rawLiteral` 和 `literalSpan`，分别提供原始捕获文本与精确范围；
   `literal` 仍是容器规范化后的匹配内容。
 - Extension SPI 为 `2`，parser plan 为 `3`，parse artifact 与 binary snapshot schema 为 `3`。

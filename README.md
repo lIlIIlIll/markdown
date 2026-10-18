@@ -212,7 +212,7 @@ markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、�
 | Offline evidence ready | `not ready` |
 | CI verified at evidence repository HEAD | `no` |
 | Published release | `no` |
-| Tests | `1566/1566` passed; `0` skipped; `0` failed |
+| Tests | `1573/1573` passed; `0` skipped; `0` failed |
 | CommonMark conformance | `652/652` |
 | GFM conformance | `671/671` |
 | Public API snapshot | `1573` declarations |
