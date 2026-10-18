@@ -1,5 +1,9 @@
 # Benchmark harness
 
+The [editor/cache decision report](../docs/reports/editor-cache-cost.md) records
+the measured alternatives and their adoption decisions. Reproduction tools and
+their restricted scope are documented in [probes/README.md](probes/README.md).
+
 The separate [append/output workload report](../docs/reports/append-cost.md)
 records per-feed latency, first closed block, finish, charged work and a Linux
 RSS checkpoint. Run `measure_append.py` against an explicitly built library and

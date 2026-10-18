@@ -21,7 +21,7 @@ for automatic merge or publication.
 | MD-00.6 | Actual AST transform → binding → read-only analysis, shared batch/append pipeline, early whole-document execution gates and meaningful capability validation | Implemented; 1585-case run, consumers and API/evidence gates PASS |
 | MD-05 / RND-T01..02 | Math 2.0, Code Groups 1.0, typed preparation and pinned actual KaTeX/Shiki/Mermaid Linux adapter with explicit offline runtime, licenses, bounded proxy/subreaper, validated outputs and full source fallback | Local real Cangjie/Chrome/clipboard/process/offline qualification PASS; frozen performance and hosted core gates remain pending |
 | MD-05.7 / code-group portion of RND-T02 | Group/Item with ordinary fenced children, titles, line ranges and exact copy text; optional localized tabs/copy and static fallback | 1600-case Cangjie run, all normal consumers and actual Chrome clipboard/keyboard/AX checks PASS |
-| MD-07..08 | Existing editor/artifact phase baseline and real process/backend capability probes retained privately; no optimization verdict yet | Pending |
+| MD-07 / MD-08.1..5/.7 | Public editor semantics and phase costs; restricted variable-local and AST/token experiments; independent public encoder proof; complete measured adoption decisions | Correctness PASS; no candidate adopted; feature on/off costs (08.6) and frozen release qualification pending |
 | DONE-02..06 | Complete task-to-test ledger, new performance qualification, docs/consumer gates and core hosted evidence | Pending |
 
 The prior 0.9 raw reports remain historical measurements of their recorded
@@ -406,3 +406,25 @@ renderer expansion scratch stack is current traversal, not a buffered legacy
 renderer; its name now reflects that role. Standard spec/GFM URI policies and
 accurately named complete-input conveniences are retained. Frozen performance,
 complete feature-cost reports and hosted core qualification remain pending.
+
+The MD-07/08 experiment decision report is `docs/reports/editor-cache-cost.md`,
+with all 3168 process rows, warmups, A/A and A/B samples and original report/log
+hashes in its numeric projection. Every retained log/input digest was verified.
+CST coalescing is not adopted because eight of nine bounded follow-up groups
+fail the preset maximum-A/A rule. The restricted variable-local candidate lowers
+scan work but has no measured median end-to-end benefit; the noisy results do
+not establish a statistically reliable regression. Restricted AST/token restore
+has promising read medians but omits general source-grammar certification and
+uses larger wire formats, so it is not shipped. A complete-check source-digest
+candidate passed instrumented encode gates and 1371 public exact-wire cases,
+but its independent uninstrumented 256KiB A/A gate failed. It was reverted and
+the original library rebuilt byte-identically. No timing threshold was relaxed,
+no historical report rebound, and no new production optimization is claimed.
+The actual feature on/off and rich-preparation costs and final frozen gates
+remain required.
+
+The formatted experimental source was rebuilt from the retained measured source;
+12 bounded functional cases and both public consumer compilations PASS. This
+is a new smoke qualification, not a timing rerun. Docs (55 Markdown pages),
+format and privacy checks PASS. Raw historical executable/source hashes stay
+unchanged in the report.
