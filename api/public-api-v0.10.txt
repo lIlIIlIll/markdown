@@ -1243,7 +1243,6 @@ math.cj:package=markdown:public class MathSourcePart {
 native/accelerator.cj:package=markdown.native:owner=class/NativeLineScanner:public func implementationId(): String {
 native/accelerator.cj:package=markdown.native:owner=class/NativeLineScanner:public func recordFormatVersion(): Int64 {
 native/accelerator.cj:package=markdown.native:owner=class/NativeLineScanner:public func scanLineRecords(input: Array<Byte>, capacity: Int64): ?LineScanRecords {
-native/accelerator.cj:package=markdown.native:owner=class/NativeLineScanner:public func scanLines(input: Array<Byte>, capacity: Int64): ?Array<UInt64> {
 native/accelerator.cj:package=markdown.native:owner=class/NativeLineScanner:public init() {
 native/accelerator.cj:package=markdown.native:public class NativeLineScanner <: LineScannerAccelerator {
 node/node.cj:package=markdown.node:owner=class/NodeRichContentBackend:public func identity(kind: RichContentKind): String {
@@ -1345,10 +1344,8 @@ profile.cj:package=markdown:owner=class/MarkdownProfile:public func sameIdentity
 profile.cj:package=markdown:owner=class/MarkdownProfile:public let id: String
 profile.cj:package=markdown:owner=class/MarkdownProfile:public let kind: ProfileKind
 profile.cj:package=markdown:owner=class/MarkdownProfile:public let standardVersion: String
-profile.cj:package=markdown:owner=class/MarkdownProfile:public static func commonMark(): MarkdownProfile {
 profile.cj:package=markdown:owner=class/MarkdownProfile:public static func commonMark0312(): MarkdownProfile {
 profile.cj:package=markdown:owner=class/MarkdownProfile:public static func custom(id: String, version: String): MarkdownProfile {
-profile.cj:package=markdown:owner=class/MarkdownProfile:public static func gfm(): MarkdownProfile {
 profile.cj:package=markdown:owner=class/MarkdownProfile:public static func gfm029(): MarkdownProfile {
 profile.cj:package=markdown:owner=class/MarkdownProfile:public static func gfmModernV1(): MarkdownProfile {
 profile.cj:package=markdown:owner=enum/HtmlPolicyKind:enum-variant | GfmCompatible
@@ -1558,8 +1555,7 @@ scanner_accelerator.cj:package=markdown:owner=class/AcceleratedMarkdownEngine:pu
 scanner_accelerator.cj:package=markdown:owner=extend/extend%20MarkdownEngine%20%7B:public func acceleratedBy(accelerator: LineScannerAccelerator): AcceleratedMarkdownEngine {
 scanner_accelerator.cj:package=markdown:owner=interface/LineScannerAccelerator:interface-member func implementationId(): String
 scanner_accelerator.cj:package=markdown:owner=interface/LineScannerAccelerator:interface-member func recordFormatVersion(): Int64 {
-scanner_accelerator.cj:package=markdown:owner=interface/LineScannerAccelerator:interface-member func scanLineRecords(input: Array<Byte>, capacity: Int64): ?LineScanRecords {
-scanner_accelerator.cj:package=markdown:owner=interface/LineScannerAccelerator:interface-member func scanLines(input: Array<Byte>, capacity: Int64): ?Array<UInt64>
+scanner_accelerator.cj:package=markdown:owner=interface/LineScannerAccelerator:interface-member func scanLineRecords(input: Array<Byte>, capacity: Int64): ?LineScanRecords
 scanner_accelerator.cj:package=markdown:owner=struct/LineScanRecords:public init(records: Array<UInt64>, count: Int64) {
 scanner_accelerator.cj:package=markdown:owner=struct/LineScanRecords:public let count: Int64
 scanner_accelerator.cj:package=markdown:owner=struct/LineScanRecords:public let records: Array<UInt64>

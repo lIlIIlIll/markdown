@@ -68,7 +68,7 @@ internal class HtmlOutputCursor {
     private let budget: OperationBudget
     private let chunkBytes: Int64
     private let planner = HtmlPlanSink()
-    private let legacyFrames = ArrayList<ArenaRenderFrame>()
+    private let expansionFrames = ArrayList<ArenaRenderFrame>()
     private let actions = ArrayList<HtmlCursorAction>()
     private var emission: ?HtmlCursorEmission = None
     private var inputOffset: Int64 = 0
@@ -151,7 +151,7 @@ internal class HtmlOutputCursor {
             case HtmlCursorAction.Output(value) =>
                 emission = Some(value)
                 inputOffset = value.start
-            case HtmlCursorAction.Node(frame) => renderer.expandCursorNode(frame, legacyFrames, planner, cancellation,
+            case HtmlCursorAction.Node(frame) => renderer.expandCursorNode(frame, expansionFrames, planner, cancellation,
                 budget)
             case HtmlCursorAction.Children(parent, index, header, suppress, listItem) =>
                 let children = parent.children()

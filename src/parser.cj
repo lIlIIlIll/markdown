@@ -1022,24 +1022,14 @@ internal class ParserSession {
         bytes: Array<Byte>,
         accelerator: LineScannerAccelerator
     ): ?Array<LineRecord> {
+        if (accelerator.recordFormatVersion() != 4) {
+            throw IllegalStateException("line scanner accelerator returned an unsupported record format")
+        }
         if (value.size == 0) {
             scanSteps(0)
             return Some(
                 [LineRecord("", 0, 0, 0, hasCoreInlineSpecial: false, hasCoreDelimiter: false,
                     hasTextLoweringCandidate: false)])
-        }
-        let recordFormat = accelerator.recordFormatVersion()
-        if (recordFormat != 1 && recordFormat != 2 && recordFormat != 3 && recordFormat != 4) {
-            throw IllegalStateException("line scanner accelerator returned an unsupported record format")
-        }
-        let recordShift: Int64 = if (recordFormat == 4) {
-            6
-        } else if (recordFormat == 3) {
-            5
-        } else if (recordFormat == 2) {
-            4
-        } else {
-            3
         }
         // One packed UInt64 per line is bounded and compact. A 16-byte average
         // covers the standard/profile corpora while halving the GC array that
@@ -1068,7 +1058,7 @@ internal class ParserSession {
         }
         for (lineIndex in 0..recordCount) {
             let packed = records[lineIndex]
-            let endWithNewline = Int64(packed >> recordShift)
+            let endWithNewline = Int64(packed >> 6)
             let newlineWidth = Int64(packed & 0x3u64)
             let end = endWithNewline - newlineWidth
             if (endWithNewline < start || endWithNewline > bytes.size || end < start || newlineWidth > 2 || (lineIndex +
@@ -1081,20 +1071,8 @@ internal class ParserSession {
                     span: Some(mappedSpan(start, end)))
             }
             lines[lineIndex] = LineRecord(value[start..end], start, end, endWithNewline,
-                hasCoreInlineSpecial: (packed & 0x4u64) != 0u64,
-                hasCoreDelimiter: if (recordFormat == 2 || recordFormat == 3 || recordFormat == 4) {
-                    (packed & 0x8u64) != 0u64
-                } else {
-                    true
-                }, hasTextLoweringCandidate: if (recordFormat == 3 || recordFormat == 4) {
-                    (packed & 0x10u64) != 0u64
-                } else {
-                    true
-                }, hasReferenceOpener: if (recordFormat == 4) {
-                    (packed & 0x20u64) != 0u64
-                } else {
-                    true
-                })
+                hasCoreInlineSpecial: (packed & 0x4u64) != 0u64, hasCoreDelimiter: (packed & 0x8u64) != 0u64,
+                hasTextLoweringCandidate: (packed & 0x10u64) != 0u64, hasReferenceOpener: (packed & 0x20u64) != 0u64)
             start = endWithNewline
         }
         Some(lines)

@@ -1817,7 +1817,7 @@ internal class AstArenaBuilder {
     }
 
     /** Returns a read-only view of the builder without sealing its partial
-     * chunks. Extension compatibility code may inspect a node while parsing is
+     * chunks. Extension parser callbacks may inspect a node while parsing is
      * still active, so a preview must not change the append/index layout.
      */
     internal func snapshotView(): Document {

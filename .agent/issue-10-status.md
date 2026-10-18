@@ -393,3 +393,16 @@ passed equivalence, but the conservative maximum-A/A-noise gate failed eight of
 nine end-to-end follow-up groups. No token coalescing entered production. The
 measured feasibility of variable-local and direct artifact restoration and the
 final frozen release/performance qualification still remain open.
+
+The compatibility cleanup checkpoint uses STS 1.2.0 and product tree
+`6c777aa402a9de37ca65bfc86b1fabcc5af9420678dfc78d9e31a40b1e6f1ce1`.
+Full tests: 1621/1621 PASS, zero skipped/errors/failures; normal build, format,
+docs, API and 70 evidence/API Python tests PASS. The unversioned commonMark/gfm
+profile aliases and scanner v1-v3 decoder/scanLines adapters are removed. Current
+v4 tests preserve emphasis, entity coalescing, Unicode and valid-prefix risks;
+old/unknown formats reject before calling the scanner, including empty input.
+The pure Cangjie capacity/input fallback remains a current capability. The shared
+renderer expansion scratch stack is current traversal, not a buffered legacy
+renderer; its name now reflects that role. Standard spec/GFM URI policies and
+accurately named complete-input conveniences are retained. Frozen performance,
+complete feature-cost reports and hosted core qualification remain pending.

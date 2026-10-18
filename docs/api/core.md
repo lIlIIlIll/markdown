@@ -233,6 +233,11 @@ rule 和可选 fix。程序应根据 code 分支。
 
 ## Capability discovery
 
+可选 `LineScannerAccelerator` 只接受 packed record v4。实现 `scanLineRecords(input,
+capacity)`，返回 `LineScanRecords(records, count)`；只读取有效前缀。容量不足或输入
+不受支持时返回 `None`，继续走纯仓颉 scanner。旧 v1–v3 和未知版本在扫描前拒绝，
+不提供旧 `scanLines` 包装。格式位定义见公开接口注释，C scanner 使用同一格式。
+
 ```cangjie
 let capabilities = engine.capabilities()
 let models = engine.executionModels()

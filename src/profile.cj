@@ -63,14 +63,6 @@ public class MarkdownProfile {
     }
 
     /**
-     * `commonMark0312()` 的稳定便捷别名。
-     * @return CommonMark 0.31.2 profile。
-     */
-    public static func commonMark(): MarkdownProfile {
-        commonMark0312()
-    }
-
-    /**
      * 返回 GFM 0.29 profile，用于与该版本语料对齐。
      * @return GFM 0.29 profile。
      */
@@ -80,14 +72,6 @@ public class MarkdownProfile {
 
     internal static func gfm029CommonMarkBase(): MarkdownProfile {
         MarkdownProfile(ProfileKind.Custom, "gfm-0.29-commonmark-base", "0.29-gfm")
-    }
-
-    /**
-     * `gfmModernV1()` 的稳定便捷入口。
-     * @return modern GFM profile。
-     */
-    public static func gfm(): MarkdownProfile {
-        gfmModernV1()
     }
 
     /**

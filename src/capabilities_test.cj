@@ -8,7 +8,7 @@ private class FallbackScannerAccelerator <: LineScannerAccelerator {
         "test-fallback"
     }
 
-    public func scanLines(_: Array<Byte>, _: Int64): ?Array<UInt64> {
+    public func scanLineRecords(_: Array<Byte>, _: Int64): ?LineScanRecords {
         None
     }
 }

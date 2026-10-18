@@ -34,7 +34,6 @@
 | `MarkdownProfile.commonMark0312()` | CommonMark 0.31.2，默认 |
 | `MarkdownProfile.gfm029()` | GFM 0.29 |
 | `MarkdownProfile.gfmModernV1()` | 仓库版本化 modern GFM |
-| `MarkdownProfile.gfm()` | `gfmModernV1()` 的稳定便捷入口 |
 | `MarkdownProfile.custom(id, version)` | 自定义 profile identity |
 
 ## Engine

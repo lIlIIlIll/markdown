@@ -10,46 +10,39 @@ private class InvalidScannerAccelerator <: LineScannerAccelerator {
         "invalid-test-scanner"
     }
 
-    public func scanLines(_: Array<Byte>, _: Int64): ?Array<UInt64> {
-        Some([UInt64.Max])
+    public func scanLineRecords(_: Array<Byte>, _: Int64): ?LineScanRecords {
+        Some(LineScanRecords([UInt64.Max], 1))
     }
 }
 
-private class LegacyV1ScannerAccelerator <: LineScannerAccelerator {
+private class SingleLineScannerAccelerator <: LineScannerAccelerator {
     public func implementationId(): String {
-        "legacy-v1-test-scanner"
+        "single-line-v4-test-scanner"
     }
 
-    public func scanLines(bytes: Array<Byte>, _: Int64): ?Array<UInt64> {
-        Some([(UInt64(bytes.size) << 3) | 0x4u64])
-    }
-}
-
-private class LegacyV2ScannerAccelerator <: LineScannerAccelerator {
-    public func implementationId(): String {
-        "legacy-v2-test-scanner"
-    }
-
-    public func recordFormatVersion(): Int64 {
-        2
-    }
-
-    public func scanLines(bytes: Array<Byte>, _: Int64): ?Array<UInt64> {
-        Some([(UInt64(bytes.size) << 4) | 0x4u64])
+    public func scanLineRecords(bytes: Array<Byte>, _: Int64): ?LineScanRecords {
+        // All optional work flags are conservative; the invalid capacity tail is unread.
+        Some(LineScanRecords([(UInt64(bytes.size) << 6) | 0x3Cu64, UInt64.Max], 1))
     }
 }
 
 private class UnsupportedScannerAccelerator <: LineScannerAccelerator {
+    private let version: Int64
+
+    init(version: Int64) {
+        this.version = version
+    }
+
     public func implementationId(): String {
         "unsupported-test-scanner"
     }
 
     public func recordFormatVersion(): Int64 {
-        99
+        version
     }
 
-    public func scanLines(_: Array<Byte>, _: Int64): ?Array<UInt64> {
-        Some([])
+    public func scanLineRecords(_: Array<Byte>, _: Int64): ?LineScanRecords {
+        throw IllegalStateException("unsupported scanner must not run")
     }
 }
 
@@ -58,12 +51,8 @@ private class InvalidScannerCountAccelerator <: LineScannerAccelerator {
         "invalid-count-test-scanner"
     }
 
-    public func scanLines(_: Array<Byte>, _: Int64): ?Array<UInt64> {
-        Some([])
-    }
-
     public func scanLineRecords(bytes: Array<Byte>, _: Int64): ?LineScanRecords {
-        Some(LineScanRecords([(UInt64(bytes.size) << 3) | 0x4u64], 2))
+        Some(LineScanRecords([(UInt64(bytes.size) << 6) | 0x3Cu64], 2))
     }
 }
 
@@ -352,25 +341,30 @@ class InputBehaviorTest {
     }
 
     @TestCase
-    func preservesLegacyScannerSemanticsAndRejectsUnknownFormats(): Unit {
-        let legacy = MarkdownEngine.builder().build().acceleratedBy(LegacyV1ScannerAccelerator())
-        let document = legacy.parse("*legacy*".toArray()).document
-        @Expect(HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(document), "<p><em>legacy</em></p>\n")
-
-        // Version 2 has no text-lowering bit. It must therefore retain the
-        // conservative coalescing path for escape/entity/code markers.
-        let legacyV2 = MarkdownEngine.builder().build().acceleratedBy(LegacyV2ScannerAccelerator())
-        let entity = legacyV2.parse("a&amp;b".toArray())
+    func currentScannerPreservesInlineSemanticsAndReadsOnlyValidPrefix(): Unit {
+        let engine = MarkdownEngine.builder().build().acceleratedBy(SingleLineScannerAccelerator())
+        let renderer = HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() })
+        @Expect(renderer.render(engine.parse("*emphasis*".toArray()).document), "<p><em>emphasis</em></p>\n")
+        let entity = engine.parse("a&amp;b".toArray())
         @Expect(entity.document.children()[0].children().size, 1)
         @Expect(entity.document.children()[0].children()[0].asText().getOrThrow().value, "a&b")
-        @Expect(entity.document.storedNodeCount, entity.document.nodeCount)
+        for (source in ["`a&amp;b`", "[unresolved]", "中😀 &amp; *text*", "a\\*b"]) {
+            @Expect(renderer.render(engine.parse(source.toArray()).document), renderer.render(Markdown.parse(source).document))
+        }
+    }
 
-        let unsupported = MarkdownEngine.builder().build().acceleratedBy(UnsupportedScannerAccelerator())
-        try {
-            unsupported.parse("x".toArray())
-            @Expect(false)
-        } catch (error: IllegalStateException) {
-            @Expect(error.message.contains("unsupported record format"), true)
+    @TestCase
+    func rejectsOldAndUnknownScannerFormatsBeforeCallingScanner(): Unit {
+        for (version in [1, 2, 3, 99]) {
+            let engine = MarkdownEngine.builder().build().acceleratedBy(UnsupportedScannerAccelerator(version))
+            for (source in ["x", ""]) {
+                try {
+                    engine.parse(source.toArray())
+                    @Expect(false)
+                } catch (error: IllegalStateException) {
+                    @Expect(error.message.contains("unsupported record format"), true)
+                }
+            }
         }
     }
 

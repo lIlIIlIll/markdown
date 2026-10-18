@@ -5,6 +5,10 @@
 实测仍在推进，不能从版本号推断它们已完成或通过发布门禁。
 
 - 使用 `result.document`；移除 `ParseResult.ast` 和 `parsePartial`。
+- 移除 `MarkdownProfile.commonMark()` / `gfm()` 别名，显式选择
+  `commonMark0312()` / `gfmModernV1()`。
+- LineScannerAccelerator 只接受 packed record v4，以 `scanLineRecords` 返回有效前缀；
+  移除旧 `scanLines` 数组接口和 v1–v3 解码。`None` 仍表示当前输入使用纯仓颉扫描。
 - 移除旧 buffered 语义的 `newSession` 别名。仍需一次性缓冲时使用
   `newBufferedInputSession`；实际分块 AST 使用 `newAppendSession`。
 - `parse` 成功返回 `ParseResult`，致命失败抛出异常。`tryParse` 返回

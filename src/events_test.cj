@@ -313,7 +313,7 @@ class SourceEventApiTest {
     func eventRangesAndStartEndPairsRemainBalanced(): Unit {
         let events = MarkdownEngine
             .builder()
-            .profile(MarkdownProfile.gfm())
+            .profile(MarkdownProfile.gfmModernV1())
             .build()
             .parseEvents("# 标题\n\nA *strong* value\n")
             .events
@@ -487,7 +487,7 @@ class SourceEventApiTest {
 
     @TestCase
     func rawSessionChunkPartitionDifferentialPreservesEventsAndSpans(): Unit {
-        let engine = MarkdownEngine.builder().profile(MarkdownProfile.gfm()).build()
+        let engine = MarkdownEngine.builder().profile(MarkdownProfile.gfmModernV1()).build()
         let bytes = "# head\n\n| a | b |\n| - | - |\n| 你 | 😀 |\n\nlast".toArray()
         let whole = collectRawSessionEvents(engine, bytes, [bytes.size])
         let partitioned = collectRawSessionEvents(engine, bytes, [1, 2, 5, 3, 8])
