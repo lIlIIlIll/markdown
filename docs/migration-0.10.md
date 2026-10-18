@@ -6,7 +6,7 @@
 
 - 使用 `result.document`；移除 `ParseResult.ast` 和 `parsePartial`。
 - 移除旧 buffered 语义的 `newSession` 别名。仍需一次性缓冲时使用
-  `newBufferedInputSession`；新追加式入口将在真实实现完成后导出。
+  `newBufferedInputSession`；实际分块 AST 使用 `newAppendSession`。
 - `parse` 成功返回 `ParseResult`，致命失败抛出异常。`tryParse` 返回
   `ParseOutcome.Success(result)` 或 `Failure(error)`，失败不携带 Document。
 - `NodeId` 包含 lineage 与不回收的局部编号；不再由 arena 下标或文本内容推断身份。
@@ -27,3 +27,10 @@
 
 公开声明见[0.10 API snapshot](../api/public-api-v0.10.txt)。开发期间的完整验证进度见
 [issue #10 实施记录](../.agent/issue-10-status.md)。
+
+## 追加输入
+
+需要实际分块 AST 的消费者改用 `newAppendSession()` 和 `AppendReplica`。feed 返回
+带会话/版本/目标身份的更新，finish 统一绑定；不要把临时块当作 ParseResult。
+`newBufferedInputSession()` 仍用于只累计输入的场景。具体调用和终态处理见
+[追加输入与更新消费](append-input.md)。HTML 背压适配器的替换仍属于未完成的开发范围。

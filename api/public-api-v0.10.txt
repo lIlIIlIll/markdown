@@ -1,4 +1,55 @@
 # markdown public API snapshot v0.10
+append.cj:package=markdown:owner=class/AppendBlockView:public let finalSemantics: Bool
+append.cj:package=markdown:owner=class/AppendBlockView:public let node: NodeRef
+append.cj:package=markdown:owner=class/AppendBlockView:public let source: SourceBuffer
+append.cj:package=markdown:owner=class/AppendBlockView:public let sourceOffset: Int64
+append.cj:package=markdown:owner=class/AppendBlockView:public prop sourceSpan: ?SourceSpan {
+append.cj:package=markdown:owner=class/AppendInputSession:public func feed(chunk: Array<Byte>): AppendUpdateBatch {
+append.cj:package=markdown:owner=class/AppendInputSession:public func feed(chunk: String): AppendUpdateBatch {
+append.cj:package=markdown:owner=class/AppendInputSession:public func finish(): AppendUpdateBatch {
+append.cj:package=markdown:owner=class/AppendLimits:public init(maximumPendingBytes!: Int64 = 32 * 1024 * 1024, maximumRetainedInputBytes!: Int64 = 32 * 1024 * 1024, maximumNodeConstructionSteps!: Int64 = 16000000, maximumPatchSteps!: Int64 = 4000000, maximumUpdateBatches!: Int64 = 4000000) {
+append.cj:package=markdown:owner=class/AppendLimits:public let maximumNodeConstructionSteps: Int64
+append.cj:package=markdown:owner=class/AppendLimits:public let maximumPatchSteps: Int64
+append.cj:package=markdown:owner=class/AppendLimits:public let maximumPendingBytes: Int64
+append.cj:package=markdown:owner=class/AppendLimits:public let maximumRetainedInputBytes: Int64
+append.cj:package=markdown:owner=class/AppendLimits:public let maximumUpdateBatches: Int64
+append.cj:package=markdown:owner=class/AppendProgress:public let inputBytes: Int64
+append.cj:package=markdown:owner=class/AppendProgress:public let nodeConstructionSteps: Int64
+append.cj:package=markdown:owner=class/AppendProgress:public let patchSteps: Int64
+append.cj:package=markdown:owner=class/AppendProgress:public let pendingBytes: Int64
+append.cj:package=markdown:owner=class/AppendProgress:public let resolvedInlineTasks: Int64
+append.cj:package=markdown:owner=class/AppendProgress:public let scanSteps: Int64
+append.cj:package=markdown:owner=class/AppendUpdateBatch:public let changes: ImmutableArray<AppendChange>
+append.cj:package=markdown:owner=class/AppendUpdateBatch:public let fromVersion: Int64
+append.cj:package=markdown:owner=class/AppendUpdateBatch:public let progress: AppendProgress
+append.cj:package=markdown:owner=class/AppendUpdateBatch:public let protocolVersion: Int64 = 1
+append.cj:package=markdown:owner=class/AppendUpdateBatch:public let sequence: Int64
+append.cj:package=markdown:owner=class/AppendUpdateBatch:public let sessionId: Int64
+append.cj:package=markdown:owner=class/AppendUpdateBatch:public let state: AppendState
+append.cj:package=markdown:owner=class/AppendUpdateBatch:public let toVersion: Int64
+append.cj:package=markdown:owner=enum/AppendChange:enum-variant | Append(AppendBlockView)
+append.cj:package=markdown:owner=enum/AppendChange:enum-variant | Bind(ParseResult)
+append.cj:package=markdown:owner=enum/AppendChange:enum-variant | Remove(NodeId)
+append.cj:package=markdown:owner=enum/AppendChange:enum-variant | Replace(NodeId, AppendBlockView)
+append.cj:package=markdown:owner=enum/AppendState:enum-variant | AwaitingInput
+append.cj:package=markdown:owner=enum/AppendState:enum-variant | Complete
+append.cj:package=markdown:owner=enum/AppendState:enum-variant | Failed(MarkdownException)
+append.cj:package=markdown:owner=extend/extend%20MarkdownEngine%20%7B:public func newAppendSession(utf8Policy!: Utf8Policy = Utf8Policy.Strict, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe(), limits!: AppendLimits = AppendLimits()): AppendInputSession {
+append.cj:package=markdown:public class AppendBlockView {
+append.cj:package=markdown:public class AppendInputSession {
+append.cj:package=markdown:public class AppendLimits {
+append.cj:package=markdown:public class AppendProgress {
+append.cj:package=markdown:public class AppendUpdateBatch {
+append.cj:package=markdown:public enum AppendChange {
+append.cj:package=markdown:public enum AppendState {
+append_replica.cj:package=markdown:owner=class/AppendReplica:public func apply(batch: AppendUpdateBatch): Unit {
+append_replica.cj:package=markdown:owner=class/AppendReplica:public func blocks(): ImmutableArray<AppendBlockView> {
+append_replica.cj:package=markdown:owner=class/AppendReplica:public init() {
+append_replica.cj:package=markdown:owner=class/AppendReplica:public prop result: ?ParseResult {
+append_replica.cj:package=markdown:owner=class/AppendReplica:public prop sessionId: ?Int64 {
+append_replica.cj:package=markdown:owner=class/AppendReplica:public prop state: AppendState {
+append_replica.cj:package=markdown:owner=class/AppendReplica:public prop version: Int64 {
+append_replica.cj:package=markdown:public class AppendReplica {
 arena.cj:package=markdown:owner=class/Document:public func children(): NodeChildren {
 arena.cj:package=markdown:owner=class/Document:public func children(node: NodeRef): NodeChildren {
 arena.cj:package=markdown:owner=class/Document:public func nodeAt(index: Int64): NodeRef {
@@ -358,7 +409,7 @@ capabilities.cj:package=markdown:owner=extend/extend%20MarkdownEngine%20%7B:publ
 capabilities.cj:package=markdown:public class EngineCapabilities {
 capabilities.cj:package=markdown:public class ExecutionModelCapabilities {
 capabilities.cj:package=markdown:public class ExtensionCapabilityReport {
-core/core.cj:package=markdown.core:public import markdown.{AcceleratedMarkdownEngine, AstInvariantValidator, CancellationSource, CancellationToken, BindingOptions, CodeBlockKind, CodeBlockNodeView, CodeSpanNodeView, Diagnostic, DiagnosticSeverity, Document, DocumentBindings, DocumentNodeView, EngineCapabilities, EventParseResult, EventParseSummary, ExecutionModelCapabilities, HardBreakKind, HardBreakNodeView, HeadingBinding, HeadingNodeView, TocEntry, HtmlExecutionMode, HtmlExecutionPath, HtmlExecutionResult, HtmlBlockNodeView, HtmlInlineNodeView, ImageNodeView, ImmutableArray, InputReadFailureException, LimitExceededException, LineScanRecords, LineScannerAccelerator, LinkBinding, LinkNodeView, LinkSyntaxKind, ListDelimiter, ListItemNodeView, ListKind, ListNodeView, Markdown, MarkdownEngine, MarkdownEventAttribute, MarkdownEventMode, MarkdownEventSink, MarkdownSourceEvent, MarkdownSourceEventKind, MarkdownEngineBuilder, MarkdownErrorCode, MarkdownException, MarkdownProfile, NodeCategory, NodeId, NodeKind, NodeOrigin, NodeOriginKind, NodeRef, OperationBudget, OwnedUtf8Input, ParseLimits, ParseOutcome, ParseResult, ProfileKind, RawBlockEventSession, ReferenceDefinition, ReusableUtf8Input, SourceBuffer, SourcePosition, SourcePositionMap, SourceSlice, SourceSpan, TableAlignment, TaskState, TextNodeView, Utf16Position, Utf8Policy, VisualPosition}
+core/core.cj:package=markdown.core:public import markdown.{AppendLimits, AppendBlockView, AppendChange, AppendState, AppendProgress, AppendUpdateBatch, AppendInputSession, AppendReplica, AcceleratedMarkdownEngine, AstInvariantValidator, CancellationSource, CancellationToken, BindingOptions, CodeBlockKind, CodeBlockNodeView, CodeSpanNodeView, Diagnostic, DiagnosticSeverity, Document, DocumentBindings, DocumentNodeView, EngineCapabilities, EventParseResult, EventParseSummary, ExecutionModelCapabilities, HardBreakKind, HardBreakNodeView, HeadingBinding, HeadingNodeView, TocEntry, HtmlExecutionMode, HtmlExecutionPath, HtmlExecutionResult, HtmlBlockNodeView, HtmlInlineNodeView, ImageNodeView, ImmutableArray, InputReadFailureException, LimitExceededException, LineScanRecords, LineScannerAccelerator, LinkBinding, LinkNodeView, LinkSyntaxKind, ListDelimiter, ListItemNodeView, ListKind, ListNodeView, Markdown, MarkdownEngine, MarkdownEventAttribute, MarkdownEventMode, MarkdownEventSink, MarkdownSourceEvent, MarkdownSourceEventKind, MarkdownEngineBuilder, MarkdownErrorCode, MarkdownException, MarkdownProfile, NodeCategory, NodeId, NodeKind, NodeOrigin, NodeOriginKind, NodeRef, OperationBudget, OwnedUtf8Input, ParseLimits, ParseOutcome, ParseResult, ProfileKind, RawBlockEventSession, ReferenceDefinition, ReusableUtf8Input, SourceBuffer, SourcePosition, SourcePositionMap, SourceSlice, SourceSpan, TableAlignment, TaskState, TextNodeView, Utf16Position, Utf8Policy, VisualPosition}
 diagnostic.cj:package=markdown:owner=class/Diagnostic:public init(code: String, severity: DiagnosticSeverity, message: String, span: SourceSpan, relatedSpans!: Array<SourceSpan> = [], extensionId!: ?String = None, ruleId!: ?String = None, fixes!: Array<DiagnosticFix> = []) {
 diagnostic.cj:package=markdown:owner=class/Diagnostic:public let code: String
 diagnostic.cj:package=markdown:owner=class/Diagnostic:public let extensionId: ?String

@@ -145,7 +145,7 @@ public class ExecutionModelCapabilities {
             case None => ""
         }
         streamInput = "buffered-before-parse"
-        chunkInput = "buffered-until-finish"
+        chunkInput = "append-closed-blocks-with-final-binding"
         partialParse = "failure-result-without-completed-prefix"
         asyncHtml = "pre-rendered-buffered-output"
     }

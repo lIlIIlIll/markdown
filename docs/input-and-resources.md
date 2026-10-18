@@ -1,6 +1,6 @@
 # 输入、限制和取消
 
-`MarkdownEngine` 接受 String、bytes、ownership wrapper、InputStream 和 buffered
+`MarkdownEngine` 接受 String、bytes、ownership wrapper、InputStream、追加会话和 buffered
 session。所有 AST parse 入口执行相同语义和资源限制。
 
 ## 选择输入 API
@@ -12,6 +12,7 @@ session。所有 AST parse 入口执行相同语义和资源限制。
 | `parse(OwnedUtf8Input)` | unsafe ownership-transfer；不重复验证 | 调用期间 |
 | `parse(ReusableUtf8Input)` | 安全构造验证和复制一次；可 unsafe take | 每次调用期间 |
 | `parse(InputStream)` | 完整缓冲后解码 | stream EOF 后 |
+| `AppendInputSession` | 保留输入和结构闭合的 AST fragment | feed 产生草稿，finish 完成语义 |
 | `BufferedInputSession` | 累计全部 chunks | `finish()` |
 
 String、bytes、Owned、Reusable 和 Stream 每次都创建完整 AST、NodeId、SourceSpan、
@@ -26,6 +27,12 @@ let replaced = engine.parse(bytes, utf8Policy: Utf8Policy.ReplaceInvalid)
 
 `Strict` 遇到非法序列时失败。`ReplaceInvalid` 插入 U+FFFD，记录 diagnostic，并保留
 原始 byte offset mapping。
+
+## 追加输入
+
+`newAppendSession()` 在 feed 中交付结构闭合块，并以带会话/版本/目标身份的更新完成最终
+修订。使用 `AppendReplica` 验证并原子消费批次；完整结果只在最终成功后出现。
+详见[追加输入与更新消费](append-input.md)。
 
 ## Buffered input
 

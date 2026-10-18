@@ -36,13 +36,15 @@ internal class ParserNodeFactory {
     private var hasOrphans = false
     internal var requiresBinding = false
 
-    init(maximumAstNodes: Int64, estimatedInputBytes!: Int64 = 0, source!: ?SourceBuffer = None) {
+    init(maximumAstNodes: Int64, estimatedInputBytes!: Int64 = 0, source!: ?SourceBuffer = None,
+        lineage!: ?NodeLineage = None, constructionBudget!: ?NodeConstructionBudget = None) {
         this.maximumAstNodes = maximumAstNodes
         this.source = source
         let estimatedNodes = parserInitialArenaCapacity(estimatedInputBytes, source)
         arena = AstArenaBuilder(maximumNodes: maximumAstNodes, trustedParserConstruction: true,
             initialNodeCapacity: min(AST_NODE_CHUNK_SIZE, estimatedNodes),
-            initialChildCapacity: min(AST_CHILD_CHUNK_SIZE, estimatedNodes), sourceBuffer: source)
+            initialChildCapacity: min(AST_CHILD_CHUNK_SIZE, estimatedNodes), sourceBuffer: source, lineage: lineage,
+            constructionBudget: constructionBudget)
     }
 
     func finishDocument(children: Array<Int64>, span: SourceSpan, profile: MarkdownProfile, dialectFingerprint: String,
@@ -286,6 +288,11 @@ internal class ParserNodeFactory {
     func snapshotNode(index: Int64): NodeRef {
         let snapshot = arena.snapshotView()
         snapshot.nodeAt(index)
+    }
+
+    func snapshotNodes(indexes: Array<Int64>): Array<NodeRef> {
+        let snapshot = arena.snapshotView()
+        Array<NodeRef>(indexes.size) {index => snapshot.nodeAt(indexes[index])}
     }
 
     /** Read-only access used by the source-event lowering path while the

@@ -208,6 +208,8 @@ private class RawBlockScanState {
     let previousBlockDslBodyLineEndedWithCarriageReturn: Bool
     let previousBlockDslBodyLineEnd: Int64
     let closureCandidate: Bool
+    let strongBoundary: Bool
+    let previousLineBlank: Bool
 
     init(pendingSize: Int64, totalBytes: Int64, scanCursor: Int64, scanLineStart: Int64, lastCompleteLineEnd: Int64,
         currentLineBytes: Int64, previousByteWasCarriageReturn: Bool, openFenceMarker: ?Byte, openFenceLength: Int64,
@@ -221,7 +223,8 @@ private class RawBlockScanState {
         openBlockDslCurrentLineCharged: Bool, openBlockDslCloserMatchLength: Int64,
         openBlockDslCloserInTrailingWhitespace: Bool, openBlockDslCloserCandidatePossible: Bool,
         completedBlockDslBodyLine: Bool, previousBlockDslBodyLineEndedWithCarriageReturn: Bool,
-        previousBlockDslBodyLineEnd: Int64, closureCandidate: Bool) {
+        previousBlockDslBodyLineEnd: Int64, closureCandidate: Bool, strongBoundary!: Bool = false,
+        previousLineBlank!: Bool = false) {
         this.pendingSize = pendingSize
         this.totalBytes = totalBytes
         this.scanCursor = scanCursor
@@ -260,6 +263,8 @@ private class RawBlockScanState {
         this.previousBlockDslBodyLineEndedWithCarriageReturn = previousBlockDslBodyLineEndedWithCarriageReturn
         this.previousBlockDslBodyLineEnd = previousBlockDslBodyLineEnd
         this.closureCandidate = closureCandidate
+        this.strongBoundary = strongBoundary
+        this.previousLineBlank = previousLineBlank
     }
 }
 
@@ -315,9 +320,11 @@ internal class ParserEventGroup {
     let fenceLength: Int64
     let nodeCount: Int64
     let events: Array<MarkdownSourceEvent>
+    let draft: ?ParsedDraft
 
     init(kind: NodeKind, span: SourceSpan, explicitlyClosed: Bool, htmlBlockType: Int64, isIndentedCode: Bool,
-        fenceMarker: ?Byte, fenceLength: Int64, nodeCount: Int64, events: Array<MarkdownSourceEvent>) {
+        fenceMarker: ?Byte, fenceLength: Int64, nodeCount: Int64, events: Array<MarkdownSourceEvent>,
+        draft!: ?ParsedDraft = None) {
         this.kind = kind
         this.span = span
         this.explicitlyClosed = explicitlyClosed
@@ -327,12 +334,14 @@ internal class ParserEventGroup {
         this.fenceLength = fenceLength
         this.nodeCount = nodeCount
         this.events = events
+        this.draft = draft
     }
 }
 
 /** Low-level lowering target used by ParserSession. It reads the transient
  * parser arena directly and completes before the parser rolls that block back. */
 internal class ParserEventEmitter {
+    let captureDrafts: Bool
     private let sink: ?MarkdownEventSink
     private let collectGroups: Bool
     private let sourceOffsetBase: Int64
@@ -343,13 +352,61 @@ internal class ParserEventEmitter {
     private var eventCount: Int64 = 0
 
     init(sink: ?MarkdownEventSink, collectGroups: Bool, sourceOffsetBase: Int64, finalSemantics: Bool,
-        maximumNodes: Int64, initialNodeCount!: Int64 = 0) {
+        maximumNodes: Int64, initialNodeCount!: Int64 = 0, captureDrafts!: Bool = false) {
         this.sink = sink
         this.collectGroups = collectGroups
         this.sourceOffsetBase = sourceOffsetBase
         this.finalSemantics = finalSemantics
         this.maximumNodes = maximumNodes
         this.nodeCount = initialNodeCount
+        this.captureDrafts = captureDrafts
+    }
+
+    func emitDraft(nodes: ParserNodeFactory, root: Int64, source: SourceBuffer, profile: MarkdownProfile,
+        fingerprint: String, references: Array<ReferenceDefinition>, diagnostics: Array<Diagnostic>,
+        budget: OperationBudget, cancellation: CancellationToken): Unit {
+        if (!captureDrafts) {
+            throw IllegalStateException("draft capture is disabled")
+        }
+        let record = nodes.eventRecord(root)
+        let span = record.span.getOrThrow()
+        let stack = ArrayList<Int64>()
+        stack.add(root)
+        var count: Int64 = 0
+        while (!stack.isEmpty()) {
+            budget.consumeScan()
+            cancellation.throwIfCancelled(phase: "append_capture")
+            let current = nodes.eventRecord(stack.remove(at: stack.size - 1))
+            count++
+            if (count > maximumNodes - nodeCount) {
+                throw LimitExceededException("ast_nodes", maximumNodes, nodeCount + count, "append_capture",
+                    span: Some(span))
+            }
+            for (index in 0..current.childCount) {
+                stack.add(nodes.eventChildIndex(current.firstChild + index))
+            }
+        }
+        let payload = nodes.eventPayload(root)
+        let document = nodes.finishDocument([root], span, profile, fingerprint, references)
+        let draft = ParsedDraft(document, source, diagnostics)
+        groups.add(
+            ParserEventGroup(record.kind, shifted(span), explicitlyClosed(payload), eventHtmlBlockType(payload),
+                eventIsIndentedCode(payload), eventFenceMarker(payload), eventFenceLength(payload), count, [],
+                draft: Some(draft)))
+        nodeCount += count
+    }
+
+    func emitDraftReference(nodes: ParserNodeFactory, reference: ReferenceDefinition, source: SourceBuffer,
+        profile: MarkdownProfile, fingerprint: String): Unit {
+        if (!captureDrafts) {
+            throw IllegalStateException("draft capture is disabled")
+        }
+        let document = nodes.finishDocument([], reference.sourceSpan, profile, fingerprint, [reference])
+        let draft = ParsedDraft(document, source, [])
+        let noFence: ?Byte = None
+        groups.add(
+            ParserEventGroup(NodeKind.DocumentNode, shifted(reference.sourceSpan), false, 0, false, noFence, 0, 0, [],
+                draft: Some(draft)))
     }
 
     func emitTopLevel(nodes: ParserNodeFactory, root: Int64): Unit {
@@ -532,7 +589,10 @@ public class RawBlockEventSession {
     private let cancellation: CancellationToken
     private let budget: OperationBudget
     private let scanCheckpointObserver: ?RawBlockScanCheckpointObserver
+    private let draftLineage: ?NodeLineage
+    private var capturedDrafts = ArrayList<CapturedDraft>()
     private var pending = ArrayList<Byte>()
+    private let constructionBudget: ?NodeConstructionBudget
     private var pendingStart: Int64 = 0
     private var sourceOffset: Int64 = 0
     private var totalBytes: Int64 = 0
@@ -600,15 +660,21 @@ public class RawBlockEventSession {
     private var previousBlockDslBodyLineEndedWithCarriageReturn = false
     private var previousBlockDslBodyLineEnd: Int64 = -1
     private var closureCandidate = false
+    private var strongBoundaryCandidate = false
+    private var previousRawLineBlank = false
+    private var lastSemanticParseLength: Int64 = 0
+    private var retainedTailKind: ?NodeKind = None
     private var started = false
     private var finished = false
 
     internal init(engine: MarkdownEngine, utf8Policy: Utf8Policy, cancellation: CancellationToken,
-        budget: OperationBudget, scanCheckpointObserver!: ?RawBlockScanCheckpointObserver = None) {
-        if (engine.dialect.parserHotPlan.hasDocumentProcessors || (engine.dialect.parserOptions.extensionsEnabled && (engine
+        budget: OperationBudget, scanCheckpointObserver!: ?RawBlockScanCheckpointObserver = None,
+        draftLineage!: ?NodeLineage = None, constructionBudget!: ?NodeConstructionBudget = None) {
+        let needsBinding = engine.dialect.parserOptions.extensionsEnabled && (engine
             .dialect
             .parserHotPlan
-            .hasFootnotes || engine.dialect.parserHotPlan.headingIdRule.isSome()))) {
+            .hasFootnotes || engine.dialect.parserHotPlan.headingIdRule.isSome())
+        if (draftLineage.isNone() && (engine.dialect.parserHotPlan.hasDocumentProcessors || needsBinding)) {
             throw MarkdownException(MarkdownErrorCode.ExtensionFailure,
                 "document-wide processors and binding require the full AST execution path", phase: "event_preflight")
         }
@@ -617,6 +683,28 @@ public class RawBlockEventSession {
         this.cancellation = cancellation
         this.budget = budget
         this.scanCheckpointObserver = scanCheckpointObserver
+        this.draftLineage = draftLineage
+        this.constructionBudget = constructionBudget
+    }
+
+    internal func abandonDrafts(): Unit {
+        if (draftLineage.isNone()) {
+            throw IllegalStateException("only internal drafts can be abandoned")
+        }
+        finished = true
+        pending = ArrayList<Byte>()
+        pendingStart = 0
+        capturedDrafts.clear()
+    }
+
+    internal func pendingByteCount(): Int64 {
+        pending.size - pendingStart
+    }
+
+    internal func takeDrafts(): Array<CapturedDraft> {
+        let result = capturedDrafts.toArray()
+        capturedDrafts = ArrayList<CapturedDraft>()
+        result
     }
 
     /** 追加 String chunk，并返回本次已证明闭合的 raw-block events。
@@ -693,7 +781,7 @@ public class RawBlockEventSession {
             openBlockDslStart, openBlockDslSourceStart, openBlockDslBodyBytes, openBlockDslCurrentLineCharged,
             openBlockDslCloserMatchLength, openBlockDslCloserInTrailingWhitespace, openBlockDslCloserCandidatePossible,
             completedBlockDslBodyLine, previousBlockDslBodyLineEndedWithCarriageReturn, previousBlockDslBodyLineEnd,
-            closureCandidate)
+            closureCandidate, strongBoundary: strongBoundaryCandidate, previousLineBlank: previousRawLineBlank)
     }
 
     private func rollbackRawBlockScan(state: RawBlockScanState): Unit {
@@ -737,6 +825,8 @@ public class RawBlockEventSession {
         previousBlockDslBodyLineEndedWithCarriageReturn = state.previousBlockDslBodyLineEndedWithCarriageReturn
         previousBlockDslBodyLineEnd = state.previousBlockDslBodyLineEnd
         closureCandidate = state.closureCandidate
+        strongBoundaryCandidate = state.strongBoundary
+        previousRawLineBlank = state.previousLineBlank
     }
 
     /**
@@ -783,6 +873,13 @@ public class RawBlockEventSession {
         if (!finishing && !closureCandidate) {
             return out.toArray()
         }
+        // Ambiguous container tails can contain arbitrarily many blank lines.
+        // Retry at geometric growth unless a new source boundary can close the
+        // retained root. The total replayed prefix length is then linear.
+        if (!finishing && !strongBoundaryCandidate && lastSemanticParseLength > 0 &&
+            parseLength - lastSemanticParseLength < lastSemanticParseLength) {
+            return out.toArray()
+        }
         // Materialize only when a completed-line probe has found a possible
         // block boundary (or once at finish). Ordinary fine-grained chunks do
         // not allocate an ever-growing copy of pending.
@@ -792,11 +889,19 @@ public class RawBlockEventSession {
         let decoded = decodeUtf8Input(parseBytes, utf8Policy)
         let noSink: ?MarkdownEventSink = None
         let emitter = ParserEventEmitter(noSink, true, sourceOffset, false, engine.limits.maximumAstNodes,
-            initialNodeCount: emittedNodes)
+            initialNodeCount: emittedNodes, captureDrafts: draftLineage.isSome())
         let noAccelerator: ?LineScannerAccelerator = None
-        let _ = ParserSession(engine.profile, engine.limits, cancellation, budget, decoded.source, engine.dialect,
-            engine.nativeScannerEnabledValue, noAccelerator, eventEmitter: Some(emitter)).parseEvents(
-            decoded.diagnostics, false)
+        try {
+            let _ = ParserSession(engine.profile, engine.limits, cancellation, budget, decoded.source, engine.dialect,
+                engine.nativeScannerEnabledValue, noAccelerator, eventEmitter: Some(emitter),
+                documentOffset: sourceOffset, lineage: draftLineage, deferReferenceInlines: draftLineage.isSome(),
+                constructionBudget: constructionBudget).parseEvents(decoded.diagnostics, draftLineage.isSome())
+        } catch (error: MarkdownException) {
+            if (draftLineage.isSome()) {
+                throw shiftAppendException(error, sourceOffset)
+            }
+            throw error
+        }
         let groups = emitter.collectedGroups()
         var emitCount = if (finishing) {
             groups.size
@@ -814,6 +919,9 @@ public class RawBlockEventSession {
         }
         for (index in 0..emitCount) {
             out.add(all: groups[index].events)
+            if (let Some(draft) <- groups[index].draft) {
+                capturedDrafts.add(CapturedDraft(draft, sourceOffset, groups[index].span))
+            }
             emittedNodes += groups[index].nodeCount
         }
         let discard = if (finishing || emitCount == groups.size) {
@@ -828,13 +936,19 @@ public class RawBlockEventSession {
             discardPendingPrefix(discard)
         }
         if (!finishing && emitCount < groups.size) {
+            lastSemanticParseLength = parseLength - discard
+            retainedTailKind = Some(groups[emitCount].kind)
             synchronizeRetainedTail(groups[emitCount])
+        } else {
+            lastSemanticParseLength = 0
+            retainedTailKind = None
         }
         if (!finishing) {
             // Every candidate through scanCursor participated in the parse.
             // If it did not close the tail, reparsing that same prefix on the
             // next feed cannot change the answer; wait for a new candidate.
             closureCandidate = false
+            strongBoundaryCandidate = false
         }
         out.toArray()
     }
@@ -1078,6 +1192,66 @@ public class RawBlockEventSession {
     }
 
     private func observeCompletedRawLine(lineStart: Int64, lineEnd: Int64): Bool {
+        let blank = rawTrimmedLineStart(pending, lineStart, lineEnd) == lineEnd
+        let tailProtected = openFenceMarker.isSome() || openBlockDslRule.isSome() || openHtmlBlockType > 0 ||
+            openIndentedCode
+        var strong = false
+        if (!tailProtected && retainedTailKind.isSome()) {
+            let kind = retainedTailKind.getOrThrow()
+            match (kind) {
+                case NodeKind.Paragraph | NodeKind.Table | NodeKind.DocumentNode => strong = blank
+                case _ => ()
+            }
+            if (!blank && rawTrimmedLineStart(pending, lineStart, lineEnd) == lineStart) {
+                if (rawLineIsClosureCandidate(pending, lineStart, lineEnd)) {
+                    strong = true
+                }
+                if (previousRawLineBlank && pending[lineStart] != b'>' && !rawMayStartList(lineStart, lineEnd)) {
+                    strong = true
+                }
+            }
+        }
+        let wasFence = openFenceMarker.isSome()
+        let wasHtml = openHtmlBlockType > 0
+        let wasIndented = openIndentedCode
+        let wasDsl = openBlockDslRule.isSome()
+        let candidate = classifyCompletedRawLine(lineStart, lineEnd)
+        if ((wasFence && openFenceMarker.isNone()) || (wasHtml && openHtmlBlockType == 0) || (wasIndented &&
+            !openIndentedCode) || (wasDsl && openBlockDslRule.isNone())) {
+            strong = true
+        }
+        if (!tailProtected && lineStart < lineEnd && rawTrimmedLineStart(pending, lineStart, lineEnd) == lineStart && (openFenceMarker
+            .isSome() || openHtmlBlockType > 0)) {
+            strong = true
+        }
+        previousRawLineBlank = blank
+        if (strong) {
+            strongBoundaryCandidate = true
+        }
+        candidate || strong
+    }
+
+    private func rawMayStartList(start: Int64, end: Int64): Bool {
+        var cursor = start
+        if (cursor >= end) {
+            return false
+        }
+        let first = pending[cursor]
+        if (first == b'-' || first == b'+' || first == b'*') {
+            cursor++
+        } else {
+            while (cursor < end && cursor - start < 9 && pending[cursor] >= b'0' && pending[cursor] <= b'9') {
+                cursor++
+            }
+            if (cursor == start || cursor >= end || (pending[cursor] != b'.' && pending[cursor] != b')')) {
+                return false
+            }
+            cursor++
+        }
+        cursor == end || pending[cursor] == b' ' || pending[cursor] == b'\t'
+    }
+
+    private func classifyCompletedRawLine(lineStart: Int64, lineEnd: Int64): Bool {
         completedBlockDslBodyLine = false
         if (let Some(rule) <- openBlockDslRule) {
             if (openBlockDslCloserCandidatePossible && openBlockDslCloserInTrailingWhitespace) {
@@ -1165,8 +1339,12 @@ public class RawBlockEventSession {
     private func observeRawBlockStart(lineStart: Int64, lineEnd: Int64): Bool {
         if (let Some(rule) <- matchingBlockDslRule(lineStart, lineEnd)) {
             match (rule.syntaxKind) {
-                case BlockSyntaxKind.FootnoteDefinition => throw MarkdownException(MarkdownErrorCode.ExtensionFailure,
-                    "footnote definitions require document binding", phase: "event_preflight")
+                case BlockSyntaxKind.FootnoteDefinition =>
+                    if (draftLineage.isSome()) {
+                        return false
+                    }
+                    throw MarkdownException(MarkdownErrorCode.ExtensionFailure,
+                        "footnote definitions require document binding", phase: "event_preflight")
                 case BlockSyntaxKind.SingleLine =>
                     indentedCodeMayStart = true
                     return true
@@ -1303,16 +1481,22 @@ public class RawBlockEventSession {
         if (!engine.dialect.parserOptions.extensionsEnabled || !engine.dialect.parserHotPlan.hasBlockDsl) {
             return None
         }
-        let contentStart = rawTrimmedLineStart(pending, lineStart, lineEnd)
+        let leadingBom = sourceOffset == 0 && pendingStart == 0 && lineStart == 0 && lineEnd >= 3 && pending[0] == 0xEF &&
+            pending[1] == 0xBB && pending[2] == 0xBF
+        let contentStart = rawTrimmedLineStart(pending, if (leadingBom) {
+            lineStart + 3
+        } else {
+            lineStart
+        }, lineEnd)
         let contentEnd = rawTrimmedLineEnd(pending, contentStart, lineEnd)
         if (contentStart == contentEnd) {
             return None
         }
-        let absoluteStart = sourceOffset + lineStart - pendingStart
+        let absoluteStart = sourceOffset + contentStart - pendingStart
         let rules = engine.dialect.parserHotPlan.blockRules(pending[contentStart])
         for (index in 0..rules.size) {
             let rule = rules[index]
-            if (rule.documentStartOnly && absoluteStart > 3) {
+            if (rule.documentStartOnly && !(absoluteStart == 0 || (absoluteStart == 3 && leadingBom))) {
                 continue
             }
             if (rawListStartsWith(pending, contentStart, contentEnd, rule.openerPrefix, false)) {
@@ -1588,7 +1772,8 @@ private func rawTailCloses(group: ParserEventGroup, bytes: Array<Byte>, localEnd
         return true
     }
     match (group.kind) {
-        case NodeKind.Paragraph => lineBreakCount(bytes, localEnd) >= 2 && tailIsWhitespace(bytes, localEnd)
+        case NodeKind.DocumentNode | NodeKind.Paragraph => lineBreakCount(bytes, localEnd) >= 2 && tailIsWhitespace(
+            bytes, localEnd)
         case NodeKind.Table => lineBreakCount(bytes, localEnd) >= 2 && tailIsWhitespace(bytes, localEnd)
         case NodeKind.HtmlBlock => (group.htmlBlockType == 6 || group.htmlBlockType == 7) &&
             lineBreakCount(bytes, localEnd) >= 2 && tailIsWhitespace(bytes, localEnd)

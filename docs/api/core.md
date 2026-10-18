@@ -112,6 +112,13 @@ match (engine.tryParse(source)) {
 可恢复问题仍在成功结果的 `diagnostics` 中。需要流式待定状态时使用对应 session 协议，
 不将待定状态放入 `ParseResult`。
 
+## Append input
+
+`newAppendSession()` 返回 `AppendInputSession`。`feed(String/Array<Byte>)` 和 `finish()`
+返回 `AppendUpdateBatch`；`AppendReplica.apply(batch)` 按会话、版本和目标身份验证并
+原子应用更新。结构闭合块可在 feed 中出现，完整 ParseResult 只在最终绑定成功后出现。
+资源限制跨 feed 累计。用法、失败和重启规则见[追加输入与更新消费](../append-input.md)。
+
 ## Buffered input
 
 `newBufferedInputSession` 返回 `BufferedInputSession`：

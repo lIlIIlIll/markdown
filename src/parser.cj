@@ -702,14 +702,20 @@ internal class ParserSession {
     private let lineScannerAccelerator: ?LineScannerAccelerator
     private let eventEmitter: ?ParserEventEmitter
     private let bindingOptions: BindingOptions
+    private let deferReferenceInlines: Bool
+    private let documentOffset: Int64
     private let diagnostics = ArrayList<Diagnostic>()
     private var references: Array<ReferenceDefinition> = []
     private var collectingReferences = false
     private let collectedReferences = ArrayList<ReferenceDefinition>()
     private let collectedReferenceLabels = HashSet<String>()
     private var referenceBlockCheckpoint: ?AstArenaCheckpoint = None
-    private let referenceIndex = HashMap<String, ReferenceDefinition>()
+    private let referenceIndex: HashMap<String, ReferenceDefinition>
+    private let hasPreparedReferences: Bool
     private let referenceLineStarts = HashSet<Int64>()
+    private let draftDefinitionsByStart: ?HashMap<Int64, ReferenceDefinition>
+    private var draftReferenceCursor: Int64 = 0
+    private var draftDiagnosticCursor: Int64 = 0
     private var checkpointSteps: Int64 = 0
     private var suppressedInlineRule = ""
     private var suppressedBlockRule = ""
@@ -720,7 +726,13 @@ internal class ParserSession {
     init(profile: MarkdownProfile, limits: ParseLimits, cancellation: CancellationToken, budget: OperationBudget,
         source: SourceBuffer, dialect: CompiledMarkdownDialect, nativeScannerEnabled: Bool,
         lineScannerAccelerator: ?LineScannerAccelerator, eventEmitter!: ?ParserEventEmitter = None,
-        bindingOptions!: BindingOptions = BindingOptions()) {
+        bindingOptions!: BindingOptions = BindingOptions(), lineage!: ?NodeLineage = None,
+        deferReferenceInlines!: Bool = false, preparedReferences!: ?PreparedReferences = None,
+        documentOffset!: Int64 = 0, estimatedInputBytes!: ?Int64 = None,
+        constructionBudget!: ?NodeConstructionBudget = None) {
+        if (documentOffset < 0 || documentOffset > limits.maximumInputBytes) {
+            throw IllegalArgumentException("fragment offset is outside the document input limit")
+        }
         this.profile = profile
         this.limits = limits
         this.cancellation = cancellation
@@ -728,15 +740,50 @@ internal class ParserSession {
         this.source = source
         this.decodedSourceBytes = source.decodedBytesForNative()
         this.dialect = dialect
-        this.nodes = ParserNodeFactory(limits.maximumAstNodes, estimatedInputBytes: source.byteLength(),
-            source: Some(source))
+        let estimate = match (estimatedInputBytes) {
+            case Some(value) => value;
+            case None => source.byteLength()
+        }
+        this.nodes = ParserNodeFactory(limits.maximumAstNodes, estimatedInputBytes: estimate, source: Some(source),
+            lineage: lineage, constructionBudget: constructionBudget)
         this.nativeScannerEnabled = nativeScannerEnabled
         this.lineScannerAccelerator = lineScannerAccelerator
         this.eventEmitter = eventEmitter
         this.bindingOptions = bindingOptions
+        this.deferReferenceInlines = deferReferenceInlines
+        draftDefinitionsByStart = if (deferReferenceInlines) {
+            Some(HashMap<Int64, ReferenceDefinition>())
+        } else {
+            None
+        }
+        this.documentOffset = documentOffset
+        hasPreparedReferences = preparedReferences.isSome()
+        referenceIndex = match (preparedReferences) {
+            case Some(value) => value.values
+            case None => HashMap<String, ReferenceDefinition>()
+        }
     }
 
-    func parse(inputDiagnostics: Array<Diagnostic>): ParseResult {
+    func parseDraft(inputDiagnostics: Array<Diagnostic>): ParsedDraft {
+        if (!deferReferenceInlines || hasPreparedReferences) {
+            throw IllegalStateException("draft parsing requires its own definition discovery")
+        }
+        let document = parseStructure(inputDiagnostics)
+        ParsedDraft(document, source, diagnostics.toArray())
+    }
+
+    func resolvePendingInline(task: PendingInlineTask): ResolvedInline {
+        if (deferReferenceInlines || !refEq(source, task.source)) {
+            throw IllegalStateException("pending inline work requires its original source and a final resolver")
+        }
+        normalizedInlineOffsets = task.offsets
+        normalizedInlineBase = task.mapBase
+        suppressedInlineRule = task.suppressedRule
+        let values = parseInline(task.text, task.baseOffset, task.depth, sourceIdentity: task.sourceIdentity)
+        ResolvedInline(nodes.snapshotNodes(values), diagnostics.toArray())
+    }
+
+    private func parseStructure(inputDiagnostics: Array<Diagnostic>): Document {
         for (diagnostic in inputDiagnostics) {
             diagnostics.add(diagnostic)
         }
@@ -751,7 +798,7 @@ internal class ParserSession {
                 []
             }
             for (reference in references) {
-                if (reference.isEffective) {
+                if (reference.isEffective && referenceIndex.get(reference.labelNormalized).isNone()) {
                     referenceIndex.add(reference.labelNormalized, reference)
                 }
             }
@@ -759,47 +806,21 @@ internal class ParserSession {
         }
         let arena = nodes.finishDocument(blocks, SourceSpan(0, source.byteLength()), profile, dialect.fingerprint,
             references)
+        arena
+    }
+
+    func parse(inputDiagnostics: Array<Diagnostic>): ParseResult {
+        if (deferReferenceInlines || hasPreparedReferences) {
+            throw IllegalStateException("pending input cannot produce a successful ParseResult")
+        }
+        let arena = parseStructure(inputDiagnostics)
         // Parser construction maintains dense NodeIds, category-safe children,
         // and nested spans as local invariants. Rewalking every node here would
         // duplicate the whole parse on the production hot path. Publicly
         // supplied and extension-transformed trees are still validated at their
         // trust boundaries below and by AstInvariantValidator.
-        var document = arena
-        if (dialect.parserHotPlan.hasDocumentProcessors) {
-            for (index in 0..dialect.documentProcessors.size) {
-                let processor = dialect.documentProcessors[index]
-                cancellation.throwIfCancelled(phase: "extension_process")
-                budget.consumeExtensionCallback()
-                budget.consumeTransform()
-                try {
-                    document = processor.process(document, budget, cancellation)
-                    document.requireSource(source)
-                } catch (error: ExtensionFailureException) {
-                    throw error
-                } catch (error: Exception) {
-                    let manifest = extensionManifest(processor.extensionId)
-                    throw ExtensionFailureException(processor.extensionId, manifest.semanticVersion,
-                        manifest.implementationVersion, "extension_process", error, ruleId: Some(processor.processorId))
-                }
-                let root = document.root().asDocument().getOrThrow()
-                if (!root.profile.sameIdentity(profile) || root.dialectFingerprint != dialect.fingerprint) {
-                    throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation,
-                        "document processor changed profile or dialect identity", phase: "extension_process")
-                }
-                AstInvariantValidator().validate(document, limits: limits)
-            }
-        }
-        if (nodes.requiresBinding || dialect.parserHotPlan.hasDocumentProcessors || (dialect
-            .parserOptions
-            .extensionsEnabled && dialect.parserHotPlan.headingIdRule.isSome())) {
-            document = DocumentBinder.bind(document, bindingOptions, limits, budget, cancellation,
-                headingsEnabled: dialect.parserOptions.extensionsEnabled && dialect
-                    .parserHotPlan
-                    .headingIdRule
-                    .isSome())
-            diagnostics.add(all: document.bindings.diagnostics.toArray())
-        }
-        ParseResult(document, source, diagnostics.toArray())
+        finishParsedDocument(arena, source, diagnostics, profile, dialect, bindingOptions, limits, budget, cancellation,
+            requiresBinding: nodes.requiresBinding)
     }
 
     /** Two-pass source-event execution. Reference definitions are collected
@@ -810,15 +831,19 @@ internal class ParserSession {
         if (eventEmitter.isNone()) {
             throw IllegalStateException("source-event parsing requires an event emitter")
         }
-        if (dialect.parserHotPlan.hasDocumentProcessors || (dialect.parserOptions.extensionsEnabled && (dialect
-            .parserHotPlan
-            .hasFootnotes || dialect.parserHotPlan.headingIdRule.isSome()))) {
+        if (hasPreparedReferences || deferReferenceInlines != eventEmitter.getOrThrow().captureDrafts) {
+            throw IllegalStateException("event and draft parser modes do not match their lowering target")
+        }
+        if (!deferReferenceInlines && (dialect.parserHotPlan.hasDocumentProcessors || (dialect
+            .parserOptions
+            .extensionsEnabled && (dialect.parserHotPlan.hasFootnotes || dialect.parserHotPlan.headingIdRule.isSome())))) {
             throw MarkdownException(MarkdownErrorCode.ExtensionFailure,
                 "document-wide processors and binding require the full AST execution path", phase: "event_preflight")
         }
         for (diagnostic in inputDiagnostics) {
             diagnostics.add(diagnostic)
         }
+        draftDiagnosticCursor = diagnostics.size
         let lines = splitLines(source)
         references = if (resolveReferences && linesHaveCoreInlineSpecial(lines) && source.text().contains("[")) {
             collectReferences(lines)
@@ -828,6 +853,9 @@ internal class ParserSession {
         for (reference in references) {
             if (reference.isEffective) {
                 referenceIndex.add(reference.labelNormalized, reference)
+            }
+            if (deferReferenceInlines) {
+                draftDefinitionsByStart.getOrThrow().add(reference.sourceSpan.startByte, reference)
             }
         }
         eventBlockCheckpoint = Some(nodes.checkpoint())
@@ -844,7 +872,7 @@ internal class ParserSession {
         }
         let value = source.text()
         var openerStart: Int64 = 0
-        if (value.size >= 3 && value[0] == 0xEF && value[1] == 0xBB && value[2] == 0xBF) {
+        if (documentOffset == 0 && value.size >= 3 && value[0] == 0xEF && value[1] == 0xBB && value[2] == 0xBF) {
             openerStart = 3
         }
         if (openerStart + 3 > value.size) {
@@ -893,7 +921,7 @@ internal class ParserSession {
         }
         let contentStart = cursor
         var contentEnd = cursor
-        var blockEnd = openerEnd
+        var blockEnd = cursor
         var closingSpan: ?SourceSpan = None
         var lineCount: Int64 = 1
         var cancellationCheckpoint = cursor + 4096
@@ -947,7 +975,7 @@ internal class ParserSession {
                 break
             }
             contentEnd = nextLine
-            blockEnd = lineEnd
+            blockEnd = nextLine
             cursor = nextLine
         }
         scanSteps(value.size + lineCount)
@@ -966,7 +994,7 @@ internal class ParserSession {
 
     private func splitLines(source: SourceBuffer): Array<LineRecord> {
         let value = source.text()
-        if (nativeScannerEnabled) {
+        if (nativeScannerEnabled && documentOffset == 0) {
             if (let Some(accelerator) <- lineScannerAccelerator) {
                 if (let Some(bytes) <- source.decodedBytesForNative()) {
                     if (let Some(acceleratedLines) <- splitLinesAccelerated(value, bytes, accelerator)) {
@@ -1030,7 +1058,8 @@ internal class ParserSession {
         // final parser-owned array directly instead of growing an ArrayList
         // and copying every LineRecord again in toArray().
         let lines = Array<LineRecord>(recordCount, repeat: LineRecord("", 0, 0, 0))
-        var start: Int64 = if (bytes.size >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF) {
+        var start: Int64 = if (documentOffset == 0 && bytes.size >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB &&
+            bytes[2] == 0xBF) {
             3
         } else {
             0
@@ -1086,7 +1115,7 @@ internal class ParserSession {
         var lineHasCoreDelimiter = false
         var lineHasTextLoweringCandidate = false
         var lineHasReferenceOpener = false
-        if (value.size >= 3 && value[0] == 0xEF && value[1] == 0xBB && value[2] == 0xBF) {
+        if (documentOffset == 0 && value.size >= 3 && value[0] == 0xEF && value[1] == 0xBB && value[2] == 0xBF) {
             start = 3
             index = 3
         }
@@ -1331,7 +1360,23 @@ internal class ParserSession {
             let lines = frame.lines
             let index = frame.index
             let line = lines[index]
-            if (isBlank(line.text) || referenceLineStarts.contains(line.startByte)) {
+            if (referenceLineStarts.contains(line.startByte)) {
+                if (deferReferenceInlines && eventEmitter.isSome() && !collectingReferences && let BlockFrameCompletionKind
+                    .Root <- frame.completion) {
+                    let position = mappedSpan(line.startByte, line.startByte).startByte
+                    if (let Some(reference) <- draftDefinitionsByStart.getOrThrow().get(position)) {
+                        eventEmitter
+                            .getOrThrow()
+                            .emitDraftReference(nodes, reference, source, profile, dialect.fingerprint)
+                        let _ = takeDraftReferences(reference.sourceSpan)
+                        nodes.rollback(eventBlockCheckpoint.getOrThrow())
+                        eventBlockCheckpoint = Some(nodes.checkpoint())
+                    }
+                }
+                frame.index++
+                continue
+            }
+            if (isBlank(line.text)) {
                 frame.index++
                 continue
             }
@@ -1466,16 +1511,46 @@ internal class ParserSession {
             return
         }
         if (eventEmitter.isSome() && let BlockFrameCompletionKind.Root <- frame.completion) {
-            if (nodes.requiresBinding) {
-                throw MarkdownException(MarkdownErrorCode.ExtensionFailure,
-                    "structured document binding requires the full AST execution path", phase: "event_preflight")
+            if (deferReferenceInlines) {
+                let span = nodes.span(node).getOrThrow()
+                eventEmitter
+                    .getOrThrow()
+                    .emitDraft(nodes, node, source, profile, dialect.fingerprint, takeDraftReferences(span),
+                        takeDraftDiagnostics(), budget, cancellation)
+            } else {
+                if (nodes.requiresBinding) {
+                    throw MarkdownException(MarkdownErrorCode.ExtensionFailure,
+                        "structured document binding requires the full AST execution path", phase: "event_preflight")
+                }
+                eventEmitter.getOrThrow().emitTopLevel(nodes, node)
             }
-            eventEmitter.getOrThrow().emitTopLevel(nodes, node)
             nodes.rollback(eventBlockCheckpoint.getOrThrow())
             eventBlockCheckpoint = Some(nodes.checkpoint())
         } else {
             frame.blocks.add(node)
         }
+    }
+
+    private func takeDraftReferences(span: SourceSpan): Array<ReferenceDefinition> {
+        let owned = ArrayList<ReferenceDefinition>()
+        while (draftReferenceCursor < references.size && references[draftReferenceCursor].sourceSpan.endByte <= span
+                .endByte) {
+            let reference = references[draftReferenceCursor]
+            if (span.containsSpan(reference.sourceSpan)) {
+                owned.add(reference)
+            }
+            draftReferenceCursor++
+        }
+        owned.toArray()
+    }
+
+    private func takeDraftDiagnostics(): Array<Diagnostic> {
+        let owned = ArrayList<Diagnostic>()
+        while (draftDiagnosticCursor < diagnostics.size) {
+            owned.add(diagnostics[draftDiagnosticCursor])
+            draftDiagnosticCursor++
+        }
+        owned.toArray()
     }
 
     private func parseAtxHeading(line: LineRecord): Int64 {
@@ -1496,13 +1571,13 @@ internal class ParserSession {
             mappedSpan(line.startByte, line.endByte))
     }
 
-    private func parseHeadingInline(text: String, baseOffset: Int64): Array<Int64> {
+    private func parseHeadingInline(text: String, baseOffset: Int64, sourceIdentity!: Bool = true): Array<Int64> {
         if (collectingReferences) {
             return []
         }
         if (!dialect.parserOptions.extensionsEnabled || dialect.parserHotPlan.headingIdRule.isNone() ||
             !text.endsWith("}")) {
-            return parseInline(text, baseOffset, 0)
+            return parseInline(text, baseOffset, 0, sourceIdentity: sourceIdentity)
         }
         let rule = dialect.parserHotPlan.headingIdRule.getOrThrow()
         var opener = text.size - 2
@@ -1516,18 +1591,18 @@ internal class ParserSession {
         }
         if (opener < minimum || opener + 2 >= text.size || text[opener + 1] != b'#' || (opener > 0 && text[opener - 1] !=
             b' ' && text[opener - 1] != b'\t')) {
-            return parseInline(text, baseOffset, 0)
+            return parseInline(text, baseOffset, 0, sourceIdentity: sourceIdentity)
         }
         let id = text[opener + 2..text.size - 1]
         if (!validHeadingId(id)) {
-            return parseInline(text, baseOffset, 0)
+            return parseInline(text, baseOffset, 0, sourceIdentity: sourceIdentity)
         }
         var contentEnd = opener
         while (contentEnd > 0 && (text[contentEnd - 1] == b' ' || text[contentEnd - 1] == b'\t')) {
             contentEnd--
         }
         let children = ArrayList<Int64>()
-        children.add(all: parseInline(text[..contentEnd], baseOffset, 0))
+        children.add(all: parseInline(text[..contentEnd], baseOffset, 0, sourceIdentity: sourceIdentity))
         let span = mappedSpan(baseOffset + opener, baseOffset + text.size)
         let payload = HeadingIdPayload(id, mappedSpan(baseOffset + opener + 2, baseOffset + text.size - 1))
         children.add(
@@ -2203,6 +2278,16 @@ internal class ParserSession {
         }
         if (text.isEmpty()) {
             return []
+        }
+        if (deferReferenceInlines) {
+            scanSteps(text.size)
+            if (text.contains("[")) {
+                let span = mappedSpan(baseOffset, baseOffset + text.size)
+                let task = PendingInlineTask(source, text, baseOffset, depth, normalizedInlineOffsets,
+                    normalizedInlineBase, suppressedInlineRule, sourceIdentity)
+                return [nodes.customInline("markdown-internal", "1", "pending-inline", task, [], Some(span),
+                    NodeOrigin(NodeOriginKind.Synthetic, sourceSpan: Some(span), transformId: Some("append")))]
+            }
         }
         let hasExtensionDispatch = dialect.parserOptions.extensionsEnabled && (dialect.parserHotPlan.hasInlineDsl || dialect
             .parserHotPlan
@@ -3345,7 +3430,7 @@ internal class ParserSession {
             if (identity == suppressedBlockRule) {
                 continue
             }
-            if (rule.documentStartOnly && lines[start].startByte > 3) {
+            if (rule.documentStartOnly && !isDocumentStart(lines[start].startByte + leadingWhitespace(lines[start].text))) {
                 continue
             }
             if (!trimmed.startsWith(rule.openerPrefix)) {
@@ -3519,6 +3604,10 @@ internal class ParserSession {
             let rules = dialect.parserHotPlan.blockRules(trimmed[0])
             for (ruleIndex in 0..rules.size) {
                 let rule = rules[ruleIndex]
+                if (rule.documentStartOnly &&
+                    !isDocumentStart(lines[index].startByte + leadingWhitespace(lines[index].text))) {
+                    continue
+                }
                 let identity = "${rule.extensionId}/${rule.ruleId}"
                 if (identity != suppressedBlockRule && trimmed.startsWith(rule.openerPrefix)) {
                     if (let BlockSyntaxKind.FootnoteDefinition <- rule.syntaxKind) {
@@ -3549,6 +3638,17 @@ internal class ParserSession {
         }
         let start = leadingWhitespace(text)
         start + 1 < text.size && text[start] == b'[' && text[start + 1] == b'^'
+    }
+
+    private func isDocumentStart(position: Int64): Bool {
+        if (documentOffset != 0) {
+            return false
+        }
+        if (position == 0) {
+            return true
+        }
+        let value = source.text()
+        position == 3 && value.size >= 3 && value[0] == 0xEF && value[1] == 0xBB && value[2] == 0xBF
     }
 
     private func footnoteHeader(text: String, maximumLabelBytes: Int64): ?(Int64, Int64, Int64) {
@@ -4085,8 +4185,12 @@ internal class ParserSession {
             }
             combined.append(content)
         }
-        if (heading && dialect.parserOptions.extensionsEnabled && dialect.parserHotPlan.headingIdRule.isSome()) {
+        let boundHeading = heading && dialect.parserOptions.extensionsEnabled &&
+            dialect.parserHotPlan.headingIdRule.isSome()
+        if (boundHeading) {
             nodes.requiresBinding = true
+        }
+        if (hasDelimiter || boundHeading) {
             // Normalize container prefixes while retaining an exact boundary map
             // for metadata and inline spans, including CRLF and quoted headings.
             let offsets = ArrayList<Int64>()
@@ -4104,7 +4208,11 @@ internal class ParserSession {
             normalizedInlineOffsets = Some(offsets.toArray())
             normalizedInlineBase = base
             try {
-                let result = parseHeadingInline(combined.toString(), base)
+                let result = if (heading) {
+                    parseHeadingInline(combined.toString(), base, sourceIdentity: false)
+                } else {
+                    parseInline(combined.toString(), base, 0, sourceIdentity: false)
+                }
                 normalizedInlineOffsets = previous
                 normalizedInlineBase = previousBase
                 return result
@@ -4113,10 +4221,6 @@ internal class ParserSession {
                 normalizedInlineBase = previousBase
                 throw error
             }
-        }
-        if (hasDelimiter) {
-            return parseInline(combined.toString(), lines[start].startByte + leadingWhitespace(lines[start].text), 0,
-                sourceIdentity: false)
         }
         let out = ArrayList<Int64>()
         for (index in start..end) {

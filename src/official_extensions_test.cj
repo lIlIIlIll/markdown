@@ -6,6 +6,33 @@ import std.unittest.testmacro.*
 @Test
 class OfficialExtensionsTest {
     @TestCase
+    func frontMatterRequiresTheAbsoluteDocumentStartAndPreservesEmptyOrUnclosedInput(): Unit {
+        let engine = MarkdownEngine
+            .builder()
+            .dialect(OfficialExtensions.frontMatter(MarkdownDialect.define("front-start", "1")).build())
+            .build()
+        for (source in ["\n---\nx: y\n---", " \n---\nx: y\n---", "text\n\n---\nx: y\n---", " ---\nx: y\n---",
+            "    ---\nx: y\n---"]) {
+            let result = engine.parse(source)
+            @Expect(countOfficial(AstQuery.customNodes(result.document), "front-matter"), 0)
+            @Expect(engine.parseSnapshot(source).syntaxTree.losslessText(), source)
+        }
+        let bom = engine.parse("\u{FEFF}---\nx: y\n---")
+        let front = AstQuery.customNodes(bom.document)
+        @Expect(front.size, 1)
+        @Expect(bom.source.slice(front[0].span.getOrThrow()), "---\nx: y\n---")
+        let empty = engine.parse("---\n---")
+        match (AstQuery.customNodes(empty.document)[0].asCustomBlock().getOrThrow().payload) {
+            case value: SyntaxPayload => @Expect(value.literal, "")
+            case _ => @Expect(false)
+        }
+        let unclosed = engine.parse("---\nx: y")
+        @Expect(AstQuery.customNodes(unclosed.document).size, 0)
+        @Expect(unclosed.diagnostics[0].code, "MD3002_UNCLOSED_EXTENSION")
+        @Expect(engine.htmlRenderer().render(unclosed.document).contains("x: y"), true)
+    }
+
+    @TestCase
     func catalogAndDefaultEnablementMatrixAreVersioned(): Unit {
         let catalog = OfficialExtensions.catalog()
         @Expect(catalog.size, 12)

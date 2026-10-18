@@ -1,6 +1,6 @@
 package markdown_cookbook
 
-import markdown.core.{Markdown, MarkdownEngine, MarkdownProfile}
+import markdown.core.{AppendReplica, AppendState, Markdown, MarkdownEngine, MarkdownProfile}
 import markdown.editor.AstQuery
 import markdown.extensions.{BlockSyntax, ExtensionCapabilities, ExtensionManifest, MarkdownDialect, RendererRule}
 import markdown.render.{HtmlOptions, HtmlRenderer}
@@ -32,7 +32,9 @@ main(): Int64 {
 
     println("== extension ==")
     let manifest = ExtensionManifest(
-        "docs", "1.0.0", "cookbook-1",
+        "docs",
+        "1.0.0",
+        "cookbook-1",
         capabilities: ExtensionCapabilities(safeHtml: true)
     )
     let dialect = MarkdownDialect
@@ -44,6 +46,28 @@ main(): Int64 {
     let extensionEngine = MarkdownEngine.builder().dialect(dialect).build()
     let custom = extensionEngine.parse(":::note\n**important**\n:::").document
     println(extensionEngine.htmlRenderer(options: HtmlOptions.safe()).render(custom))
+
+    println("== append ==")
+    let appendEngine = MarkdownEngine.builder().build()
+    let session = appendEngine.newAppendSession()
+    let replica = AppendReplica()
+    for (chunk in ["[name][id]\n\n", "[id]: /guide\n"]) {
+        let update = session.feed(chunk)
+        replica.apply(update)
+        if (let AppendState.Failed(error) <- update.state) {
+            println(error.message)
+            return 1
+        }
+    }
+    let finalUpdate = session.finish()
+    replica.apply(finalUpdate)
+    match (finalUpdate.state) {
+        case AppendState.Complete => println(HtmlRenderer().render(replica.result.getOrThrow().document))
+        case AppendState.Failed(error) =>
+            println(error.message);
+            return 1
+        case AppendState.AwaitingInput => return 1
+    }
 
     println("== format ==")
     println(Markdown.format("#  Title\n\n* item"))

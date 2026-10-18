@@ -17,7 +17,7 @@
 - Artifact commit: `6e5a207d07903a60f8270c41badac1bb4cb104b5`.
 - Evidence subject commit: `6e5a207d07903a60f8270c41badac1bb4cb104b5`; the retained execution manifest binds the clean gate commit and Git tree.
 - Hosted CI verified at that HEAD: `False`; published: `False`.
-- Tests: `1534/1534` passed, `0` skipped, `0` failed.
+- Tests: `1548/1548` passed, `0` skipped, `0` failed.
 - Benchmark: CommonMark `2.36x`, GFM `1.79x`, status `stale`.
 - Raw digest: `49e72c7b6049cddee2cb85dbb3d783a11b1c8a5652287dc9acf72ce1764bdef3`.
 

@@ -6,6 +6,22 @@ import std.unittest.testmacro.*
 @Test
 class ParserBehaviorTest {
     @TestCase
+    func multilineSetextInlineSpansKeepCrLfAndContainerOffsets(): Unit {
+        let source = "> **a**\r\n> b\r\n> ---\r\n"
+        let result = Markdown.parse(source)
+        let headings = AstQuery.headings(result.document)
+        @Expect(headings.size, 1)
+        @Expect(headings[0].level, 2)
+        let text = AstQuery.byKind(result.document, NodeKind.Text)
+        @Expect(text.size, 2)
+        @Expect(result.source.text(text[0]), "a")
+        @Expect(result.source.text(text[1]), "b")
+        @Expect(text[1].asText().getOrThrow().raw, "b")
+        @Expect(text[1].span, Some(SourceSpan(11, 12)))
+        AstInvariantValidator().validate(result.document)
+    }
+
+    @TestCase
     func coalescesTextLoweringsButKeepsSemanticInlineBoundaries(): Unit {
         let entityResult = Markdown.parse("a&amp;b")
         let entityChildren = entityResult.document.children()[0].children()
@@ -326,6 +342,16 @@ class ParserBehaviorTest {
         @Expect(crlf.document.children().size, 1)
         @Expect(crlf.document.children()[0].asCodeBlock().getOrThrow().literal, "x\n")
         @Expect(crlf.document.children()[0].span, Some(SourceSpan(0, 11)))
+        for (source in ["```", "```\n", "```\nx", "`````\n\n```\naaa\n"]) {
+            let unclosed = Markdown.parse(source)
+            @Expect(unclosed.document.children()[0].span, Some(SourceSpan(0, source.size)))
+            let mapped = HtmlRenderer().renderWithSourceMap(unclosed.document)
+            for (entry in mapped.sourceMap.toArray()) {
+                if (!entry.generated) {
+                    @Expect(entry.sourceSpan, Some(SourceSpan(0, source.size)))
+                }
+            }
+        }
     }
 
     @TestCase

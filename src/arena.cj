@@ -1345,6 +1345,7 @@ internal class AstArenaBuilder {
     private var nextLocalIdentity: Int64 = 0
     private var reservedIdentityEnd: Int64 = 0
     private let maximumNodes: Int64
+    private let constructionBudget: ?NodeConstructionBudget
     private let trustedParserConstruction: Bool
     private let sourceBuffer: ?SourceBuffer
     private let frozenNodeChunks: ArrayList<ArenaNodeChunk>
@@ -1361,7 +1362,8 @@ internal class AstArenaBuilder {
     private var unparentedCountValue: Int64
 
     init(maximumNodes!: Int64 = Int64.Max, trustedParserConstruction!: Bool = false, initialNodeCapacity!: Int64 = 16,
-        initialChildCapacity!: Int64 = 16, sourceBuffer!: ?SourceBuffer = None) {
+        initialChildCapacity!: Int64 = 16, sourceBuffer!: ?SourceBuffer = None, lineage!: ?NodeLineage = None,
+        constructionBudget!: ?NodeConstructionBudget = None) {
         if (maximumNodes <= 0) {
             throw IllegalArgumentException("maximum AST nodes must be positive")
         }
@@ -1369,8 +1371,12 @@ internal class AstArenaBuilder {
             initialChildCapacity > AST_CHILD_CHUNK_SIZE) {
             throw IllegalArgumentException("initial arena capacity exceeds its chunk size")
         }
-        lineageAllocator = NodeLineage()
+        lineageAllocator = match (lineage) {
+            case Some(value) => value;
+            case None => NodeLineage()
+        }
         this.maximumNodes = maximumNodes
+        this.constructionBudget = constructionBudget
         this.trustedParserConstruction = trustedParserConstruction
         this.sourceBuffer = sourceBuffer
         nodeTailCapacity = initialNodeCapacity
@@ -1394,6 +1400,7 @@ internal class AstArenaBuilder {
         // A transformed snapshot is a different Document identity even when
         // it shares immutable chunks with its source snapshot.
         lineageAllocator = base.nodeLineage()
+        constructionBudget = None
         this.maximumNodes = if (maximumNodes == Int64.Max) {
             Int64.Max
         } else {
@@ -1514,6 +1521,17 @@ internal class AstArenaBuilder {
         appendUnchecked(kind, span, originKind, children, payload, origin)
     }
 
+    /** A session owns its lineage and copies each retained node once. Storage
+     * relocation preserves identity; public transforms still allocate new IDs. */
+    func appendSessionNode(source: NodeRef, children: Array<Int64>, span: ?SourceSpan, payload: ArenaNodePayload,
+        origin: ?NodeOrigin): Int64 {
+        if (!trustedParserConstruction || source.nodeId.lineage != lineageAllocator.identity) {
+            throw IllegalArgumentException("session node does not belong to the assembly lineage")
+        }
+        appendUnchecked(source.kind, span, source.originKind, children, payload, origin,
+            preservedIdentity: Some(source.nodeId.value))
+    }
+
     /** Parser-owned list variant. The parser already owns this buffer and the
      * arena copies its indexes into chunked child storage, so materializing an
      * intermediate Array would add no isolation. */
@@ -1527,11 +1545,17 @@ internal class AstArenaBuilder {
     }
 
     private func appendUnchecked(kind: NodeKind, span: ?SourceSpan, originKind: NodeOriginKind, children: Array<Int64>,
-        payload: ArenaNodePayload, origin: ?NodeOrigin): Int64 {
+        payload: ArenaNodePayload, origin: ?NodeOrigin, preservedIdentity!: ?Int64 = None): Int64 {
         if (nodeCountValue >= maximumNodes) {
             throw LimitExceededException("ast_nodes", maximumNodes, nodeCountValue + 1, "ast_allocation")
         }
-        let localIdentity = allocateLocalIdentity()
+        if (let Some(value) <- constructionBudget) {
+            value.consume()
+        }
+        let localIdentity = match (preservedIdentity) {
+            case Some(value) => value;
+            case None => allocateLocalIdentity()
+        }
         let index = nodeCountValue
         for (child in children) {
             if (!trustedParserConstruction) {
@@ -1570,6 +1594,9 @@ internal class AstArenaBuilder {
         children: ArrayList<Int64>, payload: ArenaNodePayload, origin: ?NodeOrigin): Int64 {
         if (nodeCountValue >= maximumNodes) {
             throw LimitExceededException("ast_nodes", maximumNodes, nodeCountValue + 1, "ast_allocation")
+        }
+        if (let Some(value) <- constructionBudget) {
+            value.consume()
         }
         let localIdentity = allocateLocalIdentity()
         let index = nodeCountValue
