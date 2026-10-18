@@ -10,6 +10,7 @@ __pycache__/
 !api/public-api-v0.9.txt
 !docs/reports/*.json
 !release-evidence.json
+!.github/benchmark-evidence.json
 !tests/differential/
 !tests/differential/commonmark-js/
 !tests/differential/commonmark-js/package.json
