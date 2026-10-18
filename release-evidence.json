@@ -10,8 +10,8 @@
     "published": false
   },
   "identity": {
-    "artifactCommit": "6e5a207d07903a60f8270c41badac1bb4cb104b5",
-    "evidenceCommit": "6e5a207d07903a60f8270c41badac1bb4cb104b5",
+    "artifactCommit": "b930377c2ea52f4afbd5e4c93a354bda41809c82",
+    "evidenceCommit": "b930377c2ea52f4afbd5e4c93a354bda41809c82",
     "repositoryHeadAtGeneration": null,
     "repositoryGitTreeAtGeneration": null,
     "treeStateAtGeneration": "validated-by-execution-manifest",
@@ -55,23 +55,23 @@
     "failed": 0
   },
   "benchmark": {
-    "status": "stale",
+    "status": "current",
     "rawPath": "docs/reports/benchmark-raw.json",
-    "rawSha256": "49e72c7b6049cddee2cb85dbb3d783a11b1c8a5652287dc9acf72ce1764bdef3",
-    "sourceCommit": "6e5a207d07903a60f8270c41badac1bb4cb104b5",
-    "sourceGitTree": "0979d233f8c3e30436f71e5d60d7564572004382",
+    "rawSha256": "0f4f838cafefebdefea784c54b487b88241a1d3f1afb79fdef352f46b82bfe2c",
+    "sourceCommit": "b930377c2ea52f4afbd5e4c93a354bda41809c82",
+    "sourceGitTree": "6e5719ad9ed84ffb3a02cdffd1720f9cd307a0eb",
     "sdkVersion": "Cangjie Compiler: 1.2.0 (cjnative)",
-    "productSourceArchiveSha256": "6ac0f505e809a70d5d4d7a7ebe23e174f83a8357d2acacfc9aea65970eaf831b",
-    "productTreeSha256": "23055eea1568b2155794f0ed442b641ce3a33a9c3d5611e81e0a3eac85de1564",
+    "productSourceArchiveSha256": "4e927fc560c880cb5f5f85da9cddbd629d92a773d957dbef2116cf7b6010688d",
+    "productTreeSha256": "6c777aa402a9de37ca65bfc86b1fabcc5af9420678dfc78d9e31a40b1e6f1ce1",
     "benchmarkHarnessSha256": "ba095c3ed6464805959a2af907d18c16023f605ab172253c47e0b78872de5a4a",
-    "markdownDriverSha256": "21967044f6439a8ca5fded8eab99e1b030494ed82052507e32547bfe632ef07a",
+    "markdownDriverSha256": "a4911c0419924247b8cee26d5ab5c49378edf135fb78ed5ec38a85ba52de2a7c",
     "cmarkDriverSha256": "ade49af75b9eac2371dc65f2712262d6b0834997b39d2d60488a45de068cf88e",
     "cmarkGfmDriverSha256": "c2160a6ccb910e5357ad3d56090dc19c9847136836c6e32da44b34aacd55570b",
-    "commonmarkRatio": 2.361586034975156,
-    "gfmRatio": 1.7880103789446966,
+    "commonmarkRatio": 2.2662144957475965,
+    "gfmRatio": 1.7966549618996306,
     "ratioLimit": 2.5,
     "cmark": "0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8",
     "cmarkGfm": "0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b",
-    "note": "Historical 0.9 baseline only. The 0.10 product and parser plan have changed and require new measurement; the original raw samples and recorded source identities are preserved."
+    "note": "Frozen 0.10 product measurement with unchanged thresholds. Source-to-binary replay passed offline in Arch and Ubuntu; hosted core CI and release publication remain unverified."
   }
 }

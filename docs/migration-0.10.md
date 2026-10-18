@@ -1,8 +1,9 @@
 # 0.10 模型迁移（开发中）
 
 本版本允许破坏性修改，不提供旧 API facade、旧缓存 reader 或自动迁移。
-以下只列已经实施的修改；issue #10 的扩展、追加式 session、富内容后端及编辑/缓存
-实测仍在推进，不能从版本号推断它们已完成或通过发布门禁。
+以下列出已经实施的扩展、追加式 session、富内容后端及编辑/缓存取舍。
+本地完整 release gate 和 hosted core CI 仍待验收，不能从版本号推断已发布。
+逐项进度见 [issue #10 验收矩阵](../.agent/issue-10-matrix.md)。
 
 - 使用 `result.document`；移除 `ParseResult.ast` 和 `parsePartial`。
 - 移除 `MarkdownProfile.commonMark()` / `gfm()` 别名，显式选择

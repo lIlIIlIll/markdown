@@ -1,7 +1,8 @@
 # Issue 10 implementation status
 
 The scope remains MD-00..08 and all original acceptance IDs in issue #10. This is
-an implementation ledger, not a release claim. No core PR or release is authorized
+an implementation ledger, not a release claim. The current per-ID matrix is
+[issue-10-matrix.md](issue-10-matrix.md). No core PR or release is authorized
 for automatic merge or publication.
 
 | Task | Implementation and evidence | State |
@@ -446,3 +447,15 @@ all job directories were removed. The immutable raw report SHA-256 is
 `7f490f7c042e2e56d914fc51203eaa885475640bb6872086c411474f2c5802da`.
 Fresh complete frozen performance/release/offline and hosted core qualification
 remain required; core is still unpublished.
+
+The frozen 0.10 measurement subject is `b930377c2ea52f4afbd5e4c93a354bda41809c82`.
+C benchmark gates PASS: CommonMark 2.2662144957475965, GFM 1.7966549618996306,
+growth slope0.407953, pathological slope0.789897, extra RSS31236KiB.
+Same-language schema6 PASS: 12/12 shared behavior, 11 corpus semantic digests,
+geomean speedup13.880235098048031, maximum RSS ratio0.525891472868217.
+Network-isolated new-directory source-to-binary replay PASS independently in
+Arch and Ubuntu. Canonical raw reports are copied intact from those measurements;
+release evidence binds their real source/tree/archive/harness/driver identities.
+Offline release readiness remains false until the complete gate and candidate
+bundle are verified. The old hosted benchmark artifact pointer still describes
+PR #11 and is not proof for this core revision.
