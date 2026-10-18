@@ -27,6 +27,7 @@ check_one "$repo_root/tools/markdown/src/main.cj"
 check_one "$repo_root/examples/quickstart/src/main.cj"
 check_one "$repo_root/examples/cookbook/src/main.cj"
 check_one "$repo_root/benchmarks/driver/src/main.cj"
+check_one "$repo_root/benchmarks/append_workload.cj"
 check_one "$repo_root/tests/rich_backend/main.cj"
 
 printf 'cjfmt check: pass\n'

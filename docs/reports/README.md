@@ -10,6 +10,7 @@
 | 领域 | 人类可读报告 | 原始数据 |
 | --- | --- | --- |
 | Release benchmark | [Canonical benchmark](benchmark.md) | [`benchmark-raw.json`](benchmark-raw.json) |
+| 追加与可恢复输出成本 | [Append/output cost](append-cost.md) | [`append-cost-raw.json`](append-cost-raw.json) |
 | 同语言功能与性能对比 | [markdown4cj comparison](markdown4cj-comparison.md) | [`markdown4cj-comparison-raw.json`](markdown4cj-comparison-raw.json) |
 | CommonMark 0.31.2 | [Conformance report](commonmark-0.31.2-conformance.md) | 结果绑定在 release evidence 中 |
 | GFM 0.29 | [Conformance report](gfm-0.29-conformance.md) | 结果绑定在 release evidence 中 |

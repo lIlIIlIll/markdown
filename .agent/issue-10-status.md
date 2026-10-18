@@ -16,7 +16,7 @@ for automatic merge or publication.
 | MD-02 / EXT-T03 | Definition Lists 2.0 with typed List/Entry/Term/Definition, ordinary block bodies, source markers, full binding validation and shared HTML/Text/Markdown/snapshot/append/output traversal | Implemented; 1564-case full run and consumer gates PASS |
 | MD-00.8 / MD-06.1..6 | Shared block/inline parser, pre-binding transforms, final binder and read-only analysis; actual feed-time closed AST fragments, atomic identity/version updates and replica, terminal failure, cumulative limits | Public append and shared lifecycle implemented; final resource/performance qualification pending |
 | MD-06.7 | Real resumable HTML cursor over shared renderer rules; UTF-8 prefix acknowledgement, lazy tables/footnotes/escaping, terminal failure and cumulative output budgets; old buffered implementation removed | Implemented and correctness verified; final release performance/RSS qualification pending |
-| MD-06.8 | Public append scaling tests for long loose lists, deferred-reference paragraphs, unclosed fences and many closed blocks; real scan/node-construction/patch counters | Correctness and work growth PASS; latency, peak RSS and release performance qualification pending |
+| MD-06.8 | Public append scaling tests for long loose lists, deferred-reference paragraphs, unclosed fences and many closed blocks; real scan/node-construction/patch counters | Seven-sample latency/finish/scan/patch/RSS matrix PASS; frozen release performance qualification pending |
 | MD-04 / EXT-T05..06 | Versioned official capability matrix, exact enable/disable/profile output, literal Front Matter boundaries and bounded deterministic smart punctuation | Correctness verified; final release gates pending |
 | MD-00.6 | Actual AST transform → binding → read-only analysis, shared batch/append pipeline, early whole-document execution gates and meaningful capability validation | Implemented; 1585-case run, consumers and API/evidence gates PASS |
 | MD-05 / RND-T01..02 | Math 2.0, Code Groups 1.0, typed preparation and pinned actual KaTeX/Shiki/Mermaid Linux adapter with explicit offline runtime, licenses, bounded proxy/subreaper, validated outputs and full source fallback | Local real Cangjie/Chrome/clipboard/process/offline qualification PASS; frozen performance and hosted core gates remain pending |
@@ -358,3 +358,18 @@ The public regressions include transformed footnotes, detached-source rejection,
 typed-map mutation, unknown encode and unknown decode. Official STS 1.2.0 build
 and 1617/1617 full tests PASS with no skips or errors. Editor/cache optimization
 selection and the final frozen release/performance gates remain pending.
+
+## MD-06 measured cost checkpoint
+
+The production tree at `d90f112` passed 42 append/output scenarios in each of
+eight rounds (warmup plus seven retained), with byte/chunk input and independent
+batch equivalence. Scenarios cover closed Unicode/CRLF paragraphs, an unfinished
+fence, repeated forward links/footnotes and a growing loose list at three sizes
+and chunk widths 1/7/4096. Per-feed raw timings, first-block input offset, finish,
+scan/node-construction/patch work, and Linux VmHWM are retained and SHA-bound.
+See `docs/reports/append-cost.md` and the sanitized raw projection. The oracle
+follows the RSS checkpoint; runtime, replica and latency collection are included.
+Single-byte peak RSS is material and no constant-memory claim is made. Output
+uses an acknowledging counting/checksum sink and never stores the complete HTML.
+This is MD-06 measurement evidence, not a replacement for frozen release ratios,
+RSS gates or hosted CI. MD-07/08 optimization decisions remain open.
