@@ -17,13 +17,21 @@
   进程，扩展密集、重复脚注、碰撞标题、热 byte-array/应用冷启动 warm-FS、真实后端/缓存，PASS。
 - **N1**：Node 后端修订 `db67810` 的真实 STS/Chrome/clipboard/离线 runtime gate PASS；
   固定 runtime `66482adc432167538bbcccac7a431bcbf9d6d93653981333609ef0ede5d0ba39`。
-  新生产库的实际准备、缓存及输出也由 C1 校验。基础包不依赖 Node，不宣称 OS sandbox。
+  当前正式库的全套实际 browser/clipboard/timeout/cancel、七种 fixture 和实际 Chrome 清理
+  gate 也 PASS，HTML SHA-256 为 `cb42c140c0fb6877dea3b3c7345a6212c92e7dbc86e711875f007697f72e70ad`。
+  C1 校验实际成本；基础包不依赖 Node，不宣称 OS sandbox。
 - **P1**：修订 `b930377c2ea52f4afbd5e4c93a354bda41809c82` 的全新 attested 构建：C 比值
   2.2662144957 / 1.7966549619，增长/病理/RSS gate 全 PASS；同语言 12/12、几何平均
   13.880235098、最大 RSS 比 0.525891473，所有冻结门槛 PASS。Arch 和 Ubuntu 断网新目录
   从保留源码/官方 SDK/native/link 闭包重建三项产物，逐字节验证 PASS。新测量没有重绑旧数字。
-- **G1**：当前完整 release gate、全部 consumer 和最终 evidence manifest 尚待执行。
-  Hosted core CI 尚未运行，不能用本地/旧 PR #11 CI 代替。G1 完成后更新此条及 DONE 状态。
+- **G1**：干净预检提交 `e31221204753a20b229dd9875cec64afb9aec207` 的 26 步全部 PASS，
+  包括完整测试/语料、native ASan+UBSan fuzz10000、CLI、两个示例、差分25/24/1/0、
+  benchmark smoke3/3 和候选打包。真实 manifest SHA-256 为
+  `4d6fbf6f9edc44a4b6a16bcf9578c784b903614fb0d2f0e169ca55f4ead424d2`，treeState=clean。
+  在写入 readiness 前，就绪校验器已用该 manifest 验证拟议状态、JUnit/API/校验和，
+  返回零错误。最终原始 release gate 的执行 commit、步骤和候选 hash 以独立 evidence
+  中的 `target/release-evidence/manifest.json` 为准。Hosted core CI 尚未运行。
+
 
 所有功能行的 PASS 指 F1 的实际公开行为回归；成本行明确引用各自测量修订，不将其冒充
 P1 或 G1。完整原始日志、执行文件和失败诊断在独立 evidence 中保留，公开报告去除本机路径。
@@ -153,16 +161,16 @@ P1 或 G1。完整原始日志、执行文件和失败诊断在独立 evidence �
 | STM-T03 | MD-06.7、11907 resume/policy/width 对照 | F1 PASS | 无 |
 | EDT-T01 | MD-07、公开编辑回归和真实候选实验 | F1/E1 PASS，不采用复杂候选 | 无 |
 | ART-T01 | MD-08.3/.4、binary/artifact/opaque/cache tests | F1/E1/C1 PASS | 无 |
-| PERF-T01 | MD-06.8、MD-07/08、固定完整工作量与 source-to-binary | S1/E1/C1/P1 PASS | 完整 G1 尚待执行 |
+| PERF-T01 | MD-06.8、MD-07/08、固定完整工作量与 source-to-binary | S1/E1/C1/P1 PASS | G1 本地已验证；hosted core CI 未运行 |
 
 ## DONE 关闭条件
 
 | ID | 状态 | 实现/证据/剩余原因 |
 | --- | --- | --- |
 | DONE-01 | PASS | 已核对当前 issue、AGENTS、真实源码；零向后兼容已由 issue 明确要求；标准兼容与实用单一路径仍保留 |
-| DONE-02 | 本地矩阵已提供 | 本页逐条保留 ID 与实现/测试/修订/环境/实际结果；G1/hosted 未运行明确标出 |
-| DONE-03 | 待 G1 | 已有完整 F1 与新 frozen P1；仍须新 revision 的完整 release gate、consumer、fuzz/bundle/evidence manifest |
+| DONE-02 | PASS | 本页保留全部 ID、实现/测试/修订/环境/实际结果；hosted 未运行明确标出 |
+| DONE-03 | 本地 PASS | F1/P1/G1：完整构建/测试/标准语料/consumer/fuzz/benchmark/bundle；readiness 由真实 manifest 校验，最终执行记录独立保留 |
 | DONE-04 | PASS | 未修改 SDK、原始标准语料、安全/资源/冻结性能门槛；旧接口的有效风险已迁移，无静默 skip |
 | DONE-05 | 本地/离线 PASS；hosted 未运行 | 不将 PR #11 或旧 artifact 认证核心；`.github/benchmark-evidence.json` 仍指向原 PR #11，发布前需新的 hosted evidence |
-| DONE-06 | 未关闭 | 核心矩阵本地 PASS，测量型项有证据不采用；G1 与后续经授权的交付仍待完成，没有以删除需求关闭 issue |
+| DONE-06 | 本地完成；未关闭 issue | 核心与测量矩阵本地/离线通过；hosted core CI 和核心推送/PR 尚待授权，无删除需求或延期冒充关闭 |
 | DONE-07 | PASS | 0.10 breaking pre-GA；无旧 facade/reader/双写主轨；核心没有 push/PR/merge/release。先前保护检查迁移为明确单独授权，不自动修改规则 |

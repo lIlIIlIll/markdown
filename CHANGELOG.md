@@ -5,7 +5,7 @@
 
 ## 0.10.0 - Unreleased
 
-开发中的 breaking pre-GA，完整 issue #10 验收与发布门禁尚未完成。
+Breaking pre-GA：本地与离线验收就绪，核心 hosted CI 尚未运行；未合并或发布。
 
 ### Changed
 

@@ -13,7 +13,7 @@
 <!-- release-evidence:start -->
 ## Generated Release Evidence
 
-- Version/status: `0.10.0` / `in-development`.
+- Version/status: `0.10.0` / `evidence-ready`.
 - Artifact commit: `b930377c2ea52f4afbd5e4c93a354bda41809c82`.
 - Evidence subject commit: `b930377c2ea52f4afbd5e4c93a354bda41809c82`; the retained execution manifest binds the clean gate commit and Git tree.
 - Hosted CI verified at that HEAD: `False`; published: `False`.
@@ -21,7 +21,7 @@
 - Benchmark: CommonMark `2.27x`, GFM `1.80x`, status `current`.
 - Raw digest: `0f4f838cafefebdefea784c54b487b88241a1d3f1afb79fdef352f46b82bfe2c`.
 
-One or more mandatory offline evidence gates remain incomplete. Hosted CI and publication remain separate claims.
+All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->
 
 ## 2026-08-30 Same-language Merge Gate

@@ -9,21 +9,21 @@ for automatic merge or publication.
 | --- | --- | --- |
 | Prerequisite baseline | PR #11 merged as `8b5227b`; official STS 1.2.0; final push/PR checks PASS; exact retained CI artifact rebuilt offline in Arch and Ubuntu | PASS |
 | Required checks | Replaced the three obsolete SDK contexts with the two passing STS 1.2.0 contexts; all other protection values verified equal | PASS |
-| MD-00.3 / EDT-T01 identity | NodeId lineage plus nonrecycled serial, distinct immutable revisions, bounded shared-arena reservations, distributed identity hashes, persistent-fork allocation and stale CST/NodeRef/fix rejection | Correctness/resource regression PASS in 1566-case run; final performance cost not yet qualified |
-| MD-00.4 / MD-00.5 / ARC-T02 | Success-only ParseResult, explicit ParseOutcome, removed aliases and content-hash StableNodeId; consumers migrated | PASS in the 1517-case full run |
-| MD-00.7 / ART-T01 | 0.10 API boundary, SPI 3, plan 6, artifact schema 3; no old reader; explicit unsupported-version error | Current editor acceptance checkpoint: 1620/1620 full tests and 70 API/evidence Python tests PASS |
-| MD-00.1/.2, MD-01 batch | Typed footnote payloads, reachable-definition binding, first-definition/numbering/unique-anchor/backlink decisions, shared HTML/Text/Markdown output, exact source and snapshot/config identity; DocumentBindingTests | Batch and public append implemented; complete output-resource qualification pending |
-| MD-03 batch | Heading-only typed suffix, explicit-ID reservation, shared anchor allocator, authoritative heading/fragment queries, structured TOC, source/Markdown/snapshot preservation; HeadingBindingTests | Batch and public append implemented; edit dependency qualification pending |
+| MD-00.3 / EDT-T01 identity | NodeId lineage plus nonrecycled serial, distinct immutable revisions, bounded shared-arena reservations, distributed identity hashes, persistent-fork allocation and stale CST/NodeRef/fix rejection | F1 correctness/resource PASS; P1 frozen cost gates PASS |
+| MD-00.4 / MD-00.5 / ARC-T02 | Success-only ParseResult, explicit ParseOutcome, removed aliases and content-hash StableNodeId; consumers migrated | F1 1621-case full run and compatibility cleanup PASS |
+| MD-00.7 / ART-T01 | 0.10 API boundary, SPI 3, plan 6, artifact schema 3; no old reader; explicit unsupported-version error | Current F1/G1 checkpoint: 1621/1621 full tests and 70 API/evidence Python tests PASS |
+| MD-00.1/.2, MD-01 batch | Typed footnote payloads, reachable-definition binding, first-definition/numbering/unique-anchor/backlink decisions, shared HTML/Text/Markdown output, exact source and snapshot/config identity; DocumentBindingTests | F1 semantics, S1/C1 costs and P1 gates PASS |
+| MD-03 batch | Heading-only typed suffix, explicit-ID reservation, shared anchor allocator, authoritative heading/fragment queries, structured TOC, source/Markdown/snapshot preservation; HeadingBindingTests | F1 edit dependency and C1 collision cost PASS |
 | MD-02 / EXT-T03 | Definition Lists 2.0 with typed List/Entry/Term/Definition, ordinary block bodies, source markers, full binding validation and shared HTML/Text/Markdown/snapshot/append/output traversal | Implemented; 1564-case full run and consumer gates PASS |
-| MD-00.8 / MD-06.1..6 | Shared block/inline parser, pre-binding transforms, final binder and read-only analysis; actual feed-time closed AST fragments, atomic identity/version updates and replica, terminal failure, cumulative limits | Public append and shared lifecycle implemented; final resource/performance qualification pending |
-| MD-06.7 | Real resumable HTML cursor over shared renderer rules; UTF-8 prefix acknowledgement, lazy tables/footnotes/escaping, terminal failure and cumulative output budgets; old buffered implementation removed | Implemented and correctness verified; final release performance/RSS qualification pending |
-| MD-06.8 | Public append scaling tests for long loose lists, deferred-reference paragraphs, unclosed fences and many closed blocks; real scan/node-construction/patch counters | Seven-sample latency/finish/scan/patch/RSS matrix PASS; frozen release performance qualification pending |
-| MD-04 / EXT-T05..06 | Versioned official capability matrix, exact enable/disable/profile output, literal Front Matter boundaries and bounded deterministic smart punctuation | Correctness verified; final release gates pending |
+| MD-00.8 / MD-06.1..6 | Shared block/inline parser, pre-binding transforms, final binder and read-only analysis; actual feed-time closed AST fragments, atomic identity/version updates and replica, terminal failure, cumulative limits | F1/S1/C1/P1 local qualification PASS |
+| MD-06.7 | Real resumable HTML cursor over shared renderer rules; UTF-8 prefix acknowledgement, lazy tables/footnotes/escaping, terminal failure and cumulative output budgets; old buffered implementation removed | F1/S1/P1 correctness and frozen performance/RSS PASS |
+| MD-06.8 | Public append scaling tests for long loose lists, deferred-reference paragraphs, unclosed fences and many closed blocks; real scan/node-construction/patch counters | S1 costs and P1 frozen performance PASS |
+| MD-04 / EXT-T05..06 | Versioned official capability matrix, exact enable/disable/profile output, literal Front Matter boundaries and bounded deterministic smart punctuation | F1/C1/P1/G1 local qualification PASS |
 | MD-00.6 | Actual AST transform → binding → read-only analysis, shared batch/append pipeline, early whole-document execution gates and meaningful capability validation | Implemented; 1585-case run, consumers and API/evidence gates PASS |
-| MD-05 / RND-T01..02 | Math 2.0, Code Groups 1.0, typed preparation and pinned actual KaTeX/Shiki/Mermaid Linux adapter with explicit offline runtime, licenses, bounded proxy/subreaper, validated outputs and full source fallback | Local real Cangjie/Chrome/clipboard/process/offline qualification PASS; frozen performance and hosted core gates remain pending |
+| MD-05 / RND-T01..02 | Math 2.0, Code Groups 1.0, typed preparation and pinned actual KaTeX/Shiki/Mermaid Linux adapter with explicit offline runtime, licenses, bounded proxy/subreaper, validated outputs and full source fallback | Current formal-library actual browser/process gate and P1/G1 PASS; hosted core CI unrun |
 | MD-05.7 / code-group portion of RND-T02 | Group/Item with ordinary fenced children, titles, line ranges and exact copy text; optional localized tabs/copy and static fallback | 1600-case Cangjie run, all normal consumers and actual Chrome clipboard/keyboard/AX checks PASS |
-| MD-07 / MD-08.1..5/.7 | Public editor semantics and phase costs; restricted variable-local and AST/token experiments; independent public encoder proof; complete measured adoption decisions | Correctness and measured decisions PASS; no candidate adopted; 08.6 cost report complete; frozen release qualification pending |
-| DONE-02..06 | Complete task-to-test ledger, new performance qualification, docs/consumer gates and core hosted evidence | Pending |
+| MD-07 / MD-08.1..5/.7 | Public editor semantics and phase costs; restricted variable-local and AST/token experiments; independent public encoder proof; complete measured adoption decisions | F1/S1/E1/C1/P1/G1 local PASS; no experimental candidate adopted |
+| DONE-02..06 | Per-ID matrix, fresh frozen/offline performance, all local release steps and readiness validation | Local/offline PASS; core hosted evidence unrun |
 
 The prior 0.9 raw reports remain historical measurements of their recorded
 commits. They do not qualify the changed 0.10 product. No measurements are rebound
@@ -459,3 +459,15 @@ release evidence binds their real source/tree/archive/harness/driver identities.
 Offline release readiness remains false until the complete gate and candidate
 bundle are verified. The old hosted benchmark artifact pointer still describes
 PR #11 and is not proof for this core revision.
+
+Clean release preflight at `e31221204753a20b229dd9875cec64afb9aec207` passed all
+26 recorded steps and produced a valid 0.10 candidate. JUnit1621/1621, CM652/652,
+GFM671/671, API1706, native ASan+UBSan fuzz10000, normal consumers, differential
+25/24/1/0, benchmark smoke3/3 and packaging PASS. The readiness validator checked
+the actual clean manifest, test metrics and checksums before the readiness flag
+was written; zero errors. Manifest SHA is
+`4d6fbf6f9edc44a4b6a16bcf9578c784b903614fb0d2f0e169ca55f4ead424d2`.
+The current formal library also passed the full actual Node/browser/clipboard/
+process gate, with the same validated fixture HTML digest as the earlier gate.
+Final execution/bundle identities are kept in the independent full gate manifest;
+hosted core CI, core publication and issue closure are not claimed.

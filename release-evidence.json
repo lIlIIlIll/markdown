@@ -3,8 +3,8 @@
   "release": {
     "version": "0.10.0",
     "channel": "preview",
-    "status": "in-development",
-    "evidenceReady": false,
+    "status": "evidence-ready",
+    "evidenceReady": true,
     "ciVerifiedAtHead": false,
     "ciVerifiedCommit": null,
     "published": false

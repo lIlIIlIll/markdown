@@ -1,8 +1,8 @@
-# 0.10 模型迁移（开发中）
+# 0.10 模型迁移（未发布）
 
 本版本允许破坏性修改，不提供旧 API facade、旧缓存 reader 或自动迁移。
 以下列出已经实施的扩展、追加式 session、富内容后端及编辑/缓存取舍。
-本地完整 release gate 和 hosted core CI 仍待验收，不能从版本号推断已发布。
+本地正确性、冻结性能与离线候选包已验证；hosted core CI 尚未运行，不能从版本号推断已发布。
 逐项进度见 [issue #10 验收矩阵](../.agent/issue-10-matrix.md)。
 
 - 使用 `result.document`；移除 `ParseResult.ast` 和 `parsePartial`。

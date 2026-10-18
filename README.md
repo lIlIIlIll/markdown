@@ -212,8 +212,8 @@ markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、�
 <!-- release-evidence:start -->
 | Release evidence | Value |
 | --- | --- |
-| Version / status | `0.10.0` / `in-development` |
-| Offline evidence ready | `not ready` |
+| Version / status | `0.10.0` / `evidence-ready` |
+| Offline evidence ready | `ready` |
 | CI verified at evidence repository HEAD | `no` |
 | Published release | `no` |
 | Tests | `1621/1621` passed; `0` skipped; `0` failed |
