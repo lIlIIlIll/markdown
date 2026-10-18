@@ -410,6 +410,16 @@ capabilities.cj:package=markdown:public class EngineCapabilities {
 capabilities.cj:package=markdown:public class ExecutionModelCapabilities {
 capabilities.cj:package=markdown:public class ExtensionCapabilityReport {
 core/core.cj:package=markdown.core:public import markdown.{AppendLimits, AppendBlockView, AppendChange, AppendState, AppendProgress, AppendUpdateBatch, AppendInputSession, AppendReplica, AcceleratedMarkdownEngine, AstInvariantValidator, CancellationSource, CancellationToken, BindingOptions, CodeBlockKind, CodeBlockNodeView, CodeSpanNodeView, Diagnostic, DiagnosticSeverity, Document, DocumentBindings, DocumentNodeView, EngineCapabilities, EventParseResult, EventParseSummary, ExecutionModelCapabilities, HardBreakKind, HardBreakNodeView, HeadingBinding, HeadingNodeView, TocEntry, HtmlExecutionMode, HtmlExecutionPath, HtmlExecutionResult, HtmlBlockNodeView, HtmlInlineNodeView, ImageNodeView, ImmutableArray, InputReadFailureException, LimitExceededException, LineScanRecords, LineScannerAccelerator, LinkBinding, LinkNodeView, LinkSyntaxKind, ListDelimiter, ListItemNodeView, ListKind, ListNodeView, Markdown, MarkdownEngine, MarkdownEventAttribute, MarkdownEventMode, MarkdownEventSink, MarkdownSourceEvent, MarkdownSourceEventKind, MarkdownEngineBuilder, MarkdownErrorCode, MarkdownException, MarkdownProfile, NodeCategory, NodeId, NodeKind, NodeOrigin, NodeOriginKind, NodeRef, OperationBudget, OwnedUtf8Input, ParseLimits, ParseOutcome, ParseResult, ProfileKind, RawBlockEventSession, ReferenceDefinition, ReusableUtf8Input, SourceBuffer, SourcePosition, SourcePositionMap, SourceSlice, SourceSpan, TableAlignment, TaskState, TextNodeView, Utf16Position, Utf8Policy, VisualPosition}
+definition_lists.cj:package=markdown:owner=class/DefinitionListPayload:public func payloadTypeId(): String {
+definition_lists.cj:package=markdown:owner=class/DefinitionListPayload:public init(role: DefinitionListRole, markerSpan!: ?SourceSpan = None) {
+definition_lists.cj:package=markdown:owner=class/DefinitionListPayload:public let markerSpan: ?SourceSpan
+definition_lists.cj:package=markdown:owner=class/DefinitionListPayload:public let role: DefinitionListRole
+definition_lists.cj:package=markdown:owner=enum/DefinitionListRole:enum-variant | Definition
+definition_lists.cj:package=markdown:owner=enum/DefinitionListRole:enum-variant | Entry
+definition_lists.cj:package=markdown:owner=enum/DefinitionListRole:enum-variant | List
+definition_lists.cj:package=markdown:owner=enum/DefinitionListRole:enum-variant | Term
+definition_lists.cj:package=markdown:public class DefinitionListPayload <: CustomPayload {
+definition_lists.cj:package=markdown:public enum DefinitionListRole {
 diagnostic.cj:package=markdown:owner=class/Diagnostic:public init(code: String, severity: DiagnosticSeverity, message: String, span: SourceSpan, relatedSpans!: Array<SourceSpan> = [], extensionId!: ?String = None, ruleId!: ?String = None, fixes!: Array<DiagnosticFix> = []) {
 diagnostic.cj:package=markdown:owner=class/Diagnostic:public let code: String
 diagnostic.cj:package=markdown:owner=class/Diagnostic:public let extensionId: ?String
@@ -658,6 +668,7 @@ extension.cj:package=markdown:owner=class/BlockSyntax:public static func define(
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func closer(exact: String): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func conflictGroup(value: String): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func content(mode: BlockContentMode): BlockSyntaxBuilder {
+extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func definitionList(): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func documentStartOnly(enabled!: Bool = true): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func emit(emitter: BlockPayloadEmitter): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func footnoteDefinition(): BlockSyntaxBuilder {
@@ -867,6 +878,7 @@ extension.cj:package=markdown:owner=class/SyntaxResourceCost:public let baseCost
 extension.cj:package=markdown:owner=class/SyntaxResourceCost:public let perByteCost: Int64
 extension.cj:package=markdown:owner=enum/BlockContentMode:enum-variant | Literal
 extension.cj:package=markdown:owner=enum/BlockContentMode:enum-variant | Markdown
+extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | DefinitionList
 extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | FootnoteDefinition
 extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | PairedContainer
 extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | SingleLine
@@ -973,7 +985,7 @@ extension.cj:package=markdown:public interface ExtensionDocumentProcessor {
 extension.cj:package=markdown:public interface ExtensionLintProvider {
 extension.cj:package=markdown:public interface InlineParserSpi {
 extension.cj:package=markdown:public interface InlinePayloadEmitter {
-extensions/extensions.cj:package=markdown.extensions:public import markdown.{BlockContentMode, BlockPayloadEmitter, BlockSyntax, BlockSyntaxBuilder, BlockSyntaxKind, BlockSyntaxMatch, BlockSyntaxRule, CompiledDialectExplanation, CompiledMarkdownDialect, DialectCompiler, DialectParserOptions, ExtensionCapabilities, ExtensionCapabilityReport, ExtensionDependency, ExtensionDocumentProcessor, ExtensionFailureException, ExtensionLintProvider, ExtensionManifest, FootnoteDefinitionBinding, FootnoteDefinitionPayload, FootnoteReferenceBinding, FootnoteReferencePayload, HeadingBinding, HeadingIdPayload, TocEntry, ExtensionProcessingPhase, ExternalDialectDescriptor, InlineFlankingRule, InlineParserSpi, InlineParserSpiContext, InlineParserSpiResult, InlinePayloadEmitter, InlineSyntax, InlineSyntaxBuilder, InlineSyntaxKind, InlineSyntaxMatch, InlineSyntaxRule, MarkdownBlockLowering, MarkdownDialect, MarkdownDialectBuilder, OfficialExtensionDescriptor, OfficialExtensions, RendererAttributeKind, RendererAttributeSource, RendererAttributeSpec, RendererRule, SyntaxBacktrackingPolicy, SyntaxParameterSpec, SyntaxParameterType, SyntaxParameterValue, SyntaxPayload, SyntaxPhase, SyntaxResourceCost}
+extensions/extensions.cj:package=markdown.extensions:public import markdown.{BlockContentMode, BlockPayloadEmitter, BlockSyntax, BlockSyntaxBuilder, BlockSyntaxKind, BlockSyntaxMatch, BlockSyntaxRule, CompiledDialectExplanation, CompiledMarkdownDialect, DialectCompiler, DialectParserOptions, DefinitionListPayload, DefinitionListRole, ExtensionCapabilities, ExtensionCapabilityReport, ExtensionDependency, ExtensionDocumentProcessor, ExtensionFailureException, ExtensionLintProvider, ExtensionManifest, FootnoteDefinitionBinding, FootnoteDefinitionPayload, FootnoteReferenceBinding, FootnoteReferencePayload, HeadingBinding, HeadingIdPayload, TocEntry, ExtensionProcessingPhase, ExternalDialectDescriptor, InlineFlankingRule, InlineParserSpi, InlineParserSpiContext, InlineParserSpiResult, InlinePayloadEmitter, InlineSyntax, InlineSyntaxBuilder, InlineSyntaxKind, InlineSyntaxMatch, InlineSyntaxRule, MarkdownBlockLowering, MarkdownDialect, MarkdownDialectBuilder, OfficialExtensionDescriptor, OfficialExtensions, RendererAttributeKind, RendererAttributeSource, RendererAttributeSpec, RendererRule, SyntaxBacktrackingPolicy, SyntaxParameterSpec, SyntaxParameterType, SyntaxParameterValue, SyntaxPayload, SyntaxPhase, SyntaxResourceCost}
 external_descriptor.cj:package=markdown:owner=class/ExternalDialectDescriptor:public func compile(): CompiledMarkdownDialect {
 external_descriptor.cj:package=markdown:owner=class/ExternalDialectDescriptor:public func toDialect(): MarkdownDialect {
 external_descriptor.cj:package=markdown:owner=class/ExternalDialectDescriptor:public let baseProfileId: String

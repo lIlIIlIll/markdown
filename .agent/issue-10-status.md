@@ -13,10 +13,11 @@ for automatic merge or publication.
 | MD-00.7 / ART-T01 | 0.10 API boundary, SPI 2, plan/schema 3; no old reader; explicit unsupported-version error | PASS in the 1517-case full run; API checker 47, evidence bundle 5 and evidence logic 18 tests PASS |
 | MD-00.1/.2, MD-01 batch | Typed footnote payloads, reachable-definition binding, first-definition/numbering/unique-anchor/backlink decisions, shared HTML/Text/Markdown output, exact source and snapshot/config identity; DocumentBindingTests | Batch and public append implemented; complete output-resource qualification pending |
 | MD-03 batch | Heading-only typed suffix, explicit-ID reservation, shared anchor allocator, authoritative heading/fragment queries, structured TOC, source/Markdown/snapshot preservation; HeadingBindingTests | Batch and public append implemented; edit dependency qualification pending |
+| MD-02 / EXT-T03 | Definition Lists 2.0 with typed List/Entry/Term/Definition, ordinary block bodies, source markers, full binding validation and shared HTML/Text/Markdown/snapshot/append/output traversal | Implemented; 1564-case full run and consumer gates PASS |
 | MD-00.8 / MD-06.1..6 | Shared block/inline parser, final binder and document processors; actual feed-time closed AST fragments, atomic identity/version updates and replica, terminal failure, cumulative limits | Public append implemented; full phase/lifecycle redesign remains pending |
 | MD-06.7 | Real resumable HTML cursor over shared renderer rules; UTF-8 prefix acknowledgement, lazy tables/footnotes/escaping, terminal failure and cumulative output budgets; old buffered implementation removed | Implemented and correctness verified; final release performance/RSS qualification pending |
 | MD-06.8 | Public append scaling tests for long loose lists, deferred-reference paragraphs, unclosed fences and many closed blocks; real scan/node-construction/patch counters | Correctness and work growth PASS; latency, peak RSS and release performance qualification pending |
-| MD-00.6, MD-02, MD-04..06 | Lifecycle cleanup, structured definition lists, remaining extension acceptance, resumable output and real optional rich rendering | In progress |
+| MD-00.6, MD-04..05 | Lifecycle cleanup, remaining extension acceptance and real optional rich rendering | In progress |
 | MD-07..08 | Existing editor/artifact phase baseline and real process/backend capability probes retained privately; no optimization verdict yet | Pending |
 | DONE-02..06 | Complete task-to-test ledger, new performance qualification, docs/consumer gates and core hosted evidence | Pending |
 
@@ -75,3 +76,25 @@ Public API: 1561 declarations. The old buffered output class is removed and
 Pause now carries the accepted UTF-8 prefix byte count. Buffered byte counters
 exclude the AST, source and host port allocations. These correctness results do
 not qualify peak RSS, frozen performance gates or the remaining issue scope.
+
+The definition-list checkpoint uses official STS 1.2.0 and formatted product tree
+`ad689322d84c832de70f8e1e82ca647ec4f3ec29a2b16429f56560171a6b85a0`
+(workspace and disk-backed test tree verified equal). Full tests: 1564/1564 PASS,
+zero skips/errors/failures. DefinitionListTests cover exact grouped HTML/Text and
+canonical Markdown, multiple terms/definitions, empty definitions, ordinary
+paragraph/list/quote/fence bodies, nesting, Unicode/CRLF and invalid-byte source
+mapping, lossless CST, footnote/heading/link binding, snapshot equivalence,
+single-byte/mixed/whole append and resumable output. Disabled/default profiles,
+orphan markers, setext ambiguity, unsupported execution paths, malformed typed
+payloads, grammar flags, declared resource costs, limits and cancellation are
+checked explicitly. Canonical quote/list/task continuations keep their ownership;
+four additional container fixtures check HTML round trips and idempotence.
+
+Nested literal closures no longer trigger repeated whole definition-list prefix
+retries. Public scaling cases check scan/construction growth at 16/32/64 entries
+against batch output, including indented bodies. These are actual work counters,
+not latency or RSS evidence. Normal check/build, both example builds/runs, CLI
+build/smoke and benchmark-driver build PASS. Format/docs/API/evidence checks and
+70 API/evidence Python tests PASS; public API: 1573 declarations. Full lifecycle,
+remaining extension/rich-backend, editor/artifact and frozen release/performance
+qualification remain pending. No core push or PR is authorized.

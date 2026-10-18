@@ -107,7 +107,7 @@ public class OfficialExtensions {
             OfficialExtensionDescriptor("footnotes", "2.0", false),
             OfficialExtensionDescriptor("front-matter", "1.1", false),
             OfficialExtensionDescriptor("math", "1.1", false),
-            OfficialExtensionDescriptor("definition-lists", "1.1", false),
+            OfficialExtensionDescriptor("definition-lists", "2.0", false),
             OfficialExtensionDescriptor("heading-ids", "2.0", false),
             OfficialExtensionDescriptor("smart-punctuation", "1.1", false),
             OfficialExtensionDescriptor("github-alerts", "future", false),
@@ -211,16 +211,8 @@ public class OfficialExtensions {
      */
     public static func definitionLists(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
         builder
-            .enable(ExtensionManifest("definition-lists", "1.0.0", "builtin-1", capabilities: renderCapabilities()))
-            .block(
-                BlockSyntax
-                    .define("definition-lists", "definition")
-                    .linePrefix(": ")
-                    .content(BlockContentMode.Markdown)
-                    .kindFromFirstWord(false))
-            .renderer(
-                RendererRule("definition-lists", "definition", "dd", classToken: "definition", markdownOpener: ": ",
-                    markdownBlockLowering: MarkdownBlockLowering.Line))
+            .enable(ExtensionManifest("definition-lists", "2.0.0", "builtin-2", capabilities: renderCapabilities()))
+            .block(BlockSyntax.define("definition-lists", "definition-list").definitionList())
     }
 
     /** 向 builder 添加 heading-id metadata syntax。

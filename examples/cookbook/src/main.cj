@@ -2,7 +2,8 @@ package markdown_cookbook
 
 import markdown.core.{AppendReplica, AppendState, Markdown, MarkdownEngine, MarkdownProfile}
 import markdown.editor.AstQuery
-import markdown.extensions.{BlockSyntax, ExtensionCapabilities, ExtensionManifest, MarkdownDialect, RendererRule}
+import markdown.extensions.{DefinitionListPayload, DefinitionListRole, BlockSyntax, ExtensionCapabilities, 
+    ExtensionManifest, MarkdownDialect, OfficialExtensions, RendererRule}
 import markdown.render.{AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, HtmlOptions, HtmlRenderer}
 
 class CookbookOutputSink <: AsyncTextSink {
@@ -90,6 +91,20 @@ main(): Int64 {
             return 1
         case AsyncRenderState.Paused => return 1
     }
+
+    println("== definition-list ==")
+    let definitionEngine = MarkdownEngine
+        .builder()
+        .dialect(OfficialExtensions.definitionLists(MarkdownDialect.define("glossary", "2")).build())
+        .build()
+    let glossary = definitionEngine.parse("Term one\nTerm two\n: First definition\n\n  Second paragraph\n")
+    let listPayload = glossary.document.root().children()[0].asCustomBlock().getOrThrow().payload as DefinitionListPayload
+    if (let DefinitionListRole.List <- listPayload.getOrThrow().role) {
+        ()
+    } else {
+        return 1
+    }
+    println(definitionEngine.htmlRenderer().render(glossary.document))
 
     println("== format ==")
     println(Markdown.format("#  Title\n\n* item"))

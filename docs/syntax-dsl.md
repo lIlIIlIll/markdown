@@ -45,11 +45,12 @@ let note = BlockSyntax
 
 `footnoteDefinition()` 声明 `[^label]:` 和缩进四列的多段正文，生成结构化脚注 payload。
 这与 `linePrefix` 的单行语法不同。脚注和标题语义需要完整 AST 绑定，目前不能由 RawBlock
-事件路径完成。这两个专用声明属于代码 DSL；external descriptor schema 1 没有新增对应
-字段。
+事件路径完成。`definitionList()` 声明 List/Entry/Term/Definition 结构，规则见
+[定义列表](definition-lists.md)。这些专用声明属于代码 DSL；external descriptor schema 1
+没有新增对应字段。
 
-`maximumBlockBytes` 在 batch parser 和 `RawBlockEventSession.feed()` 中使用相同的正文
-字节语义实时执行。paired block 的外层 opener/closer 不计入正文；嵌套 opener、内层
+对 paired container，`maximumBlockBytes` 在 batch parser 和 RawBlockEventSession.feed 中
+使用相同的正文字节语义实时执行。外层 opener/closer 不计入正文；嵌套 opener、内层
 closer、普通正文和 CRLF 按原始字节计入。超过上限的 feed 立即抛出带 extension identity
 与准确原始 span 的结构化限制错误，不会等到 `finish()` 才拒绝。
 

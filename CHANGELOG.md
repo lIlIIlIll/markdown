@@ -16,6 +16,7 @@
 - 可恢复 HTML 遍历与部分 UTF-8 字节确认，移除预先渲染整份 HTML 的 buffered 输出实现。
 - 实际分块解析的追加会话、带身份与版本的原子更新、参考消费端与最终后置引用绑定。
 - 修正多行 setext 的 CRLF/container 来源映射、未闭合单 fence 的 EOF 范围和 Front Matter 起点。
+- 定义列表 2.0 的完整分组、普通块正文、各输出和分块支持；修复容器 Markdown 续行归属。
 - 结构化脚注绑定、可达定义脚注区、独立引用锚点和完整回链。
 - 标题显式 ID、自动 slug 和结构化 TOC，共用文档作用域及锚点冲突决策。
 - 校验 Document 与 SourceBuffer 的来源归属；修正 GFM 表格转义后的来源映射和 Markdown
@@ -29,8 +30,8 @@
 - benchmark evidence status `stale`；
 - CommonMark `652/652`；
 - GFM `671/671`；
-- 测试 `1554/1554`，`0` skipped，`0` failed；
-- public API snapshot `1561` declarations；
+- 测试 `1564/1564`，`0` skipped，`0` failed；
+- public API snapshot `1573` declarations；
 - last complete CommonMark ratio `2.361586x`；
 - last complete GFM ratio `1.788010x`。
 

@@ -180,6 +180,8 @@ internal class AppendTreeAssembler {
 
     private func shiftedCustom(payload: CustomPayload, offset: Int64): CustomPayload {
         match (payload) {
+            case value: DefinitionListPayload => DefinitionListPayload(value.role,
+                markerSpan: shifted(value.markerSpan, offset))
             case value: FootnoteReferencePayload =>
                 budget.consumeScan(steps: value.labelRaw.size)
                 FootnoteReferencePayload(value.labelRaw, shiftSpan(value.labelSpan, offset))

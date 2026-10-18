@@ -78,7 +78,7 @@ Complete 批次以唯一的 Bind 收尾，所有块必须与完整结果的顶�
 不要用最终 SourceBuffer 读取旧 fragment 的 NodeRef。需要读取草稿原文时使用该视图
 自己的 `source` 和 `node.span`；完整结果使用 `result.source`。
 
-未知自定义 payload 没有隐式的范围搬移规则。当前支持内建节点、`SyntaxPayload`、脚注和
+未知自定义 payload 没有隐式的范围搬移规则。当前支持内建节点、`SyntaxPayload`、脚注、定义列表和
 标题 ID typed payload；其他 payload 会明确失败为 `UnsupportedNode`。文档处理器在
 完整组装后执行一次，不在 feed 中执行。
 

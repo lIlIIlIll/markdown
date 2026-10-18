@@ -259,8 +259,9 @@ Definition Lists、Heading IDs 和 Smart Punctuation。使用 `catalog()` 查询
 Front Matter 和 Math 只保留 literal，不执行配置或数学引擎。
 
 脚注和标题 ID 使用 2.0 语义与 typed payload；编号、目标和目录来自
-`Document.bindings`。定义列表仍处于旧的有限语法边界，不能从 `p1Dialect` 的名字推断全部
-issue #10 目标已经验收。具体语法、输出和执行边界见[文档绑定](../semantic-binding.md)。
+`Document.bindings`。定义列表 2.0 使用 List/Entry/Term/Definition typed 结构，支持多 term、
+多定义和普通 Markdown 块正文。规则见[结构化定义列表](../definition-lists.md)；脚注和标题
+见[文档绑定](../semantic-binding.md)。不能从 p1Dialect 的名字推断全部 issue #10 目标已验收。
 
 ## External descriptor
 

@@ -1039,6 +1039,19 @@ public class HtmlRenderer {
             case NodeKind.CustomInline => node.asCustomInline().getOrThrow()
             case _ => throw IllegalStateException("arena custom renderer received a core node")
         }
+        if (let value: DefinitionListPayload <- custom.payload) {
+            requireDefinitionListBinding(node)
+            match (value.role) {
+                case DefinitionListRole.List => write("<dl>\n", sink, cancellation, budget)
+                case DefinitionListRole.Entry =>
+                    pushArenaChildren(node, stack, planner: htmlOutputPlanner(sink))
+                    return
+                case DefinitionListRole.Term => write("<dt>", sink, cancellation, budget)
+                case DefinitionListRole.Definition => write("<dd>\n", sink, cancellation, budget)
+            }
+            pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
+            return
+        }
         if (custom.payload is FootnoteReferencePayload || custom.payload is FootnoteDefinitionPayload) {
             if (!node.documentBindings.footnotesEnabled) {
                 throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
@@ -1120,6 +1133,16 @@ public class HtmlRenderer {
             case NodeKind.CustomBlock => node.asCustomBlock().getOrThrow()
             case NodeKind.CustomInline => node.asCustomInline().getOrThrow()
             case _ => throw IllegalStateException("arena custom renderer received a core node")
+        }
+        if (let value: DefinitionListPayload <- custom.payload) {
+            requireDefinitionListBinding(node)
+            match (value.role) {
+                case DefinitionListRole.List => write("</dl>\n", sink, cancellation, budget)
+                case DefinitionListRole.Entry => ()
+                case DefinitionListRole.Term => write("</dt>\n", sink, cancellation, budget)
+                case DefinitionListRole.Definition => write("</dd>\n", sink, cancellation, budget)
+            }
+            return
         }
         if (custom.payload is FootnoteReferencePayload || custom.payload is FootnoteDefinitionPayload ||
             custom.payload is HeadingIdPayload) {
@@ -1960,7 +1983,13 @@ public class PlainTextRenderer {
                         }
                     case NodeKind.CustomBlock =>
                         let custom = frame.node.asCustomBlock().getOrThrow()
-                        appendCustomTextSuffix(custom.extensionId, custom.localKindId, out)
+                        if (let value: DefinitionListPayload <- custom.payload) {
+                            if (let DefinitionListRole.Term <- value.role) {
+                                out.append("\n")
+                            }
+                        } else {
+                            appendCustomTextSuffix(custom.extensionId, custom.localKindId, out)
+                        }
                     case NodeKind.CustomInline =>
                         let custom = frame.node.asCustomInline().getOrThrow()
                         appendCustomTextSuffix(custom.extensionId, custom.localKindId, out)
@@ -1984,6 +2013,11 @@ public class PlainTextRenderer {
                 case NodeKind.ThematicBreak => out.append("\n")
                 case NodeKind.CustomBlock =>
                     let custom = frame.node.asCustomBlock().getOrThrow()
+                    if (custom.payload is DefinitionListPayload) {
+                        requireDefinitionListBinding(frame.node)
+                        pushPlainContainer(frame, stack)
+                        continue
+                    }
                     if (custom.payload is FootnoteDefinitionPayload) {
                         continue
                     }

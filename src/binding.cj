@@ -132,6 +132,7 @@ public class DocumentBindings {
         HashMap<NodeId, FootnoteReferenceBinding>(), [], footnotesEnabled: false)
     internal let footnotesEnabled: Bool
     internal let headingsEnabled: Bool
+    internal let definitionListsValidated: Bool
     internal let limits: ParseLimits
     internal let engineFingerprint: String
     internal let options: BindingOptions
@@ -152,12 +153,13 @@ public class DocumentBindings {
     internal init(options: BindingOptions, limits: ParseLimits, engineFingerprint: String,
         footnotes: Array<FootnoteDefinitionBinding>, references: HashMap<NodeId, FootnoteReferenceBinding>,
         diagnostics: Array<Diagnostic>, footnotesEnabled!: Bool = true, headingsEnabled!: Bool = false,
-        headings!: Array<HeadingBinding> = [], links!: Array<LinkBinding> = []) {
+        headings!: Array<HeadingBinding> = [], links!: Array<LinkBinding> = [], definitionListsValidated!: Bool = false) {
         this.options = options
         this.limits = limits
         this.engineFingerprint = engineFingerprint
         this.footnotesEnabled = footnotesEnabled
         this.headingsEnabled = headingsEnabled
+        this.definitionListsValidated = definitionListsValidated
         this.footnotes = ImmutableArray<FootnoteDefinitionBinding>(footnotes)
         this.headings = ImmutableArray<HeadingBinding>(headings)
         this.links = ImmutableArray<LinkBinding>(links)
@@ -364,6 +366,7 @@ internal class DocumentBinder {
             match (event) {
                 case NodeRefWalkEvent.Enter(node) =>
                     validateSemanticPayload(document, node, parents, work)
+                    validateDefinitionListNode(document, node, parents, budget, cancellation)
                     if (let NodeKind.Link <- node.kind) {
                         linkNodes.add(node)
                         if (!contexts.isEmpty()) {
@@ -449,7 +452,7 @@ internal class DocumentBinder {
         document.withBindings(
             DocumentBindings(options, limits, parserConfigurationFingerprint(document.dialectFingerprint, limits,
                 options), notes.toArray(), references, diagnostics.toArray(), headingsEnabled: headingsEnabled,
-                headings: headings, links: links))
+                headings: headings, links: links, definitionListsValidated: true))
     }
 
     private static func bindLinks(nodes: ArrayList<NodeRef>, owners: HashMap<NodeId, NodeId>,

@@ -96,6 +96,12 @@ internal enum FormatAction {
     | NodeValue(NodeRef)
     | FootnoteBodyStart
     | FootnoteBodyEnd(String)
+    | DefinitionBodyStart
+    | DefinitionBodyEnd
+    | QuoteBodyStart
+    | QuoteBodyEnd
+    | ListItemBodyStart
+    | ListItemBodyEnd(String, Int64)
 }
 
 /** 将 AST 输出为确定性的 canonical Markdown。 */
@@ -140,6 +146,44 @@ public class CanonicalMarkdownRenderer {
             match (action) {
                 case FormatAction.TextValue(value) => out.append(value)
                 case FormatAction.NodeValue(node) => formatNode(node, stack, out)
+                case FormatAction.QuoteBodyStart | FormatAction.ListItemBodyStart =>
+                    outputStack.add(out)
+                    out = StringBuilder()
+                case FormatAction.QuoteBodyEnd =>
+                    let body = trimFormatEnd(out.toString())
+                    out = outputStack.remove(at: outputStack.size - 1)
+                    out.append(if (body.isEmpty()) {
+                        ">"
+                    } else {
+                        "> "
+                    })
+                    appendPrefixedLines(body, "> ", out)
+                case FormatAction.ListItemBodyEnd(prefix, indentation) =>
+                    let body = trimFormatEnd(out.toString())
+                    out = outputStack.remove(at: outputStack.size - 1)
+                    out.append(prefix)
+                    appendPrefixedLines(body, repeatString(" ", indentation), out)
+                case FormatAction.DefinitionBodyStart =>
+                    outputStack.add(out)
+                    out = StringBuilder()
+                case FormatAction.DefinitionBodyEnd =>
+                    let body = trimFormatEnd(out.toString())
+                    out = outputStack.remove(at: outputStack.size - 1)
+                    out.append(":")
+                    if (!body.isEmpty()) {
+                        out.append(" ")
+                        var start: Int64 = 0
+                        var index: Int64 = 0
+                        while (index < body.size) {
+                            if (body[index] == b'\n') {
+                                out.append(body[start..index + 1])
+                                out.append("  ")
+                                start = index + 1
+                            }
+                            index++
+                        }
+                        out.append(body[start..])
+                    }
                 case FormatAction.FootnoteBodyStart =>
                     outputStack.add(out)
                     out = StringBuilder()
@@ -175,9 +219,9 @@ public class CanonicalMarkdownRenderer {
                 stack.add(
                     FormatAction.TextValue(repeatString(options.headingMarker, node.asHeading().getOrThrow().level) + " "))
             case NodeKind.BlockQuote =>
-                stack.add(FormatAction.TextValue("\n"))
-                pushNodes(node.children(), stack)
-                stack.add(FormatAction.TextValue("> "))
+                stack.add(FormatAction.QuoteBodyEnd)
+                pushSeparated(node.children(), "\n\n", stack)
+                stack.add(FormatAction.QuoteBodyStart)
             case NodeKind.List => pushList(node, stack)
             case NodeKind.ListItem => pushNodes(node.children(), stack)
             case NodeKind.ThematicBreak => out.append("---")
@@ -227,6 +271,19 @@ public class CanonicalMarkdownRenderer {
             case NodeKind.HtmlInline => out.append(node.asHtmlInline().getOrThrow().literal)
             case NodeKind.CustomBlock =>
                 let custom = node.asCustomBlock().getOrThrow()
+                if (let value: DefinitionListPayload <- custom.payload) {
+                    requireDefinitionListBinding(node)
+                    match (value.role) {
+                        case DefinitionListRole.List => pushSeparated(node.children(), "\n\n", stack)
+                        case DefinitionListRole.Entry => pushSeparated(node.children(), "\n", stack)
+                        case DefinitionListRole.Term => pushNodes(node.children(), stack)
+                        case DefinitionListRole.Definition =>
+                            stack.add(FormatAction.DefinitionBodyEnd)
+                            pushSeparated(node.children(), "\n\n", stack)
+                            stack.add(FormatAction.DefinitionBodyStart)
+                    }
+                    return
+                }
                 if (let note: FootnoteDefinitionPayload <- custom.payload) {
                     stack.add(FormatAction.FootnoteBodyEnd(escapeMarkdownText(note.labelNormalized)))
                     pushSeparated(node.children(), "\n\n", stack)
@@ -386,7 +443,6 @@ public class CanonicalMarkdownRenderer {
             match (children[index].kind) {
                 case NodeKind.ListItem =>
                     let item = children[index].asListItem().getOrThrow()
-                    pushNodes(children[index].children(), stack)
                     let marker = match (list.listKind) {
                         case ListKind.Bullet => options.bulletMarker
                         case ListKind.Ordered => "${list.start + index}${options.orderedDelimiter}"
@@ -396,15 +452,41 @@ public class CanonicalMarkdownRenderer {
                         case TaskState.Unchecked => " [ ]"
                         case TaskState.NotTask => ""
                     }
-                    stack.add(FormatAction.TextValue(marker + task + " "))
+                    stack.add(FormatAction.ListItemBodyEnd(marker + task + " ", marker.size + 1))
+                    pushSeparated(children[index].children(), if (list.tight) {
+                        "\n"
+                    } else {
+                        "\n\n"
+                    }, stack)
+                    stack.add(FormatAction.ListItemBodyStart)
                     if (index > 0) {
-                        stack.add(FormatAction.TextValue("\n"))
+                        stack.add(FormatAction.TextValue(if (list.tight) {
+                            "\n"
+                        } else {
+                            "\n\n"
+                        }))
                     }
                 case _ => throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation,
                     "List has non-ListItem child", phase: "format", span: children[index].span)
             }
             index--
         }
+    }
+
+    private func appendPrefixedLines(value: String, prefix: String, out: StringBuilder): Unit {
+        var start: Int64 = 0
+        var index: Int64 = 0
+        while (index < value.size) {
+            if (value[index] == b'\n') {
+                out.append(value[start..index + 1])
+                if (index + 1 < value.size) {
+                    out.append(prefix)
+                }
+                start = index + 1
+            }
+            index++
+        }
+        out.append(value[start..])
     }
 
     private func formatCodeBlock(code: CodeBlockNodeView, out: StringBuilder): Unit {

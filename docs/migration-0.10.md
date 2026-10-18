@@ -42,3 +42,10 @@
 前缀必须位于 UTF-8 边界。AsyncRenderState.Failed 现在携带 MarkdownException，包含
 sink、取消、预算和 renderer 错误。Complete/Failed 后不允许 resume。详见
 [暂停与恢复 HTML 输出](html-output.md)。
+
+## 定义列表 2.0
+
+移除旧的单行 definition → dd 映射。新 AST 使用 DefinitionListPayload 的
+List/Entry/Term/Definition roles，定义正文包含普通块。格式化可以规范化缩进和文本转义；
+原始拼写使用 SourceBuffer、lossless CST 或 preserving formatter。现有 consumer 应按
+角色和 children 读取归属，不按旧 dd 节点猜测 term。见[定义列表](definition-lists.md)。

@@ -329,6 +329,7 @@ internal class ParserHotPlan {
     internal let hasInlineSpi: Bool
     internal let hasDocumentProcessors: Bool
     internal let hasFootnotes: Bool
+    internal let definitionListRule: ?BlockSyntaxRule
     internal let headingIdRule: ?InlineSyntaxRule
     private let inlineDslByFirstByte: Array<ImmutableArray<InlineSyntaxRule>>
     private let blockDslByFirstByte: Array<ImmutableArray<BlockSyntaxRule>>
@@ -345,6 +346,7 @@ internal class ParserHotPlan {
         let spiBuckets = Array<ArrayList<InlineParserSpi>>(256) {_ => ArrayList<InlineParserSpi>()}
         var footnotes = false
         var headingRule: ?InlineSyntaxRule = None
+        var definitionRule: ?BlockSyntaxRule = None
         for (rule in inlineRules) {
             inlineBuckets[Int64(rule.opener[0])].add(rule)
             if (let InlineSyntaxKind.HeadingIdSuffix <- rule.syntaxKind) {
@@ -361,8 +363,12 @@ internal class ParserHotPlan {
             if (let BlockSyntaxKind.FootnoteDefinition <- rule.syntaxKind) {
                 footnotes = true
             }
+            if (definitionRule.isNone() && let BlockSyntaxKind.DefinitionList <- rule.syntaxKind) {
+                definitionRule = Some(rule)
+            }
         }
         hasFootnotes = footnotes
+        definitionListRule = definitionRule
         headingIdRule = headingRule
         for (spi in parserSpis) {
             for (trigger in spi.triggerBytes) {
@@ -872,6 +878,8 @@ public enum BlockSyntaxKind {
     | SingleLine
     /** 脚注定义：标签行和缩进四列的后续 Markdown blocks。 */
     | FootnoteDefinition
+    /** 术语行和冒号定义，包含普通 Markdown 正文。 */
+    | DefinitionList
 }
 
 // cjlint-ignore -end Public BlockContentMode.Markdown is the frozen DSL spelling.
@@ -1112,6 +1120,18 @@ public class BlockSyntaxBuilder {
     public func footnoteDefinition(): BlockSyntaxBuilder {
         syntaxKindValue = BlockSyntaxKind.FootnoteDefinition
         openerPrefixValue = "[^"
+        closerValue = ""
+        contentModeValue = BlockContentMode.Markdown
+        kindFromFirstWordValue = false
+        allowNestingValue = true
+        this
+    }
+    /** 定义带 entry/term/definition 归属的结构化定义列表。
+     * @return 同一 builder，支持链式调用。
+     */
+    public func definitionList(): BlockSyntaxBuilder {
+        syntaxKindValue = BlockSyntaxKind.DefinitionList
+        openerPrefixValue = ":"
         closerValue = ""
         contentModeValue = BlockContentMode.Markdown
         kindFromFirstWordValue = false
@@ -1941,6 +1961,11 @@ public class DialectCompiler {
         if (hasBoundFootnoteRenderer(dialect, extensionId)) {
             return true
         }
+        for (rule in dialect.blockBuilders) {
+            if (rule.extensionId == extensionId && let BlockSyntaxKind.DefinitionList <- rule.syntaxKindValue) {
+                return true
+            }
+        }
         if (extensionId == "heading-ids") {
             for (rule in dialect.inlineBuilders) {
                 if (rule.extensionId == extensionId && let InlineSyntaxKind.HeadingIdSuffix <- rule.syntaxKindValue) {
@@ -2008,6 +2033,15 @@ public class DialectCompiler {
             case BlockSyntaxKind.SingleLine =>
                 if (!rule.closerValue.isEmpty()) {
                     fail("single-line block must not have a closer")
+                }
+            case BlockSyntaxKind.DefinitionList =>
+                if (rule.openerPrefixValue != ":" || !rule.closerValue.isEmpty() || rule.kindFromFirstWordValue ||
+                    rule.emitterValue.isSome() || !rule.parameterValues.isEmpty() || !rule.allowNestingValue || rule
+                    .documentStartOnlyValue) {
+                    fail("definition lists require the structured grammar and payload")
+                }
+                if (let BlockContentMode.Literal <- rule.contentModeValue) {
+                    fail("definition list content must be Markdown")
                 }
             case BlockSyntaxKind.FootnoteDefinition =>
                 if (rule.openerPrefixValue != "[^" || !rule.closerValue.isEmpty() || rule.kindFromFirstWordValue ||
@@ -2730,6 +2764,7 @@ private func canonicalDescriptor(
             case BlockSyntaxKind.PairedContainer => out.append("paired")
             case BlockSyntaxKind.SingleLine => out.append("line")
             case BlockSyntaxKind.FootnoteDefinition => out.append("footnote")
+            case BlockSyntaxKind.DefinitionList => out.append("definition-list/2")
         }
         out.append(":dynamic-kind=");
         out.append(rule.kindFromFirstWord)

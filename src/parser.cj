@@ -576,6 +576,7 @@ internal enum BlockFrameCompletionKind {
     | Root
     | Quote
     | ListItemFrame
+    | DefinitionBodyFrame
     | Extension
 }
 
@@ -673,12 +674,14 @@ internal class BlockParseFrame {
     let quoteState: ?PendingQuoteState
     let list: ?PendingListState
     let extension: ?PendingExtensionState
+    let definitionList: ?PendingDefinitionList
     let blocks = ArrayList<Int64>()
     var index: Int64 = 0
 
     init(lines: Array<LineRecord>, depth: Int64, suppressedRule: String,
         completion!: BlockFrameCompletionKind = BlockFrameCompletionKind.Root, quoteState!: ?PendingQuoteState = None,
-        list!: ?PendingListState = None, extension!: ?PendingExtensionState = None) {
+        list!: ?PendingListState = None, extension!: ?PendingExtensionState = None,
+        definitionList!: ?PendingDefinitionList = None) {
         this.lines = lines
         this.depth = depth
         this.suppressedRule = suppressedRule
@@ -686,6 +689,7 @@ internal class BlockParseFrame {
         this.quoteState = quoteState
         this.list = list
         this.extension = extension
+        this.definitionList = definitionList
     }
 }
 
@@ -836,7 +840,8 @@ internal class ParserSession {
         }
         if (!deferReferenceInlines && (dialect.parserHotPlan.hasDocumentProcessors || (dialect
             .parserOptions
-            .extensionsEnabled && (dialect.parserHotPlan.hasFootnotes || dialect.parserHotPlan.headingIdRule.isSome())))) {
+            .extensionsEnabled && (dialect.parserHotPlan.hasFootnotes || dialect.parserHotPlan.headingIdRule.isSome() ||
+            dialect.parserHotPlan.definitionListRule.isSome())))) {
             throw MarkdownException(MarkdownErrorCode.ExtensionFailure,
                 "document-wide processors and binding require the full AST execution path", phase: "event_preflight")
         }
@@ -1173,7 +1178,8 @@ internal class ParserSession {
     }
 
     private func collectReferences(lines: Array<LineRecord>): Array<ReferenceDefinition> {
-        if (dialect.parserOptions.extensionsEnabled && dialect.parserHotPlan.hasFootnotes) {
+        if (dialect.parserOptions.extensionsEnabled && (dialect.parserHotPlan.hasFootnotes ||
+            dialect.parserHotPlan.definitionListRule.isSome())) {
             return collectStructuredReferences(lines)
         }
         let out = ArrayList<ReferenceDefinition>()
@@ -1340,6 +1346,37 @@ internal class ParserSession {
                             }, state.marker.startNumber, state.marker.delimiter, state.tight, state.nodes, state.span)
                             appendParsedBlock(frames[frames.size - 1], listNode)
                         }
+                    case BlockFrameCompletionKind.DefinitionBodyFrame =>
+                        let state = frame.definitionList.getOrThrow()
+                        let entry = state.entries[state.entryIndex]
+                        let body = entry.definitions[state.definitionIndex]
+                        state
+                            .entryNodes
+                            .add(
+                                definitionNode(DefinitionListRole.Definition, children, body.span, state.rule,
+                                    markerSpan: Some(body.markerSpan)))
+                        state.definitionIndex++
+                        if (state.definitionIndex >= entry.definitions.size) {
+                            state
+                                .nodes
+                                .add(
+                                    definitionNode(DefinitionListRole.Entry, state.entryNodes.toArray(), entry.span,
+                                        state.rule))
+                            state.entryIndex++
+                            if (state.entryIndex < state.entries.size) {
+                                prepareDefinitionTerms(state)
+                            }
+                        }
+                        if (state.entryIndex < state.entries.size) {
+                            let next = state.entries[state.entryIndex].definitions[state.definitionIndex]
+                            frames.add(
+                                BlockParseFrame(next.lines, frame.depth, frame.suppressedRule,
+                                    completion: BlockFrameCompletionKind.DefinitionBodyFrame,
+                                    definitionList: Some(state)))
+                        } else {
+                            appendParsedBlock(frames[frames.size - 1],
+                                definitionNode(DefinitionListRole.List, state.nodes.toArray(), state.span, state.rule))
+                        }
                     case BlockFrameCompletionKind.Extension =>
                         let state = frame.extension.getOrThrow()
                         let payload = match (state.payloadOverride) {
@@ -1482,6 +1519,26 @@ internal class ParserSession {
                     continue
                 }
             }
+            if (dialect.parserOptions.extensionsEnabled && let Some(rule) <- dialect.parserHotPlan.definitionListRule) {
+                let scanner = DefinitionListScanner(lines, rule, budget, cancellation,
+                    {start, end => mappedSpan(start, end)}, {
+                        candidate => !referenceLineStarts.contains(lines[candidate].startByte) &&
+                            !isSetextMarkerLine(lines[candidate]) && !isAnyBlockStart(lines, candidate)
+                    })
+                if (let Some(state) <- scanner.scan(index)) {
+                    budget.consumeScan(steps: syntaxRuleCost(rule.resourceCost, state.span.length()))
+                    if (frame.depth >= limits.maximumNestingDepth) {
+                        throw LimitExceededException("nesting_depth", limits.maximumNestingDepth, frame.depth + 1,
+                            "definition_list_parse", span: Some(state.span), extensionId: Some(rule.extensionId))
+                    }
+                    frame.index = state.nextIndex
+                    prepareDefinitionTerms(state)
+                    frames.add(
+                        BlockParseFrame(state.entries[0].definitions[0].lines, frame.depth + 1, frame.suppressedRule,
+                            completion: BlockFrameCompletionKind.DefinitionBodyFrame, definitionList: Some(state)))
+                    continue
+                }
+            }
             let setextMarker = findSetextMarker(lines, index)
             if (setextMarker > index) {
                 let markerStart = leadingWhitespace(lines[setextMarker].text)
@@ -1502,6 +1559,27 @@ internal class ParserSession {
         }
         suppressedBlockRule = ""
         result
+    }
+
+    private func prepareDefinitionTerms(state: PendingDefinitionList): Unit {
+        state.entryNodes.clear()
+        state.definitionIndex = 0
+        for (line in state.entries[state.entryIndex].terms) {
+            let children = parseInlineLineRange([line], 0, 1)
+            state
+                .entryNodes
+                .add(
+                    definitionNode(DefinitionListRole.Term, children,
+                        mappedSpan(line.startByte + leadingWhitespace(line.text), line.endByte), state.rule))
+        }
+    }
+
+    private func definitionNode(role: DefinitionListRole, children: Array<Int64>, span: SourceSpan,
+        rule: BlockSyntaxRule, markerSpan!: ?SourceSpan = None): Int64 {
+        nodes.requiresBinding = true
+        nodes.customBlock(rule.extensionId, manifestVersion(rule.extensionId), definitionListKind(role),
+            DefinitionListPayload(role, markerSpan: markerSpan), children, Some(span),
+            NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: Some(span), extensionId: Some(rule.extensionId)))
     }
 
     private func appendParsedBlock(frame: BlockParseFrame, node: Int64): Unit {
@@ -3426,6 +3504,9 @@ internal class ParserSession {
         let blockRules = dialect.parserHotPlan.blockRules(trimmed[0])
         for (ruleIndex in 0..blockRules.size) {
             let rule = blockRules[ruleIndex]
+            if (let BlockSyntaxKind.DefinitionList <- rule.syntaxKind) {
+                continue
+            }
             let identity = "${rule.extensionId}/${rule.ruleId}"
             if (identity == suppressedBlockRule) {
                 continue
@@ -3604,6 +3685,9 @@ internal class ParserSession {
             let rules = dialect.parserHotPlan.blockRules(trimmed[0])
             for (ruleIndex in 0..rules.size) {
                 let rule = rules[ruleIndex]
+                if (let BlockSyntaxKind.DefinitionList <- rule.syntaxKind) {
+                    continue
+                }
                 if (rule.documentStartOnly &&
                     !isDocumentStart(lines[index].startByte + leadingWhitespace(lines[index].text))) {
                     continue

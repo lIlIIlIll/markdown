@@ -17,7 +17,7 @@ private func appendTestEngine(): MarkdownEngine {
         .build()
 }
 
-private func expectAppendEquivalent(engine: MarkdownEngine, actual: ParseResult, expected: ParseResult): Unit {
+internal func expectAppendEquivalent(engine: MarkdownEngine, actual: ParseResult, expected: ParseResult): Unit {
     @Expect(actual.source.text(), expected.source.text())
     @Expect(actual.document.nodeCount, expected.document.nodeCount)
     @Expect(actual.document.references.size, expected.document.references.size)
@@ -66,7 +66,7 @@ private func expectAppendEquivalent(engine: MarkdownEngine, actual: ParseResult,
     }
 }
 
-private func appendByWidths(engine: MarkdownEngine, bytes: Array<Byte>, widths: Array<Int64>,
+internal func appendByWidths(engine: MarkdownEngine, bytes: Array<Byte>, widths: Array<Int64>,
     policy!: Utf8Policy = Utf8Policy.Strict): ParseResult {
     let session = engine.newAppendSession(utf8Policy: policy)
     let replica = AppendReplica()

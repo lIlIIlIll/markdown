@@ -29,6 +29,21 @@ class FormatterBehaviorTest {
     }
 
     @TestCase
+    func canonicalContainersKeepEveryContinuationAndParagraphInsideItsOwner(): Unit {
+        let engine = MarkdownEngine.builder().profile(MarkdownProfile.gfmModernV1()).build()
+        let formatter = CanonicalMarkdownRenderer()
+        for (source in ["> first\n>\n> second\n>\n> - item\n>\n> ```text\n> code\n> ```\n",
+            "1. [x] first\n\n   second\n\n2. [ ] next\n", "- para\n  - nested\n    - deep\n- next\n",
+            "- ```text\n  code\n  ```\n- tail\n"]) {
+            let original = engine.parse(source)
+            let formatted = formatter.render(original.document)
+            let restored = engine.parse(formatted)
+            @Expect(engine.htmlRenderer().render(restored.document), engine.htmlRenderer().render(original.document))
+            @Expect(formatter.render(restored.document), formatted)
+        }
+    }
+
+    @TestCase
     func formatterSupportsCrlfAndFinalNewlineOptions(): Unit {
         let document = MarkdownEngine.builder().build().parse("text").document
         let crlf = CanonicalMarkdownRenderer(options: MarkdownFormatOptions(newline: "\r\n")).render(document)

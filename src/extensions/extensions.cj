@@ -2,8 +2,8 @@ package markdown.extensions
 
 public import markdown.{BlockContentMode, BlockPayloadEmitter, BlockSyntax, BlockSyntaxBuilder, BlockSyntaxKind, 
     BlockSyntaxMatch, BlockSyntaxRule, CompiledDialectExplanation, CompiledMarkdownDialect, DialectCompiler, 
-    DialectParserOptions, ExtensionCapabilities, ExtensionCapabilityReport, ExtensionDependency, 
-    ExtensionDocumentProcessor, ExtensionFailureException, ExtensionLintProvider, ExtensionManifest, 
+    DialectParserOptions, DefinitionListPayload, DefinitionListRole, ExtensionCapabilities, ExtensionCapabilityReport, 
+    ExtensionDependency, ExtensionDocumentProcessor, ExtensionFailureException, ExtensionLintProvider, ExtensionManifest, 
     FootnoteDefinitionBinding, FootnoteDefinitionPayload, FootnoteReferenceBinding, FootnoteReferencePayload, 
     HeadingBinding, HeadingIdPayload, TocEntry, ExtensionProcessingPhase, ExternalDialectDescriptor, InlineFlankingRule, 
     InlineParserSpi, InlineParserSpiContext, InlineParserSpiResult, InlinePayloadEmitter, InlineSyntax, 

@@ -156,7 +156,8 @@ internal class ParserNodeFactory {
 
     func customBlock(extensionId: String, extensionSemanticVersion: String, localKindId: String, payload: CustomPayload,
         children: Array<Int64>, span: ?SourceSpan, origin: NodeOrigin): Int64 {
-        if (payload is FootnoteDefinitionPayload || payload is FootnoteReferencePayload || payload is HeadingIdPayload) {
+        if (payload is FootnoteDefinitionPayload || payload is FootnoteReferencePayload || payload is HeadingIdPayload ||
+            payload is DefinitionListPayload) {
             requiresBinding = true
         }
         arena.appendParserOwned(NodeKind.CustomBlock, NodeCategory.Block, span, origin.kind, children,
@@ -277,7 +278,8 @@ internal class ParserNodeFactory {
 
     func customInline(extensionId: String, extensionSemanticVersion: String, localKindId: String,
         payload: CustomPayload, children: Array<Int64>, span: ?SourceSpan, origin: NodeOrigin): Int64 {
-        if (payload is FootnoteDefinitionPayload || payload is FootnoteReferencePayload || payload is HeadingIdPayload) {
+        if (payload is FootnoteDefinitionPayload || payload is FootnoteReferencePayload || payload is HeadingIdPayload ||
+            payload is DefinitionListPayload) {
             requiresBinding = true
         }
         arena.appendParserOwned(NodeKind.CustomInline, NodeCategory.Inline, span, origin.kind, children,

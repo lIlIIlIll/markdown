@@ -314,6 +314,7 @@ internal class ParserEventGroup {
     let kind: NodeKind
     let span: SourceSpan
     let explicitlyClosed: Bool
+    let definitionList: Bool
     let htmlBlockType: Int64
     let isIndentedCode: Bool
     let fenceMarker: ?Byte
@@ -324,10 +325,11 @@ internal class ParserEventGroup {
 
     init(kind: NodeKind, span: SourceSpan, explicitlyClosed: Bool, htmlBlockType: Int64, isIndentedCode: Bool,
         fenceMarker: ?Byte, fenceLength: Int64, nodeCount: Int64, events: Array<MarkdownSourceEvent>,
-        draft!: ?ParsedDraft = None) {
+        draft!: ?ParsedDraft = None, definitionList!: Bool = false) {
         this.kind = kind
         this.span = span
         this.explicitlyClosed = explicitlyClosed
+        this.definitionList = definitionList
         this.htmlBlockType = htmlBlockType
         this.isIndentedCode = isIndentedCode
         this.fenceMarker = fenceMarker
@@ -392,7 +394,7 @@ internal class ParserEventEmitter {
         groups.add(
             ParserEventGroup(record.kind, shifted(span), explicitlyClosed(payload), eventHtmlBlockType(payload),
                 eventIsIndentedCode(payload), eventFenceMarker(payload), eventFenceLength(payload), count, [],
-                draft: Some(draft)))
+                draft: Some(draft), definitionList: eventIsDefinitionList(payload)))
         nodeCount += count
     }
 
@@ -421,7 +423,7 @@ internal class ParserEventEmitter {
             groups.add(
                 ParserEventGroup(record.kind, shifted(span), explicitlyClosed(payload), eventHtmlBlockType(payload),
                     eventIsIndentedCode(payload), eventFenceMarker(payload), eventFenceLength(payload),
-                    nodeCount - before, events))
+                    nodeCount - before, events, definitionList: eventIsDefinitionList(payload)))
             eventCount += events.size
         } else {
             let forwarding = CountingForwardEventSink(sink.getOrThrow())
@@ -540,7 +542,8 @@ extend MarkdownEngine {
         }
         if (dialect.parserHotPlan.hasDocumentProcessors || (dialect.parserOptions.extensionsEnabled && (dialect
             .parserHotPlan
-            .hasFootnotes || dialect.parserHotPlan.headingIdRule.isSome()))) {
+            .hasFootnotes || dialect.parserHotPlan.headingIdRule.isSome() ||
+            dialect.parserHotPlan.definitionListRule.isSome()))) {
             throw MarkdownException(MarkdownErrorCode.ExtensionFailure,
                 "document-wide processors and binding require the full AST execution path", phase: "event_preflight")
         }
@@ -664,6 +667,7 @@ public class RawBlockEventSession {
     private var previousRawLineBlank = false
     private var lastSemanticParseLength: Int64 = 0
     private var retainedTailKind: ?NodeKind = None
+    private var retainedDefinitionList = false
     private var started = false
     private var finished = false
 
@@ -673,7 +677,8 @@ public class RawBlockEventSession {
         let needsBinding = engine.dialect.parserOptions.extensionsEnabled && (engine
             .dialect
             .parserHotPlan
-            .hasFootnotes || engine.dialect.parserHotPlan.headingIdRule.isSome())
+            .hasFootnotes || engine.dialect.parserHotPlan.headingIdRule.isSome() ||
+            engine.dialect.parserHotPlan.definitionListRule.isSome())
         if (draftLineage.isNone() && (engine.dialect.parserHotPlan.hasDocumentProcessors || needsBinding)) {
             throw MarkdownException(MarkdownErrorCode.ExtensionFailure,
                 "document-wide processors and binding require the full AST execution path", phase: "event_preflight")
@@ -917,6 +922,24 @@ public class RawBlockEventSession {
                 emitCount = groups.size
             }
         }
+        if (!finishing && !groups.isEmpty() && engine.dialect.parserOptions.extensionsEnabled &&
+            engine.dialect.parserHotPlan.definitionListRule.isSome()) {
+            let last = groups[groups.size - 1]
+            if (let NodeKind.Paragraph <- last.kind) {
+                let after = last.span.endByte - sourceOffset
+                let canBecomeTerm = rawBoundedLineBreaks(parseBytes, after, parseBytes.size) < 3
+                if (canBecomeTerm) {
+                    emitCount = min(emitCount, groups.size - 1)
+                    if (groups.size > 1 && groups[groups.size - 2].definitionList) {
+                        let previous = groups[groups.size - 2]
+                        if (rawBoundedLineBreaks(parseBytes, previous.span.endByte - sourceOffset,
+                            last.span.startByte - sourceOffset) < 3) {
+                            emitCount = min(emitCount, groups.size - 2)
+                        }
+                    }
+                }
+            }
+        }
         for (index in 0..emitCount) {
             out.add(all: groups[index].events)
             if (let Some(draft) <- groups[index].draft) {
@@ -938,10 +961,12 @@ public class RawBlockEventSession {
         if (!finishing && emitCount < groups.size) {
             lastSemanticParseLength = parseLength - discard
             retainedTailKind = Some(groups[emitCount].kind)
+            retainedDefinitionList = groups[emitCount].definitionList
             synchronizeRetainedTail(groups[emitCount])
         } else {
             lastSemanticParseLength = 0
             retainedTailKind = None
+            retainedDefinitionList = false
         }
         if (!finishing) {
             // Every candidate through scanCursor participated in the parse.
@@ -951,6 +976,27 @@ public class RawBlockEventSession {
             strongBoundaryCandidate = false
         }
         out.toArray()
+    }
+
+    private func rawBoundedLineBreaks(bytes: Array<Byte>, start: Int64, end: Int64): Int64 {
+        var index = start
+        var count: Int64 = 0
+        while (index < end && count < 3) {
+            budget.consumeScan()
+            if ((index - start) % 1024 == 0) {
+                cancellation.throwIfCancelled(phase: "input")
+            }
+            if (bytes[index] == b'\r') {
+                count++
+                if (index + 1 < end && bytes[index + 1] == b'\n') {
+                    index++
+                }
+            } else if (bytes[index] == b'\n') {
+                count++
+            }
+            index++
+        }
+        count
     }
 
     private func validateAppendedLineBytes(chunk: Array<Byte>): Unit {
@@ -1206,7 +1252,8 @@ public class RawBlockEventSession {
                 if (rawLineIsClosureCandidate(pending, lineStart, lineEnd)) {
                     strong = true
                 }
-                if (previousRawLineBlank && pending[lineStart] != b'>' && !rawMayStartList(lineStart, lineEnd)) {
+                if (previousRawLineBlank && !retainedDefinitionList && pending[lineStart] != b'>' &&
+                    !rawMayStartList(lineStart, lineEnd)) {
                     strong = true
                 }
             }
@@ -1216,8 +1263,12 @@ public class RawBlockEventSession {
         let wasIndented = openIndentedCode
         let wasDsl = openBlockDslRule.isSome()
         let candidate = classifyCompletedRawLine(lineStart, lineEnd)
-        if ((wasFence && openFenceMarker.isNone()) || (wasHtml && openHtmlBlockType == 0) || (wasIndented &&
-            !openIndentedCode) || (wasDsl && openBlockDslRule.isNone())) {
+        let literalClosed = (wasFence && openFenceMarker.isNone()) || (wasHtml && openHtmlBlockType == 0) || (wasIndented &&
+            !openIndentedCode) || (wasDsl && openBlockDslRule.isNone())
+        // A literal nested inside a definition does not close its surrounding
+        // list. Keep geometric retries for indented/blank inner closers.
+        if (literalClosed && (!retainedDefinitionList || (!blank && rawTrimmedLineStart(pending, lineStart, lineEnd) ==
+            lineStart))) {
             strong = true
         }
         if (!tailProtected && lineStart < lineEnd && rawTrimmedLineStart(pending, lineStart, lineEnd) == lineStart && (openFenceMarker
@@ -1339,6 +1390,7 @@ public class RawBlockEventSession {
     private func observeRawBlockStart(lineStart: Int64, lineEnd: Int64): Bool {
         if (let Some(rule) <- matchingBlockDslRule(lineStart, lineEnd)) {
             match (rule.syntaxKind) {
+                case BlockSyntaxKind.DefinitionList => return false
                 case BlockSyntaxKind.FootnoteDefinition =>
                     if (draftLineage.isSome()) {
                         return false
@@ -2390,4 +2442,15 @@ private func hardBreakKindName(value: HardBreakKind): String {
         case HardBreakKind.Backslash => "backslash"
         case HardBreakKind.Spaces => "spaces"
     }
+}
+
+private func eventIsDefinitionList(payload: ArenaNodePayload): Bool {
+    if (let ArenaNodePayload.CustomValue(_, _, _, custom) <- payload) {
+        if (let value: DefinitionListPayload <- custom) {
+            if (let DefinitionListRole.List <- value.role) {
+                return true
+            }
+        }
+    }
+    false
 }

@@ -53,7 +53,7 @@ let dialect = MarkdownDialect
     .build()
 
 let engine = MarkdownEngine.builder().dialect(dialect).build()
-let html = engine.renderHtml(engine.parse(":::note\n**important**\n:::"))
+let html = engine.htmlRenderer().render(engine.parse(":::note\n**important**\n:::").document)
 ```
 
 ## 选择 DSL 还是 SPI
