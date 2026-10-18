@@ -39,7 +39,7 @@
 
 - [API 速查](api/quick-reference.md)：常用入口、默认值和返回值。
 - [完整 API 索引](api.md)：按公开子包和类型定位 reference。
-- [公开声明 snapshot](../api/public-api-v0.9.txt)：精确声明事实源。
+- [公开声明 snapshot](../api/public-api-v0.10.txt)：精确声明事实源。
 
 按子包深入：
 
@@ -84,3 +84,5 @@
 ---
 
 [返回项目首页](../README.md) · [开始使用](getting-started.md) · [API 速查](api/quick-reference.md)
+
+- [0.10 模型迁移（开发中）](migration-0.10.md)：破坏性修改与实际交付边界。

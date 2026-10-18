@@ -13,6 +13,7 @@ import markdown.core.{
     MarkdownProfile,
     OperationBudget,
     ParseLimits,
+    ParseOutcome,
     Utf8Policy
 }
 ```
@@ -87,29 +88,23 @@ utf8Policy: Utf8Policy = Utf8Policy.Strict
 | 字段 | 类型 | 含义 |
 | --- | --- | --- |
 | `document` | `Document` | 完整不可变 AST |
-| `ast` | `Document` | `document` 的兼容属性 |
 | `source` | `SourceBuffer` | 源文本、切片和位置转换 |
 | `diagnostics` | `ImmutableArray<Diagnostic>` | parser 恢复后保留的诊断 |
-| `isComplete` | `Bool` | 正常 parse 为 true |
-| `stoppedAt` | `?SourceSpan` | `tryParse` 失败位置 |
-| `unfinishedPhase` | `String` | `tryParse` 失败阶段 |
-| `errors` | `ImmutableArray<MarkdownException>` | `tryParse` 捕获的错误 |
+## `tryParse`
 
-## `tryParse` 和 `parsePartial`
-
-`tryParse` 捕获 `MarkdownException`，并返回 `isComplete=false` 的结果。失败结果
-包含空 `Document`，不包含已完成的 AST 前缀。
+`ParseResult` 只表示成功。`tryParse` 返回 `ParseOutcome`：成功携带完整结果，致命
+失败只携带 `MarkdownException`，不会分配空 Document 冒充成功，也不返回 AST 前缀。
+`parsePartial` 与 `ParseResult.ast` 已移除。
 
 ```cangjie
-let result = engine.tryParse(source)
-if (!result.isComplete) {
-    for (error in result.errors.toArray()) {
-        println("code=${error.code}, phase=${error.phase}")
-    }
+match (engine.tryParse(source)) {
+    case ParseOutcome.Success(result) => println(result.document.nodeCount)
+    case ParseOutcome.Failure(error) => println("code=${error.code}, phase=${error.phase}")
 }
 ```
 
-`parsePartial` 是同一行为的兼容名称。
+可恢复问题仍在成功结果的 `diagnostics` 中。需要流式待定状态时使用对应 session 协议，
+不将待定状态放入 `ParseResult`。
 
 ## Buffered input
 

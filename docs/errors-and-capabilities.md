@@ -34,8 +34,8 @@ try {
 `Diagnostic` 包含 code、severity、message、span、extension ID、rule ID 和可选
 `DiagnosticFix`。诊断表示 parser 已恢复的问题；收到诊断不等于 parse 不完整。
 
-`tryParse` 把 hard failure 放入 `ParseResult.errors`，并设置
-`isComplete=false`。它不返回已完成 AST 前缀。
+`tryParse` 将致命失败表示为 `ParseOutcome.Failure(error)`。只有 Success 包含
+`ParseResult`；失败不返回空 Document 或已完成 AST 前缀。
 
 ## Capability discovery
 

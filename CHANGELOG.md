@@ -3,6 +3,33 @@
 本文件记录用户可观察的变更。项目遵循 Keep a Changelog；0.x 仍允许明确记录的破坏性
 调整。
 
+## 0.10.0 - Unreleased
+
+开发中的 breaking pre-GA，完整 issue #10 验收与发布门禁尚未完成。
+
+### Changed
+
+- 节点身份使用 lineage 与不回收编号，NodeRef 和 lint fix 绑定不可变 revision。
+- ParseResult 只表示成功；tryParse 返回独立的成功/失败枚举。
+- 移除纯兼容别名、内容哈希型 StableNodeId 和旧 schema reader 路径。
+- Extension SPI 2、parser plan 3、artifact schema 3 与独立的 0.10 API snapshot。
+
+### Evidence
+
+<!-- release-evidence:start -->
+当前数字只由 [`release-evidence.json`](release-evidence.json)提供：
+
+- benchmark evidence status `stale`；
+- CommonMark `652/652`；
+- GFM `671/671`；
+- 测试 `1517/1517`，`0` skipped，`0` failed；
+- public API snapshot `1434` declarations；
+- last complete CommonMark ratio `2.361586x`；
+- last complete GFM ratio `1.788010x`。
+
+原始数据和受测 commit identity 见 `docs/reports/benchmark-raw.json`。
+<!-- release-evidence:end -->
+
 ## 0.9.0 - 2026-08-30
 
 这是 breaking pre-GA preview。当前离线 release evidence 状态为 evidence-ready，但托管
@@ -30,22 +57,6 @@ CI 验证和 GitHub Release 发布是独立状态；0.9 不构成 1.x ABI/行为
   `ChunkedParseSession` 和 `AsyncHtmlRenderSession` 类型名。异步输出请使用
   `BufferedAsyncHtmlOutputSession`。
 - `OperationBudget` 明确为单次操作拥有、不可并发共享的 mutable budget。
-
-### Evidence
-
-<!-- release-evidence:start -->
-当前数字只由 [`release-evidence.json`](release-evidence.json)提供：
-
-- benchmark evidence status `current`；
-- CommonMark `652/652`；
-- GFM `671/671`；
-- 测试 `1511/1511`，`0` skipped，`0` failed；
-- public API snapshot `1436` declarations；
-- canonical CommonMark ratio `2.361586x`；
-- canonical GFM ratio `1.788010x`。
-
-原始数据和受测 commit identity 见 `docs/reports/benchmark-raw.json`。
-<!-- release-evidence:end -->
 
 ## 0.8.0 - 2026-08-25
 

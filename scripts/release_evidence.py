@@ -602,7 +602,7 @@ def main() -> int:
         README, "## 验证状态", "## 参与项目", readme_block(data)
     )
     expected_changelog = replace_section(
-        CHANGELOG, "### Evidence", "## 0.8.0 - 2026-08-25", changelog_block(data)
+        CHANGELOG, "### Evidence", "## 0.9.0 - 2026-08-30", changelog_block(data)
     )
     expected_performance = replace_section(
         PERFORMANCE, "## 当前 canonical 结果", "## 比较了什么", performance_block(data)

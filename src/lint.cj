@@ -29,7 +29,7 @@ public enum FixApplicability {
     | ManualReview
 }
 
-/** 绑定 snapshot digest、version 和源码 edits 的 lint fix。 */
+/** 绑定不可变 Document revision、源码 digest 和 edits 的 lint fix。 */
 public class Fix {
     /** fix 的展示标题。 */
     public let title: String
@@ -39,23 +39,23 @@ public class Fix {
     public let applicability: FixApplicability
     /** fix 生成时的 snapshot digest。 */
     public let sourceDigest: String
-    /** fix 生成时的 snapshot version。 */
-    public let snapshotVersion: Int64
+    /** fix 生成时的 Document revision。 */
+    public let documentRevision: Int64
     /**
      * 创建 lint fix。
      * @param title fix 的展示标题。
      * @param edits 要应用到源码的 edit 列表。
      * @param applicability 自动应用可信度。
      * @param sourceDigest fix 生成时的 snapshot digest。
-     * @param snapshotVersion fix 生成时的 snapshot version。
+     * @param documentRevision fix 生成时的 Document revision。
      */
     public init(title: String, edits: Array<SourceEdit>, applicability: FixApplicability, sourceDigest: String,
-        snapshotVersion: Int64) {
+        documentRevision: Int64) {
         this.title = title
         this.edits = ImmutableArray<SourceEdit>(edits)
         this.applicability = applicability
         this.sourceDigest = sourceDigest
-        this.snapshotVersion = snapshotVersion
+        this.documentRevision = documentRevision
     }
 }
 
@@ -203,7 +203,7 @@ public class MarkdownLinter {
      * @throws IllegalArgumentException edit 越界或重叠时。
      */
     public static func applyFix(snapshot: DocumentSnapshot, fix: Fix): ReparseResult {
-        if (fix.sourceDigest != snapshot.sourceDigest || fix.snapshotVersion != snapshot.version) {
+        if (fix.sourceDigest != snapshot.sourceDigest || fix.documentRevision != snapshot.result.document.revision) {
             throw IllegalStateException("fix is stale for this snapshot")
         }
         snapshot.applyEdits(fix.edits.toArray())
@@ -395,7 +395,7 @@ extend MarkdownEngine {
 private func rawHtmlLint(snapshot: DocumentSnapshot, node: NodeRef): LintDiagnostic {
     let span = requiredLintSpan(node)
     let fix = Fix("Escape raw HTML", [SourceEdit(span, escapeLintHtml(snapshot.result.source.slice(span)))],
-        FixApplicability.Always, snapshot.sourceDigest, snapshot.version)
+        FixApplicability.Always, snapshot.sourceDigest, snapshot.result.document.revision)
     LintDiagnostic("MDL3003_RAW_HTML", LintCategory.Security, DiagnosticSeverity.Warning, "raw HTML is present", span,
         fixes: [fix])
 }

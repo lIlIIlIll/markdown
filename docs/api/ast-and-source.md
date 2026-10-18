@@ -155,8 +155,13 @@ for (event in result.document.walk()) {
 
 ## Node identity 和 origin
 
-`NodeId` 在一个 Document 内确定且唯一。编辑或重新解析后，不保证保留同一 NodeId。
-编辑器场景使用 `StableNodeId`。
+`NodeId(lineage, value)` 包含文档 lineage 和不回收的局部编号。编号不是 arena 下标。
+独立解析即使文本相同，也具有不同 lineage；持久化分叉保留共享节点的 NodeId，新节点
+分配新编号，回滚不回收已分配编号。完整重新解析产生新的 lineage。
+
+`Document.revision` 标识具体不可变视图，`NodeRef.revision` 绑定该视图。共享节点的
+NodeId 可以不变，但旧视图的 NodeRef 不能传给新视图的访问器。查询新视图时使用
+`AstQuery.byNodeId`，找不到表示节点未保留。内容哈希型 `StableNodeId` 已移除。
 
 `NodeOriginKind` 包含 `Parsed`、`ExtensionGenerated`、`Transformed`、
 `Synthetic` 和 `Deserialized`。普通 parsed node 的 origin span 与 node span

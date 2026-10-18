@@ -58,7 +58,7 @@ SourceSpan 和 origin。
 
 | 参数 | 默认值 |
 | --- | --- |
-| `requiredSpiVersion` | `"1"` |
+| `requiredSpiVersion` | `"2"` |
 | `supportedProfiles` | CommonMark 0.31.2、GFM modern v1 |
 | `dependencies` | `[]` |
 | `dependencyConstraints` | `[]` |
@@ -228,7 +228,7 @@ link/image 相同的 policy。
 
 ## `InlineParserSpi`
 
-DSL 无法表达的有限行内语法可实现 SPI v1。实现必须声明：
+DSL 无法表达的有限行内语法可实现 SPI v2。实现必须声明：
 
 - `extensionId`
 - `ruleId`

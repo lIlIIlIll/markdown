@@ -175,14 +175,16 @@ let reparse = snapshot.applyUtf16Edit(
 单个、等 byte 长度、纯文本、顶层 paragraph 或 heading edit 在没有 reference/extension
 依赖时可走 block-local fast path。其他 edit 明确回退完整解析。
 
-## Stable node identity
+## 节点身份和修复新鲜度
 
 ```cangjie
-let stable = snapshot.stableNodeId(node.nodeId)
+let retained = AstQuery.byNodeId(changed.snapshot.result.document, node.nodeId)
 ```
 
-`StableNodeId` 使用内容和路径身份，适合在 snapshot 之间关联节点。它不改变
-`NodeId` 只在一个 Document 内稳定的契约。
+只有实际共享的节点保留 NodeId。新节点、独立解析和完整回退不以相同文本推断身份。
+NodeRef 绑定 Document revision；旧 NodeRef 不能用于新 snapshot 的 CST/AST 映射。
+`Fix.documentRevision` 和 source digest 必须同时匹配。相同源码、相同 version 的另一个
+snapshot 也不能使用此 fix；编辑后改回原文仍不能复用旧 fix。
 
 ## Preserving formatter
 

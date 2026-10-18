@@ -51,7 +51,7 @@ public class ParseStatistics {
         var nodes: Int64 = 0;
         var depth: Int64 = 0;
         var maximumDepth: Int64 = 0
-        for (event in result.ast.walk()) {
+        for (event in result.document.walk()) {
             match (event) {
                 case NodeRefWalkEvent.Enter(_) =>
                     nodes++;
@@ -64,7 +64,7 @@ public class ParseStatistics {
         }
         nodeCount = nodes
         maxDepth = maximumDepth
-        let root = result.ast.root().asDocument().getOrThrow()
+        let root = result.document.root().asDocument().getOrThrow()
         referenceCount = root.references.size
         extensionCallbackCount = budget.usedExtensionCallbacks()
         scanSteps = budget.usedScanSteps()

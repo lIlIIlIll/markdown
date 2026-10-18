@@ -160,7 +160,7 @@ text/code/html literal 转成 owned text。
 
 ## Partial 和 async 名称
 
-`tryParse` 和兼容名称 `parsePartial` 返回完整结果或带空 Document 的失败结果。
+`tryParse` 返回 `ParseOutcome.Success(result)` 或 `Failure(error)`；失败不携带 Document。
 它们不返回 AST prefix。
 
 `BufferedAsyncHtmlOutputSession` 先渲染完整 HTML，再分块写 sink。它不降低 peak

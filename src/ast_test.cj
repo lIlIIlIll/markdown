@@ -82,7 +82,7 @@ class AstContractTest {
     func customNodesKeepTypedPayloadAndOrigin(): Unit {
         let origin = NodeOrigin(
             NodeOriginKind.ExtensionGenerated,
-            sourceNodeIds: [NodeId(1)],
+            sourceNodeIds: [NodeId(1, 1)],
             sourceSpan: Some(SourceSpan(0, 4)),
             extensionId: Some("admonition")
         )

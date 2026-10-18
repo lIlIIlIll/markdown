@@ -156,7 +156,7 @@ class InputBehaviorTest {
         let engine = MarkdownEngine.builder().build()
         let expected = HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(
             engine.parse(input).document)
-        let session = engine.newSession()
+        let session = engine.newBufferedInputSession()
         for (byte in input.toArray()) {
             session.feed([byte])
         }

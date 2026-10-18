@@ -1,0 +1,22 @@
+# 0.10 模型迁移（开发中）
+
+本版本允许破坏性修改，不提供旧 API facade、旧缓存 reader 或自动迁移。
+以下只列已经实施的修改；issue #10 的扩展、追加式 session、富内容后端及编辑/缓存
+实测仍在推进，不能从版本号推断它们已完成或通过发布门禁。
+
+- 使用 `result.document`；移除 `ParseResult.ast` 和 `parsePartial`。
+- 移除旧 buffered 语义的 `newSession` 别名。仍需一次性缓冲时使用
+  `newBufferedInputSession`；新追加式入口将在真实实现完成后导出。
+- `parse` 成功返回 `ParseResult`，致命失败抛出异常。`tryParse` 返回
+  `ParseOutcome.Success(result)` 或 `Failure(error)`，失败不携带 Document。
+- `NodeId` 包含 lineage 与不回收的局部编号；不再由 arena 下标或文本内容推断身份。
+  NodeRef 绑定 Document revision，持久化共享节点也必须重新查询当前视图的 NodeRef。
+- 移除 `StableNodeId` 和 `stableNodeId`。使用当前 Document 的
+  `AstQuery.byNodeId(document, id)` 查询实际保留的节点。
+- lint `Fix` 绑定 `documentRevision` 和 source digest；不能跨独立 snapshot 或回退版本使用。
+- Extension SPI 为 `2`，parser plan 为 `3`，parse artifact 与 binary snapshot schema 为 `3`。
+  旧缓存返回 CacheMiss；显式 `BinaryArtifactCodec.read` 遇到旧持久化版本报
+  `MarkdownErrorCode.UnsupportedVersion`，不尝试旧格式解码。
+
+公开声明见[0.10 API snapshot](../api/public-api-v0.10.txt)。开发期间的完整验证进度见
+[issue #10 实施记录](../.agent/issue-10-status.md)。

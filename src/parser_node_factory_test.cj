@@ -22,7 +22,7 @@ public class ParserNodeFactoryTests {
             [])
 
         @Expect(snapshot.nodeCount, 4)
-        @Expect(snapshot.root().nodeId, NodeId(4))
+        @Expect(snapshot.root().nodeId, NodeId(snapshot.lineage, 4))
         @Expect(snapshot.root().asDocument().getOrThrow().dialectFingerprint, "fp")
         @Expect(snapshot.nodeAt(heading).asHeading().getOrThrow().level, 2)
         @Expect(snapshot.nodeAt(text).asText().getOrThrow().value, "value")
@@ -37,7 +37,7 @@ public class ParserNodeFactoryTests {
         let paragraph = nodes.paragraph([text], SourceSpan(0, 2))
         let snapshot = nodes.finishDocument([paragraph], SourceSpan(0, 2), MarkdownProfile.commonMark0312(), "fp", [])
 
-        @Expect(snapshot.nodeAt(text).nodeId, NodeId(1))
+        @Expect(snapshot.nodeAt(text).nodeId, NodeId(snapshot.lineage, 1))
         @Expect(snapshot.nodeAt(text).asText().getOrThrow().raw, "ab")
         @Expect(snapshot.nodeAt(text).asText().getOrThrow().value, "AB")
     }

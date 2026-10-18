@@ -9,6 +9,6 @@ public import markdown.{AcceleratedMarkdownEngine, AstInvariantValidator, Cancel
     ListNodeView, Markdown, MarkdownEngine, MarkdownEventAttribute, MarkdownEventMode, MarkdownEventSink, 
     MarkdownSourceEvent, MarkdownSourceEventKind, MarkdownEngineBuilder, MarkdownErrorCode, MarkdownException, 
     MarkdownProfile, NodeCategory, NodeId, NodeKind, NodeOrigin, NodeOriginKind, NodeRef, OperationBudget, 
-    OwnedUtf8Input, ParseLimits, ParseResult, ProfileKind, RawBlockEventSession, ReferenceDefinition, ReusableUtf8Input, 
-    SourceBuffer, SourcePosition, SourcePositionMap, SourceSlice, SourceSpan, TableAlignment, TaskState, TextNodeView, 
-    Utf16Position, Utf8Policy, VisualPosition}
+    OwnedUtf8Input, ParseLimits, ParseOutcome, ParseResult, ProfileKind, RawBlockEventSession, ReferenceDefinition, 
+    ReusableUtf8Input, SourceBuffer, SourcePosition, SourcePositionMap, SourceSlice, SourceSpan, TableAlignment, 
+    TaskState, TextNodeView, Utf16Position, Utf8Policy, VisualPosition}

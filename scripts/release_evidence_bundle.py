@@ -132,7 +132,7 @@ def snapshot_artifacts(output: Path) -> None:
         output / "reports" / "differential-smoke.json")
     copy_path(ROOT / "docs" / "reports" / "benchmark-raw.json",
         output / "reports" / "benchmark-raw.json")
-    copy_path(ROOT / "api" / "public-api-v0.9.txt", output / "api" / "public-api-v0.9.txt")
+    copy_path(ROOT / "api" / "public-api-v0.10.txt", output / "api" / "public-api-v0.10.txt")
     for bundle in sorted((ROOT / "target").glob("*.cjp")):
         copy_path(bundle, output / "candidate" / bundle.name)
 
@@ -191,7 +191,7 @@ def finalize(output: Path, gate_exit: int) -> None:
         benchmark_errors = validate_benchmark_derivations(
             json.loads(benchmark_path.read_text(encoding="utf-8"))
         )
-    snapshot = output / "api" / "public-api-v0.9.txt"
+    snapshot = output / "api" / "public-api-v0.10.txt"
     manifest = {
         "schemaVersion": 1,
         **context,

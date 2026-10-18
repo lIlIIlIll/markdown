@@ -128,12 +128,13 @@ class RendererBehaviorTest {
             "[link](https://example.com \"t\") ![alt *text*](img.png)  \nnext\n\n<div>x</div>\n"
         let common = MarkdownEngine.builder().build().parse(commonSource)
         let safe = HtmlRenderer()
-        @Expect(safe.render(common.ast), safe.render(common.document))
+        @Expect(safe.render(common.document), safe.render(Markdown.parse(commonSource).document))
 
         let gfmSource = "| a | b |\n| :- | -: |\n| ~~x~~ | y |\n\n- [x] done\n"
         let gfm = MarkdownEngine.builder().profile(MarkdownProfile.gfmModernV1()).build().parse(gfmSource)
         let compatible = HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() })
-        @Expect(compatible.render(gfm.ast), compatible.render(gfm.document))
+        @Expect(compatible.render(gfm.document), compatible.render(
+            Markdown.parse(gfmSource, profile: MarkdownProfile.gfmModernV1()).document))
     }
 
     @TestCase

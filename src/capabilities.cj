@@ -95,10 +95,10 @@ public class EngineCapabilities {
         }
         supportedSyntaxKinds = ImmutableArray<String>(syntax.toArray())
         dslSchemaVersions = ImmutableArray<String>(["1"])
-        spiVersions = ImmutableArray<String>(["1"])
+        spiVersions = ImmutableArray<String>(["2"])
         positionEncodings = ImmutableArray<String>(
             ["utf-8-byte", "utf-16-code-unit", "visual-scalar", "visual-scalar-with-tab-stops"])
-        serializationVersions = ImmutableArray<String>(["parse-artifact-2", "markdown-snapshot-binary-2"])
+        serializationVersions = ImmutableArray<String>(["parse-artifact-3", "markdown-snapshot-binary-3"])
         incrementalSupport = true
         incrementalMode = "block-local-with-full-fallback"
         losslessSupport = true

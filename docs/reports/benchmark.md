@@ -1,8 +1,8 @@
 # Release benchmark report
 
-Status: **PASS**
+Status: **FAIL**
 
-Evidence status: `current`. Canonical local Linux run at 2026-10-18T01:40:46.839212+00:00 with the official STS 1.2.0 SDK, a pinned CPU, root -O2, benchmark consumer -O2 --lto thin, a 2 GiB heap, cjGCInterval=500ms and seven alternating paired samples. All frozen ratio, growth and memory gates passed. Environment, raw samples, corpus identities and executable digests are retained in the raw report; this is local execution evidence, not hosted CI or publication proof.
+Evidence status: `stale`. Historical 0.9 baseline only. The 0.10 product and parser plan have changed and require new measurement; the original raw samples and recorded source identities are preserved.
 
 - CommonMark parse-only geometric mean ratio vs cmark: `2.36x` (limit `2.5x`).
 - GFM parse+HTML geometric mean ratio vs cmark-gfm: `1.79x` (limit `2.5x`).

@@ -7,6 +7,32 @@ import std.unittest.testmacro.*
 @Test
 class DocumentSystemTest {
     @TestCase
+    func oldBinarySnapshotsMissCacheAndExplicitReadsRejectTheirVersion(): Unit {
+        let engine = MarkdownEngine.builder().build()
+        for (magic in ["MCJ1", "MCJ2", "MCJ4"]) {
+            let bytes = magic.toArray()
+            match (BinaryArtifactCodec.decode(engine, BinarySnapshotArtifact(bytes))) {
+                case BinaryArtifactLoadResult.CacheMiss(_) => @Expect(true)
+                case _ => @Expect(false)
+            }
+            try {
+                let _ = BinaryArtifactCodec.read(engine, bytes)
+                @Expect(false)
+            } catch (error: MarkdownException) {
+                @Expect(if (let MarkdownErrorCode.UnsupportedVersion <- error.code) { true } else { false })
+            }
+        }
+        let source = "# First\n\nText"
+        let original = engine.parseSnapshot(source)
+        let edited = original.applyEdits([SourceEdit(SourceSpan(2, 7), "Other")]).snapshot
+        let bytes = BinaryArtifactCodec.encode(edited).bytes()
+        let restored = BinaryArtifactCodec.read(engine, bytes)
+        @Expect(restored.result.source.text(), "# Other\n\nText")
+        @Expect(HtmlRenderer().render(restored.result.document), HtmlRenderer().render(edited.result.document))
+        @Expect(restored.result.document.lineage == edited.result.document.lineage, false)
+    }
+
+    @TestCase
     func documentGraphUsesOnlyHostSuppliedInputsAndResolvesEdgesAndReferences(): Unit {
         let graph = DocumentGraph.build(
             MarkdownEngine.builder().build(),
@@ -52,10 +78,10 @@ class DocumentSystemTest {
         let engine = MarkdownEngine.builder().profile(MarkdownProfile.gfmModernV1()).build()
         let snapshot = engine.parseSnapshot("# H\n\n- [x] task\n\n| a |\n| - |\n| b |")
         let artifact = BinaryArtifactCodec.encode(snapshot)
-        @Expect(artifact.schemaVersion, "markdown-snapshot-binary-2")
+        @Expect(artifact.schemaVersion, "markdown-snapshot-binary-3")
         match (BinaryArtifactCodec.decode(engine, artifact)) {
             case BinaryArtifactLoadResult.Hit(value) =>
-                @Expect(HtmlRenderer().render(value.result.ast), HtmlRenderer().render(snapshot.result.ast))
+                @Expect(HtmlRenderer().render(value.result.document), HtmlRenderer().render(snapshot.result.document))
                 @Expect(engine.createArtifact(value.result).utf8PolicyId, "strict")
             case _ => @Expect(false)
         }
@@ -72,7 +98,7 @@ class DocumentSystemTest {
             case BinaryArtifactLoadResult.CacheMiss(reason) => @Expect(reason, "schema magic")
             case _ => @Expect(false)
         }
-        @Expect(engine.capabilities().serializationVersions[1], "markdown-snapshot-binary-2")
+        @Expect(engine.capabilities().serializationVersions[1], "markdown-snapshot-binary-3")
     }
 
     @TestCase
@@ -86,7 +112,7 @@ class DocumentSystemTest {
         match (BinaryArtifactCodec.decode(engine, artifact)) {
             case BinaryArtifactLoadResult.Hit(value) =>
                 @Expect(value.result.source.text(), result.source.text())
-                @Expect(value.result.ast.root().span, Some(SourceSpan(0, sourceBytes.size)))
+                @Expect(value.result.document.root().span, Some(SourceSpan(0, sourceBytes.size)))
                 @Expect(value.syntaxTree.losslessText(), result.source.text())
                 @Expect(engine.createArtifact(value.result).utf8PolicyId, "replace-invalid")
             case _ => @Expect(false)

@@ -80,8 +80,6 @@ class EditorSnapshotTest {
         let snapshot = engine.parseSnapshot("# Title\n\nBefore\n\nAfter")
         let heading = snapshot.result.document.children()[0]
         let after = snapshot.result.document.children()[2]
-        let headingStable = snapshot.stableNodeId(heading.nodeId)
-        let afterStable = snapshot.stableNodeId(after.nodeId)
         let changed = snapshot.applyEdits([SourceEdit(SourceSpan(9, 15), "Change")])
         @Expect(changed.wasIncremental, true)
         @Expect(changed.snapshot.result.source.text(), "# Title\n\nChange\n\nAfter")
@@ -90,8 +88,6 @@ class EditorSnapshotTest {
         @Expect(changed.sourceMapChangedRange, SourceSpan(9, 15))
         @Expect(changed.snapshot.result.document.children()[0].nodeId, heading.nodeId)
         @Expect(changed.snapshot.result.document.children()[2].nodeId, after.nodeId)
-        @Expect(changed.snapshot.stableNodeId(heading.nodeId), headingStable)
-        @Expect(changed.snapshot.stableNodeId(after.nodeId), afterStable)
 
         let reference = engine.parseSnapshot("[x][id]\n\n[id]: /a")
         @Expect(reference.applyEdits([SourceEdit(SourceSpan(1, 2), "y")]).wasIncremental, false)

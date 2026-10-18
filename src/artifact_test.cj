@@ -54,8 +54,8 @@ class ArtifactSourceMapTest {
         let engine = MarkdownEngine.builder().build()
         let result = engine.parse("text")
         let artifact = engine.createArtifact(result)
-        @Expect(artifact.schemaVersion, "2")
-        @Expect(artifact.parserPlanVersion, "2")
+        @Expect(artifact.schemaVersion, "3")
+        @Expect(artifact.parserPlanVersion, "3")
         @Expect(artifact.utf8PolicyId, "strict")
         @Expect(artifact.sourceDigest, artifact.decodedTextDigest)
         match (engine.loadArtifact(artifact, "text")) {

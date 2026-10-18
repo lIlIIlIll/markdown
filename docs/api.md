@@ -1,7 +1,7 @@
 # API reference
 
 先看[API 速查](api/quick-reference.md)。需要完整语义、错误和扩展示例时，再进入对应
-子包页面。精确声明以 [`api/public-api-v0.9.txt`](../api/public-api-v0.9.txt) 为准。
+子包页面。精确声明以 [`api/public-api-v0.10.txt`](../api/public-api-v0.10.txt) 为准。
 
 [文档首页](README.md) · [API 速查](api/quick-reference.md) · **API reference** · [Cookbook](cookbook.md)
 
@@ -62,7 +62,7 @@ import markdown.render.{HtmlOptions, HtmlRenderer}
 解析和渲染的结构化失败继承 `MarkdownException`。程序应根据 `code`、`phase` 和可选
 `span` 分支，不要解析英文消息。`tryParse` 返回空文档和结构化错误，不返回部分 AST。
 
-当前 reference 对应 `0.9.0` breaking pre-GA preview。详见
+当前 reference 对应 `0.10.0` breaking pre-GA preview。详见
 [版本与兼容性](versioning-and-compatibility.md)。
 
 ---

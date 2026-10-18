@@ -1,10 +1,10 @@
 {
   "schemaVersion": 4,
   "release": {
-    "version": "0.9.0",
+    "version": "0.10.0",
     "channel": "preview",
-    "status": "evidence-ready",
-    "evidenceReady": true,
+    "status": "in-development",
+    "evidenceReady": false,
     "ciVerifiedAtHead": false,
     "ciVerifiedCommit": null,
     "published": false
@@ -43,19 +43,19 @@
     }
   },
   "api": {
-    "snapshotPath": "api/public-api-v0.9.txt",
-    "declarations": 1436,
-    "sha256": "d056c91147c54e8afb0388fae47b9b6509714ab726646bca3135306f03051722"
+    "snapshotPath": "api/public-api-v0.10.txt",
+    "declarations": 1434,
+    "sha256": "fc623ee89cad607cabadc473b377b39c6c7f8185a82c1593a1ce854447c76bdc"
   },
   "tests": {
-    "total": 1511,
-    "passed": 1511,
+    "total": 1517,
+    "passed": 1517,
     "skipped": 0,
     "errors": 0,
     "failed": 0
   },
   "benchmark": {
-    "status": "current",
+    "status": "stale",
     "rawPath": "docs/reports/benchmark-raw.json",
     "rawSha256": "49e72c7b6049cddee2cb85dbb3d783a11b1c8a5652287dc9acf72ce1764bdef3",
     "sourceCommit": "6e5a207d07903a60f8270c41badac1bb4cb104b5",
@@ -72,6 +72,6 @@
     "ratioLimit": 2.5,
     "cmark": "0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8",
     "cmarkGfm": "0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b",
-    "note": "Canonical local Linux run at 2026-10-18T01:40:46.839212+00:00 with the official STS 1.2.0 SDK, a pinned CPU, root -O2, benchmark consumer -O2 --lto thin, a 2 GiB heap, cjGCInterval=500ms and seven alternating paired samples. All frozen ratio, growth and memory gates passed. Environment, raw samples, corpus identities and executable digests are retained in the raw report; this is local execution evidence, not hosted CI or publication proof."
+    "note": "Historical 0.9 baseline only. The 0.10 product and parser plan have changed and require new measurement; the original raw samples and recorded source identities are preserved."
   }
 }

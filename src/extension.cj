@@ -112,7 +112,7 @@ public class ExtensionDependency {
 /**
  * 扩展的稳定身份、依赖、能力和 renderer fallback 配置。
  *
- * `requiredSpiVersion` 默认是 `"1"`，`ruleBudget` 默认是 `100000`，
+ * `requiredSpiVersion` 默认是 `"2"`，`ruleBudget` 默认是 `100000`，
  * `trustLevel` 默认是 `"host-code"`，缺失 renderer 默认失败，扩展默认可共享。
  *
  * ```cj
@@ -170,7 +170,7 @@ public class ExtensionManifest {
         extensionId: String,
         semanticVersion: String,
         implementationVersion: String,
-        requiredSpiVersion!: String = "1",
+        requiredSpiVersion!: String = "2",
         supportedProfiles!: Array<String> = ["commonmark-0.31.2", "gfm-modern-v1"],
         dependencies!: Array<String> = [],
         dependencyConstraints!: Array<ExtensionDependency> = [],
@@ -1852,7 +1852,7 @@ public class DialectCompiler {
             fail("extension semantic version must be a valid SemVer version")
         }
         validateIdentifier("implementation version", manifest.implementationVersion)
-        if (manifest.requiredSpiVersion != "1") {
+        if (manifest.requiredSpiVersion != "2") {
             fail("unsupported extension SPI version")
         }
         if (manifest.ruleBudget <= 0) {
@@ -2447,7 +2447,7 @@ private func canonicalDescriptor(
     block: Array<BlockSyntaxRule>
 ): String {
     let out = CanonicalDescriptor()
-    out.append("dialect=");
+    out.append("parser-plan-3|dialect=");
     out.append(dialect.id);
     out.append("@");
     out.append(dialect.version)

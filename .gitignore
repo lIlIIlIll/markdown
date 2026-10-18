@@ -8,6 +8,7 @@ __pycache__/
 *.pyc
 !api/public-api-v1.txt
 !api/public-api-v0.9.txt
+!api/public-api-v0.10.txt
 !docs/reports/*.json
 !release-evidence.json
 !.github/benchmark-evidence.json

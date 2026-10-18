@@ -88,8 +88,8 @@ class ServicesTest {
         let store = AnnotationStore()
         @Expect(store.threadSafe, false)
         let channel = store.channel(AnnotationKey<String>("heading-slug", includeInFingerprint: true))
-        channel.put(NodeId(1), "intro")
-        @Expect(channel.get(NodeId(1)), Some("intro"))
+        channel.put(NodeId(1, 1), "intro")
+        @Expect(channel.get(NodeId(1, 1)), Some("intro"))
         store.close()
         @Expect(store.isClosed(), true)
     }

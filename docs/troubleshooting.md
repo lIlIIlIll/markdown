@@ -91,10 +91,10 @@ let position = result.source.utf16Position(span.startByte)
 只在可信输入中考虑 `ParseLimits.trusted()`。服务器场景应构造更严格的 `ParseLimits`，
 而不是关闭限制。
 
-### `tryParse` 返回空文档
+### `tryParse` 遇到致命失败
 
-这是既定契约。`tryParse` 捕获结构化失败并返回 `isComplete == false`、空 `Document`
-和 `errors`；它不提供已完成的 AST 前缀。
+匹配 `ParseOutcome.Failure(error)` 并读取错误类别、phase 和 span。失败不携带
+Document；`ParseOutcome.Success(result)` 才有完整 AST 和可恢复诊断。
 
 ### 操作在开始前就被取消
 

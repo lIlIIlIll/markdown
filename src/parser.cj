@@ -20,48 +20,32 @@ public enum Utf8Policy {
  * 保留可恢复诊断。
  */
 public class ParseResult {
-    /** 完整且不可变的 arena AST；失败的 `tryParse` 结果包含空文档。 */
+    /** 成功解析得到的完整、不可变 arena AST。 */
     public let document: Document
     /** 与结果对应的原始文本、byte range 和位置映射。 */
     public let source: SourceBuffer
     /** 解析过程中保留的可恢复诊断。 */
     public let diagnostics: ImmutableArray<Diagnostic>
-    /** 是否完成了完整解析；正常 `parse` 结果为 true。 */
-    public let isComplete: Bool
-    /** `tryParse` 失败时可用的停止位置。 */
-    public let stoppedAt: ?SourceSpan
-    /** `tryParse` 失败时记录的阶段名称。 */
-    public let unfinishedPhase: String
-    /** `tryParse` 捕获的异常；正常结果为空。 */
-    public let errors: ImmutableArray<MarkdownException>
 
     /**
      * 创建解析结果。
      * @param document 完整且不可变的 arena AST。
      * @param source 与结果对应的原始文本和位置映射。
      * @param diagnostics 解析过程中保留的可恢复诊断。
-     * @param isComplete 是否完成了完整解析。
-     * @param stoppedAt `tryParse` 失败时的停止位置。
-     * @param unfinishedPhase `tryParse` 失败时记录的阶段名称。
-     * @param errors `tryParse` 捕获的异常。
      */
-    public init(document: Document, source: SourceBuffer, diagnostics: Array<Diagnostic>, isComplete!: Bool = true,
-        stoppedAt!: ?SourceSpan = None, unfinishedPhase!: String = "", errors!: Array<MarkdownException> = []) {
+    public init(document: Document, source: SourceBuffer, diagnostics: Array<Diagnostic>) {
         this.document = document
         this.source = source
         this.diagnostics = ImmutableArray<Diagnostic>(diagnostics)
-        this.isComplete = isComplete
-        this.stoppedAt = stoppedAt
-        this.unfinishedPhase = unfinishedPhase
-        this.errors = ImmutableArray<MarkdownException>(errors)
     }
+}
 
-    /** 兼容别名：返回解析得到的 `Document`。 */
-    public prop ast: Document {
-        get() {
-            document
-        }
-    }
+/** 完整解析的成功或致命失败；失败不携带空文档或 AST 前缀。 */
+public enum ParseOutcome {
+    /** 成功文档及其可恢复诊断。 */
+    | Success(ParseResult)
+    /** 致命错误，保留类别、阶段及可用的来源范围。 */
+    | Failure(MarkdownException)
 }
 
 /**
@@ -191,40 +175,21 @@ public class MarkdownEngine {
     }
 
     /**
-     * `tryParse` 的兼容名称；失败时返回不完整结果和空文档。
+     * 捕获 `MarkdownException`，以独立的 Failure 表达致命失败。
      * @param value 要解析的 Markdown 文本。
      * @param cancellation 可选取消 token。
      * @param budget 可选 operation budget。
-     * @return 完整或不完整的 `ParseResult`。
-     */
-    public func parsePartial(
-        value: String,
-        cancellation!: CancellationToken = CancellationToken.none(),
-        budget!: OperationBudget = OperationBudget.safe()
-    ): ParseResult {
-        tryParse(value, cancellation: cancellation, budget: budget)
-    }
-
-    /**
-     * 捕获 `MarkdownException` 并返回 `isComplete=false` 的结果，不暴露 AST 前缀。
-     * @param value 要解析的 Markdown 文本。
-     * @param cancellation 可选取消 token。
-     * @param budget 可选 operation budget。
-     * @return 成功结果或包含 `errors` 的不完整结果。
+     * @return Success 包含完整结果；Failure 只包含错误。
      */
     public func tryParse(
         value: String,
         cancellation!: CancellationToken = CancellationToken.none(),
         budget!: OperationBudget = OperationBudget.safe()
-    ): ParseResult {
+    ): ParseOutcome {
         try {
-            parse(value, cancellation: cancellation, budget: budget)
+            ParseOutcome.Success(parse(value, cancellation: cancellation, budget: budget))
         } catch (error: MarkdownException) {
-            let source = SourceBuffer(value)
-            let document = ParserNodeFactory(limits.maximumAstNodes).finishDocument([],
-                SourceSpan(0, source.byteLength()), profile, dialect.fingerprint, [])
-            ParseResult(document, source, [], isComplete: false, stoppedAt: error.span, unfinishedPhase: error.phase,
-                errors: [error])
+            ParseOutcome.Failure(error)
         }
     }
 
@@ -383,21 +348,6 @@ public class MarkdownEngine {
             throw InputReadFailureException(error)
         }
         parseBytesWithAccelerator(bytes.toArray(), utf8Policy, cancellation, budget, accelerator)
-    }
-
-    /**
-     * 创建只在 `finish()` 时解析的 buffered input session。
-     * @param utf8Policy 输入解码策略。
-     * @param cancellation 可选取消 token。
-     * @param budget 可选 operation budget。
-     * @return 新的 `BufferedInputSession`。
-     */
-    public func newSession(
-        utf8Policy!: Utf8Policy = Utf8Policy.Strict,
-        cancellation!: CancellationToken = CancellationToken.none(),
-        budget!: OperationBudget = OperationBudget.safe()
-    ): BufferedInputSession {
-        BufferedInputSession(this, utf8Policy, cancellation, budget)
     }
 
     /** 创建 `feed` 只累计输入、`finish()` 才执行解析的 session。

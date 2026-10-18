@@ -151,7 +151,7 @@ public class MarkdownParseArtifact {
     /** 偏移映射 digest。 */
     public let offsetMappingDigest: String
     /** 解析得到的 Document。 */
-    public let ast: Document
+    public let document: Document
     /** 文档级引用定义。 */
     public let references: ImmutableArray<ReferenceDefinition>
     /** 解析诊断。 */
@@ -159,9 +159,9 @@ public class MarkdownParseArtifact {
     internal let profileIdentity: String
 
     internal init(engine: MarkdownEngine, result: ParseResult) {
-        schemaVersion = "2"
-        libraryVersion = "0.9.0"
-        parserPlanVersion = "2"
+        schemaVersion = "3"
+        libraryVersion = "0.10.0"
+        parserPlanVersion = "3"
         profileId = engine.profile.id
         dialectFingerprint = engine.dialect.fingerprint
         engineFingerprint = computeEngineFingerprint(engine)
@@ -170,8 +170,8 @@ public class MarkdownParseArtifact {
         decodedTextDigest = Sha256.digest(result.source.text())
         utf8PolicyId = artifactUtf8PolicyId(result.source.decodePolicy())
         offsetMappingDigest = identityOffsetMappingDigest(originalBytes.size)
-        ast = result.ast
-        references = result.ast.root().asDocument().getOrThrow().references
+        document = result.document
+        references = result.document.root().asDocument().getOrThrow().references
         diagnostics = result.diagnostics
         profileIdentity = profileIdentityDescriptor(engine.profile)
     }
@@ -181,7 +181,7 @@ public class MarkdownParseArtifact {
      * @return 用于诊断的简短 JSON 文本。
      */
     public func debugJson(): String {
-        "{\"debug\":true,\"profile\":\"${profileId}\",\"nodes\":${ast.nodeCount}}"
+        "{\"debug\":true,\"profile\":\"${profileId}\",\"nodes\":${document.nodeCount}}"
     }
 }
 
@@ -190,20 +190,16 @@ extend MarkdownEngine {
      * 创建绑定当前 engine 和完整 parse result 的 artifact。
      * @param result 当前 engine 产生的完整 parse result。
      * @return 可用于 identity 校验和缓存加载的 artifact。
-     * @throws MarkdownException result 不完整、mapping 非 identity 或 provenance 不匹配时。
+     * @throws MarkdownException mapping 非 identity 或 provenance 不匹配时。
      */
     public func createArtifact(result: ParseResult): MarkdownParseArtifact {
-        if (!result.isComplete) {
-            throw MarkdownException(MarkdownErrorCode.InvalidArtifact, "partial parse results cannot be cached",
-                phase: "artifact_encode")
-        }
         if (!result.source.hasIdentityMapping()) {
             throw MarkdownException(MarkdownErrorCode.InvalidArtifact,
                 "artifacts require an identity-preserving UTF-8 source mapping", phase: "artifact_encode")
         }
         let originalBytes = result.source.originalBytesForArtifact()
         match (artifactDocumentProvenanceFailure(
-            result.ast,
+            result.document,
             profile,
             dialect.fingerprint,
             Sha256.digestBytes(originalBytes),
@@ -250,10 +246,10 @@ extend MarkdownEngine {
 
     private func loadArtifactIdentity(artifact: MarkdownParseArtifact, originalBytes: Array<Byte>, decoded: String,
         utf8PolicyId: String): ArtifactLoadResult {
-        if (artifact.schemaVersion != "2") {
+        if (artifact.schemaVersion != "3") {
             return ArtifactLoadResult.CacheMiss("schema version")
         }
-        if (artifact.parserPlanVersion != "2") {
+        if (artifact.parserPlanVersion != "3") {
             return ArtifactLoadResult.CacheMiss("parser plan version")
         }
         if (artifact.profileId != profile.id) {
@@ -281,7 +277,7 @@ extend MarkdownEngine {
             return ArtifactLoadResult.CacheMiss("offset mapping digest")
         }
         match (artifactDocumentProvenanceFailure(
-            artifact.ast,
+            artifact.document,
             profile,
             dialect.fingerprint,
             artifact.sourceDigest,
@@ -293,11 +289,11 @@ extend MarkdownEngine {
             case None => ()
         }
         try {
-            AstInvariantValidator().validate(artifact.ast, limits: limits)
+            AstInvariantValidator().validate(artifact.document, limits: limits)
         } catch (_: Exception) {
             return ArtifactLoadResult.CacheMiss("AST invariants")
         }
-        ArtifactLoadResult.Hit(artifact.ast)
+        ArtifactLoadResult.Hit(artifact.document)
     }
 }
 
@@ -359,7 +355,7 @@ private func identityOffsetMappingDigest(byteLength: Int64): String {
 private func computeEngineFingerprint(engine: MarkdownEngine): String {
     let limits = engine.limits
     let out = CanonicalDescriptor()
-    out.append("engine")
+    out.append("engine-0.10-plan-3")
     out.append(engine.dialect.fingerprint)
     out.append(limits.maximumInputBytes)
     out.append(limits.maximumLineBytes)

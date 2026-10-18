@@ -24,6 +24,8 @@ public enum MarkdownErrorCode {
     | UnsupportedNode
     /** artifact 无效或身份不匹配。 */
     | InvalidArtifact
+    /** 显式输入采用了当前不支持的版本。 */
+    | UnsupportedVersion
     /** 触发内部不变量违规。 */
     | InternalInvariantViolation
 }

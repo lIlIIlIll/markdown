@@ -87,17 +87,20 @@ for (link in AstQuery.links(result.document)) {
 取消由调用方持有 `CancellationSource`：
 
 ```cangjie
-import markdown.core.{CancellationSource, MarkdownEngine}
+import markdown.core.{CancellationSource, MarkdownEngine, ParseOutcome}
 
 let source = CancellationSource()
 source.cancel()
 let engine = MarkdownEngine.builder().build()
 let result = engine.tryParse("# cancelled", cancellation: source.token)
-println(result.isComplete) // false
+match (result) {
+    case ParseOutcome.Success(_) => println("parsed")
+    case ParseOutcome.Failure(error) => println(error.phase) // input
+}
 ```
 
 正常的 `parse` 在取消或超限时抛出 `MarkdownException`；`tryParse` 返回
-`isComplete == false`、空文档和结构化 `errors`，不会返回部分 AST。
+`ParseOutcome.Failure(error)`，不会返回空文档或部分 AST。
 
 ## 自定义容器语法
 

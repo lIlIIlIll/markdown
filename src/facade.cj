@@ -32,7 +32,7 @@ public class Markdown {
      * @return 转义 raw HTML 后的 HTML 文本。
      */
     public static func toSafeHtml(source: String, profile!: MarkdownProfile = MarkdownProfile.commonMark0312()): String {
-        HtmlRenderer().render(parse(source, profile: profile).ast)
+        HtmlRenderer().render(parse(source, profile: profile).document)
     }
 
     /**
@@ -44,7 +44,7 @@ public class Markdown {
      * @return 规范兼容的 HTML 文本。
      */
     public static unsafe func toSpecHtml(source: String, profile!: MarkdownProfile = MarkdownProfile.commonMark0312()): String {
-        HtmlRenderer(options: HtmlOptions.specCompatible()).render(parse(source, profile: profile).ast)
+        HtmlRenderer(options: HtmlOptions.specCompatible()).render(parse(source, profile: profile).document)
     }
 
     /**

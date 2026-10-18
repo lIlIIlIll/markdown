@@ -50,7 +50,7 @@ public class MarkdownExtensionTestKit {
             failures.add("ast-invariants")
         }
 
-        let session = engine.newSession()
+        let session = engine.newBufferedInputSession()
         for (byte in sample.toArray()) {
             session.feed([byte])
         }

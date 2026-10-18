@@ -17,8 +17,8 @@
 
 </div>
 
-当前版本是 `0.9.0` breaking pre-GA preview。规范语料、全量测试和性能发布门槛已经
-通过。0.9 仍允许在 GA 前调整公开 API。
+当前开发版本是 `0.10.0` breaking pre-GA preview，正在实施新的语义、身份和流式模型。
+本次开发尚未完成全部发布门槛；破坏性修改和状态见[0.10 迁移](docs/migration-0.10.md)。
 
 > [!NOTE]
 > 基础包是纯仓颉实现，不需要 C 编译器。原生 line scanner 是可选加速器，不是运行依赖。
@@ -207,20 +207,20 @@ markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、�
 <!-- release-evidence:start -->
 | Release evidence | Value |
 | --- | --- |
-| Version / status | `0.9.0` / `evidence-ready` |
-| Offline evidence ready | `ready` |
+| Version / status | `0.10.0` / `in-development` |
+| Offline evidence ready | `not ready` |
 | CI verified at evidence repository HEAD | `no` |
 | Published release | `no` |
-| Tests | `1511/1511` passed; `0` skipped; `0` failed |
+| Tests | `1517/1517` passed; `0` skipped; `0` failed |
 | CommonMark conformance | `652/652` |
 | GFM conformance | `671/671` |
-| Public API snapshot | `1436` declarations |
+| Public API snapshot | `1434` declarations |
 | Artifact commit | `6e5a207d07903a60f8270c41badac1bb4cb104b5` |
 | Evidence subject commit | `6e5a207d07903a60f8270c41badac1bb4cb104b5` |
 | Execution identity | `target/release-evidence/manifest.json` records and verifies the clean gate commit/tree |
 | CommonMark / cmark | `2.36x` / limit `2.5x` |
 | GFM HTML / cmark-gfm | `1.79x` / limit `2.5x` |
-| Benchmark identity | `current`; commit `6e5a207d07903a60f8270c41badac1bb4cb104b5`; SDK `Cangjie Compiler: 1.2.0 (cjnative)` |
+| Benchmark identity | `stale`; commit `6e5a207d07903a60f8270c41badac1bb4cb104b5`; SDK `Cangjie Compiler: 1.2.0 (cjnative)` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
 `evidenceReady` describes reproducible offline artifacts and gates only. It does not claim that

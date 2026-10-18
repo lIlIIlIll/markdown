@@ -1,14 +1,12 @@
 package markdown
 
 import std.collection.*
-import std.sync.AtomicInt64
 
 // The sizes are part of the 0.9 snapshot format and intentionally live next
 // to the storage implementation instead of being parser tuning knobs.
 internal let AST_NODE_CHUNK_SIZE: Int64 = 4096
 internal let AST_CHILD_CHUNK_SIZE: Int64 = 16384
 internal let AST_SOURCE_OFFSET_MAX: Int64 = 4294967294
-private let NEXT_ARENA_DOCUMENT_ID = AtomicInt64(1)
 private let ARENA_PAYLOAD_EMPTY: Int64 = -1
 private let ARENA_PAYLOAD_TABLE_ROW_BODY: Int64 = -2
 private let ARENA_PAYLOAD_TABLE_ROW_HEADER: Int64 = -3
@@ -156,6 +154,7 @@ private func compactNodeIdentity(kind: NodeKind, originKind: NodeOriginKind, ori
 
 /** arena 中的紧凑语义 header；kind-specific payload 单独存储。 */
 public struct ArenaNodeRecord {
+    private let localIdentityValue: UInt32
     private let identityDescriptorValue: UInt32
     private let spanStartByteValue: UInt32
     private let spanEndByteValue: UInt32
@@ -163,8 +162,9 @@ public struct ArenaNodeRecord {
     private let childCountValue: UInt32
     private let payloadIndexValue: UInt32
 
-    internal init(kind: NodeKind, span: ?SourceSpan, originKind: NodeOriginKind, originMetadataIndex: Int64,
-        firstChild: Int64, childCount: Int64, payloadIndex: Int64) {
+    internal init(localIdentity: Int64, kind: NodeKind, span: ?SourceSpan, originKind: NodeOriginKind,
+        originMetadataIndex: Int64, firstChild: Int64, childCount: Int64, payloadIndex: Int64) {
+        localIdentityValue = UInt32(localIdentity)
         identityDescriptorValue = compactNodeIdentity(kind, originKind, originMetadataIndex)
         match (span) {
             case Some(value) =>
@@ -177,6 +177,12 @@ public struct ArenaNodeRecord {
         firstChildValue = compactArenaIndex(firstChild, "first child")
         childCountValue = compactArenaIndex(childCount, "child count")
         payloadIndexValue = compactPayloadIndex(payloadIndex)
+    }
+
+    internal prop localIdentity: Int64 {
+        get() {
+            Int64(localIdentityValue)
+        }
     }
 
     /** 第一个 child 的物理 arena index。 */
@@ -355,7 +361,9 @@ internal struct AstArenaCheckpoint {
  * `nodeCount` 和 `childCount` 描述从 root 可达的逻辑结构。
  */
 public class Document {
-    private let documentIdentity: Int64
+    /** 此不可变 Document 视图的唯一 revision；不同视图的 NodeRef 不可混用。 */
+    public let revision: Int64
+    private let lineageAllocator: NodeLineage
     private let nodeChunks: Array<ArenaNodeChunk>
     private let childChunks: Array<ArenaChildChunk>
     private let payloads: Array<ArenaNodePayload>
@@ -370,11 +378,12 @@ public class Document {
     /** 逻辑 child 总数。 */
     public let childCount: Int64
 
-    internal init(documentIdentity: Int64, nodeChunks: Array<ArenaNodeChunk>, childChunks: Array<ArenaChildChunk>,
-        payloads: Array<ArenaNodePayload>, originMetadata: Array<NodeOrigin>, physicalNodeCount: Int64,
-        physicalChildCount: Int64, rootIndex!: Int64 = -1, reachableNodeIndexes!: Array<Int64> = [],
-        reachableChildCount!: Int64 = -1, sourceBuffer!: ?SourceBuffer = None) {
-        this.documentIdentity = documentIdentity
+    internal init(documentRevision: Int64, lineageAllocator: NodeLineage, nodeChunks: Array<ArenaNodeChunk>,
+        childChunks: Array<ArenaChildChunk>, payloads: Array<ArenaNodePayload>, originMetadata: Array<NodeOrigin>,
+        physicalNodeCount: Int64, physicalChildCount: Int64, rootIndex!: Int64 = -1,
+        reachableNodeIndexes!: Array<Int64> = [], reachableChildCount!: Int64 = -1, sourceBuffer!: ?SourceBuffer = None) {
+        this.revision = documentRevision
+        this.lineageAllocator = lineageAllocator
         this.nodeChunks = nodeChunks
         this.childChunks = childChunks
         this.payloads = payloads
@@ -398,6 +407,21 @@ public class Document {
         } else {
             reachableChildCount
         }
+    }
+
+    /** 节点的共同分配 lineage；持久化分叉共享此值。 */
+    public prop lineage: Int64 {
+        get() {
+            lineageAllocator.identity
+        }
+    }
+
+    internal func nodeLineage(): NodeLineage {
+        lineageAllocator
+    }
+
+    internal func nodeIdAt(index: Int64): NodeId {
+        NodeId(lineage, recordAt(index).localIdentity)
     }
 
     /** 返回逻辑 arena index 对应的 NodeRef。
@@ -484,7 +508,7 @@ public class Document {
     }
 
     internal func requireOwned(node: NodeRef): Unit {
-        if (node.documentIdentity != documentIdentity) {
+        if (node.documentIdentity != revision) {
             throw IllegalArgumentException("NodeRef belongs to a different Document snapshot")
         }
         requirePhysicalNodeIndex(node.index)
@@ -543,7 +567,7 @@ public class Document {
 
     internal prop identity: Int64 {
         get() {
-            documentIdentity
+            revision
         }
     }
 
@@ -567,7 +591,7 @@ public class Document {
 
     internal func nodeRefAtPhysical(index: Int64): NodeRef {
         requirePhysicalNodeIndex(index)
-        NodeRef(this, documentIdentity, index)
+        NodeRef(this, revision, index)
     }
 
     private func requirePhysicalNodeIndex(index: Int64): Unit {
@@ -600,10 +624,16 @@ public struct NodeRef <: Equatable<NodeRef> {
         this.index = index
     }
 
-    /** 节点 id（物理 index + 1）。 */
+    /** 节点在 lineage 内不回收的身份，与 arena 下标无关。 */
     public prop nodeId: NodeId {
         get() {
-            NodeId(index + 1)
+            snapshot.nodeIdAt(index)
+        }
+    }
+    /** 此引用绑定的不可变 Document revision。 */
+    public prop revision: Int64 {
+        get() {
+            documentIdentity
         }
     }
     /** 节点种类。 */
@@ -1268,7 +1298,9 @@ public struct CustomNodeView {
  * chunk modified by replaceRecord().
  */
 internal class AstArenaBuilder {
-    private let documentIdentity: Int64
+    private let lineageAllocator: NodeLineage
+    private var nextLocalIdentity: Int64 = 0
+    private var reservedIdentityEnd: Int64 = 0
     private let maximumNodes: Int64
     private let trustedParserConstruction: Bool
     private let sourceBuffer: ?SourceBuffer
@@ -1294,7 +1326,7 @@ internal class AstArenaBuilder {
             initialChildCapacity > AST_CHILD_CHUNK_SIZE) {
             throw IllegalArgumentException("initial arena capacity exceeds its chunk size")
         }
-        documentIdentity = NEXT_ARENA_DOCUMENT_ID.fetchAdd(1)
+        lineageAllocator = NodeLineage()
         this.maximumNodes = maximumNodes
         this.trustedParserConstruction = trustedParserConstruction
         this.sourceBuffer = sourceBuffer
@@ -1318,7 +1350,7 @@ internal class AstArenaBuilder {
         }
         // A transformed snapshot is a different Document identity even when
         // it shares immutable chunks with its source snapshot.
-        documentIdentity = NEXT_ARENA_DOCUMENT_ID.fetchAdd(1)
+        lineageAllocator = base.nodeLineage()
         this.maximumNodes = if (maximumNodes == Int64.Max) {
             Int64.Max
         } else {
@@ -1456,6 +1488,7 @@ internal class AstArenaBuilder {
         if (nodeCountValue >= maximumNodes) {
             throw LimitExceededException("ast_nodes", maximumNodes, nodeCountValue + 1, "ast_allocation")
         }
+        let localIdentity = allocateLocalIdentity()
         let index = nodeCountValue
         for (child in children) {
             if (!trustedParserConstruction) {
@@ -1477,8 +1510,8 @@ internal class AstArenaBuilder {
             }
         }
         nodeTail.add(
-            ArenaNodeRecord(kind, span, originKind, originMetadataIndex, childCountValue - children.size, children.size,
-                payloadIndex))
+            ArenaNodeRecord(localIdentity, kind, span, originKind, originMetadataIndex, childCountValue - children.size,
+                children.size, payloadIndex))
         nodeCountValue++
         if (!trustedParserConstruction) {
             parentIndexes.add(-1)
@@ -1495,6 +1528,7 @@ internal class AstArenaBuilder {
         if (nodeCountValue >= maximumNodes) {
             throw LimitExceededException("ast_nodes", maximumNodes, nodeCountValue + 1, "ast_allocation")
         }
+        let localIdentity = allocateLocalIdentity()
         let index = nodeCountValue
         for (child in children) {
             unparentedCountValue--
@@ -1513,8 +1547,8 @@ internal class AstArenaBuilder {
             }
         }
         nodeTail.add(
-            ArenaNodeRecord(kind, span, originKind, originMetadataIndex, childCountValue - children.size, children.size,
-                payloadIndex))
+            ArenaNodeRecord(localIdentity, kind, span, originKind, originMetadataIndex, childCountValue - children.size,
+                children.size, payloadIndex))
         nodeCountValue++
         unparentedCountValue++
         if (nodeTail.size == AST_NODE_CHUNK_SIZE) {
@@ -1526,8 +1560,8 @@ internal class AstArenaBuilder {
     func freeze(): Document {
         freezeNodeTail()
         freezeChildTail()
-        Document(documentIdentity, frozenNodeChunks.toArray(), frozenChildChunks.toArray(), payloads.toArray(),
-            originMetadata.toArray(), nodeCountValue, childCountValue, sourceBuffer: sourceBuffer)
+        Document(nextDocumentRevision(), lineageAllocator, frozenNodeChunks.toArray(), frozenChildChunks.toArray(),
+            payloads.toArray(), originMetadata.toArray(), nodeCountValue, childCountValue, sourceBuffer: sourceBuffer)
     }
 
     /** Captures the append-only construction state without allocating an AST
@@ -1683,8 +1717,8 @@ internal class AstArenaBuilder {
         }
         freezeNodeTail()
         freezeChildTail()
-        Document(documentIdentity, frozenNodeChunks.toArray(), frozenChildChunks.toArray(), payloads.toArray(),
-            originMetadata.toArray(), nodeCountValue, childCountValue, rootIndex: rootIndex,
+        Document(nextDocumentRevision(), lineageAllocator, frozenNodeChunks.toArray(), frozenChildChunks.toArray(),
+            payloads.toArray(), originMetadata.toArray(), nodeCountValue, childCountValue, rootIndex: rootIndex,
             reachableNodeIndexes: reachable.toArray(), reachableChildCount: reachableChildren,
             sourceBuffer: sourceBuffer)
     }
@@ -1720,8 +1754,8 @@ internal class AstArenaBuilder {
         if (!childTail.isEmpty()) {
             childChunks.add(ArenaChildChunk(childTail.toArray()))
         }
-        Document(documentIdentity, nodeChunks.toArray(), childChunks.toArray(), payloads.toArray(),
-            originMetadata.toArray(), nodeCountValue, childCountValue, sourceBuffer: sourceBuffer)
+        Document(nextDocumentRevision(), lineageAllocator, nodeChunks.toArray(), childChunks.toArray(),
+            payloads.toArray(), originMetadata.toArray(), nodeCountValue, childCountValue, sourceBuffer: sourceBuffer)
     }
 
     /** Replaces one compact header while preserving its NodeId and child
@@ -1787,6 +1821,17 @@ internal class AstArenaBuilder {
         unparentedCountValue
     }
 
+    private func allocateLocalIdentity(): Int64 {
+        if (nextLocalIdentity == reservedIdentityEnd) {
+            let (start, end) = lineageAllocator.reserve()
+            nextLocalIdentity = start
+            reservedIdentityEnd = end
+        }
+        let identity = nextLocalIdentity
+        nextLocalIdentity++
+        identity
+    }
+
     private func appendChild(index: Int64): Unit {
         childTail.add(compactArenaIndex(index, "child index"))
         childCountValue++
@@ -1824,8 +1869,8 @@ internal class AstArenaBuilder {
 
     private func replacementRecord(previous: ArenaNodeRecord, kind: NodeKind, span: ?SourceSpan,
         originKind: NodeOriginKind, payloadIndex: Int64, originMetadataIndex: Int64): ArenaNodeRecord {
-        ArenaNodeRecord(kind, span, originKind, originMetadataIndex, previous.firstChild, previous.childCount,
-            payloadIndex)
+        ArenaNodeRecord(previous.localIdentity, kind, span, originKind, originMetadataIndex, previous.firstChild,
+            previous.childCount, payloadIndex)
     }
 
     private func replacementPayloadIndex(previous: ArenaNodeRecord, payload: ?ArenaNodePayload): Int64 {

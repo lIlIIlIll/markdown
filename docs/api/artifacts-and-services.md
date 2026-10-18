@@ -27,9 +27,9 @@ match (engine.loadArtifact(artifact, source)) {
 - offset mapping digest
 - AST、references 和 diagnostics
 
-`createArtifact` 拒绝 incomplete parse result 和非 identity UTF-8 mapping。只有输入实际
+`createArtifact` 只接受成功的 ParseResult，并拒绝非 identity UTF-8 mapping。只有输入实际
 包含无效 UTF-8 并发生替换时，`ReplaceInvalid` 才产生非 identity mapping。有效 UTF-8
-bytes 即使使用 `ReplaceInvalid` 也能创建和加载 0.9 parse artifact。
+bytes 即使使用 `ReplaceInvalid` 也能创建和加载当前 parse artifact。
 
 `createArtifact` 还会交叉验证 `ParseResult.source`、AST root profile、dialect fingerprint、
 parser 保留的 `SourceBuffer`、UTF-8 policy、原始与解码 digest，以及根节点的完整源码
@@ -40,8 +40,8 @@ parser 保留的 `SourceBuffer`、UTF-8 policy、原始与解码 digest，以及
 或 mapping 不匹配都返回 `CacheMiss(reason)`。加载时会再次检查 artifact 中 AST 的来源，
 避免已篡改的 AST 与正确 digest 组合命中 cache。
 
-0.9 pre-GA 中 profile identity 的修正会改变 dialect/engine fingerprint；旧 binary artifact
-因此安全地返回 cache miss，不会被猜测性迁移。
+0.10 的 parser plan、节点身份及 SPI 改变了 fingerprint。旧 artifact 返回 cache miss，
+不进行猜测性迁移。
 
 ## Binary snapshot
 
@@ -56,10 +56,15 @@ match (BinaryArtifactCodec.decode(engine, BinarySnapshotArtifact(bytes))) {
 }
 ```
 
-schema ID 是 `markdown-snapshot-binary-2`。codec 使用长度前缀字段，并验证 magic、
+schema ID 是 `markdown-snapshot-binary-3`。codec 使用长度前缀字段，并验证 magic、
 profile、dialect、engine、UTF-8 policy、source、AST、CST 和 trailing bytes。
 
 decode 会验证 source 后重新解析 snapshot。它不会信任 artifact 中的未验证节点数据。
+解码得到新的 lineage/revision，语义 digest 不包含进程内节点编号。
+
+对显式提供的持久化文件，使用 `BinaryArtifactCodec.read(engine, bytes)`。旧版或未知版
+报 `MarkdownErrorCode.UnsupportedVersion`；无效内容报 `InvalidArtifact`。
+`decode` 是缓存入口，相同情况返回 CacheMiss。
 
 ## Rendered source map
 

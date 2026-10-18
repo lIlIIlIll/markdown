@@ -1,11 +1,11 @@
 # 版本与兼容性
 
-包名、依赖名和产品名均为 `markdown`。当前版本是 `0.9.0` breaking pre-GA
-preview。
+包名、依赖名和产品名均为 `markdown`。当前开发版本是 `0.10.0` breaking pre-GA preview。
+issue #10 的模型迁移正在实施，完整交付状态见[0.10 迁移](migration-0.10.md)。
 
-## 0.9 的兼容性范围
+## 0.10 的兼容性范围
 
-0.9 通过 `api/public-api-v0.9.txt` 记录公开声明，但仍允许在 GA 前做破坏性修改。
+0.10 通过 `api/public-api-v0.10.txt` 记录公开声明，但仍允许在 GA 前做破坏性修改。
 每个破坏性修改必须：
 
 1. 更新 API snapshot。
@@ -54,7 +54,7 @@ implementation version 是 opaque build identity，不参与 SemVer 排序。
 - fingerprint
 - artifact schema
 
-当前 0.9 不宣称这些已经冻结。
+当前 0.10 不宣称这些已经冻结。
 
 ## Event 和 buffered API
 
@@ -71,7 +71,7 @@ NodeRef。
 python3 scripts/check_public_api.py
 ```
 
-命令比较源码声明与 `api/public-api-v0.9.txt`。只有明确的 0.9 breaking 变更才可使用
+命令比较源码声明与 `api/public-api-v0.10.txt`。只有明确的 0.10 breaking 变更才可使用
 `--update` 更新 snapshot。
 
 迁移步骤见 [0.8 到 0.9](migration.md)。

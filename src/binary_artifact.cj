@@ -12,7 +12,7 @@ public class BinarySnapshotArtifact {
      * @param data 快照的完整二进制内容，构造时会复制一份。
      */
     public init(data: Array<Byte>) {
-        this.schemaVersion = "markdown-snapshot-binary-2"
+        this.schemaVersion = "markdown-snapshot-binary-3"
         this.data = data.clone()
     }
     /**
@@ -34,6 +34,28 @@ public enum BinaryArtifactLoadResult {
 
 /** 编解码包含 AST、CST 和身份 digest 的 binary snapshot。 */
 public class BinaryArtifactCodec {
+    /** 读取显式提供的持久化快照；旧版和未知版明确报 UnsupportedVersion。
+     * @param engine 用于身份及资源校验的目标 engine。
+     * @param data 持久化快照字节。
+     * @return 经当前格式校验的 snapshot。
+     * @throws MarkdownException 版本不支持、身份不符或内容无效时。
+     */
+    public static func read(engine: MarkdownEngine, data: Array<Byte>): DocumentSnapshot {
+        if (data.size >= 4 && data[0] == b'M' && data[1] == b'C' && data[2] == b'J' && data[3] != b'3') {
+            throw MarkdownException(MarkdownErrorCode.UnsupportedVersion, "unsupported binary snapshot version",
+                phase: "artifact_decode")
+        }
+        if (data.size > engine.limits.maximumInputBytes && data.size - engine.limits.maximumInputBytes > 1024 * 1024) {
+            throw MarkdownException(MarkdownErrorCode.InvalidArtifact, "binary snapshot exceeds the input limit",
+                phase: "artifact_decode")
+        }
+        match (decode(engine, BinarySnapshotArtifact(data))) {
+            case BinaryArtifactLoadResult.Hit(snapshot) => snapshot
+            case BinaryArtifactLoadResult.CacheMiss(reason) => throw MarkdownException(
+                MarkdownErrorCode.InvalidArtifact, "invalid binary snapshot: ${reason}", phase: "artifact_decode")
+        }
+    }
+
     /** 编码完整且 identity-preserving 的 snapshot；不支持非 identity UTF-8 mapping。
      * @param snapshot 要编码的完整 snapshot。
      * @return 编码后的二进制快照。
@@ -46,8 +68,8 @@ public class BinaryArtifactCodec {
         }
         let out = ArrayList<Byte>()
         let originalBytes = snapshot.result.source.originalBytesForArtifact()
-        out.add(all: "MCJ2".toArray())
-        let root = snapshot.result.ast.root().asDocument().getOrThrow()
+        out.add(all: "MCJ3".toArray())
+        let root = snapshot.result.document.root().asDocument().getOrThrow()
         binaryWriteString(out, root.profile.id)
         binaryWriteString(out, root.dialectFingerprint)
         binaryWriteString(out, binaryEngineFingerprint(snapshot.engine))
@@ -56,7 +78,7 @@ public class BinaryArtifactCodec {
         binaryWriteString(out, Sha256.digest(snapshot.result.source.text()))
         binaryWriteString(out,
             binaryIdentityOffsetMappingDigest(originalBytes.size, snapshot.result.source.decodePolicy()))
-        binaryWriteString(out, binaryAstDigest(snapshot.result.ast))
+        binaryWriteString(out, binaryAstDigest(snapshot.result.document))
         binaryWriteString(out, Sha256.digest(snapshot.syntaxTree.losslessText()))
         binaryWriteString(out, snapshot.result.source.text())
         BinarySnapshotArtifact(out.toArray())
@@ -69,12 +91,12 @@ public class BinaryArtifactCodec {
      */
     public static func decode(engine: MarkdownEngine, artifact: BinarySnapshotArtifact): BinaryArtifactLoadResult {
         let data = artifact.bytes()
-        if (data.size > engine.limits.maximumInputBytes + 1024 * 1024) {
+        if (data.size > engine.limits.maximumInputBytes && data.size - engine.limits.maximumInputBytes > 1024 * 1024) {
             return BinaryArtifactLoadResult.CacheMiss("artifact size")
         }
         try {
             let reader = BinaryArtifactReader(data)
-            if (reader.readFixed(4) != "MCJ2") {
+            if (reader.readFixed(4) != "MCJ3") {
                 return BinaryArtifactLoadResult.CacheMiss("schema magic")
             }
             let profile = reader.readString()
@@ -115,7 +137,7 @@ public class BinaryArtifactCodec {
                 return BinaryArtifactLoadResult.CacheMiss("offset mapping digest")
             }
             let snapshot = DocumentSnapshot(engine, 1, engine.parse(sourceBytes, utf8Policy: utf8Policy))
-            if (astDigest != binaryAstDigest(snapshot.result.ast)) {
+            if (astDigest != binaryAstDigest(snapshot.result.document)) {
                 return BinaryArtifactLoadResult.CacheMiss("AST digest")
             }
             if (cstDigest != Sha256.digest(snapshot.syntaxTree.losslessText())) {
@@ -195,7 +217,7 @@ private func binaryWriteU64(out: ArrayList<Byte>, value: UInt64): Unit {
 private func binaryEngineFingerprint(engine: MarkdownEngine): String {
     let limits = engine.limits
     let out = CanonicalDescriptor()
-    out.append("engine")
+    out.append("engine-0.10-plan-3")
     out.append(engine.dialect.fingerprint)
     out.append(limits.maximumInputBytes)
     out.append(limits.maximumLineBytes)
@@ -218,8 +240,6 @@ private func binaryAstDigest(document: Document): String {
             case NodeRefWalkEvent.Enter(node) =>
                 out.append("+");
                 out.append(binaryNodeKind(node));
-                out.append(":");
-                out.append(node.nodeId.value)
                 if (let Some(span) <- node.span) {
                     out.append("@");
                     out.append(span.startByte);
