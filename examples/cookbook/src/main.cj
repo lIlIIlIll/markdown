@@ -1,9 +1,11 @@
 package markdown_cookbook
 
-import markdown.core.{AppendReplica, AppendState, Markdown, MarkdownEngine, MarkdownProfile}
+import std.collection.ArrayList
+import markdown.core.{AppendReplica, AppendState, CancellationToken, Diagnostic, DiagnosticSeverity, Document, Markdown, 
+    MarkdownEngine, MarkdownProfile, OperationBudget, ParseLimits, SourceBuffer}
 import markdown.editor.AstQuery
 import markdown.extensions.{DefinitionListPayload, DefinitionListRole, BlockSyntax, ExtensionCapabilities, 
-    ExtensionManifest, MarkdownDialect, OfficialExtensions, RendererRule}
+    ExtensionDocumentAnalysis, ExtensionManifest, MarkdownDialect, OfficialExtensions, RendererRule}
 import markdown.render.{AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, HtmlOptions, HtmlRenderer}
 
 class CookbookOutputSink <: AsyncTextSink {
@@ -14,6 +16,46 @@ class CookbookOutputSink <: AsyncTextSink {
     }
     func content(): String {
         out.toString()
+    }
+}
+
+class CookbookHeadingAnalysis <: ExtensionDocumentAnalysis {
+    public prop extensionId: String {
+        get() {
+            "cookbook-analysis"
+        }
+    }
+    public prop analysisId: String {
+        get() {
+            "headings"
+        }
+    }
+    public prop version: String {
+        get() {
+            "1"
+        }
+    }
+    public prop priority: Int64 {
+        get() {
+            100
+        }
+    }
+    public prop deterministic: Bool {
+        get() {
+            true
+        }
+    }
+    public func analyze(document: Document, source: SourceBuffer, limits: ParseLimits, budget: OperationBudget,
+        cancellation: CancellationToken): Array<Diagnostic> {
+        let diagnostics = ArrayList<Diagnostic>()
+        for (heading in document.bindings.headings.toArray()) {
+            budget.consumeScan()
+            cancellation.throwIfCancelled(phase: "cookbook_analysis")
+            if (let Some(span) <- heading.span) {
+                diagnostics.add(Diagnostic("COOKBOOK_HEADING", DiagnosticSeverity.Info, "heading=${heading.id}", span))
+            }
+        }
+        diagnostics.toArray()
     }
 }
 
@@ -105,6 +147,22 @@ main(): Int64 {
         return 1
     }
     println(definitionEngine.htmlRenderer().render(glossary.document))
+
+    println("== bound-analysis ==")
+    let analysisDialect = OfficialExtensions
+        .headingIds(
+            MarkdownDialect
+                .define("analyzed", "1")
+                .enable(
+                    ExtensionManifest("cookbook-analysis", "1.0.0", "cookbook-1",
+                        capabilities: ExtensionCapabilities(parse: false, analysis: true)))
+                .documentAnalysis(CookbookHeadingAnalysis()))
+        .build()
+    let analyzed = MarkdownEngine.builder().dialect(analysisDialect).build().parse("# Analyzed {#analyzed}")
+    if (analyzed.diagnostics.size != 1 || analyzed.diagnostics[0].message != "heading=analyzed") {
+        return 1
+    }
+    println(analyzed.diagnostics[0].message)
 
     println("== format ==")
     println(Markdown.format("#  Title\n\n* item"))

@@ -44,8 +44,8 @@ public class ExtensionCapabilities {
     public let incremental: Bool
     /** 是否声明 snapshot lint。 */
     public let lint: Bool
-    /** 是否声明 document 后处理。 */
-    public let postprocess: Bool
+    /** 是否声明 document 分析。 */
+    public let analysis: Bool
     /** 是否声明 AST transform。 */
     public let transform: Bool
 
@@ -61,7 +61,7 @@ public class ExtensionCapabilities {
      * @param serialize 是否声明 artifact 序列化。
      * @param incremental 是否声明增量编辑。
      * @param lint 是否声明 snapshot lint。
-     * @param postprocess 是否声明 document 后处理。
+     * @param analysis 是否声明 document 分析。
      * @param transform 是否声明 AST transform。
      */
     public init(
@@ -75,7 +75,7 @@ public class ExtensionCapabilities {
         serialize!: Bool = false,
         incremental!: Bool = false,
         lint!: Bool = false,
-        postprocess!: Bool = false,
+        analysis!: Bool = false,
         transform!: Bool = false
     ) {
         this.parse = parse
@@ -88,7 +88,7 @@ public class ExtensionCapabilities {
         this.serialize = serialize
         this.incremental = incremental
         this.lint = lint
-        this.postprocess = postprocess
+        this.analysis = analysis
         this.transform = transform
     }
 }
@@ -112,7 +112,7 @@ public class ExtensionDependency {
 /**
  * 扩展的稳定身份、依赖、能力和 renderer fallback 配置。
  *
- * `requiredSpiVersion` 默认是 `"2"`，`ruleBudget` 默认是 `100000`，
+ * `requiredSpiVersion` 默认是 `"3"`，`ruleBudget` 默认是 `100000`，
  * `trustLevel` 默认是 `"host-code"`，缺失 renderer 默认失败，扩展默认可共享。
  *
  * ```cj
@@ -170,7 +170,7 @@ public class ExtensionManifest {
         extensionId: String,
         semanticVersion: String,
         implementationVersion: String,
-        requiredSpiVersion!: String = "2",
+        requiredSpiVersion!: String = "3",
         supportedProfiles!: Array<String> = ["commonmark-0.31.2", "gfm-modern-v1"],
         dependencies!: Array<String> = [],
         dependencyConstraints!: Array<ExtensionDependency> = [],
@@ -327,7 +327,7 @@ internal class ParserHotPlan {
     internal let hasInlineDsl: Bool
     internal let hasBlockDsl: Bool
     internal let hasInlineSpi: Bool
-    internal let hasDocumentProcessors: Bool
+    internal let hasDocumentStages: Bool
     internal let hasFootnotes: Bool
     internal let definitionListRule: ?BlockSyntaxRule
     internal let headingIdRule: ?InlineSyntaxRule
@@ -336,11 +336,12 @@ internal class ParserHotPlan {
     private let inlineSpiByFirstByte: Array<ImmutableArray<InlineParserSpi>>
 
     internal init(inlineRules: Array<InlineSyntaxRule>, blockRules: Array<BlockSyntaxRule>,
-        parserSpis: Array<InlineParserSpi>, documentProcessors: Array<ExtensionDocumentProcessor>) {
+        parserSpis: Array<InlineParserSpi>, astTransforms: Array<ExtensionAstTransform>,
+        analyses: Array<ExtensionDocumentAnalysis>) {
         hasInlineDsl = !inlineRules.isEmpty()
         hasBlockDsl = !blockRules.isEmpty()
         hasInlineSpi = !parserSpis.isEmpty()
-        hasDocumentProcessors = !documentProcessors.isEmpty()
+        hasDocumentStages = !astTransforms.isEmpty() || !analyses.isEmpty()
         let inlineBuckets = Array<ArrayList<InlineSyntaxRule>>(256) {_ => ArrayList<InlineSyntaxRule>()}
         let blockBuckets = Array<ArrayList<BlockSyntaxRule>>(256) {_ => ArrayList<BlockSyntaxRule>()}
         let spiBuckets = Array<ArrayList<InlineParserSpi>>(256) {_ => ArrayList<InlineParserSpi>()}
@@ -405,37 +406,6 @@ internal class RendererHotPlan {
     internal init(rendererRules: Array<RendererRule>) {
         hasCustomRules = !rendererRules.isEmpty()
     }
-}
-
-/** document processor 的执行阶段。 */
-public enum ExtensionProcessingPhase {
-    /** 在完整 Document 构建后执行的后处理阶段。 */
-    | DocumentPostprocess
-    /** 对 AST 执行 transform 的阶段。 */
-    | AstTransform
-}
-
-/** 对完整 Document 执行扩展后处理或 AST transform 的接口。 */
-public interface ExtensionDocumentProcessor {
-    /** processor 所属的扩展 id。 */
-    prop extensionId: String
-    /** processor 的稳定 id。 */
-    prop processorId: String
-    /** processor 的版本。 */
-    prop version: String
-    /** 执行阶段。 */
-    prop phase: ExtensionProcessingPhase
-    /** 执行优先级。 */
-    prop priority: Int64
-    /** 处理是否确定性。 */
-    prop deterministic: Bool
-    /** 对输入 Document 执行处理并返回结果。
-     * @param document 输入 Document。
-     * @param budget 处理操作预算。
-     * @param cancellation 协作式取消信号。
-     * @return 处理后的 `Document`。
-     */
-    func process(document: Document, budget: OperationBudget, cancellation: CancellationToken): Document
 }
 
 /** 为 `DocumentSnapshot` 提供扩展诊断的接口。 */
@@ -1416,7 +1386,8 @@ public class MarkdownDialect {
     internal let blockBuilders: Array<BlockSyntaxBuilder>
     internal let rendererRules: Array<RendererRule>
     internal let parserSpis: Array<InlineParserSpi>
-    internal let documentProcessors: Array<ExtensionDocumentProcessor>
+    internal let astTransforms: Array<ExtensionAstTransform>
+    internal let documentAnalyses: Array<ExtensionDocumentAnalysis>
     internal let lintProviders: Array<ExtensionLintProvider>
 
     internal init(builder: MarkdownDialectBuilder) {
@@ -1430,7 +1401,8 @@ public class MarkdownDialect {
         blockBuilders = builder.blockBuilders.toArray()
         rendererRules = builder.rendererRules.toArray()
         parserSpis = builder.parserSpis.toArray()
-        documentProcessors = builder.documentProcessors.toArray()
+        astTransforms = builder.astTransforms.toArray()
+        documentAnalyses = builder.documentAnalyses.toArray()
         lintProviders = builder.lintProviders.toArray()
     }
 
@@ -1471,7 +1443,8 @@ public class MarkdownDialectBuilder {
     internal let blockBuilders = ArrayList<BlockSyntaxBuilder>()
     internal let rendererRules = ArrayList<RendererRule>()
     internal let parserSpis = ArrayList<InlineParserSpi>()
-    internal let documentProcessors = ArrayList<ExtensionDocumentProcessor>()
+    internal let astTransforms = ArrayList<ExtensionAstTransform>()
+    internal let documentAnalyses = ArrayList<ExtensionDocumentAnalysis>()
     internal let lintProviders = ArrayList<ExtensionLintProvider>()
 
     internal init(id: String, version: String) {
@@ -1543,12 +1516,20 @@ public class MarkdownDialectBuilder {
         parserSpis.add(spi);
         this
     }
-    /** 注册完整 Document processor。
-     * @param processor 要注册的 processor。
+    /** 注册绑定前的完整 AST transform。
+     * @param processor 要注册的转换。
      * @return 同一 builder，支持链式调用。
      */
-    public func documentProcessor(processor: ExtensionDocumentProcessor): MarkdownDialectBuilder {
-        documentProcessors.add(processor)
+    public func astTransform(processor: ExtensionAstTransform): MarkdownDialectBuilder {
+        astTransforms.add(processor)
+        this
+    }
+    /** 注册完整绑定后的只读 document analysis。
+     * @param analysis 分析实现；只产生诊断，不修改 AST。
+     * @return 同一 builder，支持链式调用。
+     */
+    public func documentAnalysis(analysis: ExtensionDocumentAnalysis): MarkdownDialectBuilder {
+        documentAnalyses.add(analysis)
         this
     }
     /** 注册 snapshot lint provider。
@@ -1569,7 +1550,8 @@ public class MarkdownDialectBuilder {
         blockBuilders.removeIf({rule => rule.extensionId == extensionId})
         rendererRules.removeIf({rule => rule.extensionId == extensionId})
         parserSpis.removeIf({spi => spi.extensionId == extensionId})
-        documentProcessors.removeIf({processor => processor.extensionId == extensionId})
+        astTransforms.removeIf({processor => processor.extensionId == extensionId})
+        documentAnalyses.removeIf({analysis => analysis.extensionId == extensionId})
         lintProviders.removeIf({provider => provider.extensionId == extensionId})
         this
     }
@@ -1606,19 +1588,27 @@ public class CompiledMarkdownDialect {
     public let rendererRules: ImmutableArray<RendererRule>
     /** 已排序的 parser SPI 列表。 */
     public let parserSpis: ImmutableArray<InlineParserSpi>
-    /** 已排序的 document processor 列表。 */
-    public let documentProcessors: ImmutableArray<ExtensionDocumentProcessor>
+    /** 绑定前 AST transform 的有序执行计划。 */
+    public let astTransforms: ImmutableArray<ExtensionAstTransform>
+    /** 绑定后只读分析的有序执行计划。 */
+    public let documentAnalyses: ImmutableArray<ExtensionDocumentAnalysis>
     /** 已排序的 lint provider 列表。 */
     public let lintProviders: ImmutableArray<ExtensionLintProvider>
     internal let parserHotPlan: ParserHotPlan
     internal let rendererHotPlan: RendererHotPlan
+
+    internal func requiresFullAst(): Bool {
+        parserHotPlan.hasDocumentStages || (parserOptions.extensionsEnabled && (parserHotPlan.hasFootnotes ||
+            parserHotPlan.headingIdRule.isSome() || parserHotPlan.definitionListRule.isSome()))
+    }
 
     internal init(
         dialect: MarkdownDialect,
         inlineRules: Array<InlineSyntaxRule>,
         blockRules: Array<BlockSyntaxRule>,
         parserSpis: Array<InlineParserSpi>,
-        documentProcessors: Array<ExtensionDocumentProcessor>,
+        astTransforms: Array<ExtensionAstTransform>,
+        documentAnalyses: Array<ExtensionDocumentAnalysis>,
         lintProviders: Array<ExtensionLintProvider>,
         fingerprint: String
     ) {
@@ -1633,9 +1623,10 @@ public class CompiledMarkdownDialect {
         this.blockRules = ImmutableArray<BlockSyntaxRule>(blockRules)
         rendererRules = ImmutableArray<RendererRule>(dialect.rendererRules)
         this.parserSpis = ImmutableArray<InlineParserSpi>(parserSpis)
-        this.documentProcessors = ImmutableArray<ExtensionDocumentProcessor>(documentProcessors)
+        this.astTransforms = ImmutableArray<ExtensionAstTransform>(astTransforms)
+        this.documentAnalyses = ImmutableArray<ExtensionDocumentAnalysis>(documentAnalyses)
         this.lintProviders = ImmutableArray<ExtensionLintProvider>(lintProviders)
-        parserHotPlan = ParserHotPlan(inlineRules, blockRules, parserSpis, documentProcessors)
+        parserHotPlan = ParserHotPlan(inlineRules, blockRules, parserSpis, astTransforms, documentAnalyses)
         rendererHotPlan = RendererHotPlan(dialect.rendererRules)
     }
 
@@ -1730,10 +1721,14 @@ public class DialectCompiler {
         let spis = ArrayList<InlineParserSpi>()
         spis.add(all: dialect.parserSpis)
         sortParserSpis(spis)
-        let processors = ArrayList<ExtensionDocumentProcessor>()
-        processors.add(all: dialect.documentProcessors)
-        validateDocumentProcessors(processors, manifestIds)
-        sortDocumentProcessors(processors)
+        let processors = ArrayList<ExtensionAstTransform>()
+        processors.add(all: dialect.astTransforms)
+        validateAstTransforms(processors, manifestIds)
+        sortAstTransforms(processors)
+        let analyses = ArrayList<ExtensionDocumentAnalysis>()
+        analyses.add(all: dialect.documentAnalyses)
+        validateDocumentAnalyses(analyses, manifestIds)
+        sortDocumentAnalyses(analyses)
         let lintProviders = ArrayList<ExtensionLintProvider>()
         lintProviders.add(all: dialect.lintProviders)
         validateLintProviders(lintProviders, manifestIds)
@@ -1743,7 +1738,7 @@ public class DialectCompiler {
         validateRenderers(dialect, manifestIds)
         let canonical = canonicalDescriptor(dialect, inline.toArray(), block.toArray())
         CompiledMarkdownDialect(dialect, inline.toArray(), block.toArray(), spis.toArray(), processors.toArray(),
-            lintProviders.toArray(), stableDescriptorDigest(canonical))
+            analyses.toArray(), lintProviders.toArray(), stableDescriptorDigest(canonical))
     }
 
     private static func validateParserSpis(dialect: MarkdownDialect, manifestIds: HashSet<String>): Unit {
@@ -1775,20 +1770,37 @@ public class DialectCompiler {
         }
     }
 
-    private static func validateDocumentProcessors(values: ArrayList<ExtensionDocumentProcessor>,
-        manifestIds: HashSet<String>): Unit {
+    private static func validateAstTransforms(values: ArrayList<ExtensionAstTransform>, manifestIds: HashSet<String>): Unit {
         let identities = HashSet<String>()
         for (processor in values) {
             if (!manifestIds.contains(processor.extensionId)) {
                 fail("document processor extension is not enabled")
             }
-            validateIdentifier("document processor id", processor.processorId)
+            validateIdentifier("document processor id", processor.transformId)
             validateIdentifier("document processor version", processor.version)
             if (!processor.deterministic) {
                 fail("non-deterministic document processor is not supported")
             }
-            if (!identities.add("${processor.extensionId}/${processor.processorId}")) {
+            if (!identities.add("${processor.extensionId}/${processor.transformId}")) {
                 fail("duplicate document processor id")
+            }
+        }
+    }
+
+    private static func validateDocumentAnalyses(values: ArrayList<ExtensionDocumentAnalysis>,
+        manifestIds: HashSet<String>): Unit {
+        let identities = HashSet<String>()
+        for (analysis in values) {
+            if (!manifestIds.contains(analysis.extensionId)) {
+                fail("document analysis extension is not enabled")
+            }
+            validateIdentifier("document analysis id", analysis.analysisId)
+            validateIdentifier("document analysis version", analysis.version)
+            if (!analysis.deterministic) {
+                fail("non-deterministic document analysis is not supported")
+            }
+            if (!identities.add("${analysis.extensionId}/${analysis.analysisId}")) {
+                fail("duplicate document analysis id")
             }
         }
     }
@@ -1846,7 +1858,7 @@ public class DialectCompiler {
         for (manifest in dialect.manifests) {
             let boundRenderer = hasBoundSemanticRenderer(dialect, manifest.extensionId)
             var hasParser = false
-            var hasPostprocessor = false
+            var hasAnalysis = false
             var hasTransform = false
             var hasLint = false
             for (rule in dialect.inlineBuilders) {
@@ -1867,19 +1879,19 @@ public class DialectCompiler {
             if (hasParser && !manifest.capabilities.parse) {
                 fail("extension parser rules require parse capability")
             }
-            for (processor in dialect.documentProcessors) {
-                if (processor.extensionId == manifest.extensionId) {
-                    match (processor.phase) {
-                        case ExtensionProcessingPhase.DocumentPostprocess =>
-                            hasPostprocessor = true
-                            if (!manifest.capabilities.postprocess) {
-                                fail("document postprocessor requires postprocess capability")
-                            }
-                        case ExtensionProcessingPhase.AstTransform =>
-                            hasTransform = true
-                            if (!manifest.capabilities.transform) {
-                                fail("AST transform requires transform capability")
-                            }
+            for (transform in dialect.astTransforms) {
+                if (transform.extensionId == manifest.extensionId) {
+                    hasTransform = true
+                    if (!manifest.capabilities.transform) {
+                        fail("AST transform requires transform capability")
+                    }
+                }
+            }
+            for (analysis in dialect.documentAnalyses) {
+                if (analysis.extensionId == manifest.extensionId) {
+                    hasAnalysis = true
+                    if (!manifest.capabilities.analysis) {
+                        fail("document analysis requires analysis capability")
                     }
                 }
             }
@@ -1891,8 +1903,8 @@ public class DialectCompiler {
                     }
                 }
             }
-            if (manifest.capabilities.postprocess && !hasPostprocessor) {
-                fail("postprocess capability has no document postprocessor")
+            if (manifest.capabilities.analysis && !hasAnalysis) {
+                fail("analysis capability has no document analysis")
             }
             if (manifest.capabilities.transform && !hasTransform) {
                 fail("transform capability has no AST transform")
@@ -1983,7 +1995,7 @@ public class DialectCompiler {
             fail("extension semantic version must be a valid SemVer version")
         }
         validateIdentifier("implementation version", manifest.implementationVersion)
-        if (manifest.requiredSpiVersion != "2") {
+        if (manifest.requiredSpiVersion != "3") {
             fail("unsupported extension SPI version")
         }
         if (manifest.ruleBudget <= 0) {
@@ -1999,8 +2011,15 @@ public class DialectCompiler {
         match (rule.syntaxKindValue) {
             case InlineSyntaxKind.HeadingIdSuffix =>
                 if (rule.openerValue != "{#" || rule.closerValue != "}" || rule.emitterValue.isSome() || rule
-                    .parseChildrenValue || rule.emitContentValue || rule.allowLineBreaksValue) {
+                    .parseChildrenValue || rule.emitContentValue || rule.allowLineBreaksValue || rule.allowNestingValue) {
                     fail("heading IDs require the structured heading suffix grammar and payload")
+                }
+                if (let InlineEscapePolicy.LiteralBackslash <- rule.escapePolicyValue) {
+                    fail("heading IDs require the fixed heading suffix escape policy")
+                }
+                match (rule.flankingRuleValue) {
+                    case InlineFlankingRule.Any => ()
+                    case _ => fail("heading IDs require the fixed heading suffix boundary")
                 }
             case InlineSyntaxKind.SingleToken =>
                 if (!rule.closerValue.isEmpty()) {
@@ -2045,7 +2064,7 @@ public class DialectCompiler {
                 }
             case BlockSyntaxKind.FootnoteDefinition =>
                 if (rule.openerPrefixValue != "[^" || !rule.closerValue.isEmpty() || rule.kindFromFirstWordValue ||
-                    rule.emitterValue.isSome()) {
+                    rule.emitterValue.isSome() || !rule.parameterValues.isEmpty() || !rule.allowNestingValue) {
                     fail("footnote definitions require the structured footnote grammar and payload")
                 }
                 if (let BlockContentMode.Literal <- rule.contentModeValue) {
@@ -2085,6 +2104,9 @@ public class DialectCompiler {
         for (renderer in dialect.rendererRules) {
             if (!manifestIds.contains(renderer.extensionId)) {
                 fail("renderer extension is not enabled")
+            }
+            if (hasSemanticRendererOverride(dialect, renderer)) {
+                fail("structured semantic nodes do not support generic renderer overrides")
             }
             if (!validHtmlName(renderer.htmlTag)) {
                 fail("invalid structured renderer tag")
@@ -2140,6 +2162,40 @@ public class DialectCompiler {
         }
     }
 
+    private static func hasSemanticRendererOverride(dialect: MarkdownDialect, renderer: RendererRule): Bool {
+        for (rule in dialect.inlineBuilders) {
+            if (rule.extensionId == renderer.extensionId && rule.ruleId == renderer.localKindId) {
+                if (let InlineSyntaxKind.HeadingIdSuffix <- rule.syntaxKindValue) {
+                    return true
+                }
+                if (let Some(emitter) <- rule.emitterValue) {
+                    if (emitter is FootnoteReferenceEmitter) {
+                        return true
+                    }
+                }
+            }
+        }
+        for (rule in dialect.blockBuilders) {
+            if (rule.extensionId != renderer.extensionId) {
+                continue
+            }
+            match (rule.syntaxKindValue) {
+                case BlockSyntaxKind.FootnoteDefinition =>
+                    if (renderer.localKindId == "footnote-definition") {
+                        return true
+                    }
+                case BlockSyntaxKind.DefinitionList => for (role in [DefinitionListRole.List, DefinitionListRole.Entry,
+                    DefinitionListRole.Term, DefinitionListRole.Definition]) {
+                    if (definitionListKind(role) == renderer.localKindId) {
+                        return true
+                    }
+                }
+                case _ => ()
+            }
+        }
+        false
+    }
+
     private static func sortInline(values: ArrayList<InlineSyntaxRule>): Unit {
         var index: Int64 = 1
         while (index < values.size) {
@@ -2185,11 +2241,11 @@ public class DialectCompiler {
         }
     }
 
-    private static func sortDocumentProcessors(values: ArrayList<ExtensionDocumentProcessor>): Unit {
+    private static func sortAstTransforms(values: ArrayList<ExtensionAstTransform>): Unit {
         var index: Int64 = 1
         while (index < values.size) {
             var current = index
-            while (current > 0 && documentProcessorBefore(values[current], values[current - 1])) {
+            while (current > 0 && astTransformBefore(values[current], values[current - 1])) {
                 let swap = values[current - 1]
                 values[current - 1] = values[current]
                 values[current] = swap
@@ -2199,25 +2255,38 @@ public class DialectCompiler {
         }
     }
 
-    private static func documentProcessorBefore(left: ExtensionDocumentProcessor, right: ExtensionDocumentProcessor): Bool {
-        let leftPhase = match (left.phase) {
-            case ExtensionProcessingPhase.DocumentPostprocess => 0
-            case ExtensionProcessingPhase.AstTransform => 1
-        }
-        let rightPhase = match (right.phase) {
-            case ExtensionProcessingPhase.DocumentPostprocess => 0
-            case ExtensionProcessingPhase.AstTransform => 1
-        }
-        if (leftPhase != rightPhase) {
-            return leftPhase < rightPhase
-        }
+    private static func astTransformBefore(left: ExtensionAstTransform, right: ExtensionAstTransform): Bool {
         if (left.priority != right.priority) {
             return left.priority > right.priority
         }
         if (left.extensionId != right.extensionId) {
             return left.extensionId < right.extensionId
         }
-        left.processorId < right.processorId
+        left.transformId < right.transformId
+    }
+
+    private static func sortDocumentAnalyses(values: ArrayList<ExtensionDocumentAnalysis>): Unit {
+        var index: Int64 = 1
+        while (index < values.size) {
+            var current = index
+            while (current > 0 && documentAnalysisBefore(values[current], values[current - 1])) {
+                let swap = values[current - 1]
+                values[current - 1] = values[current]
+                values[current] = swap
+                current--
+            }
+            index++
+        }
+    }
+
+    private static func documentAnalysisBefore(left: ExtensionDocumentAnalysis, right: ExtensionDocumentAnalysis): Bool {
+        if (left.priority != right.priority) {
+            return left.priority > right.priority
+        }
+        if (left.extensionId != right.extensionId) {
+            return left.extensionId < right.extensionId
+        }
+        left.analysisId < right.analysisId
     }
 
     private static func ruleBefore(left: InlineSyntaxRule, right: InlineSyntaxRule): Bool {
@@ -2601,7 +2670,7 @@ private func canonicalDescriptor(
     block: Array<BlockSyntaxRule>
 ): String {
     let out = CanonicalDescriptor()
-    out.append("parser-plan-3|dialect=");
+    out.append("parser-plan-4|dialect=");
     out.append(dialect.id);
     out.append("@");
     out.append(dialect.version)
@@ -2676,7 +2745,7 @@ private func canonicalDescriptor(
         out.append(":");
         out.append(manifest.capabilities.lint)
         out.append(":");
-        out.append(manifest.capabilities.postprocess)
+        out.append(manifest.capabilities.analysis)
         out.append(":");
         out.append(manifest.capabilities.transform)
         let dependencies = manifest.dependencies.toArray()
@@ -2814,20 +2883,27 @@ private func canonicalDescriptor(
         out.append(":");
         out.append(spi.priority)
     }
-    for (processor in dialect.documentProcessors) {
-        out.append("|processor=");
+    for (processor in dialect.astTransforms) {
+        out.append("|ast-transform=");
         out.append(processor.extensionId);
         out.append("/")
-        out.append(processor.processorId);
+        out.append(processor.transformId);
         out.append("@");
         out.append(processor.version);
         out.append(":")
-        match (processor.phase) {
-            case ExtensionProcessingPhase.DocumentPostprocess => out.append("postprocess")
-            case ExtensionProcessingPhase.AstTransform => out.append("transform")
-        }
+        out.append("transform")
         out.append(":");
         out.append(processor.priority)
+    }
+    for (analysis in dialect.documentAnalyses) {
+        out.append("|document-analysis=")
+        out.append(analysis.extensionId)
+        out.append("/")
+        out.append(analysis.analysisId)
+        out.append("@")
+        out.append(analysis.version)
+        out.append(":")
+        out.append(analysis.priority)
     }
     for (provider in dialect.lintProviders) {
         out.append("|lint=");
@@ -2837,7 +2913,7 @@ private func canonicalDescriptor(
         out.append("@");
         out.append(provider.version)
     }
-    out.append("|spi=1|plan=1")
+    out.append("|spi=3|plan=4")
     out.toString()
 }
 

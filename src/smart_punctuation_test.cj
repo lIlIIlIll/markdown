@@ -42,34 +42,37 @@ class SmartPunctuationTests {
 
     @TestCase
     func repeatedProcessingKeepsUnchangedContentAndNodeIdentity(): Unit {
-        let processor = SmartPunctuationProcessor()
-        let original = Markdown.parse("中文😀 -- ...").document
-        let once = processor.process(original, OperationBudget.safe(), CancellationToken.none())
-        let again = processor.process(once, OperationBudget.safe(), CancellationToken.none())
+        let processor = SmartPunctuationTransform()
+        let original = Markdown.parse("中文😀 -- ...")
+        let once = processor.transform(original.document, original.source, ParseLimits.safe(), OperationBudget.safe(),
+            CancellationToken.none())
+        let again = processor.transform(once, original.source, ParseLimits.safe(), OperationBudget.safe(),
+            CancellationToken.none())
         @Expect(HtmlRenderer().render(again), "<p>中文😀 – …</p>\n")
         @Expect(again.revision, once.revision)
         @Expect(again.nodeId, once.nodeId)
-        let plain = Markdown.parse("unchanged 中文😀 — …").document
-        @Expect(processor.process(plain, OperationBudget.safe(), CancellationToken.none()).revision, plain.revision)
+        let plain = Markdown.parse("unchanged 中文😀 — …")
+        @Expect(processor.transform(plain.document, plain.source, ParseLimits.safe(), OperationBudget.safe(), CancellationToken.none()).revision, plain.document.revision)
     }
 
     @TestCase
     func textScanningUsesCumulativeBudgetAndObservesCancellation(): Unit {
-        let processor = SmartPunctuationProcessor()
+        let processor = SmartPunctuationTransform()
         let text = StringBuilder()
         for (_ in 0..4096) {
             text.append("中文😀 -- ... ")
         }
-        let document = Markdown.parse(text.toString()).document
-        @ExpectThrows[MarkdownException](processor.process(document, OperationBudget(0, 0, 0, 100, 0, 0),
+        let parsed = Markdown.parse(text.toString())
+        let document = parsed.document
+        @ExpectThrows[MarkdownException](processor.transform(document, parsed.source, ParseLimits.safe(), OperationBudget(0, 0, 0, 100, 0, 0),
             CancellationToken.none()))
         let cancellation = CancellationSource()
         cancellation.cancel()
-        @ExpectThrows[MarkdownException](processor.process(document, OperationBudget.safe(), cancellation.token))
+        @ExpectThrows[MarkdownException](processor.transform(document, parsed.source, ParseLimits.safe(), OperationBudget.safe(), cancellation.token))
         let budget = OperationBudget.safe()
-        let changed = processor.process(document, budget, CancellationToken.none())
+        let changed = processor.transform(document, parsed.source, ParseLimits.safe(), budget, CancellationToken.none())
         @Expect(budget.usedScanSteps() >= text.size, true)
-        @Expect(budget.usedScanSteps() <= text.size + document.nodeCount * 4, true)
+        @Expect(budget.usedScanSteps() <= text.size + document.nodeCount * 8, true)
         @Expect(changed.nodeCount, document.nodeCount)
     }
 

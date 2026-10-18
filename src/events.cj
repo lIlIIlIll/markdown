@@ -540,10 +540,7 @@ extend MarkdownEngine {
         if (source.size > limits.maximumInputBytes) {
             throw LimitExceededException("input_bytes", limits.maximumInputBytes, source.size, "input")
         }
-        if (dialect.parserHotPlan.hasDocumentProcessors || (dialect.parserOptions.extensionsEnabled && (dialect
-            .parserHotPlan
-            .hasFootnotes || dialect.parserHotPlan.headingIdRule.isSome() ||
-            dialect.parserHotPlan.definitionListRule.isSome()))) {
+        if (dialect.requiresFullAst()) {
             throw MarkdownException(MarkdownErrorCode.ExtensionFailure,
                 "document-wide processors and binding require the full AST execution path", phase: "event_preflight")
         }
@@ -674,12 +671,7 @@ public class RawBlockEventSession {
     internal init(engine: MarkdownEngine, utf8Policy: Utf8Policy, cancellation: CancellationToken,
         budget: OperationBudget, scanCheckpointObserver!: ?RawBlockScanCheckpointObserver = None,
         draftLineage!: ?NodeLineage = None, constructionBudget!: ?NodeConstructionBudget = None) {
-        let needsBinding = engine.dialect.parserOptions.extensionsEnabled && (engine
-            .dialect
-            .parserHotPlan
-            .hasFootnotes || engine.dialect.parserHotPlan.headingIdRule.isSome() ||
-            engine.dialect.parserHotPlan.definitionListRule.isSome())
-        if (draftLineage.isNone() && (engine.dialect.parserHotPlan.hasDocumentProcessors || needsBinding)) {
+        if (draftLineage.isNone() && engine.dialect.requiresFullAst()) {
             throw MarkdownException(MarkdownErrorCode.ExtensionFailure,
                 "document-wide processors and binding require the full AST execution path", phase: "event_preflight")
         }

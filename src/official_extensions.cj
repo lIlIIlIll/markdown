@@ -182,7 +182,7 @@ public class OfficialExtensions {
             .enable(
                 ExtensionManifest("smart-punctuation", "2.0.0", "builtin-2",
                     capabilities: ExtensionCapabilities(parse: false, transform: true)))
-            .documentProcessor(SmartPunctuationProcessor())
+            .astTransform(SmartPunctuationTransform())
     }
 
     private static func renderCapabilities(): ExtensionCapabilities {

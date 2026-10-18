@@ -10,15 +10,16 @@ for automatic merge or publication.
 | Required checks | Replaced the three obsolete SDK contexts with the two passing STS 1.2.0 contexts; all other protection values verified equal | PASS |
 | MD-00.3 / EDT-T01 identity | NodeId lineage plus nonrecycled serial, distinct immutable revisions, bounded shared-arena reservations, distributed identity hashes, persistent-fork allocation and stale CST/NodeRef/fix rejection | Correctness/resource regression PASS in 1566-case run; final performance cost not yet qualified |
 | MD-00.4 / MD-00.5 / ARC-T02 | Success-only ParseResult, explicit ParseOutcome, removed aliases and content-hash StableNodeId; consumers migrated | PASS in the 1517-case full run |
-| MD-00.7 / ART-T01 | 0.10 API boundary, SPI 2, plan/schema 3; no old reader; explicit unsupported-version error | PASS in the 1517-case full run; API checker 47, evidence bundle 5 and evidence logic 18 tests PASS |
+| MD-00.7 / ART-T01 | 0.10 API boundary, SPI 3, plan 4, artifact schema 3; no old reader; explicit unsupported-version error | Current lifecycle checkpoint: 1585/1585 full tests and 70 API/evidence Python tests PASS |
 | MD-00.1/.2, MD-01 batch | Typed footnote payloads, reachable-definition binding, first-definition/numbering/unique-anchor/backlink decisions, shared HTML/Text/Markdown output, exact source and snapshot/config identity; DocumentBindingTests | Batch and public append implemented; complete output-resource qualification pending |
 | MD-03 batch | Heading-only typed suffix, explicit-ID reservation, shared anchor allocator, authoritative heading/fragment queries, structured TOC, source/Markdown/snapshot preservation; HeadingBindingTests | Batch and public append implemented; edit dependency qualification pending |
 | MD-02 / EXT-T03 | Definition Lists 2.0 with typed List/Entry/Term/Definition, ordinary block bodies, source markers, full binding validation and shared HTML/Text/Markdown/snapshot/append/output traversal | Implemented; 1564-case full run and consumer gates PASS |
-| MD-00.8 / MD-06.1..6 | Shared block/inline parser, final binder and document processors; actual feed-time closed AST fragments, atomic identity/version updates and replica, terminal failure, cumulative limits | Public append implemented; full phase/lifecycle redesign remains pending |
+| MD-00.8 / MD-06.1..6 | Shared block/inline parser, pre-binding transforms, final binder and read-only analysis; actual feed-time closed AST fragments, atomic identity/version updates and replica, terminal failure, cumulative limits | Public append and shared lifecycle implemented; final resource/performance qualification pending |
 | MD-06.7 | Real resumable HTML cursor over shared renderer rules; UTF-8 prefix acknowledgement, lazy tables/footnotes/escaping, terminal failure and cumulative output budgets; old buffered implementation removed | Implemented and correctness verified; final release performance/RSS qualification pending |
 | MD-06.8 | Public append scaling tests for long loose lists, deferred-reference paragraphs, unclosed fences and many closed blocks; real scan/node-construction/patch counters | Correctness and work growth PASS; latency, peak RSS and release performance qualification pending |
-| MD-04 / EXT-T05..06 | Versioned official capability matrix, exact enable/disable/profile output, literal Front Matter boundaries and bounded deterministic smart punctuation | Correctness verified in 1573-case run; lifecycle and final release gates pending |
-| MD-00.6 / MD-05 | Lifecycle cleanup and real optional rich rendering | In progress |
+| MD-04 / EXT-T05..06 | Versioned official capability matrix, exact enable/disable/profile output, literal Front Matter boundaries and bounded deterministic smart punctuation | Correctness verified; final release gates pending |
+| MD-00.6 | Actual AST transform → binding → read-only analysis, shared batch/append pipeline, early whole-document execution gates and meaningful capability validation | Implemented; 1585-case run, consumers and API/evidence gates PASS |
+| MD-05 | Structured rich-content preparation and real optional backends | Pending; actual private capability probes retained |
 | MD-07..08 | Existing editor/artifact phase baseline and real process/backend capability probes retained privately; no optimization verdict yet | Pending |
 | DONE-02..06 | Complete task-to-test ledger, new performance qualification, docs/consumer gates and core hosted evidence | Pending |
 
@@ -133,3 +134,32 @@ The combined punctuation/footnote/heading/definition/math/front-matter fixture
 checks batch/append, source maps, diagnostics, canonical output and snapshots.
 The API remains at 1573 declarations. Frozen performance, full lifecycle, real
 rich backends, edit/cache work, final consumers and hosted core gates are pending.
+
+The lifecycle checkpoint uses official STS 1.2.0 and formatted product tree
+`4caf6ae2e200c241d9b7d841aed63cdb1e1ff52e5c3d7e92bd4f4c6cd429d85a`
+(workspace and disk-backed test tree verified equal). Full tests: 1585/1585 PASS,
+zero skips/errors/failures. ExtensionAstTransform executes before binding and
+ExtensionDocumentAnalysis reads final bindings to return diagnostics. Both receive
+the actual source/limits/budget/cancellation. Old DocumentPostprocess/processor
+interfaces, registration and the obsolete execution-model field are removed.
+SPI is 3, parser plan is 4; the binary layout remains schema 3 and configuration
+identity changes invalidate prior caches. No compatibility wrapper is introduced.
+
+Lifecycle tests verify transform/bind/analysis ordering, exactly-once final append
+execution, analysis-only edit fallback, callback-free events/fused rejection and
+PreferFused fallback. Callback resource errors retain their categories; invalid
+source/profile ownership and host failures carry stage identity. Diagnostic main,
+related and fix spans are validated, including Chinese/emoji scalar boundaries and
+invalid-byte replacement mapping; attribution, literal budgets and defensive
+related-span copying are checked. AST validation and TreeRewriter share operation
+budgets/cancellation, and construction uses the configured node bound.
+
+Typed grammar flags and generic renderer overrides fail explicitly; footnote and
+heading matches charge configured resource costs. Heading suffixes obey global
+lookahead/capture limits. Existing full append/output and standard corpus checks
+remain enabled. All nine normal consumer steps PASS; the cookbook's actual
+post-binding analysis emits `heading=analyzed`. CLI validation reads the engine's
+current SPI and tests default/3 success plus obsolete 1/2 rejection. Format, docs,
+public API (1578 declarations), evidence consistency, 70 API/evidence Python tests
+and privacy checks PASS. Real rich backends, measured edit/cache decisions and
+frozen release/performance/hosted core evidence remain pending. Core stays local.

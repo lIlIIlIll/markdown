@@ -5,10 +5,10 @@
 
 | 契约 | 当前版本 | 不匹配行为 |
 | --- | --- | --- |
-| Extension SPI | `2` | dialect 编译失败 |
+| Extension SPI | `3` | dialect 编译失败 |
 | Dialect DSL schema | `1` | descriptor 拒绝加载 |
 | Syntax DSL schema | `1` | descriptor 拒绝加载 |
-| Parser plan | `3` | parse artifact cache miss |
+| Parser plan | `4` | parse artifact cache miss |
 | Binary artifact | schema `3` | 拒绝或 cache miss，不猜测恢复 |
 | Public API snapshot | `v0.10` | `check_public_api.py` 报告差异 |
 
@@ -21,6 +21,8 @@ SemVer 排序。
 dialect fingerprint 绑定 base profile、dialect identity、extension identity、规范化 rules
 和语义相关顺序。engine fingerprint 额外绑定影响解析结果的 limits。renderer policy 不会
 错误地混入 parse-only cache key。
+AST transform 和 document analysis 的 ID、版本、优先级及对应能力参与 fingerprint。
+analysis 在绑定后执行，返回诊断；它不能替代 transform 修改 AST。
 
 canonical descriptor 使用长度前缀编码，不使用未转义的 `@`、`|` 或 `:` 拼接，因此字段中
 包含 delimiter 或 Unicode 不会造成序列化歧义。
@@ -34,4 +36,3 @@ canonical descriptor 使用长度前缀编码，不使用未转义的 `@`、`|` 
 
 当前版本是 breaking pre-GA 0.10，公开 API 以
 [`api/public-api-v0.10.txt`](../api/public-api-v0.10.txt)为准。
-

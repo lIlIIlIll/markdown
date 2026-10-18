@@ -156,7 +156,7 @@ func runDialect(engine: MarkdownEngine, args: Array<String>): Int64 {
         return 0
     }
     if (action == "validate") {
-        let spiVersion = argValue(args, "--spi-version", "1")
+        let spiVersion = argValue(args, "--spi-version", engine.capabilities().spiVersions[0])
         DialectCompiler.compile(
             MarkdownDialect
                 .define("cli-validation", "1")

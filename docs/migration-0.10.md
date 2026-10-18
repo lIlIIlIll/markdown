@@ -22,9 +22,14 @@
 - 智能标点升为 2.0；保护自动链接的显示 URI，无内容变化时保留节点身份，并累计文本扫描预算。
 - `InlineSyntaxMatch` 增加 `rawLiteral` 和 `literalSpan`，分别提供原始捕获文本与精确范围；
   `literal` 仍是容器规范化后的匹配内容。
-- Extension SPI 为 `2`，parser plan 为 `3`，parse artifact 与 binary snapshot schema 为 `3`。
+- Extension SPI 为 `3`，parser plan 为 `4`，parse artifact 与 binary snapshot schema 为 `3`。
   旧缓存返回 CacheMiss；显式 `BinaryArtifactCodec.read` 遇到旧持久化版本报
   `MarkdownErrorCode.UnsupportedVersion`，不尝试旧格式解码。
+- 移除 ExtensionDocumentProcessor、ExtensionProcessingPhase 和 documentProcessor 注册。
+  改用绑定前的 ExtensionAstTransform 或绑定后的只读 ExtensionDocumentAnalysis；
+  callback 接收实际 source/limits/budget/cancellation。见[扩展阶段](api/extensions.md#完整文档阶段)。
+- executionModels 的失败模型字段为 parseOutcome；移除旧 partialParse 名称。
+  CLI dialect validate 默认读取引擎当前 SPI；旧 SPI 1/2 明确拒绝。
 
 公开声明见[0.10 API snapshot](../api/public-api-v0.10.txt)。开发期间的完整验证进度见
 [issue #10 实施记录](../.agent/issue-10-status.md)。

@@ -41,6 +41,16 @@ test "$argument_status" -eq 2
 
 test "$(printf '#  x' | "$cli" format --range 0:4)" = '# x'
 
+test "$("$cli" dialect validate)" = valid
+test "$("$cli" dialect validate --spi-version 3)" = valid
+for obsolete_spi in 1 2; do
+    set +e
+    "$cli" dialect validate --spi-version "$obsolete_spi" >/dev/null 2>&1
+    obsolete_spi_status=$?
+    set -e
+    test "$obsolete_spi_status" -eq 5
+done
+
 "$cli" dialect fingerprint > "$tmp_dir/fingerprint"
 test "$(wc -c < "$tmp_dir/fingerprint")" -eq 65
 

@@ -1039,6 +1039,7 @@ public class HtmlRenderer {
             case NodeKind.CustomInline => node.asCustomInline().getOrThrow()
             case _ => throw IllegalStateException("arena custom renderer received a core node")
         }
+        requireSemanticRendererContract(custom, extensionRules)
         if (let value: DefinitionListPayload <- custom.payload) {
             requireDefinitionListBinding(node)
             match (value.role) {
@@ -2013,6 +2014,7 @@ public class PlainTextRenderer {
                 case NodeKind.ThematicBreak => out.append("\n")
                 case NodeKind.CustomBlock =>
                     let custom = frame.node.asCustomBlock().getOrThrow()
+                    requireSemanticRendererContract(custom, extensionRules)
                     if (custom.payload is DefinitionListPayload) {
                         requireDefinitionListBinding(frame.node)
                         pushPlainContainer(frame, stack)
@@ -2025,6 +2027,7 @@ public class PlainTextRenderer {
                     pushPlainContainer(frame, stack)
                 case NodeKind.CustomInline =>
                     let custom = frame.node.asCustomInline().getOrThrow()
+                    requireSemanticRendererContract(custom, extensionRules)
                     if (custom.payload is HeadingIdPayload) {
                         continue
                     }
@@ -2097,6 +2100,22 @@ private func arenaPlainTextValue(root: NodeRef): String {
         }
     }
     out.toString()
+}
+
+internal func requireSemanticRendererContract(custom: CustomNodeView, rules: ImmutableArray<RendererRule>,
+    phase!: String = "render"): Unit {
+    if (!(custom.payload is FootnoteReferencePayload || custom.payload is FootnoteDefinitionPayload ||
+        custom.payload is HeadingIdPayload || custom.payload is DefinitionListPayload)) {
+        return
+    }
+    for (index in 0..rules.size) {
+        let rule = rules[index]
+        if (rule.extensionId == custom.extensionId && rule.localKindId == custom.localKindId) {
+            throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
+                "structured semantic nodes do not support generic renderer overrides", phase: phase,
+                span: custom.node.span)
+        }
+    }
 }
 
 private func arenaCustomLiteralValue(node: NodeRef): String {

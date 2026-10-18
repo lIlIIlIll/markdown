@@ -396,10 +396,14 @@ public class AstInvariantValidator {
     /** 验证 document；超出结构限制或破坏 invariant 时抛出异常。
      * @param document 待验证的 Document。
      * @param limits 结构限制；节点数超过上限时失败。
+     * @param budget 验证的累计扫描预算。
+     * @param cancellation 验证期间的协作式取消信号。
      * @throws LimitExceededException 节点数超过上限时。
      * @throws MarkdownException 破坏 AST invariant 时。
      */
-    public func validate(document: Document, limits!: ParseLimits = ParseLimits.safe()): Unit {
+    public func validate(document: Document, limits!: ParseLimits = ParseLimits.safe(),
+        budget!: OperationBudget = OperationBudget.safe(), cancellation!: CancellationToken = CancellationToken.none()): Unit {
+        cancellation.throwIfCancelled(phase: "ast_validation")
         if (document.nodeCount > limits.maximumAstNodes) {
             throw LimitExceededException("ast_nodes", limits.maximumAstNodes, document.nodeCount, "ast_validation")
         }
@@ -408,6 +412,8 @@ public class AstInvariantValidator {
         stack.add((document.root(), None))
         var visited: Int64 = 0
         while (!stack.isEmpty()) {
+            budget.consumeScan()
+            cancellation.throwIfCancelled(phase: "ast_validation")
             let entry = stack.remove(at: stack.size - 1)
             let node = entry[0]
             let parentSpan = entry[1]
@@ -416,10 +422,12 @@ public class AstInvariantValidator {
                 fail("duplicate NodeId ${node.nodeId.value}", node.span)
             }
             validateArenaSpan(node, parentSpan)
-            validateArenaChildren(node)
+            validateArenaChildren(node, budget, cancellation)
             let children = node.children()
             var index = children.size - 1
             while (index >= 0) {
+                budget.consumeScan()
+                cancellation.throwIfCancelled(phase: "ast_validation")
                 stack.add((children[index], node.span))
                 index--
             }
@@ -428,6 +436,8 @@ public class AstInvariantValidator {
         if (visited != nodeCount) {
             var missing: Int64 = 0
             while (missing < nodeCount) {
+                budget.consumeScan()
+                cancellation.throwIfCancelled(phase: "ast_validation")
                 let missingNodeId = document.nodeAt(missing).nodeId.value
                 if (!seen.contains(missingNodeId)) {
                     break
@@ -463,9 +473,11 @@ public class AstInvariantValidator {
         }
     }
 
-    private func validateArenaChildren(node: NodeRef): Unit {
+    private func validateArenaChildren(node: NodeRef, budget: OperationBudget, cancellation: CancellationToken): Unit {
         let children = node.children()
         for (index in 0..children.size) {
+            budget.consumeScan()
+            cancellation.throwIfCancelled(phase: "ast_validation")
             let child = children[index]
             match (arenaChildrenPolicy(node.kind)) {
                 case ChildrenPolicy.None => fail("leaf node has children", node.span)

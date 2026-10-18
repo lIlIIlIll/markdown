@@ -29,6 +29,7 @@
 | 读取标题、链接和源码位置 | [Cookbook：AST 查询](cookbook.md#读取标题链接和位置) |
 | 编写多 term、多段正文的定义列表 | [结构化定义列表](definition-lists.md) |
 | 查看官方扩展能力、智能标点和 URI 保护 | [扩展模型](extensions.md#官方扩展能力矩阵) |
+| 绑定前转换 AST、绑定后生成整文诊断 | [完整文档阶段](api/extensions.md#完整文档阶段) |
 | 使用脚注、标题 ID 和结构化目录 | [文档绑定](semantic-binding.md) |
 | 逐块接收 AST、处理后置引用和更新顺序 | [追加输入与更新消费](append-input.md) |
 | 选择 String、bytes、stream 或 events | [输入、限制和取消](input-and-resources.md) |

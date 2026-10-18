@@ -95,7 +95,7 @@ public class EngineCapabilities {
         }
         supportedSyntaxKinds = ImmutableArray<String>(syntax.toArray())
         dslSchemaVersions = ImmutableArray<String>(["1"])
-        spiVersions = ImmutableArray<String>(["2"])
+        spiVersions = ImmutableArray<String>(["3"])
         positionEncodings = ImmutableArray<String>(
             ["utf-8-byte", "utf-16-code-unit", "visual-scalar", "visual-scalar-with-tab-stops"])
         serializationVersions = ImmutableArray<String>(["parse-artifact-3", "markdown-snapshot-binary-3"])
@@ -134,8 +134,8 @@ public class ExecutionModelCapabilities {
     public let streamInput: String
     /** chunk 输入的执行模型说明。 */
     public let chunkInput: String
-    /** partial parse 的失败语义说明。 */
-    public let partialParse: String
+    /** tryParse 的失败语义说明。 */
+    public let parseOutcome: String
     /** async HTML 输出的执行模型说明。 */
     public let asyncHtml: String
 
@@ -146,7 +146,7 @@ public class ExecutionModelCapabilities {
         }
         streamInput = "buffered-before-parse"
         chunkInput = "append-closed-blocks-with-final-binding"
-        partialParse = "failure-result-without-completed-prefix"
+        parseOutcome = "success-result-or-failure-without-document"
         asyncHtml = "resumable-traversal-with-utf8-prefix-acknowledgement"
     }
 }
@@ -162,7 +162,7 @@ extend MarkdownEngine {
     }
 
     /**
-     * 返回 stream、chunk、partial parse 和 async HTML 的执行模型。
+     * 返回 stream、chunk、tryParse 和 async HTML 的执行模型。
      * @return 当前 engine 的执行模型报告。
      */
     public func executionModels(): ExecutionModelCapabilities {

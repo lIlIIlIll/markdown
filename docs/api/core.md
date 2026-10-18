@@ -116,7 +116,7 @@ match (engine.tryParse(source)) {
 
 `newAppendSession()` 返回 `AppendInputSession`。`feed(String/Array<Byte>)` 和 `finish()`
 返回 `AppendUpdateBatch`；`AppendReplica.apply(batch)` 按会话、版本和目标身份验证并
-原子应用更新。结构闭合块可在 feed 中出现，完整 ParseResult 只在最终绑定成功后出现。
+原子应用更新。结构闭合块可在 feed 中出现，完整 ParseResult 只在最终绑定与整文分析成功后出现。
 资源限制跨 feed 累计。用法、失败和重启规则见[追加输入与更新消费](../append-input.md)。
 
 ## Buffered input
@@ -159,7 +159,7 @@ for (event in events.events.toArray()) {
 返回事件，`finish()` 发出最后一个 block 和 `DocumentEnd`。`feed()` 只扫描新增 bytes，
 并立即检查 input 和 line limits。逐 byte feed 不会反复复制或扫描全部 pending input。
 
-Event 值不持有 `Document` 或 `NodeRef`。配置 document processor、脚注或标题 ID 绑定的
+Event 值不持有 `Document` 或 `NodeRef`。配置 AST transform、只读 analysis、脚注、标题 ID 或定义列表绑定的
 dialect 需要完整 AST，因此 Event preflight 会失败。
 
 ## HTML execution mode
@@ -178,7 +178,7 @@ let output = engine.renderHtml(
 | `PreferFused` | 只有 preflight 证明等价时使用 fused path，否则回退 FullAst |
 | `RequireFused` | 无法证明等价时抛出 RenderFailure |
 
-Fused path 不会静默关闭扩展、processor 或安全策略。
+Fused path 不会静默关闭扩展、整文阶段或安全策略。
 FullAst 和 fused path 都执行 input、line、literal、output、cancellation 和 operation
 budget。`maximumAstNodes` 只统计实际 AST 分配；fused path 不创建 AST，因此不会模拟
 逻辑节点数。需要该限制参与执行结果时，使用 `FullAst`。

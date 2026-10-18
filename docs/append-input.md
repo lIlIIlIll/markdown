@@ -71,7 +71,7 @@ Complete 批次以唯一的 Bind 收尾，所有块必须与完整结果的顶�
 - `finalSemantics`：只有最终修订中的块为 true。
 
 结构闭合不代表无需修订。例如 `[name][id]` 的目标可能在后文，脚注编号和回链依赖所有
-定义和引用，文档处理器也可能删除或改写块。草稿内可能存在内部待定行内节点，不应直接
+定义和引用，AST transform 也可能删除或改写块。草稿内可能存在内部待定行内节点，不应直接
 作为已绑定 AST 渲染、序列化或缓存。需要完整语义时等待 `replica.result`。
 
 未变化节点在最终存储组装时可以保留 NodeId；所有 NodeRef 仍绑定各自不可变 revision。
@@ -79,8 +79,8 @@ Complete 批次以唯一的 Bind 收尾，所有块必须与完整结果的顶�
 自己的 `source` 和 `node.span`；完整结果使用 `result.source`。
 
 未知自定义 payload 没有隐式的范围搬移规则。当前支持内建节点、`SyntaxPayload`、脚注、定义列表和
-标题 ID typed payload；其他 payload 会明确失败为 `UnsupportedNode`。文档处理器在
-完整组装后执行一次，不在 feed 中执行。
+标题 ID typed payload；其他 payload 会明确失败为 `UnsupportedNode`。完整组装后依次执行
+AST transform、统一绑定和只读 analysis；这些整文阶段不在 feed 中执行。
 
 ## UTF-8 与生命周期
 

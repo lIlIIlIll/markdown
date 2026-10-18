@@ -102,7 +102,7 @@ extend MarkdownEngine {
         cancellation.throwIfCancelled(phase: "fused_render")
         if (dialect.parserHotPlan.hasInlineDsl || dialect.parserHotPlan.hasBlockDsl || dialect
             .parserHotPlan
-            .hasInlineSpi || dialect.parserHotPlan.hasDocumentProcessors || dialect.rendererHotPlan.hasCustomRules) {
+            .hasInlineSpi || dialect.requiresFullAst() || dialect.rendererHotPlan.hasCustomRules) {
             return None
         }
         if (source.size > limits.maximumInputBytes) {

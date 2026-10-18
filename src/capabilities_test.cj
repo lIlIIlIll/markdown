@@ -47,7 +47,7 @@ class CapabilitiesTest {
         @Expect(executionModels.nativeScannerImplementation, "test-fallback")
         @Expect(executionModels.streamInput, "buffered-before-parse")
         @Expect(executionModels.chunkInput, "append-closed-blocks-with-final-binding")
-        @Expect(executionModels.partialParse, "failure-result-without-completed-prefix")
+        @Expect(executionModels.parseOutcome, "success-result-or-failure-without-document")
         @Expect(executionModels.asyncHtml, "resumable-traversal-with-utf8-prefix-acknowledgement")
         let pureCapabilities = MarkdownEngine.builder().nativeScannerEnabled(false).build().capabilities()
         @Expect(pureCapabilities.nativeScannerAvailable, false)

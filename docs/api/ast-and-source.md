@@ -172,11 +172,13 @@ NodeId 可以不变，但旧视图的 NodeRef 不能传给新视图的访问器�
 ## AST invariants
 
 ```cangjie
-AstInvariantValidator.validate(document, limits: ParseLimits.safe())
+AstInvariantValidator().validate(document, limits: ParseLimits.safe())
 ```
 
-validator 检查节点数量、范围包含、child category、acyclic ownership、NodeId 和自定义
-payload 契约。parser 热路径在构造时执行限制检查，不依赖 parse 后的全树扫描。
+validator 检查节点数量、范围包含、child category、acyclic ownership 和 NodeId。
+可传入 budget 与 cancellation，使验证参与同一操作的累计预算和取消。
+typed 扩展的语义 payload 由绑定器校验。parser 热路径在构造时执行限制检查，不依赖
+parse 后的全树扫描。
 
 ## 查询
 

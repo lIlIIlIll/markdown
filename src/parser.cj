@@ -838,10 +838,7 @@ internal class ParserSession {
         if (hasPreparedReferences || deferReferenceInlines != eventEmitter.getOrThrow().captureDrafts) {
             throw IllegalStateException("event and draft parser modes do not match their lowering target")
         }
-        if (!deferReferenceInlines && (dialect.parserHotPlan.hasDocumentProcessors || (dialect
-            .parserOptions
-            .extensionsEnabled && (dialect.parserHotPlan.hasFootnotes || dialect.parserHotPlan.headingIdRule.isSome() ||
-            dialect.parserHotPlan.definitionListRule.isSome())))) {
+        if (!deferReferenceInlines && dialect.requiresFullAst()) {
             throw MarkdownException(MarkdownErrorCode.ExtensionFailure,
                 "document-wide processors and binding require the full AST execution path", phase: "event_preflight")
         }
@@ -1659,7 +1656,7 @@ internal class ParserSession {
         }
         let rule = dialect.parserHotPlan.headingIdRule.getOrThrow()
         var opener = text.size - 2
-        let minimum = max(0, text.size - rule.maximumLookahead)
+        let minimum = max(0, text.size - min(rule.maximumLookahead, limits.maximumExtensionLookaheadBytes))
         while (opener >= minimum) {
             scanStep()
             if (text[opener] == b'{') {
@@ -1671,10 +1668,17 @@ internal class ParserSession {
             b' ' && text[opener - 1] != b'\t')) {
             return parseInline(text, baseOffset, 0, sourceIdentity: sourceIdentity)
         }
+        let captureBytes = text.size - opener - 3
+        if (captureBytes > limits.maximumExtensionCaptureBytes) {
+            throw LimitExceededException("extension_capture_bytes", limits.maximumExtensionCaptureBytes, captureBytes,
+                "heading_parse", span: Some(mappedSpan(baseOffset + opener, baseOffset + text.size)),
+                extensionId: Some(rule.extensionId))
+        }
         let id = text[opener + 2..text.size - 1]
         if (!validHeadingId(id)) {
             return parseInline(text, baseOffset, 0, sourceIdentity: sourceIdentity)
         }
+        budget.consumeScan(steps: syntaxRuleCost(rule.resourceCost, text.size - opener))
         var contentEnd = opener
         while (contentEnd > 0 && (text[contentEnd - 1] == b' ' || text[contentEnd - 1] == b'\t')) {
             contentEnd--
@@ -3519,6 +3523,8 @@ internal class ParserSession {
             }
             if (let BlockSyntaxKind.FootnoteDefinition <- rule.syntaxKind) {
                 if (let Some(value) <- scanFootnoteDefinition(lines, start, rule, extensionDepth)) {
+                    budget.consumeScan(
+                        steps: syntaxRuleCost(rule.resourceCost, value.pending.getOrThrow().span.length()))
                     return Some(value)
                 }
                 continue

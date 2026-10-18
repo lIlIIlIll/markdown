@@ -704,8 +704,9 @@ public class DocumentSnapshot {
             return None
         }
         let dialect = engine.dialect
-        if (!dialect.blockRules.isEmpty() || !dialect.inlineRules.isEmpty() || !dialect.parserSpis.isEmpty() ||
-            !dialect.documentProcessors.isEmpty()) {
+        if (!dialect.blockRules.isEmpty() || !dialect.inlineRules.isEmpty() || !dialect.parserSpis.isEmpty() || dialect
+            .parserHotPlan
+            .hasDocumentStages) {
             return None
         }
         var target: ?NodeRef = None
@@ -747,7 +748,7 @@ public class DocumentSnapshot {
             } else {
                 RewriteAction.Keep
             }
-        })
+        }, limits: engine.limits)
         let sourceText = result.source.text()
         let nextText = sourceText[0..edit.range.startByte] + edit.replacement + sourceText[edit.range.endByte..]
         let nextSource = SourceBuffer(nextText)

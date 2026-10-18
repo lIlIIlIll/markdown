@@ -224,7 +224,7 @@ artifact.cj:package=markdown:public class RenderedOutput {
 artifact.cj:package=markdown:public class RenderedSourceMapEntry {
 artifact.cj:package=markdown:public enum ArtifactLoadResult {
 artifact/artifact.cj:package=markdown.artifact:public import markdown.{ArtifactLoadResult, BinaryArtifactCodec, BinaryArtifactLoadResult, BinarySnapshotArtifact, MarkdownParseArtifact}
-ast.cj:package=markdown:owner=class/AstInvariantValidator:public func validate(document: Document, limits!: ParseLimits = ParseLimits.safe()): Unit {
+ast.cj:package=markdown:owner=class/AstInvariantValidator:public func validate(document: Document, limits!: ParseLimits = ParseLimits.safe(), budget!: OperationBudget = OperationBudget.safe(), cancellation!: CancellationToken = CancellationToken.none()): Unit {
 ast.cj:package=markdown:owner=class/AstInvariantValidator:public init() {
 ast.cj:package=markdown:owner=class/ImmutableArray:public func isEmpty(): Bool {
 ast.cj:package=markdown:owner=class/ImmutableArray:public func toArray(): Array<T> {
@@ -396,7 +396,7 @@ capabilities.cj:package=markdown:owner=class/EngineCapabilities:public let virtu
 capabilities.cj:package=markdown:owner=class/ExecutionModelCapabilities:public let asyncHtml: String
 capabilities.cj:package=markdown:owner=class/ExecutionModelCapabilities:public let chunkInput: String
 capabilities.cj:package=markdown:owner=class/ExecutionModelCapabilities:public let nativeScannerImplementation: String
-capabilities.cj:package=markdown:owner=class/ExecutionModelCapabilities:public let partialParse: String
+capabilities.cj:package=markdown:owner=class/ExecutionModelCapabilities:public let parseOutcome: String
 capabilities.cj:package=markdown:owner=class/ExecutionModelCapabilities:public let streamInput: String
 capabilities.cj:package=markdown:owner=class/ExtensionCapabilityReport:public let capabilities: ExtensionCapabilities
 capabilities.cj:package=markdown:owner=class/ExtensionCapabilityReport:public let extensionId: String
@@ -711,10 +711,11 @@ extension.cj:package=markdown:owner=class/BlockSyntaxRule:public let resourceCos
 extension.cj:package=markdown:owner=class/BlockSyntaxRule:public let ruleId: String
 extension.cj:package=markdown:owner=class/BlockSyntaxRule:public let syntaxKind: BlockSyntaxKind
 extension.cj:package=markdown:owner=class/BlockSyntaxRule:public let tieBreak: String
+extension.cj:package=markdown:owner=class/CompiledMarkdownDialect:public let astTransforms: ImmutableArray<ExtensionAstTransform>
 extension.cj:package=markdown:owner=class/CompiledMarkdownDialect:public let baseProfile: MarkdownProfile
 extension.cj:package=markdown:owner=class/CompiledMarkdownDialect:public let blockRules: ImmutableArray<BlockSyntaxRule>
 extension.cj:package=markdown:owner=class/CompiledMarkdownDialect:public let declaredLimits: ParseLimits
-extension.cj:package=markdown:owner=class/CompiledMarkdownDialect:public let documentProcessors: ImmutableArray<ExtensionDocumentProcessor>
+extension.cj:package=markdown:owner=class/CompiledMarkdownDialect:public let documentAnalyses: ImmutableArray<ExtensionDocumentAnalysis>
 extension.cj:package=markdown:owner=class/CompiledMarkdownDialect:public let fingerprint: String
 extension.cj:package=markdown:owner=class/CompiledMarkdownDialect:public let id: String
 extension.cj:package=markdown:owner=class/CompiledMarkdownDialect:public let inlineRules: ImmutableArray<InlineSyntaxRule>
@@ -729,7 +730,8 @@ extension.cj:package=markdown:owner=class/DialectCompiler:public static func com
 extension.cj:package=markdown:owner=class/DialectParserOptions:public init(emitUnclosedExtensionDiagnostics!: Bool = true, extensionsEnabled!: Bool = true) {
 extension.cj:package=markdown:owner=class/DialectParserOptions:public let emitUnclosedExtensionDiagnostics: Bool
 extension.cj:package=markdown:owner=class/DialectParserOptions:public let extensionsEnabled: Bool
-extension.cj:package=markdown:owner=class/ExtensionCapabilities:public init(parse!: Bool = true, specHtml!: Bool = false, safeHtml!: Bool = false, plainText!: Bool = false, markdown!: Bool = false, cst!: Bool = false, format!: Bool = false, serialize!: Bool = false, incremental!: Bool = false, lint!: Bool = false, postprocess!: Bool = false, transform!: Bool = false) {
+extension.cj:package=markdown:owner=class/ExtensionCapabilities:public init(parse!: Bool = true, specHtml!: Bool = false, safeHtml!: Bool = false, plainText!: Bool = false, markdown!: Bool = false, cst!: Bool = false, format!: Bool = false, serialize!: Bool = false, incremental!: Bool = false, lint!: Bool = false, analysis!: Bool = false, transform!: Bool = false) {
+extension.cj:package=markdown:owner=class/ExtensionCapabilities:public let analysis: Bool
 extension.cj:package=markdown:owner=class/ExtensionCapabilities:public let cst: Bool
 extension.cj:package=markdown:owner=class/ExtensionCapabilities:public let format: Bool
 extension.cj:package=markdown:owner=class/ExtensionCapabilities:public let incremental: Bool
@@ -737,7 +739,6 @@ extension.cj:package=markdown:owner=class/ExtensionCapabilities:public let lint:
 extension.cj:package=markdown:owner=class/ExtensionCapabilities:public let markdown: Bool
 extension.cj:package=markdown:owner=class/ExtensionCapabilities:public let parse: Bool
 extension.cj:package=markdown:owner=class/ExtensionCapabilities:public let plainText: Bool
-extension.cj:package=markdown:owner=class/ExtensionCapabilities:public let postprocess: Bool
 extension.cj:package=markdown:owner=class/ExtensionCapabilities:public let safeHtml: Bool
 extension.cj:package=markdown:owner=class/ExtensionCapabilities:public let serialize: Bool
 extension.cj:package=markdown:owner=class/ExtensionCapabilities:public let specHtml: Bool
@@ -745,7 +746,7 @@ extension.cj:package=markdown:owner=class/ExtensionCapabilities:public let trans
 extension.cj:package=markdown:owner=class/ExtensionDependency:public init(extensionId: String, minimumSemanticVersion: String) {
 extension.cj:package=markdown:owner=class/ExtensionDependency:public let extensionId: String
 extension.cj:package=markdown:owner=class/ExtensionDependency:public let minimumSemanticVersion: String
-extension.cj:package=markdown:owner=class/ExtensionManifest:public init(extensionId: String, semanticVersion: String, implementationVersion: String, requiredSpiVersion!: String = "2", supportedProfiles!: Array<String> = ["commonmark-0.31.2", "gfm-modern-v1"], dependencies!: Array<String> = [], dependencyConstraints!: Array<ExtensionDependency> = [], conflicts!: Array<String> = [], capabilities!: ExtensionCapabilities = ExtensionCapabilities(), ruleBudget!: Int64 = 100000, trustLevel!: String = "host-code", missingRendererPolicy!: MissingRendererPolicy = MissingRendererPolicy.Error, shareable!: Bool = true) {
+extension.cj:package=markdown:owner=class/ExtensionManifest:public init(extensionId: String, semanticVersion: String, implementationVersion: String, requiredSpiVersion!: String = "3", supportedProfiles!: Array<String> = ["commonmark-0.31.2", "gfm-modern-v1"], dependencies!: Array<String> = [], dependencyConstraints!: Array<ExtensionDependency> = [], conflicts!: Array<String> = [], capabilities!: ExtensionCapabilities = ExtensionCapabilities(), ruleBudget!: Int64 = 100000, trustLevel!: String = "host-code", missingRendererPolicy!: MissingRendererPolicy = MissingRendererPolicy.Error, shareable!: Bool = true) {
 extension.cj:package=markdown:owner=class/ExtensionManifest:public let capabilities: ExtensionCapabilities
 extension.cj:package=markdown:owner=class/ExtensionManifest:public let conflicts: ImmutableArray<String>
 extension.cj:package=markdown:owner=class/ExtensionManifest:public let dependencies: ImmutableArray<String>
@@ -829,11 +830,12 @@ extension.cj:package=markdown:owner=class/MarkdownDialect:public let limits: Par
 extension.cj:package=markdown:owner=class/MarkdownDialect:public let parserOptions: DialectParserOptions
 extension.cj:package=markdown:owner=class/MarkdownDialect:public let version: String
 extension.cj:package=markdown:owner=class/MarkdownDialect:public static func define(id: String, version: String): MarkdownDialectBuilder {
+extension.cj:package=markdown:owner=class/MarkdownDialectBuilder:public func astTransform(processor: ExtensionAstTransform): MarkdownDialectBuilder {
 extension.cj:package=markdown:owner=class/MarkdownDialectBuilder:public func base(profile: MarkdownProfile): MarkdownDialectBuilder {
 extension.cj:package=markdown:owner=class/MarkdownDialectBuilder:public func block(rule: BlockSyntaxBuilder): MarkdownDialectBuilder {
 extension.cj:package=markdown:owner=class/MarkdownDialectBuilder:public func build(): MarkdownDialect {
 extension.cj:package=markdown:owner=class/MarkdownDialectBuilder:public func disable(extensionId: String): MarkdownDialectBuilder {
-extension.cj:package=markdown:owner=class/MarkdownDialectBuilder:public func documentProcessor(processor: ExtensionDocumentProcessor): MarkdownDialectBuilder {
+extension.cj:package=markdown:owner=class/MarkdownDialectBuilder:public func documentAnalysis(analysis: ExtensionDocumentAnalysis): MarkdownDialectBuilder {
 extension.cj:package=markdown:owner=class/MarkdownDialectBuilder:public func enable(manifest: ExtensionManifest): MarkdownDialectBuilder {
 extension.cj:package=markdown:owner=class/MarkdownDialectBuilder:public func inline(rule: InlineSyntaxBuilder): MarkdownDialectBuilder {
 extension.cj:package=markdown:owner=class/MarkdownDialectBuilder:public func limits(limits: ParseLimits): MarkdownDialectBuilder {
@@ -882,8 +884,6 @@ extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | Definiti
 extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | FootnoteDefinition
 extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | PairedContainer
 extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | SingleLine
-extension.cj:package=markdown:owner=enum/ExtensionProcessingPhase:enum-variant | AstTransform
-extension.cj:package=markdown:owner=enum/ExtensionProcessingPhase:enum-variant | DocumentPostprocess
 extension.cj:package=markdown:owner=enum/InlineEscapePolicy:enum-variant | CommonMarkBackslash
 extension.cj:package=markdown:owner=enum/InlineEscapePolicy:enum-variant | LiteralBackslash
 extension.cj:package=markdown:owner=enum/InlineFlankingRule:enum-variant | Any
@@ -921,13 +921,6 @@ extension.cj:package=markdown:owner=enum/SyntaxPhase:enum-variant | Block
 extension.cj:package=markdown:owner=enum/SyntaxPhase:enum-variant | Inline
 extension.cj:package=markdown:owner=enum/SyntaxPhase:enum-variant | Metadata
 extension.cj:package=markdown:owner=interface/BlockPayloadEmitter:interface-member func emit(value: BlockSyntaxMatch): CustomPayload
-extension.cj:package=markdown:owner=interface/ExtensionDocumentProcessor:interface-member func process(document: Document, budget: OperationBudget, cancellation: CancellationToken): Document
-extension.cj:package=markdown:owner=interface/ExtensionDocumentProcessor:interface-member prop deterministic: Bool
-extension.cj:package=markdown:owner=interface/ExtensionDocumentProcessor:interface-member prop extensionId: String
-extension.cj:package=markdown:owner=interface/ExtensionDocumentProcessor:interface-member prop phase: ExtensionProcessingPhase
-extension.cj:package=markdown:owner=interface/ExtensionDocumentProcessor:interface-member prop priority: Int64
-extension.cj:package=markdown:owner=interface/ExtensionDocumentProcessor:interface-member prop processorId: String
-extension.cj:package=markdown:owner=interface/ExtensionDocumentProcessor:interface-member prop version: String
 extension.cj:package=markdown:owner=interface/ExtensionLintProvider:interface-member func lint(snapshot: DocumentSnapshot): Array<LintDiagnostic>
 extension.cj:package=markdown:owner=interface/ExtensionLintProvider:interface-member prop extensionId: String
 extension.cj:package=markdown:owner=interface/ExtensionLintProvider:interface-member prop ruleId: String
@@ -967,7 +960,6 @@ extension.cj:package=markdown:public class SyntaxPayload <: CustomPayload {
 extension.cj:package=markdown:public class SyntaxResourceCost {
 extension.cj:package=markdown:public enum BlockContentMode {
 extension.cj:package=markdown:public enum BlockSyntaxKind {
-extension.cj:package=markdown:public enum ExtensionProcessingPhase {
 extension.cj:package=markdown:public enum InlineEscapePolicy {
 extension.cj:package=markdown:public enum InlineFlankingRule {
 extension.cj:package=markdown:public enum InlineParserSpiResult {
@@ -981,11 +973,24 @@ extension.cj:package=markdown:public enum SyntaxParameterType {
 extension.cj:package=markdown:public enum SyntaxParameterValue {
 extension.cj:package=markdown:public enum SyntaxPhase {
 extension.cj:package=markdown:public interface BlockPayloadEmitter {
-extension.cj:package=markdown:public interface ExtensionDocumentProcessor {
 extension.cj:package=markdown:public interface ExtensionLintProvider {
 extension.cj:package=markdown:public interface InlineParserSpi {
 extension.cj:package=markdown:public interface InlinePayloadEmitter {
-extensions/extensions.cj:package=markdown.extensions:public import markdown.{BlockContentMode, BlockPayloadEmitter, BlockSyntax, BlockSyntaxBuilder, BlockSyntaxKind, BlockSyntaxMatch, BlockSyntaxRule, CompiledDialectExplanation, CompiledMarkdownDialect, DialectCompiler, DialectParserOptions, DefinitionListPayload, DefinitionListRole, ExtensionCapabilities, ExtensionCapabilityReport, ExtensionDependency, ExtensionDocumentProcessor, ExtensionFailureException, ExtensionLintProvider, ExtensionManifest, FootnoteDefinitionBinding, FootnoteDefinitionPayload, FootnoteReferenceBinding, FootnoteReferencePayload, HeadingBinding, HeadingIdPayload, TocEntry, ExtensionProcessingPhase, ExternalDialectDescriptor, InlineFlankingRule, InlineParserSpi, InlineParserSpiContext, InlineParserSpiResult, InlinePayloadEmitter, InlineSyntax, InlineSyntaxBuilder, InlineSyntaxKind, InlineSyntaxMatch, InlineSyntaxRule, MarkdownBlockLowering, MarkdownDialect, MarkdownDialectBuilder, OfficialExtensionDescriptor, OfficialExtensions, RendererAttributeKind, RendererAttributeSource, RendererAttributeSpec, RendererRule, SyntaxBacktrackingPolicy, SyntaxParameterSpec, SyntaxParameterType, SyntaxParameterValue, SyntaxPayload, SyntaxPhase, SyntaxResourceCost}
+extension_stages.cj:package=markdown:owner=interface/ExtensionAstTransform:interface-member func transform(document: Document, source: SourceBuffer, limits: ParseLimits, budget: OperationBudget, cancellation: CancellationToken): Document
+extension_stages.cj:package=markdown:owner=interface/ExtensionAstTransform:interface-member prop deterministic: Bool
+extension_stages.cj:package=markdown:owner=interface/ExtensionAstTransform:interface-member prop extensionId: String
+extension_stages.cj:package=markdown:owner=interface/ExtensionAstTransform:interface-member prop priority: Int64
+extension_stages.cj:package=markdown:owner=interface/ExtensionAstTransform:interface-member prop transformId: String
+extension_stages.cj:package=markdown:owner=interface/ExtensionAstTransform:interface-member prop version: String
+extension_stages.cj:package=markdown:owner=interface/ExtensionDocumentAnalysis:interface-member func analyze(document: Document, source: SourceBuffer, limits: ParseLimits, budget: OperationBudget, cancellation: CancellationToken): Array<Diagnostic>
+extension_stages.cj:package=markdown:owner=interface/ExtensionDocumentAnalysis:interface-member prop analysisId: String
+extension_stages.cj:package=markdown:owner=interface/ExtensionDocumentAnalysis:interface-member prop deterministic: Bool
+extension_stages.cj:package=markdown:owner=interface/ExtensionDocumentAnalysis:interface-member prop extensionId: String
+extension_stages.cj:package=markdown:owner=interface/ExtensionDocumentAnalysis:interface-member prop priority: Int64
+extension_stages.cj:package=markdown:owner=interface/ExtensionDocumentAnalysis:interface-member prop version: String
+extension_stages.cj:package=markdown:public interface ExtensionAstTransform {
+extension_stages.cj:package=markdown:public interface ExtensionDocumentAnalysis {
+extensions/extensions.cj:package=markdown.extensions:public import markdown.{BlockContentMode, BlockPayloadEmitter, BlockSyntax, BlockSyntaxBuilder, BlockSyntaxKind, BlockSyntaxMatch, BlockSyntaxRule, CompiledDialectExplanation, CompiledMarkdownDialect, DialectCompiler, DialectParserOptions, DefinitionListPayload, DefinitionListRole, ExtensionCapabilities, ExtensionCapabilityReport, ExtensionDependency, ExtensionAstTransform, ExtensionDocumentAnalysis, ExtensionFailureException, ExtensionLintProvider, ExtensionManifest, FootnoteDefinitionBinding, FootnoteDefinitionPayload, FootnoteReferenceBinding, FootnoteReferencePayload, HeadingBinding, HeadingIdPayload, TocEntry, ExternalDialectDescriptor, InlineFlankingRule, InlineParserSpi, InlineParserSpiContext, InlineParserSpiResult, InlinePayloadEmitter, InlineSyntax, InlineSyntaxBuilder, InlineSyntaxKind, InlineSyntaxMatch, InlineSyntaxRule, MarkdownBlockLowering, MarkdownDialect, MarkdownDialectBuilder, OfficialExtensionDescriptor, OfficialExtensions, RendererAttributeKind, RendererAttributeSource, RendererAttributeSpec, RendererRule, SyntaxBacktrackingPolicy, SyntaxParameterSpec, SyntaxParameterType, SyntaxParameterValue, SyntaxPayload, SyntaxPhase, SyntaxResourceCost}
 external_descriptor.cj:package=markdown:owner=class/ExternalDialectDescriptor:public func compile(): CompiledMarkdownDialect {
 external_descriptor.cj:package=markdown:owner=class/ExternalDialectDescriptor:public func toDialect(): MarkdownDialect {
 external_descriptor.cj:package=markdown:owner=class/ExternalDialectDescriptor:public let baseProfileId: String
@@ -1400,7 +1405,7 @@ renderer.cj:package=markdown:public interface ExternalLinkRewriterPort {
 renderer.cj:package=markdown:public interface HtmlSanitizerPort {
 renderer.cj:package=markdown:public interface RawHtmlHandlerPort {
 renderer.cj:package=markdown:public interface TextSink {
-rewrite.cj:package=markdown:owner=class/TreeRewriter:public static func rewrite(document: Document, transform: (NodeRef) -> RewriteAction, budget!: OperationBudget = OperationBudget.safe(), cancellation!: CancellationToken = CancellationToken.none()): Document {
+rewrite.cj:package=markdown:owner=class/TreeRewriter:public static func rewrite(document: Document, transform: (NodeRef) -> RewriteAction, limits!: ParseLimits = ParseLimits.safe(), budget!: OperationBudget = OperationBudget.safe(), cancellation!: CancellationToken = CancellationToken.none()): Document {
 rewrite.cj:package=markdown:owner=enum/RewriteAction:enum-variant | DetachLiteral
 rewrite.cj:package=markdown:owner=enum/RewriteAction:enum-variant | InsertAfter(Array<NodeRef>)
 rewrite.cj:package=markdown:owner=enum/RewriteAction:enum-variant | InsertBefore(Array<NodeRef>)

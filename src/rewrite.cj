@@ -51,6 +51,7 @@ public class TreeRewriter {
      * transform budget 与 cancellation 约束。
      * @param document 输入 Document。
      * @param transform 为每个节点返回 rewrite action 的 callback。
+     * @param limits 构造和验证输出 AST 的结构上限。
      * @param budget 可选 transform budget。
      * @param cancellation 可选取消 token。
      * @return 重写后的 Document。
@@ -58,10 +59,11 @@ public class TreeRewriter {
     public static func rewrite(
         document: Document,
         transform: (NodeRef) -> RewriteAction,
+        limits!: ParseLimits = ParseLimits.safe(),
         budget!: OperationBudget = OperationBudget.safe(),
         cancellation!: CancellationToken = CancellationToken.none()
     ): Document {
-        let builder = AstArenaBuilder(document)
+        let builder = AstArenaBuilder(document, maximumNodes: limits.maximumAstNodes)
         let outputs = HashMap<Int64, Array<Int64>>()
         let stack = ArrayList<ArenaRewriteFrame>()
         stack.add(ArenaRewriteFrame(document.root(), false))
@@ -118,7 +120,7 @@ public class TreeRewriter {
             }
         }
         let result = builder.freeze(roots[0])
-        AstInvariantValidator().validate(result)
+        AstInvariantValidator().validate(result, limits: limits, budget: budget, cancellation: cancellation)
         if (document.bindings.footnotesEnabled) {
             return DocumentBinder.bind(result, document.bindings.options, document.bindings.limits, budget, cancellation,
                 headingsEnabled: document.bindings.headingsEnabled)

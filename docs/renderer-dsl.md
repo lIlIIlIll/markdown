@@ -21,6 +21,10 @@ let rule = RendererRule(
 opener/closer、text prefix/suffix、structured attributes、payload literal 和 Markdown block
 lowering。
 
+脚注、标题 ID 和定义列表的 typed payload 使用共享语义绑定及固定输出。为这些 local
+kind 注册通用 RendererRule 会在编译时失败；opaque emitter 运行后才产生 typed payload
+时，各输出也会明确拒绝匹配的通用 override。相关边界见[完整文档阶段](api/extensions.md#完整文档阶段)。
+
 ## HTML 安全
 
 普通 String 始终转义。tag、class 和 attribute 名称在 dialect 编译时验证；`on*` 与

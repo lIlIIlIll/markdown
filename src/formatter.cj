@@ -271,6 +271,7 @@ public class CanonicalMarkdownRenderer {
             case NodeKind.HtmlInline => out.append(node.asHtmlInline().getOrThrow().literal)
             case NodeKind.CustomBlock =>
                 let custom = node.asCustomBlock().getOrThrow()
+                requireSemanticRendererContract(custom, extensionRules, phase: "format")
                 if (let value: DefinitionListPayload <- custom.payload) {
                     requireDefinitionListBinding(node)
                     match (value.role) {
@@ -294,6 +295,7 @@ public class CanonicalMarkdownRenderer {
                     stack)
             case NodeKind.CustomInline =>
                 let custom = node.asCustomInline().getOrThrow()
+                requireSemanticRendererContract(custom, extensionRules, phase: "format")
                 if (let metadata: HeadingIdPayload <- custom.payload) {
                     out.append(" {#${metadata.rawId}}")
                     return

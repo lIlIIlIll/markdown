@@ -287,13 +287,13 @@ internal func verifyAppendStandardCases(cases: Array<(MarkdownProfile, String)>)
     }
 }
 
-private class AppendDropHeadings <: ExtensionDocumentProcessor {
+private class AppendDropHeadings <: ExtensionAstTransform {
     public prop extensionId: String {
         get() {
             "append-transform"
         }
     }
-    public prop processorId: String {
+    public prop transformId: String {
         get() {
             "drop-headings"
         }
@@ -301,11 +301,6 @@ private class AppendDropHeadings <: ExtensionDocumentProcessor {
     public prop version: String {
         get() {
             "1"
-        }
-    }
-    public prop phase: ExtensionProcessingPhase {
-        get() {
-            ExtensionProcessingPhase.AstTransform
         }
     }
     public prop priority: Int64 {
@@ -318,13 +313,14 @@ private class AppendDropHeadings <: ExtensionDocumentProcessor {
             true
         }
     }
-    public func process(document: Document, budget: OperationBudget, cancellation: CancellationToken): Document {
+    public func transform(document: Document, _: SourceBuffer, limits: ParseLimits, budget: OperationBudget,
+        cancellation: CancellationToken): Document {
         TreeRewriter.rewrite(document, {
             node => match (node.kind) {
                 case NodeKind.Heading => RewriteAction.Remove
                 case _ => RewriteAction.Keep
             }
-        }, budget: budget, cancellation: cancellation)
+        }, limits: limits, budget: budget, cancellation: cancellation)
     }
 }
 
@@ -340,7 +336,7 @@ class AppendRevisionAndWorkTests {
                     .enable(
                         ExtensionManifest("append-transform", "1.0.0", "1",
                             capabilities: ExtensionCapabilities(transform: true)))
-                    .documentProcessor(AppendDropHeadings())
+                    .astTransform(AppendDropHeadings())
                     .build())
             .build()
         let source = "# drop\n\none\n\ntwo\n\n"

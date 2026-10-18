@@ -1,7 +1,7 @@
 # 扩展模型
 
 `markdown.extensions` 用不可变方言描述 Markdown 语义。扩展可以声明受限语法、
-renderer lowering、文档处理器和 lint provider；engine 在第一次解析前完成依赖、冲突、
+renderer lowering、AST transform、只读分析和 lint provider；engine 在第一次解析前完成依赖、冲突、
 资源边界和 renderer coverage 校验。
 
 如果只需要 CommonMark 或 GFM，请直接使用内置 profile。只有需要稳定复用自定义语法时，
@@ -10,16 +10,35 @@ renderer lowering、文档处理器和 lint provider；engine 在第一次解析
 ## 扩展生命周期
 
 ```text
-ExtensionManifest + Syntax + RendererRule
+ExtensionManifest + Syntax + Transform + Analysis + RendererRule
                  ↓ MarkdownDialectBuilder.build()
+          MarkdownDialect 声明
+                 ↓ MarkdownEngine.builder().dialect(...).build()
         CompiledMarkdownDialect
-                 ↓ MarkdownEngine.builder().dialect(...)
-          parse / render / format
+                 ↓ parse
+          完整 AST → AST transform → 语义绑定 → 只读分析 → ParseResult
+                                                            ↓ render / format
 ```
 
 `CompiledMarkdownDialect` 是不可变且可并发复用的。运行时不会动态更改 rule 顺序。
-`disable(extensionId)` 在编译前移除该扩展的 manifest、syntax、renderer、SPI、processor
-和 lint provider。
+`disable(extensionId)` 在编译前移除该扩展的 manifest、syntax、renderer、SPI、transform、
+analysis 和 lint provider。
+
+用 ExtensionAstTransform 修改语义树，返回值会验证 source、profile、dialect、节点上限
+及图结构。然后绑定器统一确定引用、脚注编号和标题目标。ExtensionDocumentAnalysis
+读取这些最终决策并返回诊断，不能通过返回值替换文档。诊断的主范围、关联范围和 fix
+范围都必须在原始输入内，并落在 UTF-8 或非法字节替换后的解码边界；不合格的结果使
+本次解析失败。
+
+两种 callback 都接收 document、source、引擎实际 limits、累计 budget 和 cancellation。
+调用 TreeRewriter 时传入同一 limits/budget/cancellation。阶段内按 priority 从高到低
+执行，再按 extension ID 与 stage ID 排序。分析后的 HTML、Markdown 和查询使用同一
+Document，不重新执行 transform 或 analysis。
+
+batch 与 append 共用这条完整管线。append 在 finish 时执行整文阶段；source events
+和独立 RawBlockEventSession 在调用 callback 前拒绝需要完整文档的配置。RequireFused
+失败，PreferFused 回退完整 AST。含整文阶段的编辑在无法证明局部结果有效时完整回退。
+可运行示例见 [cookbook](../examples/cookbook/src/main.cj) 的 bound-analysis 段。
 
 ## 官方扩展能力矩阵
 
@@ -104,7 +123,8 @@ let html = engine.htmlRenderer().render(engine.parse(":::note\n**important**\n::
 | 固定 delimiter、token 或块 opener | `InlineSyntax` / `BlockSyntax` |
 | 静态 HTML、Markdown、纯文本 lowering | `RendererRule` |
 | DSL 无法表达、但 lookahead 有界的行内语法 | `InlineParserSpi` |
-| 需要整棵 AST 的后处理 | `ExtensionDocumentProcessor` |
+| 绑定前修改完整 AST | `ExtensionAstTransform` |
+| 读取绑定结果并产生整文诊断 | `ExtensionDocumentAnalysis` |
 | snapshot 级诊断 | `ExtensionLintProvider` |
 
 优先使用 DSL。它的边界、优先级和资源成本可以在 dialect 编译时验证。SPI callback
@@ -113,7 +133,7 @@ let html = engine.htmlRenderer().render(engine.parse(":::note\n**important**\n::
 ## 优先级、错误和 fallback
 
 方言编译器按 phase、priority、registration order 和 rule identity 生成确定性执行计划。
-重复 ID、opener 冲突、依赖缺失、版本不满足、依赖环和显式 conflict 都会在 `build()`
+重复 ID、opener 冲突、依赖缺失、版本不满足、依赖环和显式 conflict 都会在 engine 构建或显式编译
 期间失败，而不是等到解析时随机选择。
 
 未注册的语法保持普通文本。已注册但未闭合的扩展产生
@@ -121,8 +141,11 @@ let html = engine.htmlRenderer().render(engine.parse(":::note\n**important**\n::
 `MD3003_INVALID_EXTENSION_PARAMETER`。
 
 `ExtensionCapabilities` 分别声明 parse、HTML、纯文本、Markdown、CST、format、
-serialize、incremental、lint、postprocess 和 transform。声明能力后必须提供实现，或在
+serialize、incremental、lint、analysis 和 transform。声明能力后必须提供实现，或在
 manifest 中选择明确的 missing-renderer policy。默认 policy 是 `Error`。
+
+脚注、标题 ID 和定义列表的 typed 节点由绑定结果决定输出。为这些语义注册通用
+RendererRule 会明确失败；固定语法不支持的 builder 选项也会在编译时被拒绝。
 
 ## 安全边界
 

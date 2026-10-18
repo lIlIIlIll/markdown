@@ -49,6 +49,11 @@ let note = BlockSyntax
 [定义列表](definition-lists.md)。这些专用声明属于代码 DSL；external descriptor schema 1
 没有新增对应字段。
 
+专用语法按固定归属校验配置。footnoteDefinition 不接受额外参数或关闭嵌套；
+headingIdSuffix 不接受开启嵌套、自定义 escaping 或 flanking。标题后缀同时受 rule 与
+全局 lookahead 的较小值限制，并执行全局 capture 上限。脚注、标题后缀和定义列表
+成功匹配时也会计入声明的 resourceCost；不支持的选项在编译时明确失败。
+
 对 paired container，`maximumBlockBytes` 在 batch parser 和 RawBlockEventSession.feed 中
 使用相同的正文字节语义实时执行。外层 opener/closer 不计入正文；嵌套 opener、内层
 closer、普通正文和 CRLF 按原始字节计入。超过上限的 feed 立即抛出带 extension identity

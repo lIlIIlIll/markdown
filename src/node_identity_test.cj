@@ -56,13 +56,15 @@ class NodeIdentityTests {
     }
 
     @TestCase
-    func priorExtensionSpiIsRejectedAtTheNewIdentityBoundary(): Unit {
-        let old = MarkdownDialect
-            .define("old-spi", "1")
-            .enable(ExtensionManifest("old", "1.0.0", "fixture", requiredSpiVersion: "1"))
-            .build()
-        @ExpectThrows[MarkdownException](MarkdownEngine.builder().dialect(old).build())
-        @Expect(MarkdownEngine.builder().build().capabilities().spiVersions[0], "2")
+    func obsoleteExtensionSpiVersionsAreRejected(): Unit {
+        for (version in ["1", "2"]) {
+            let old = MarkdownDialect
+                .define("old-spi", "0")
+                .enable(ExtensionManifest("old", "1.0.0", "fixture", requiredSpiVersion: version))
+                .build()
+            @ExpectThrows[MarkdownException](MarkdownEngine.builder().dialect(old).build())
+        }
+        @Expect(MarkdownEngine.builder().build().capabilities().spiVersions[0], "3")
     }
 
     @TestCase

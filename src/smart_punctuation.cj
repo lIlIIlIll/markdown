@@ -2,7 +2,7 @@ package markdown
 
 import std.collection.*
 
-internal class SmartPunctuationProcessor <: ExtensionDocumentProcessor {
+internal class SmartPunctuationTransform <: ExtensionAstTransform {
     /** 返回扩展 id。 */
     public prop extensionId: String {
         get() {
@@ -10,7 +10,7 @@ internal class SmartPunctuationProcessor <: ExtensionDocumentProcessor {
         }
     }
     /** 返回 processor id。 */
-    public prop processorId: String {
+    public prop transformId: String {
         get() {
             "smart-punctuation"
         }
@@ -19,12 +19,6 @@ internal class SmartPunctuationProcessor <: ExtensionDocumentProcessor {
     public prop version: String {
         get() {
             "2"
-        }
-    }
-    /** 返回处理阶段：AST transform。 */
-    public prop phase: ExtensionProcessingPhase {
-        get() {
-            ExtensionProcessingPhase.AstTransform
         }
     }
     /** 返回处理优先级。 */
@@ -45,7 +39,8 @@ internal class SmartPunctuationProcessor <: ExtensionDocumentProcessor {
      * @param cancellation 协作式取消信号。
      * @return 处理后的 `Document`。
      */
-    public func process(document: Document, budget: OperationBudget, cancellation: CancellationToken): Document {
+    public func transform(document: Document, _: SourceBuffer, limits: ParseLimits, budget: OperationBudget,
+        cancellation: CancellationToken): Document {
         let protected = automaticLinkTextNodes(document, budget, cancellation)
         TreeRewriter.rewrite(
             document,
@@ -60,6 +55,7 @@ internal class SmartPunctuationProcessor <: ExtensionDocumentProcessor {
                     }
                     RewriteAction.Keep
             },
+            limits: limits,
             budget: budget,
             cancellation: cancellation
         )
