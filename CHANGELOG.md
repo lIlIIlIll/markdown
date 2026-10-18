@@ -45,7 +45,7 @@
 - benchmark evidence status `stale`；
 - CommonMark `652/652`；
 - GFM `671/671`；
-- 测试 `1617/1617`，`0` skipped，`0` failed；
+- 测试 `1620/1620`，`0` skipped，`0` failed；
 - public API snapshot `1710` declarations；
 - last complete CommonMark ratio `2.361586x`；
 - last complete GFM ratio `1.788010x`。

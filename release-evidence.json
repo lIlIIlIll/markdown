@@ -48,8 +48,8 @@
     "sha256": "90410a88db19aaeef0d30a8eff0bfcf9905c0317d8b5a88f7b8755c66e3b172c"
   },
   "tests": {
-    "total": 1617,
-    "passed": 1617,
+    "total": 1620,
+    "passed": 1620,
     "skipped": 0,
     "errors": 0,
     "failed": 0

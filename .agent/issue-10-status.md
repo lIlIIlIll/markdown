@@ -10,7 +10,7 @@ for automatic merge or publication.
 | Required checks | Replaced the three obsolete SDK contexts with the two passing STS 1.2.0 contexts; all other protection values verified equal | PASS |
 | MD-00.3 / EDT-T01 identity | NodeId lineage plus nonrecycled serial, distinct immutable revisions, bounded shared-arena reservations, distributed identity hashes, persistent-fork allocation and stale CST/NodeRef/fix rejection | Correctness/resource regression PASS in 1566-case run; final performance cost not yet qualified |
 | MD-00.4 / MD-00.5 / ARC-T02 | Success-only ParseResult, explicit ParseOutcome, removed aliases and content-hash StableNodeId; consumers migrated | PASS in the 1517-case full run |
-| MD-00.7 / ART-T01 | 0.10 API boundary, SPI 3, plan 6, artifact schema 3; no old reader; explicit unsupported-version error | Current integrity checkpoint: 1617/1617 full tests and 70 API/evidence Python tests PASS |
+| MD-00.7 / ART-T01 | 0.10 API boundary, SPI 3, plan 6, artifact schema 3; no old reader; explicit unsupported-version error | Current editor acceptance checkpoint: 1620/1620 full tests and 70 API/evidence Python tests PASS |
 | MD-00.1/.2, MD-01 batch | Typed footnote payloads, reachable-definition binding, first-definition/numbering/unique-anchor/backlink decisions, shared HTML/Text/Markdown output, exact source and snapshot/config identity; DocumentBindingTests | Batch and public append implemented; complete output-resource qualification pending |
 | MD-03 batch | Heading-only typed suffix, explicit-ID reservation, shared anchor allocator, authoritative heading/fragment queries, structured TOC, source/Markdown/snapshot preservation; HeadingBindingTests | Batch and public append implemented; edit dependency qualification pending |
 | MD-02 / EXT-T03 | Definition Lists 2.0 with typed List/Entry/Term/Definition, ordinary block bodies, source markers, full binding validation and shared HTML/Text/Markdown/snapshot/append/output traversal | Implemented; 1564-case full run and consumer gates PASS |
@@ -373,3 +373,23 @@ Single-byte peak RSS is material and no constant-memory claim is made. Output
 uses an acknowledging counting/checksum sink and never stores the complete HTML.
 This is MD-06 measurement evidence, not a replacement for frozen release ratios,
 RSS gates or hosted CI. MD-07/08 optimization decisions remain open.
+
+## Public editor semantic acceptance
+
+Three new public-API cases cover ten paragraph/heading/block edit fixtures, four
+reference/footnote/heading dependency fixtures, and invalid byte/UTF-16 boundaries.
+Each successful result is compared with full parseSnapshot for source, HTML and
+coarse maps, canonical Markdown, diagnostics, CST token spans/raw text and semantic
+owners, heading decisions, UTF-16 conversions and binary semantic digests. Old
+NodeRefs are rejected by the new CST; original snapshots remain unchanged.
+Variable-length, cross-block and semantic dependency edits report full fallback.
+The minimal pre-change byte-boundary probe already rejected both equal/variable
+interior-byte edits, so no product boundary fix was invented. Official STS 1.2.0
+full suite: 1620/1620 PASS, zero skipped/errors/failures.
+
+Independent constructor-count CST candidates remain experimental and unadopted:
+the single-operation 1728-process matrix and calibrated 288-process follow-up
+passed equivalence, but the conservative maximum-A/A-noise gate failed eight of
+nine end-to-end follow-up groups. No token coalescing entered production. The
+measured feasibility of variable-local and direct artifact restoration and the
+final frozen release/performance qualification still remain open.
