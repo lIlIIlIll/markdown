@@ -85,7 +85,7 @@ public class EngineCapabilities {
         extensionCapabilities = ImmutableArray<ExtensionCapabilityReport>(reports.toArray())
         supportedRenderers = ImmutableArray<String>(
             ["spec-html", "gfm-html", "safe-html", "plain-text", "canonical-markdown", "html-source-map",
-                "async-html-adapter"])
+                "resumable-html"])
         let syntax = ArrayList<String>()
         for (rule in dialect.inlineRules.toArray()) {
             syntax.add("inline:${rule.extensionId}/${rule.ruleId}")
@@ -147,7 +147,7 @@ public class ExecutionModelCapabilities {
         streamInput = "buffered-before-parse"
         chunkInput = "append-closed-blocks-with-final-binding"
         partialParse = "failure-result-without-completed-prefix"
-        asyncHtml = "pre-rendered-buffered-output"
+        asyncHtml = "resumable-traversal-with-utf8-prefix-acknowledgement"
     }
 }
 

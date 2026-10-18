@@ -681,6 +681,7 @@ class AppendStandardCorpusTests {
             (MarkdownProfile.commonMark0312(), "Multiple     spaces\n")
         ]
         verifyAppendStandardCases(cases)
+        verifyHtmlOutputStandardCases(cases)
     }
     @TestCase
     func gfm029AppendEquivalence(): Unit {
@@ -1390,5 +1391,6 @@ class AppendStandardCorpusTests {
             (MarkdownProfile.gfm029CommonMarkBase(), "Multiple     spaces\n")
         ]
         verifyAppendStandardCases(cases)
+        verifyHtmlOutputStandardCases(cases)
     }
 }

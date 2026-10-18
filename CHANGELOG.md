@@ -13,6 +13,7 @@
 - ParseResult 只表示成功；tryParse 返回独立的成功/失败枚举。
 - 移除纯兼容别名、内容哈希型 StableNodeId 和旧 schema reader 路径。
 - Extension SPI 2、parser plan 3、artifact schema 3 与独立的 0.10 API snapshot。
+- 可恢复 HTML 遍历与部分 UTF-8 字节确认，移除预先渲染整份 HTML 的 buffered 输出实现。
 - 实际分块解析的追加会话、带身份与版本的原子更新、参考消费端与最终后置引用绑定。
 - 修正多行 setext 的 CRLF/container 来源映射、未闭合单 fence 的 EOF 范围和 Front Matter 起点。
 - 结构化脚注绑定、可达定义脚注区、独立引用锚点和完整回链。
@@ -28,8 +29,8 @@
 - benchmark evidence status `stale`；
 - CommonMark `652/652`；
 - GFM `671/671`；
-- 测试 `1548/1548`，`0` skipped，`0` failed；
-- public API snapshot `1559` declarations；
+- 测试 `1554/1554`，`0` skipped，`0` failed；
+- public API snapshot `1561` declarations；
 - last complete CommonMark ratio `2.361586x`；
 - last complete GFM ratio `1.788010x`。
 

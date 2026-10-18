@@ -37,10 +37,10 @@ public interface TextSink {
 
 /** 异步 sink 一次写入后的 backpressure 状态。 */
 public enum AsyncSinkWriteResult {
-    /** 继续写出。 */
+    /** 确认接收本次完整片段并继续写出。 */
     | Continue
-    /** 暂停，等待宿主 resume。 */
-    | Pause
+    /** 确认本次片段的 UTF-8 前缀字节数后暂停；0 表示未接收，全部接收也可暂停。 */
+    | Pause(Int64)
     /** 写入失败，携带错误详情。 */
     | Failed(SinkError)
 }
@@ -53,14 +53,14 @@ public interface AsyncTextSink {
     func write(slice: String): AsyncSinkWriteResult
 }
 
-/** buffered async 输出的 session 状态。 */
+/** 实际 renderer 遍历和输出确认的会话状态。 */
 public enum AsyncRenderState {
     /** 全部输出已写出。 */
     | Complete
     /** 因 sink `Pause` 暂停。 */
     | Paused
-    /** 因 sink 失败终止。 */
-    | Failed(SinkError)
+    /** 因 sink、取消、预算或 renderer 错误终止。 */
+    | Failed(MarkdownException)
 }
 
 /** 将同步 renderer 输出收集到一个 String 的内建 sink。 */
@@ -677,6 +677,69 @@ public class HtmlRenderer {
         cancellation.throwIfCancelled(phase: "render")
     }
 
+    internal func expandCursorNode(frame: ArenaRenderFrame, frames: ArrayList<ArenaRenderFrame>, sink: HtmlPlanSink,
+        cancellation: CancellationToken, budget: OperationBudget): Unit {
+        cancellation.throwIfCancelled(phase: "render")
+        if (frame.exiting) {
+            writeArenaExit(frame, sink, cancellation, budget)
+        } else {
+            budget.consumeRenderedNode()
+            writeArenaEnter(frame, frames, sink, cancellation, budget)
+        }
+        // Planning helpers keep only exits here; child iteration is lazy.
+        while (!frames.isEmpty()) {
+            sink.emit(HtmlCursorAction.Node(frames.remove(at: frames.size - 1)))
+        }
+    }
+
+    internal func expandCursorTableRow(row: NodeRef, header: Bool, sink: HtmlPlanSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        if (row.asTableRow().isNone()) {
+            throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation, "table contains non-row",
+                phase: "render", span: row.span)
+        }
+        budget.consumeRenderedNode()
+        write("<tr>\n", sink, cancellation, budget)
+        sink.emit(HtmlCursorAction.TableCells(row, 0, header))
+        write("</tr>\n", sink, cancellation, budget)
+    }
+
+    internal func encodeCursorEmission(emission: HtmlCursorEmission, start: Int64, end: Int64,
+        cancellation: CancellationToken, budget: OperationBudget): String {
+        let sink = StringTextSink()
+        match (emission.kind) {
+            case 0 => writeRange(emission.value, start, end, sink, cancellation, budget)
+            case 1 => writeEscapedTextFromNode(emission.value[start..end], emission.node.getOrThrow(), sink,
+                cancellation, budget)
+            case 2 => writeEscapedAttribute(emission.value[start..end], sink, cancellation, budget)
+            case 3 => writeEncodedUriAttribute(emission.value[start..end], sink, cancellation, budget)
+            case 4 => writeGfmTagFilteredRange(emission.value, start, end, emission.node.getOrThrow(), sink,
+                cancellation, budget)
+            case _ => throw IllegalStateException("unknown cursor encoding")
+        }
+        sink.content()
+    }
+
+    internal func cursorFootnoteOpen(note: FootnoteDefinitionBinding, sink: HtmlPlanSink,
+        cancellation: CancellationToken, budget: OperationBudget): Unit {
+        write("<li id=\"", sink, cancellation, budget)
+        writeEscapedAttribute(note.definitionId, sink, cancellation, budget)
+        write("\">\n", sink, cancellation, budget)
+    }
+
+    internal func cursorFootnoteBacklink(note: FootnoteDefinitionBinding, index: Int64, node: NodeRef,
+        sink: HtmlPlanSink, cancellation: CancellationToken, budget: OperationBudget): Unit {
+        if (index > 0) {
+            write(" ", sink, cancellation, budget)
+        }
+        write("<a href=\"#", sink, cancellation, budget)
+        writeEncodedUriAttribute(note.references[index].referenceId, sink, cancellation, budget)
+        write("\" aria-label=\"Back to reference ${index + 1} for footnote ${note.number}\">", sink, cancellation,
+            budget)
+        writeFromNode("↩", node, sink, cancellation, budget)
+        write("</a>", sink, cancellation, budget)
+    }
+
     private func renderArenaTo(ast: Document, sink: TextSink, cancellation: CancellationToken, budget: OperationBudget): Unit {
         renderArenaSubtree(ast.root(), sink, cancellation, budget)
         renderFootnoteSection(ast, sink, cancellation, budget)
@@ -743,7 +806,7 @@ public class HtmlRenderer {
         cancellation: CancellationToken, budget: OperationBudget): Unit {
         let node = frame.node
         match (node.kind) {
-            case NodeKind.DocumentNode => pushArenaContainer(frame, stack)
+            case NodeKind.DocumentNode => pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
             case NodeKind.Heading =>
                 let level = node.asHeading().getOrThrow().level
                 write("<h${level}", sink, cancellation, budget)
@@ -753,15 +816,15 @@ public class HtmlRenderer {
                     write("\"", sink, cancellation, budget)
                 }
                 write(">", sink, cancellation, budget)
-                pushArenaContainer(frame, stack)
+                pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
             case NodeKind.Paragraph =>
                 if (!frame.suppressParagraph) {
                     write("<p>", sink, cancellation, budget)
                 }
-                pushArenaContainer(frame, stack)
+                pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
             case NodeKind.BlockQuote =>
                 write("<blockquote>\n", sink, cancellation, budget)
-                pushArenaContainer(frame, stack)
+                pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
             case NodeKind.List =>
                 let list = node.asList().getOrThrow()
                 match (list.listKind) {
@@ -774,7 +837,7 @@ public class HtmlRenderer {
                         }
                 }
                 stack.add(ArenaRenderFrame(node, true))
-                pushArenaChildren(node, stack, suppressParagraph: list.tight)
+                pushArenaChildren(node, stack, suppressParagraph: list.tight, planner: htmlOutputPlanner(sink))
             case NodeKind.ListItem =>
                 let item = node.asListItem().getOrThrow()
                 match (item.taskState) {
@@ -796,6 +859,10 @@ public class HtmlRenderer {
                     write("\n", sink, cancellation, budget)
                 }
                 stack.add(ArenaRenderFrame(node, true, suppressParagraph: frame.suppressParagraph))
+                if (let Some(plan) <- htmlOutputPlanner(sink)) {
+                    plan.children(node, suppressParagraph: frame.suppressParagraph, listItem: true)
+                    return
+                }
                 var childIndex = children.size - 1
                 while (childIndex >= 0) {
                     let childSuppress = if (frame.suppressParagraph) {
@@ -830,7 +897,7 @@ public class HtmlRenderer {
                 let row = node.asTableRow().getOrThrow()
                 write("<tr>\n", sink, cancellation, budget)
                 stack.add(ArenaRenderFrame(node, true, tableHeader: row.header))
-                pushArenaChildren(node, stack, tableHeader: row.header)
+                pushArenaChildren(node, stack, tableHeader: row.header, planner: htmlOutputPlanner(sink))
             case NodeKind.TableCell =>
                 let tag = if (frame.tableHeader) {
                     "th"
@@ -840,7 +907,7 @@ public class HtmlRenderer {
                 let alignment = alignmentAttribute(node.asTableCell().getOrThrow().alignment)
                 write("<${tag}${alignment}>", sink, cancellation, budget)
                 stack.add(ArenaRenderFrame(node, true, tableHeader: frame.tableHeader))
-                pushArenaChildren(node, stack, tableHeader: frame.tableHeader)
+                pushArenaChildren(node, stack, tableHeader: frame.tableHeader, planner: htmlOutputPlanner(sink))
             case NodeKind.Text => writeEscapedTextFromNode(node.asText().getOrThrow().value, node, sink, cancellation,
                 budget)
             case NodeKind.SoftBreak => write("\n", sink, cancellation, budget)
@@ -851,13 +918,13 @@ public class HtmlRenderer {
                 write("</code>", sink, cancellation, budget)
             case NodeKind.Emphasis =>
                 write("<em>", sink, cancellation, budget)
-                pushArenaContainer(frame, stack)
+                pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
             case NodeKind.Strong =>
                 write("<strong>", sink, cancellation, budget)
-                pushArenaContainer(frame, stack)
+                pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
             case NodeKind.Strikethrough =>
                 write("<del>", sink, cancellation, budget)
-                pushArenaContainer(frame, stack)
+                pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
             case NodeKind.Link =>
                 let link = node.asLink().getOrThrow()
                 let boundDestination = match (node.documentBindings.linkForNode(node.nodeId)) {
@@ -879,7 +946,7 @@ public class HtmlRenderer {
                 }
                 writeExternalAttributes(destination, sink, cancellation, budget)
                 write(">", sink, cancellation, budget)
-                pushArenaContainer(frame, stack)
+                pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
             case NodeKind.Image =>
                 let image = node.asImage().getOrThrow()
                 write("<img", sink, cancellation, budget)
@@ -941,15 +1008,21 @@ public class HtmlRenderer {
         }
     }
 
-    private func pushArenaContainer(frame: ArenaRenderFrame, stack: ArrayList<ArenaRenderFrame>): Unit {
+    private func pushArenaContainer(frame: ArenaRenderFrame, stack: ArrayList<ArenaRenderFrame>,
+        planner!: ?HtmlPlanSink = None): Unit {
         stack.add(
             ArenaRenderFrame(frame.node, true, tableHeader: frame.tableHeader,
                 suppressParagraph: frame.suppressParagraph, newlineAfter: frame.newlineAfter))
-        pushArenaChildren(frame.node, stack, tableHeader: frame.tableHeader, suppressParagraph: frame.suppressParagraph)
+        pushArenaChildren(frame.node, stack, tableHeader: frame.tableHeader, suppressParagraph: frame.suppressParagraph,
+            planner: planner)
     }
 
     private func pushArenaChildren(node: NodeRef, stack: ArrayList<ArenaRenderFrame>, tableHeader!: Bool = false,
-        suppressParagraph!: Bool = false): Unit {
+        suppressParagraph!: Bool = false, planner!: ?HtmlPlanSink = None): Unit {
+        if (let Some(plan) <- planner) {
+            plan.children(node, tableHeader: tableHeader, suppressParagraph: suppressParagraph)
+            return
+        }
         let children = node.children()
         var index = children.size - 1
         while (index >= 0) {
@@ -1018,7 +1091,7 @@ public class HtmlRenderer {
             if (rule.renderPayloadLiteral) {
                 writeEscapedTextFromNode(arenaCustomLiteral(node, cancellation), node, sink, cancellation, budget)
             }
-            pushArenaContainer(frame, stack)
+            pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
             return
         }
         let policy = match (findExtensionManifest(custom.extensionId)) {
@@ -1028,7 +1101,7 @@ public class HtmlRenderer {
         match (policy) {
             case MissingRendererPolicy.Error => throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
                 "missing renderer for ${custom.extensionId}/${custom.localKindId}", phase: "render", span: node.span)
-            case MissingRendererPolicy.RenderChildren => pushArenaChildren(node, stack)
+            case MissingRendererPolicy.RenderChildren => pushArenaChildren(node, stack, planner: htmlOutputPlanner(sink))
             case MissingRendererPolicy.RenderLiteral => writeEscapedTextFromNode(arenaCustomLiteral(node, cancellation),
                 node, sink, cancellation, budget)
             case MissingRendererPolicy.Drop => ()
@@ -1125,6 +1198,10 @@ public class HtmlRenderer {
 
     private func renderArenaTable(table: NodeRef, sink: TextSink, cancellation: CancellationToken,
         budget: OperationBudget): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.emit(HtmlCursorAction.Table(table, 0, 0));
+            return
+        }
         let rows = table.children()
         let inlineFrames = ArrayList<ArenaRenderFrame>()
         write("<table>\n", sink, cancellation, budget)
@@ -1252,6 +1329,10 @@ public class HtmlRenderer {
         cancellation: CancellationToken,
         budget: OperationBudget
     ): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.output(0, value);
+            return
+        }
         cancellation.throwIfCancelled(phase: "render")
         consumeOutput(value.size, budget)
         let result = match (sink) {
@@ -1272,6 +1353,10 @@ public class HtmlRenderer {
         cancellation: CancellationToken,
         budget: OperationBudget
     ): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.output(0, value);
+            return
+        }
         cancellation.throwIfCancelled(phase: "render")
         consumeOutput(value.size, budget)
         let result = match (sink) {
@@ -1294,6 +1379,10 @@ public class HtmlRenderer {
         cancellation: CancellationToken,
         budget: OperationBudget
     ): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.output(0, value, start: start, end: end);
+            return
+        }
         cancellation.throwIfCancelled(phase: "render")
         consumeOutput(end - start, budget)
         let slice = value[start..end]
@@ -1316,6 +1405,10 @@ public class HtmlRenderer {
         cancellation: CancellationToken,
         budget: OperationBudget
     ): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.output(0, value, start: start, end: end);
+            return
+        }
         cancellation.throwIfCancelled(phase: "render")
         consumeOutput(end - start, budget)
         let slice = value[start..end]
@@ -1343,6 +1436,10 @@ public class HtmlRenderer {
     /** Writes escaped text without materializing a node-sized temporary String. */
     private func writeEscapedTextFromNode(value: String, node: NodeRef, sink: TextSink, cancellation: CancellationToken,
         budget: OperationBudget): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.output(1, value, node: Some(node));
+            return
+        }
         var segmentStart: Int64 = 0
         var index: Int64 = 0
         var nextCancellationCheck: Int64 = 0
@@ -1375,6 +1472,10 @@ public class HtmlRenderer {
 
     private func writeEscapedAttribute(value: String, sink: TextSink, cancellation: CancellationToken,
         budget: OperationBudget): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.output(2, value);
+            return
+        }
         var segmentStart: Int64 = 0
         var index: Int64 = 0
         var nextCancellationCheck: Int64 = 0
@@ -1418,6 +1519,10 @@ public class HtmlRenderer {
 
     private func writeEncodedUriAttribute(value: String, sink: TextSink, cancellation: CancellationToken,
         budget: OperationBudget): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.output(3, value);
+            return
+        }
         var segmentStart: Int64 = 0
         var index: Int64 = 0
         var nextCancellationCheck: Int64 = 0
@@ -1473,6 +1578,10 @@ public class HtmlRenderer {
 
     private func writeArenaPlainTextAttribute(root: NodeRef, sink: TextSink, cancellation: CancellationToken,
         budget: OperationBudget): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.emit(HtmlCursorAction.ImageAlt(root));
+            return
+        }
         cancellation.throwIfCancelled(phase: "render")
         let stack = ArrayList<NodeRef>()
         stack.add(root)
@@ -1512,10 +1621,19 @@ public class HtmlRenderer {
     /** Applies the GFM raw-tag filter while checking the output limit before every emitted segment. */
     private func writeGfmTagFilteredFromNode(value: String, node: NodeRef, sink: TextSink,
         cancellation: CancellationToken, budget: OperationBudget): Unit {
-        var segmentStart: Int64 = 0
-        var index: Int64 = 0
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.output(4, value, node: Some(node));
+            return
+        }
+        writeGfmTagFilteredRange(value, 0, value.size, node, sink, cancellation, budget)
+    }
+
+    private func writeGfmTagFilteredRange(value: String, start: Int64, end: Int64, node: NodeRef, sink: TextSink,
+        cancellation: CancellationToken, budget: OperationBudget): Unit {
+        var segmentStart: Int64 = start
+        var index: Int64 = start
         var nextCancellationCheck: Int64 = 0
-        while (index < value.size) {
+        while (index < end) {
             if (index >= nextCancellationCheck) {
                 cancellation.throwIfCancelled(phase: "render")
                 nextCancellationCheck = index + RENDER_SCAN_CANCELLATION_BYTES
@@ -1538,8 +1656,8 @@ public class HtmlRenderer {
             index = rendererNextRune(value, index)
         }
         cancellation.throwIfCancelled(phase: "render")
-        if (segmentStart < value.size) {
-            writeRangeFromNode(value, segmentStart, value.size, node, sink, cancellation, budget)
+        if (segmentStart < end) {
+            writeRangeFromNode(value, segmentStart, end, node, sink, cancellation, budget)
         }
     }
 
@@ -1763,60 +1881,6 @@ public interface HtmlSanitizerPort {
      * @param html 待清洗的 HTML 文本。
      */
     func sanitize(html: String): String
-}
-
-/**
- * 先生成完整 HTML，再以 bounded chunks 对 sink 应用 backpressure。
- *
- * 这是 buffered output，不是增量 renderer；构造 session 时已完成完整渲染。
- */
-public class BufferedAsyncHtmlOutputSession {
-    private let content: String
-    private let chunkBytes: Int64
-    private var offset: Int64 = 0
-
-    /**
-     * 渲染完整文档并准备分块输出。
-     * @param renderer 使用的 HTML renderer。
-     * @param document 要渲染的 Document。
-     * @param chunkBytes 每次 write 的最大字节数，必须为正。
-     * @param cancellation 渲染阶段的取消信号。
-     * @param budget 渲染阶段的操作预算。
-     */
-    public init(renderer: HtmlRenderer, document: Document, chunkBytes!: Int64 = 4096,
-        cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()) {
-        if (chunkBytes <= 0) {
-            throw IllegalArgumentException("buffered async output chunk size must be positive")
-        }
-        this.content = renderer.render(document, cancellation: cancellation, budget: budget)
-        this.chunkBytes = chunkBytes
-    }
-
-    /**
-     * 从上次 offset 继续向 async sink 写出；`Pause` 后可再次 resume。
-     * @param sink 接收 bounded chunks 的 async sink。
-     * @param cancellation 可选取消 token。
-     * @return `Complete`、`Paused` 或 `Failed`。
-     * @throws MarkdownException 取消时。
-     */
-    public func resume(sink: AsyncTextSink, cancellation!: CancellationToken = CancellationToken.none()): AsyncRenderState {
-        while (offset < content.size) {
-            cancellation.throwIfCancelled(phase: "async_render")
-            let end = min(content.size, offset + chunkBytes)
-            let chunk = content[offset..end]
-            match (sink.write(chunk)) {
-                case AsyncSinkWriteResult.Continue => offset = end
-                case AsyncSinkWriteResult.Pause => return AsyncRenderState.Paused
-                case AsyncSinkWriteResult.Failed(error) => return AsyncRenderState.Failed(error)
-            }
-        }
-        AsyncRenderState.Complete
-    }
-
-    /** 返回 sink 已确认接收的 output byte 数。 */
-    public func bytesWritten(): Int64 {
-        offset
-    }
 }
 
 /** 纯文本 renderer 的链接和软换行选项。 */
@@ -2460,5 +2524,13 @@ private func rendererNextRune(value: String, offset: Int64): Int64 {
         end
     } else {
         value.size
+    }
+}
+
+private func htmlOutputPlanner(sink: TextSink): ?HtmlPlanSink {
+    if (let plan: HtmlPlanSink <- sink) {
+        Some(plan)
+    } else {
+        None
     }
 }

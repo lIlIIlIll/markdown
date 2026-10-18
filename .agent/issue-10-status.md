@@ -14,6 +14,7 @@ for automatic merge or publication.
 | MD-00.1/.2, MD-01 batch | Typed footnote payloads, reachable-definition binding, first-definition/numbering/unique-anchor/backlink decisions, shared HTML/Text/Markdown output, exact source and snapshot/config identity; DocumentBindingTests | Batch and public append implemented; complete output-resource qualification pending |
 | MD-03 batch | Heading-only typed suffix, explicit-ID reservation, shared anchor allocator, authoritative heading/fragment queries, structured TOC, source/Markdown/snapshot preservation; HeadingBindingTests | Batch and public append implemented; edit dependency qualification pending |
 | MD-00.8 / MD-06.1..6 | Shared block/inline parser, final binder and document processors; actual feed-time closed AST fragments, atomic identity/version updates and replica, terminal failure, cumulative limits | Public append implemented; full phase/lifecycle redesign remains pending |
+| MD-06.7 | Real resumable HTML cursor over shared renderer rules; UTF-8 prefix acknowledgement, lazy tables/footnotes/escaping, terminal failure and cumulative output budgets; old buffered implementation removed | Implemented and correctness verified; final release performance/RSS qualification pending |
 | MD-06.8 | Public append scaling tests for long loose lists, deferred-reference paragraphs, unclosed fences and many closed blocks; real scan/node-construction/patch counters | Correctness and work growth PASS; latency, peak RSS and release performance qualification pending |
 | MD-00.6, MD-02, MD-04..06 | Lifecycle cleanup, structured definition lists, remaining extension acceptance, resumable output and real optional rich rendering | In progress |
 | MD-07..08 | Existing editor/artifact phase baseline and real process/backend capability probes retained privately; no optimization verdict yet | Pending |
@@ -55,3 +56,22 @@ append tests assert linear scan/construction growth. These counters are not heap
 allocation or RSS measurements. Full resumable HTML traversal (MD-06.7), the new
 definition-list model, rich backends, edit/cache work and final release gates are
 still pending. Historical benchmark reports remain bound to their original source.
+
+The resumable-output checkpoint uses official STS 1.2.0 and formatted product
+tree `94adfef5e05b4a5a61b9cb7652469fa957259859f06a07dbae0211d718694d27`
+(workspace and disk-backed test tree verified equal). Full tests: 1554/1554 PASS,
+zero skips/errors/failures. All 1323 pinned standard inputs run through three
+HTML policies and three output widths (11907 output checks), with rejected,
+partial and fully acknowledged pauses. Output bytes and rendered-node counters
+match synchronous rendering; the existing 7938 append checks remain enabled.
+Additional cases cover host callback timing, UTF-8 acknowledgement validation,
+sink exceptions/failures, empty output, cancellation before/during/after a pause,
+long flat documents and a single long escaped literal. No full HTML is built by
+the session constructor; repeated refusal does not advance traversal or budgets.
+
+Normal check/build, both example builds/runs, CLI build/smoke and benchmark-driver
+build PASS. Format/docs/API/evidence checks and 70 API/evidence Python tests PASS.
+Public API: 1561 declarations. The old buffered output class is removed and
+Pause now carries the accepted UTF-8 prefix byte count. Buffered byte counters
+exclude the AST, source and host port allocations. These correctness results do
+not qualify peak RSS, frozen performance gates or the remaining issue scope.

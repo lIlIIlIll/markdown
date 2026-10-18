@@ -63,8 +63,9 @@ manifest 集合按稳定身份规范化，注册顺序本身不改变 fingerprin
 renderer 写入前检查 output budget，并保留 sink 错误。SourceMap 在 writer 写出正文时同步
 记录，不通过 HTML 字符串反向搜索。
 
-`BufferedAsyncHtmlOutputSession` 会先生成完整、有界 HTML，再按 `Continue`、`Pause` 或
-`Failed` 推送。它是 buffered backpressure adapter，不是增量 parser-renderer。
+`renderer.newOutputSession()` 在 resume 中执行实际遍历，按 `Continue`、`Pause(n)` 或
+`Failed` 消费结果恢复；不会预先渲染整份 HTML。确认、预算和终态契约见
+[暂停与恢复 HTML 输出](html-output.md)。
 
 完整构造参数和 renderer API 见 [Extensions API](api/extensions.md)与
 [Rendering API](api/rendering.md)。

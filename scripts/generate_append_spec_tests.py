@@ -32,7 +32,7 @@ def generate() -> str:
         output.append('        let cases: Array<(MarkdownProfile, String)> = [\n')
         output.append(',\n'.join(f'            (MarkdownProfile.{profile}(), {literal})'
                                   for _, profile, literal in cases))
-        output.append('\n        ]\n        verifyAppendStandardCases(cases)\n    }\n')
+        output.append('\n        ]\n        verifyAppendStandardCases(cases)\n        verifyHtmlOutputStandardCases(cases)\n    }\n')
     output.append('}\n')
     return ''.join(output)
 

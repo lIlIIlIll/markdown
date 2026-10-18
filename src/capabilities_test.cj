@@ -48,7 +48,7 @@ class CapabilitiesTest {
         @Expect(executionModels.streamInput, "buffered-before-parse")
         @Expect(executionModels.chunkInput, "append-closed-blocks-with-final-binding")
         @Expect(executionModels.partialParse, "failure-result-without-completed-prefix")
-        @Expect(executionModels.asyncHtml, "pre-rendered-buffered-output")
+        @Expect(executionModels.asyncHtml, "resumable-traversal-with-utf8-prefix-acknowledgement")
         let pureCapabilities = MarkdownEngine.builder().nativeScannerEnabled(false).build().capabilities()
         @Expect(pureCapabilities.nativeScannerAvailable, false)
         @Expect(pureCapabilities.nativeScannerEnabled, false)

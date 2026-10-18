@@ -1028,6 +1028,12 @@ headings.cj:package=markdown:owner=class/TocEntry:public let heading: HeadingBin
 headings.cj:package=markdown:public class HeadingBinding {
 headings.cj:package=markdown:public class HeadingIdPayload <: CustomPayload {
 headings.cj:package=markdown:public class TocEntry {
+html_output.cj:package=markdown:owner=class/HtmlOutputSession:public func bufferedBytes(): Int64 {
+html_output.cj:package=markdown:owner=class/HtmlOutputSession:public func bytesProduced(): Int64 {
+html_output.cj:package=markdown:owner=class/HtmlOutputSession:public func bytesWritten(): Int64 {
+html_output.cj:package=markdown:owner=class/HtmlOutputSession:public func resume(sink: AsyncTextSink): AsyncRenderState {
+html_output.cj:package=markdown:owner=extend/extend%20HtmlRenderer%20%7B:public func newOutputSession(document: Document, chunkBytes!: Int64 = 4096, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): HtmlOutputSession {
+html_output.cj:package=markdown:public class HtmlOutputSession {
 isolation.cj:package=markdown:owner=class/IsolatedPluginRequest:public init(extensionId: String, implementationVersion: String, operation: String, payload: String, protocolVersion!: String = "markdown-isolation-ipc-1") {
 isolation.cj:package=markdown:owner=class/IsolatedPluginRequest:public let extensionId: String
 isolation.cj:package=markdown:owner=class/IsolatedPluginRequest:public let implementationVersion: String
@@ -1292,11 +1298,8 @@ profile.cj:package=markdown:public class HtmlPolicy {
 profile.cj:package=markdown:public class MarkdownProfile {
 profile.cj:package=markdown:public enum HtmlPolicyKind {
 profile.cj:package=markdown:public enum ProfileKind {
-render/render.cj:package=markdown.render:public import markdown.{AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, BufferedAsyncHtmlOutputSession, CanonicalMarkdownRenderer, ExtensionRendererFallback, HtmlFidelityPolicy, HtmlInputPolicy, HtmlOptions, HtmlPolicy, HtmlPolicyKind, HtmlRenderer, HtmlSanitizerPort, HtmlToMarkdownConverter, HtmlToMarkdownOptions, ImageUriPolicy, InlineEscapePolicy, LinkUriPolicy, MissingRendererPolicy, PlainTextOptions, PlainTextRenderer, RawHtmlPolicyKind, RenderStatistics, RenderedOutput, RenderedSourceMapEntry, SinkError, SinkFailureException, SinkWriteResult, StringTextSink, TextSink, TrustedHtml}
+render/render.cj:package=markdown.render:public import markdown.{AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, HtmlOutputSession, CanonicalMarkdownRenderer, ExtensionRendererFallback, HtmlFidelityPolicy, HtmlInputPolicy, HtmlOptions, HtmlPolicy, HtmlPolicyKind, HtmlRenderer, HtmlSanitizerPort, HtmlToMarkdownConverter, HtmlToMarkdownOptions, ImageUriPolicy, InlineEscapePolicy, LinkUriPolicy, MissingRendererPolicy, PlainTextOptions, PlainTextRenderer, RawHtmlPolicyKind, RenderStatistics, RenderedOutput, RenderedSourceMapEntry, SinkError, SinkFailureException, SinkWriteResult, StringTextSink, TextSink, TrustedHtml}
 render/render.cj:package=markdown.render:public import markdown.{ExternalLinkRewriterPort, RawHtmlHandlerPort}
-renderer.cj:package=markdown:owner=class/BufferedAsyncHtmlOutputSession:public func bytesWritten(): Int64 {
-renderer.cj:package=markdown:owner=class/BufferedAsyncHtmlOutputSession:public func resume(sink: AsyncTextSink, cancellation!: CancellationToken = CancellationToken.none()): AsyncRenderState {
-renderer.cj:package=markdown:owner=class/BufferedAsyncHtmlOutputSession:public init(renderer: HtmlRenderer, document: Document, chunkBytes!: Int64 = 4096, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()) {
 renderer.cj:package=markdown:owner=class/HtmlOptions:public init(policy: HtmlPolicy, rawHtmlPolicy: RawHtmlPolicyKind, linkUriPolicy: LinkUriPolicy, imageUriPolicy: ImageUriPolicy, rewriteExternalLinks!: ?ExternalLinkRewriterPort = None, externalLinkRel!: String = "", externalLinkTarget!: String = "") {
 renderer.cj:package=markdown:owner=class/HtmlOptions:public let externalLinkRel: String
 renderer.cj:package=markdown:owner=class/HtmlOptions:public let externalLinkTarget: String
@@ -1341,11 +1344,11 @@ renderer.cj:package=markdown:owner=class/StringTextSink:public init() {
 renderer.cj:package=markdown:owner=class/TrustedHtml:public let value: String
 renderer.cj:package=markdown:owner=class/TrustedHtml:public static unsafe func fromString(value: String): TrustedHtml {
 renderer.cj:package=markdown:owner=enum/AsyncRenderState:enum-variant | Complete
-renderer.cj:package=markdown:owner=enum/AsyncRenderState:enum-variant | Failed(SinkError)
+renderer.cj:package=markdown:owner=enum/AsyncRenderState:enum-variant | Failed(MarkdownException)
 renderer.cj:package=markdown:owner=enum/AsyncRenderState:enum-variant | Paused
 renderer.cj:package=markdown:owner=enum/AsyncSinkWriteResult:enum-variant | Continue
 renderer.cj:package=markdown:owner=enum/AsyncSinkWriteResult:enum-variant | Failed(SinkError)
-renderer.cj:package=markdown:owner=enum/AsyncSinkWriteResult:enum-variant | Pause
+renderer.cj:package=markdown:owner=enum/AsyncSinkWriteResult:enum-variant | Pause(Int64)
 renderer.cj:package=markdown:owner=enum/RawHtmlPolicyKind:enum-variant | CustomHandler
 renderer.cj:package=markdown:owner=enum/RawHtmlPolicyKind:enum-variant | Drop
 renderer.cj:package=markdown:owner=enum/RawHtmlPolicyKind:enum-variant | Escape
@@ -1365,7 +1368,6 @@ renderer.cj:package=markdown:owner=interface/HtmlSanitizerPort:interface-member 
 renderer.cj:package=markdown:owner=interface/RawHtmlHandlerPort:interface-member func renderRawHtml(literal: String, block: Bool): TrustedHtml
 renderer.cj:package=markdown:owner=interface/RawHtmlHandlerPort:interface-member prop identity: String
 renderer.cj:package=markdown:owner=interface/TextSink:interface-member func write(slice: String): SinkWriteResult
-renderer.cj:package=markdown:public class BufferedAsyncHtmlOutputSession {
 renderer.cj:package=markdown:public class HtmlOptions {
 renderer.cj:package=markdown:public class HtmlRenderer {
 renderer.cj:package=markdown:public class ImageUriPolicy {

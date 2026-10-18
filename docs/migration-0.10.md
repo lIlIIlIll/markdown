@@ -33,4 +33,12 @@
 需要实际分块 AST 的消费者改用 `newAppendSession()` 和 `AppendReplica`。feed 返回
 带会话/版本/目标身份的更新，finish 统一绑定；不要把临时块当作 ParseResult。
 `newBufferedInputSession()` 仍用于只累计输入的场景。具体调用和终态处理见
-[追加输入与更新消费](append-input.md)。HTML 背压适配器的替换仍属于未完成的开发范围。
+[追加输入与更新消费](append-input.md)。
+
+## 可恢复输出
+
+移除 BufferedAsyncHtmlOutputSession。改用 `renderer.newOutputSession(document)`，构造
+时不再渲染。AsyncSinkWriteResult 的 Pause 改为 `Pause(acceptedBytes)`；0 表示未接收，
+前缀必须位于 UTF-8 边界。AsyncRenderState.Failed 现在携带 MarkdownException，包含
+sink、取消、预算和 renderer 错误。Complete/Failed 后不允许 resume。详见
+[暂停与恢复 HTML 输出](html-output.md)。

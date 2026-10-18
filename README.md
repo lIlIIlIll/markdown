@@ -186,7 +186,7 @@ markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、�
 - `newAppendSession()` 在 feed 中交付结构闭合块，通过原子更新在 finish 完成后置引用和绑定。
 - `BufferedInputSession` 在 `finish()` 时解析，不降低峰值内存。
 - `parseEvents` 和 `emitEvents` 产生不持有 AST 的 source events。
-- `BufferedAsyncHtmlOutputSession` 先生成完整 HTML，再处理 sink backpressure。
+- `renderer.newOutputSession()` 保存实际遍历和转义状态，按 UTF-8 前缀确认暂停与恢复。
 - Safe HTML 默认转义 raw HTML，并拒绝危险 URI。
 
 需要选择输入 API、流式接口或资源上限时，查看[输入、限制和取消](docs/input-and-resources.md)。
@@ -212,10 +212,10 @@ markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、�
 | Offline evidence ready | `not ready` |
 | CI verified at evidence repository HEAD | `no` |
 | Published release | `no` |
-| Tests | `1548/1548` passed; `0` skipped; `0` failed |
+| Tests | `1554/1554` passed; `0` skipped; `0` failed |
 | CommonMark conformance | `652/652` |
 | GFM conformance | `671/671` |
-| Public API snapshot | `1559` declarations |
+| Public API snapshot | `1561` declarations |
 | Artifact commit | `6e5a207d07903a60f8270c41badac1bb4cb104b5` |
 | Evidence subject commit | `6e5a207d07903a60f8270c41badac1bb4cb104b5` |
 | Execution identity | `target/release-evidence/manifest.json` records and verifies the clean gate commit/tree |

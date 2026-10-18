@@ -1,5 +1,7 @@
 # 从 0.8 迁移到 0.9
 
+本页保留 0.8 → 0.9 的历史变更；当前接口继续阅读[0.10 模型迁移](migration-0.10.md)。
+
 0.9 重置了 pre-GA AST、Event、artifact 和 parser SPI。消费工程必须重新编译，并删除
 0.8 cache artifact。
 

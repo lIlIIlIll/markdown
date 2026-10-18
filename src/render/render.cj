@@ -1,6 +1,6 @@
 package markdown.render
 
-public import markdown.{AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, BufferedAsyncHtmlOutputSession, 
+public import markdown.{AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, HtmlOutputSession, 
     CanonicalMarkdownRenderer, ExtensionRendererFallback, HtmlFidelityPolicy, HtmlInputPolicy, HtmlOptions, HtmlPolicy, 
     HtmlPolicyKind, HtmlRenderer, HtmlSanitizerPort, HtmlToMarkdownConverter, HtmlToMarkdownOptions, ImageUriPolicy, 
     InlineEscapePolicy, LinkUriPolicy, MissingRendererPolicy, PlainTextOptions, PlainTextRenderer, RawHtmlPolicyKind, 

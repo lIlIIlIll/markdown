@@ -3,7 +3,18 @@ package markdown_cookbook
 import markdown.core.{AppendReplica, AppendState, Markdown, MarkdownEngine, MarkdownProfile}
 import markdown.editor.AstQuery
 import markdown.extensions.{BlockSyntax, ExtensionCapabilities, ExtensionManifest, MarkdownDialect, RendererRule}
-import markdown.render.{HtmlOptions, HtmlRenderer}
+import markdown.render.{AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, HtmlOptions, HtmlRenderer}
+
+class CookbookOutputSink <: AsyncTextSink {
+    private let out = StringBuilder()
+    public func write(value: String): AsyncSinkWriteResult {
+        out.append(value)
+        AsyncSinkWriteResult.Continue
+    }
+    func content(): String {
+        out.toString()
+    }
+}
 
 main(): Int64 {
     println("== safe-html ==")
@@ -67,6 +78,17 @@ main(): Int64 {
             println(error.message);
             return 1
         case AppendState.AwaitingInput => return 1
+    }
+
+    println("== resumable-output ==")
+    let output = HtmlRenderer().newOutputSession(replica.result.getOrThrow().document, chunkBytes: 7)
+    let outputSink = CookbookOutputSink()
+    match (output.resume(outputSink)) {
+        case AsyncRenderState.Complete => println(outputSink.content())
+        case AsyncRenderState.Failed(error) =>
+            println(error.message);
+            return 1
+        case AsyncRenderState.Paused => return 1
     }
 
     println("== format ==")

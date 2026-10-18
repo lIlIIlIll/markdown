@@ -66,7 +66,7 @@ class PauseOnceSink <: AsyncTextSink {
     public func write(slice: String): AsyncSinkWriteResult {
         if (!paused) {
             paused = true
-            return AsyncSinkWriteResult.Pause
+            return AsyncSinkWriteResult.Pause(0)
         }
         out.append(slice)
         AsyncSinkWriteResult.Continue
@@ -484,10 +484,9 @@ class RendererBehaviorTest {
     }
 
     @TestCase
-    func explicitlyNamedBufferedAsyncSessionPreservesBackpressure(): Unit {
+    func resumableSessionPreservesBackpressure(): Unit {
         let normal = HtmlRenderer().render(Markdown.parse("buffered output").document)
-        let session = BufferedAsyncHtmlOutputSession(HtmlRenderer(), Markdown.parse("buffered output").document,
-            chunkBytes: 4)
+        let session = HtmlRenderer().newOutputSession(Markdown.parse("buffered output").document, chunkBytes: 4)
         let sink = PauseOnceSink()
         match (session.resume(sink)) {
             case AsyncRenderState.Paused => @Expect(true)

@@ -52,7 +52,7 @@ let execution = engine.executionModels()
 - native scanner availability 和 enablement
 - incremental、lossless、HTML-to-Markdown 等支持范围
 
-`ExecutionModelCapabilities` 报告 buffered stream/chunk、Event、async HTML 和 native
+`ExecutionModelCapabilities` 报告 buffered stream、追加 chunk、Event、可恢复 HTML 和 native
 accelerator 的真实语义。
 
 ## Explain

@@ -61,9 +61,9 @@ implementation version 是 opaque build identity，不参与 SemVer 排序。
 0.9 已提供 source-driven Resolved/RawBlock Event API。Event 值不持有 Document 或
 NodeRef。
 
-`BufferedInputSession` 和 `BufferedAsyncHtmlOutputSession` 的 buffered 语义属于公开
-契约。它们不会被描述为 incremental AST parser 或 incremental renderer。0.9 删除了
-语义容易被高估的 `ChunkedParseSession` 和 `AsyncHtmlRenderSession` 类型名。
+`BufferedInputSession` 仍只累计输入。0.10 的 `newAppendSession` 实际在 feed 中交付
+结构闭合块，`renderer.newOutputSession` 使用可恢复遍历。旧 buffered 输出实现已移除，
+`Pause(n)` 明确报告 UTF-8 前缀确认。迁移规则见[0.10 模型迁移](migration-0.10.md)。
 
 ## 检查 API
 

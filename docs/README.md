@@ -30,6 +30,7 @@
 | 使用脚注、标题 ID 和结构化目录 | [文档绑定](semantic-binding.md) |
 | 逐块接收 AST、处理后置引用和更新顺序 | [追加输入与更新消费](append-input.md) |
 | 选择 String、bytes、stream 或 events | [输入、限制和取消](input-and-resources.md) |
+| 处理 HTML sink 背压与部分字节确认 | [暂停与恢复 HTML 输出](html-output.md) |
 | 配置 HTML、URI 和 sanitizer | [Rendering API](api/rendering.md) |
 | 自定义块或行内语法 | [扩展开发](extensions.md) |
 | query、rewrite、lint 或 format | [Editor API](api/editor.md) |

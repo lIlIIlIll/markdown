@@ -170,9 +170,9 @@ text/code/html literal 转成 owned text。
 `tryParse` 返回 `ParseOutcome.Success(result)` 或 `Failure(error)`；失败不携带 Document。
 它们不返回 AST prefix。
 
-`BufferedAsyncHtmlOutputSession` 先渲染完整 HTML，再分块写 sink。它不降低 peak
-output memory。0.9 已删除会让使用者误以为是真正异步增量 renderer 的旧类型名
-`AsyncHtmlRenderSession`。
+`renderer.newOutputSession()` 在 resume 时执行实际遍历，保留未确认的 UTF-8 输出和转义
+状态。sink 用 `Pause(n)` 明确确认前缀。旧 buffered 输出实现已移除；详见
+[暂停与恢复 HTML 输出](html-output.md)。
 
 ## 下一步
 
