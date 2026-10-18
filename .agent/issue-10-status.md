@@ -10,7 +10,7 @@ for automatic merge or publication.
 | Required checks | Replaced the three obsolete SDK contexts with the two passing STS 1.2.0 contexts; all other protection values verified equal | PASS |
 | MD-00.3 / EDT-T01 identity | NodeId lineage plus nonrecycled serial, distinct immutable revisions, bounded shared-arena reservations, distributed identity hashes, persistent-fork allocation and stale CST/NodeRef/fix rejection | Correctness/resource regression PASS in 1566-case run; final performance cost not yet qualified |
 | MD-00.4 / MD-00.5 / ARC-T02 | Success-only ParseResult, explicit ParseOutcome, removed aliases and content-hash StableNodeId; consumers migrated | PASS in the 1517-case full run |
-| MD-00.7 / ART-T01 | 0.10 API boundary, SPI 3, plan 5, artifact schema 3; no old reader; explicit unsupported-version error | Current preparation checkpoint: 1611/1611 full tests and 70 API/evidence Python tests PASS |
+| MD-00.7 / ART-T01 | 0.10 API boundary, SPI 3, plan 5, artifact schema 3; no old reader; explicit unsupported-version error | Current Node checkpoint: 1614/1614 full tests and 70 API/evidence Python tests PASS |
 | MD-00.1/.2, MD-01 batch | Typed footnote payloads, reachable-definition binding, first-definition/numbering/unique-anchor/backlink decisions, shared HTML/Text/Markdown output, exact source and snapshot/config identity; DocumentBindingTests | Batch and public append implemented; complete output-resource qualification pending |
 | MD-03 batch | Heading-only typed suffix, explicit-ID reservation, shared anchor allocator, authoritative heading/fragment queries, structured TOC, source/Markdown/snapshot preservation; HeadingBindingTests | Batch and public append implemented; edit dependency qualification pending |
 | MD-02 / EXT-T03 | Definition Lists 2.0 with typed List/Entry/Term/Definition, ordinary block bodies, source markers, full binding validation and shared HTML/Text/Markdown/snapshot/append/output traversal | Implemented; 1564-case full run and consumer gates PASS |
@@ -19,7 +19,7 @@ for automatic merge or publication.
 | MD-06.8 | Public append scaling tests for long loose lists, deferred-reference paragraphs, unclosed fences and many closed blocks; real scan/node-construction/patch counters | Correctness and work growth PASS; latency, peak RSS and release performance qualification pending |
 | MD-04 / EXT-T05..06 | Versioned official capability matrix, exact enable/disable/profile output, literal Front Matter boundaries and bounded deterministic smart punctuation | Correctness verified; final release gates pending |
 | MD-00.6 | Actual AST transform → binding → read-only analysis, shared batch/append pipeline, early whole-document execution gates and meaningful capability validation | Implemented; 1585-case run, consumers and API/evidence gates PASS |
-| MD-05 | Math 2.0, Code Groups 1.0 and explicit typed preparation with revision/source/config binding, validation, Ready-only cache and shared resumable rendering | Shared preparation/model/UI correctness PASS; installable real optional backends and end-to-end resource qualification pending |
+| MD-05 / RND-T01..02 | Math 2.0, Code Groups 1.0, typed preparation and pinned actual KaTeX/Shiki/Mermaid Linux adapter with explicit offline runtime, licenses, bounded proxy/subreaper, validated outputs and full source fallback | Local real Cangjie/Chrome/clipboard/process/offline qualification PASS; frozen performance and hosted core gates remain pending |
 | MD-05.7 / code-group portion of RND-T02 | Group/Item with ordinary fenced children, titles, line ranges and exact copy text; optional localized tabs/copy and static fallback | 1600-case Cangjie run, all normal consumers and actual Chrome clipboard/keyboard/AX checks PASS |
 | MD-07..08 | Existing editor/artifact phase baseline and real process/backend capability probes retained privately; no optimization verdict yet | Pending |
 | DONE-02..06 | Complete task-to-test ledger, new performance qualification, docs/consumer gates and core hosted evidence | Pending |
@@ -284,3 +284,63 @@ The STS 1.2.0 bridge passes concurrent pipe/timeout/limit checks. This establish
 a viable Linux optional-adapter mechanism, not a production backend or an OS
 sandbox. Frozen performance, editor/cache decisions and hosted core gates remain
 pending. Core changes remain local; no push, PR or release is authorized.
+
+## Actual optional Node backend checkpoint
+
+Official STS 1.2.0, formatted product tree
+`92bdbc2bd3a68fe43ebecee0da259c583ed9e71a9c5252f23cb89abbfa84103e`
+matches the test tree. Full suite 1614/1614 includes three missing-runtime/config
+cases in markdown.node; no skips/errors/failures. Nine normal consumer steps,
+70 API/evidence Python tests and format/docs/API/evidence/privacy checks PASS.
+Public API: 1710 declarations. The base paths still run without a Node runtime.
+
+MD-05.2/.3 now deliver NodeRichContentBackend and explicit prepare/gate scripts,
+with KaTeX 0.19.0, Shiki 4.5.0, Mermaid CLI 12.0.0, parse5 8.0.0, Node 24.22.0,
+Chrome 155.0.8059.84 and Noto Sans CJK SC 2.004. The official npm lock fixes the
+transitive closure; install scripts and ambient npm configuration are excluded.
+Pinned archives/font/license, vendor notices and npm license files are retained.
+The first Mermaid delivery supports strict flowcharts; unsupported syntax returns
+an explicit state with full source fallback. Host-only themes/paths and explicit
+no-sandbox opt-in cannot be selected by author content.
+
+The 39274-file runtime identity is
+`66482adc432167538bbcccac7a431bcbf9d6d93653981333609ef0ede5d0ba39`.
+A clean network-unshared offline rebuild produces the exact manifest/identity.
+The same compiled STS consumer runs against that rebuilt runtime with networking
+unshared and produces byte-identical HTML:
+`cb42c140c0fb6877dea3b3c7345a6212c92e7dbc86e711875f007697f72e70ad`.
+The consumer source hash is
+`2922bbff9fd82d2cd19a5de43d1e5be626b71d075a4030d7a4755c4a4e14f5e4`.
+It checks real batch/single-byte append preparation, four Ready products, current
+revision/source binding, warm cache, exact resumed HTML, provenance, timeout and
+cancel categories. All five linked static libraries still match the hashes in
+the actual gate after final normal consumer builds.
+
+Actual Chrome renders native fraction/square-root MathML with 11 math AX roles,
+a 784x140 Chinese flowchart with 297 pixel colors and Shiki-colored Unicode code.
+Real clipboard content retains BOM and CRLF independently of the LF display.
+The screenshot was visually inspected. There are zero unexpected page requests;
+two external/outside-file probes are rejected before the upstream reader, which
+receives neither. No mock stands in for any of these engine outputs.
+
+MD-05.8 uses a fixed binary protocol and concurrent bounded Cangjie pipes. The
+Linux supervisor proxies child I/O, so detached descendants never own the caller
+pipe, enforces wall/output bounds, reaps its full subtree and cleans private disk
+jobs. Seven process-fixture cases PASS: blocked input, cancellation, output limit,
+launcher death, timeout, worker exit and signal crash. Separate actual Chrome
+cancel/Node-kill cases observe five or more descendants and reap every one; cleanup
+returns only after ECHILD. A V8 limit is not reported as full process-tree RSS,
+and ordinary processes/request interception are not an OS sandbox.
+
+Retained actual failures explain narrow fixes: upstream did not serve OTF fonts;
+the owned exact font response supplies its MIME type. Long disk TMP paths exceeded
+Chromium's Unix socket path limit; a held /proc directory descriptor supplies a
+short path without moving storage to tmpfs. Purpose imports needed their static
+libraries in the standalone gate. An expected task cancellation is caught inside
+the task to avoid SDK diagnostic output. A process-fixture SIGUSR1 readiness race
+activated Node's debugger; the fixture now registers SIGUSR2 before readiness and
+asserts empty stderr. The final complete gate passes all actual and fixture cases.
+
+Remaining scope is MD-06 resource measurements, MD-07/08 measured editor/cache
+decisions and retention audit, fresh frozen performance/release evidence and the
+complete final ID ledger. No core push, PR, merge or release is authorized.

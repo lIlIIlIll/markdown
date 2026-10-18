@@ -23,6 +23,9 @@
 > [!NOTE]
 > 基础包是纯仓颉实现，不需要 C 编译器。原生 line scanner 是可选加速器，不是运行依赖。
 
+真实公式、图表与代码高亮可选择[显式安装的 Node 后端](docs/node-rich-backend.md)；
+默认解析和输出独立可用，不下载或启动该运行时。
+
 ## 为什么选择 markdown
 
 | 能力 | 默认契约 |
@@ -146,7 +149,7 @@ let engine = MarkdownEngine.builder().dialect(dialect).build()
 
 ## 包结构
 
-新代码应导入用途明确的子包。根包 `markdown.*` 只作为兼容门面。
+新代码应导入用途明确的子包。根包 `markdown.*` 是共享实现包。
 
 | 子包 | 用途 |
 | --- | --- |
@@ -158,6 +161,7 @@ let engine = MarkdownEngine.builder().dialect(dialect).build()
 | `markdown.document` | document graph 和跨文档引用 |
 | `markdown.testkit` | 第三方扩展 TCK |
 | `markdown.native` | 可选原生 line scanner |
+| `markdown.node` | 显式、可选的 KaTeX/Shiki/Mermaid 准备端口 |
 
 ## 性能对比
 
@@ -212,10 +216,10 @@ markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、�
 | Offline evidence ready | `not ready` |
 | CI verified at evidence repository HEAD | `no` |
 | Published release | `no` |
-| Tests | `1611/1611` passed; `0` skipped; `0` failed |
+| Tests | `1614/1614` passed; `0` skipped; `0` failed |
 | CommonMark conformance | `652/652` |
 | GFM conformance | `671/671` |
-| Public API snapshot | `1705` declarations |
+| Public API snapshot | `1710` declarations |
 | Artifact commit | `6e5a207d07903a60f8270c41badac1bb4cb104b5` |
 | Evidence subject commit | `6e5a207d07903a60f8270c41badac1bb4cb104b5` |
 | Execution identity | `target/release-evidence/manifest.json` records and verifies the clean gate commit/tree |

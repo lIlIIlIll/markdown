@@ -60,7 +60,8 @@ CommonMark 0.31.2 和 GFM modern 可组合这六项扩展；GFM 0.29 未列在�
 基础能力仅随对应 GFM profile 默认开启；github-alerts、wikilinks 仍是未实现的目录项。
 另有独立选择的 [Code Groups 1.0](code-groups.md)，不加入 p1Dialect 的六项组合。
 它支持有序代码条目、标题、行高亮、原始换行复制及可选 tabs；基础 profile 默认关闭。
-真实富内容后端、编辑和性能的最终验收仍在 issue #10 中推进。
+真实富内容有[可选 Linux Node 链路](node-rich-backend.md)；编辑和冻结性能的最终验收
+仍在 issue #10 中推进。
 
 ## 智能标点
 

@@ -35,6 +35,7 @@
 | 选择 String、bytes、stream 或 events | [输入、限制和取消](input-and-resources.md) |
 | 处理 HTML sink 背压与部分字节确认 | [暂停与恢复 HTML 输出](html-output.md) |
 | 显式准备公式、图表和颜色 token，处理后端缺失 | [富内容准备](rich-content.md) |
+| 离线安装真实 KaTeX、Mermaid 和 Shiki 链路 | [可选 Node 后端](node-rich-backend.md) |
 | 配置 HTML、URI 和 sanitizer | [Rendering API](api/rendering.md) |
 | 自定义块或行内语法 | [扩展开发](extensions.md) |
 | query、rewrite、lint 或 format | [Editor API](api/editor.md) |

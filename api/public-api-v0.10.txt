@@ -1246,6 +1246,11 @@ native/accelerator.cj:package=markdown.native:owner=class/NativeLineScanner:publ
 native/accelerator.cj:package=markdown.native:owner=class/NativeLineScanner:public func scanLines(input: Array<Byte>, capacity: Int64): ?Array<UInt64> {
 native/accelerator.cj:package=markdown.native:owner=class/NativeLineScanner:public init() {
 native/accelerator.cj:package=markdown.native:public class NativeLineScanner <: LineScannerAccelerator {
+node/node.cj:package=markdown.node:owner=class/NodeRichContentBackend:public func identity(kind: RichContentKind): String {
+node/node.cj:package=markdown.node:owner=class/NodeRichContentBackend:public func prepare(requests: Array<RichContentRequest>, limits: RichContentLimits, budget: OperationBudget, cancellation: CancellationToken): Array<RichContentOutcome> {
+node/node.cj:package=markdown.node:owner=class/NodeRichContentBackend:public init(runtimeDirectory: String, workDirectory: String, pythonExecutable!: String = "/usr/bin/python3", shikiTheme!: String = "github-light", diagramTheme!: String = "default", allowUnsandboxedChromium!: Bool = false) {
+node/node.cj:package=markdown.node:owner=class/NodeRichContentBackend:public let runtimeIdentity: String
+node/node.cj:package=markdown.node:public class NodeRichContentBackend <: RichContentBackend {
 observability.cj:package=markdown:owner=class/ObservedParseResult:public init(result: ParseResult, statistics: ParseStatistics) {
 observability.cj:package=markdown:owner=class/ObservedParseResult:public let result: ParseResult
 observability.cj:package=markdown:owner=class/ObservedParseResult:public let statistics: ParseStatistics

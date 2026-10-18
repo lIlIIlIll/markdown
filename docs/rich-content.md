@@ -4,8 +4,9 @@
 只有宿主开启相应能力并提供后端时，它才请求派生展示。默认 parser、HTML、Text 和
 Markdown 不执行外部程序，也不下载或安装引擎。
 
-共享准备层已经实现。固定版本的 KaTeX、Mermaid 和 Shiki 已通过独立能力 probe；
-可安装的正式适配器仍在开发，不能把 probe 当作本页接口的端到端后端交付。
+共享准备层和固定版本的 [Linux Node 可选适配器](node-rich-backend.md)均已实现。
+适配器提供真实 KaTeX MathML、Shiki 颜色 token 和 Mermaid flowchart PNG；基础默认路径
+继续独立可用。安装、许可、离线输入、实际能力和进程边界见该指南。
 
 ## 选择能力并处理缺失
 
@@ -79,7 +80,7 @@ renderer 和输出 session 都拒绝旧或外来的文档版本；不会因为�
 
 ## 拥有并清理缓存
 
-显式传入 `RichContentCache` 才会跨准备操作缓存。key 绑定协议、种类、完整源内容、
+显式传入 `RichContentCache` 才会跨准备操作缓存。key 绑定协议、种类、传入引擎的完整表达式/代码、
 语言、display 标志及后端 identity。identity 必须包含引擎版本及实际影响该产物的配置；
 主题只在实际影响产物时参与，例如高亮颜色，而非与主题无关的 MathML。
 

@@ -30,7 +30,8 @@ import markdown.core.{MarkdownEngine, MarkdownProfile}
 import markdown.render.{HtmlOptions, HtmlRenderer}
 ```
 
-根包 `markdown.*` 继续提供兼容门面，但容易让代码无意依赖 editor、artifact 或 testkit。
+根包 `markdown.*` 包含共享实现和完整公开集合；按用途导入可以避免无意依赖 editor、
+artifact 或 testkit。可选真实富内容准备使用 `markdown.node`，见[安装指南](node-rich-backend.md)。
 
 ### 最小依赖原则
 

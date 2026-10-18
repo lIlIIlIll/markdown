@@ -12,6 +12,8 @@ __pycache__/
 !docs/reports/*.json
 !release-evidence.json
 !.github/benchmark-evidence.json
+!backends/node/package.json
+!backends/node/package-lock.json
 !tests/differential/
 !tests/differential/commonmark-js/
 !tests/differential/commonmark-js/package.json
