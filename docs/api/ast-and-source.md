@@ -97,7 +97,7 @@ let second = engine.parse(input)
 | `dialectFingerprint` | `String` | 编译方言身份 |
 | `references` | `ImmutableArray<ReferenceDefinition>` | reference definitions |
 | `walk()` | `NodeRefWalker` | 深度优先 enter/exit iterator |
-| `detach()` | `Document` | 将 slice-backed text/code/html literal 转成 owned text |
+| `detach()` | `Document` | 独立 arena 与 owned text；未知 custom payload 报 UnsupportedNode |
 
 `NodeRef` 只能和其所属 `Document` 一起使用。把一个 snapshot 的 NodeRef 传给另一
 个 Document 会抛出 `IllegalArgumentException`。

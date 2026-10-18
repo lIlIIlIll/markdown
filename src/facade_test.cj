@@ -20,7 +20,8 @@ class FacadeTest {
             longText.append("x")
         }
         let ownedText = longText.toString()
-        let parsed = Markdown.parse(ownedText).document
+        let result = Markdown.parse(ownedText)
+        let parsed = result.document
         let parsedText = parsed.children()[0].children()[0]
         match (parsedText.kind) {
             case NodeKind.Text => match (parsedText.asText().getOrThrow().rawLiteralStorage()) {
@@ -30,6 +31,10 @@ class FacadeTest {
             case _ => @Expect(false)
         }
         let detached = parsed.detach()
+        @ExpectThrows[IllegalArgumentException](ParseResult(detached, result.source, []))
+        @Expect(detached.nodeCount, parsed.nodeCount)
+        @Expect(detached.nodeId, parsed.nodeId)
+        @Expect(detached.revision == parsed.revision, false)
         @Expect(PlainTextRenderer().render(detached), ownedText)
         let detachedText = detached.children()[0].children()[0]
         match (detachedText.kind) {
@@ -54,6 +59,34 @@ class FacadeTest {
                     case _ => ()
                 }
             }
+        }
+    }
+
+    @TestCase
+    func detachPreservesBoundSemanticsAndRejectsOpaqueOwnership(): Unit {
+        let engine = MarkdownEngine.builder().dialect(OfficialExtensions.p1Dialect()).build()
+        let parsed = engine.parse("# Heading {#explicit}\n\nword[^n]\n\n[^n]: **body**")
+        let detached = parsed.document.detach()
+        @Expect(HtmlRenderer().render(detached), HtmlRenderer().render(parsed.document))
+        @Expect(CanonicalMarkdownRenderer().render(detached), CanonicalMarkdownRenderer().render(parsed.document))
+        @Expect(detached.bindings.headings[0].id, "explicit")
+        let rewritten = TreeRewriter.rewrite(parsed.document, {
+            node => if (let NodeKind.Text <- node.kind) {
+                RewriteAction.MapText("edited")
+            } else {
+                RewriteAction.Keep
+            }
+        })
+        let compact = rewritten.detach()
+        @Expect(HtmlRenderer().render(compact), HtmlRenderer().render(rewritten))
+        @Expect(PlainTextRenderer().render(compact), PlainTextRenderer().render(rewritten))
+        let opaque = opaqueArtifactEngine(OpaqueArtifactEmitter()).parse("%%text%%")
+        try {
+            opaque.document.detach()
+            @Expect(false)
+        } catch (error: MarkdownException) {
+            @Expect(error.phase, "detach")
+            @Expect(if (let MarkdownErrorCode.UnsupportedNode <- error.code) { true } else { false })
         }
     }
 }

@@ -150,6 +150,18 @@ public class DocumentBindings {
     private let fragments = HashMap<String, NodeId>()
     private let linkNodes = HashMap<NodeId, LinkBinding>()
 
+    internal func relocatedDefinitions(indexes: HashMap<Int64, Int64>): DocumentBindings {
+        let notes = ArrayList<FootnoteDefinitionBinding>()
+        for (note in footnotes.toArray()) {
+            notes.add(
+                FootnoteDefinitionBinding(note.definition, indexes[note.definitionIndex], note.number, note.definitionId,
+                    note.references.toArray()))
+        }
+        DocumentBindings(options, limits, engineFingerprint, notes.toArray(), footnoteReferences, diagnostics.toArray(),
+            footnotesEnabled: footnotesEnabled, headingsEnabled: headingsEnabled, headings: headings.toArray(),
+            links: links.toArray(), semanticPayloadsValidated: semanticPayloadsValidated)
+    }
+
     internal init(options: BindingOptions, limits: ParseLimits, engineFingerprint: String,
         footnotes: Array<FootnoteDefinitionBinding>, references: HashMap<NodeId, FootnoteReferenceBinding>,
         diagnostics: Array<Diagnostic>, footnotesEnabled!: Bool = true, headingsEnabled!: Bool = false,

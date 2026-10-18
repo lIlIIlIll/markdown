@@ -10,7 +10,7 @@ for automatic merge or publication.
 | Required checks | Replaced the three obsolete SDK contexts with the two passing STS 1.2.0 contexts; all other protection values verified equal | PASS |
 | MD-00.3 / EDT-T01 identity | NodeId lineage plus nonrecycled serial, distinct immutable revisions, bounded shared-arena reservations, distributed identity hashes, persistent-fork allocation and stale CST/NodeRef/fix rejection | Correctness/resource regression PASS in 1566-case run; final performance cost not yet qualified |
 | MD-00.4 / MD-00.5 / ARC-T02 | Success-only ParseResult, explicit ParseOutcome, removed aliases and content-hash StableNodeId; consumers migrated | PASS in the 1517-case full run |
-| MD-00.7 / ART-T01 | 0.10 API boundary, SPI 3, plan 5, artifact schema 3; no old reader; explicit unsupported-version error | Current Node checkpoint: 1614/1614 full tests and 70 API/evidence Python tests PASS |
+| MD-00.7 / ART-T01 | 0.10 API boundary, SPI 3, plan 6, artifact schema 3; no old reader; explicit unsupported-version error | Current integrity checkpoint: 1617/1617 full tests and 70 API/evidence Python tests PASS |
 | MD-00.1/.2, MD-01 batch | Typed footnote payloads, reachable-definition binding, first-definition/numbering/unique-anchor/backlink decisions, shared HTML/Text/Markdown output, exact source and snapshot/config identity; DocumentBindingTests | Batch and public append implemented; complete output-resource qualification pending |
 | MD-03 batch | Heading-only typed suffix, explicit-ID reservation, shared anchor allocator, authoritative heading/fragment queries, structured TOC, source/Markdown/snapshot preservation; HeadingBindingTests | Batch and public append implemented; edit dependency qualification pending |
 | MD-02 / EXT-T03 | Definition Lists 2.0 with typed List/Entry/Term/Definition, ordinary block bodies, source markers, full binding validation and shared HTML/Text/Markdown/snapshot/append/output traversal | Implemented; 1564-case full run and consumer gates PASS |
@@ -344,3 +344,17 @@ asserts empty stderr. The final complete gate passes all actual and fixture case
 Remaining scope is MD-06 resource measurements, MD-07/08 measured editor/cache
 decisions and retention audit, fresh frozen performance/release evidence and the
 complete final ID ledger. No core push, PR, merge or release is authorized.
+
+## Ownership and binary identity audit
+
+The public pre-fix probe reproduced both retained parser provenance after
+`detach()` and acceptance of an opaque binary payload. The final build now
+rejects both. Detachment copies only reachable records into a source-free arena,
+preserves NodeIds under a new revision, and relocates footnote physical indexes.
+Opaque payload ownership is rejected rather than guessed. The binary digest
+rejects unknown payloads and covers owned, sorted typed parameter names/types/values.
+Parser plan 6 invalidates the prior configuration identity; wire layout stays 3.
+The public regressions include transformed footnotes, detached-source rejection,
+typed-map mutation, unknown encode and unknown decode. Official STS 1.2.0 build
+and 1617/1617 full tests PASS with no skips or errors. Editor/cache optimization
+selection and the final frozen release/performance gates remain pending.

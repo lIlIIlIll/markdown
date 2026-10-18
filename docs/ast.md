@@ -21,7 +21,9 @@ println(heading.level)
 
 普通 text、code block 和 HTML block 可引用 `SourceBuffer` 范围，避免复制 literal。
 `Document.detach()` 返回等价 Document，并把这些 literal 转为 owned String。需要让
-AST 脱离原始输入生命周期时调用 `detach()`。
+AST 脱离原始输入生命周期时调用 `detach()`。它复制可达节点到独立 arena，保留 NodeId
+并创建新 revision，不保留旧 arena 中不可达的 source slice。未知 custom payload 的
+ownership 无法验证时报告 `UnsupportedNode`；不会假装已解除来源持有。
 
 ## 遍历和查询
 

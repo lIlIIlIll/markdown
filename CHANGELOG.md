@@ -9,6 +9,9 @@
 
 ### Changed
 
+- `Document.detach()` 使用独立 compact arena，保留绑定目标；未知 payload ownership 明确失败。
+- Binary snapshot 拒绝未知 payload，typed 参数名称、类型和值纳入摘要，参数表防御性复制。
+
 - 显式富内容准备：有界 MathML/token/PNG 校验、独立失败状态、Ready 缓存与 revision 绑定。
   同步/可恢复 HTML 共用产物；默认保留原文。
 - 可选 Linux Node 适配器：固定 KaTeX/Shiki/Mermaid、显式离线准备与许可闭包、受控产物和
@@ -22,7 +25,7 @@
 - 共享 lineage 的短片段按构造规模预留编号，避免过早耗尽身份空间；改善稀疏编号的哈希分布。
 - ParseResult 只表示成功；tryParse 返回独立的成功/失败枚举。
 - 移除纯兼容别名、内容哈希型 StableNodeId 和旧 schema reader 路径。
-- Extension SPI 3、parser plan 5、artifact schema 3 与独立的 0.10 API snapshot。
+- Extension SPI 3、parser plan 6、artifact schema 3 与独立的 0.10 API snapshot。
 - 整文处理分为绑定前 AST transform 和绑定后只读 analysis；共享实际 limits、预算和取消。
 - 可恢复 HTML 遍历与部分 UTF-8 字节确认，移除预先渲染整份 HTML 的 buffered 输出实现。
 - 实际分块解析的追加会话、带身份与版本的原子更新、参考消费端与最终后置引用绑定。
@@ -42,7 +45,7 @@
 - benchmark evidence status `stale`；
 - CommonMark `652/652`；
 - GFM `671/671`；
-- 测试 `1614/1614`，`0` skipped，`0` failed；
+- 测试 `1617/1617`，`0` skipped，`0` failed；
 - public API snapshot `1710` declarations；
 - last complete CommonMark ratio `2.361586x`；
 - last complete GFM ratio `1.788010x`。

@@ -55,7 +55,7 @@ class ArtifactSourceMapTest {
         let result = engine.parse("text")
         let artifact = engine.createArtifact(result)
         @Expect(artifact.schemaVersion, "3")
-        @Expect(artifact.parserPlanVersion, "5")
+        @Expect(artifact.parserPlanVersion, "6")
         @Expect(artifact.utf8PolicyId, "strict")
         @Expect(artifact.sourceDigest, artifact.decodedTextDigest)
         match (engine.loadArtifact(artifact, "text")) {

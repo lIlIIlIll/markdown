@@ -42,6 +42,60 @@ private class ArenaRewriteFrame {
     }
 }
 
+// A persistent rewrite retains the old payload arena, including unreachable
+// source slices. Detachment needs a compact arena with no source owner instead.
+internal func detachDocument(document: Document): Document {
+    let builder = AstArenaBuilder(maximumNodes: document.nodeCount, trustedParserConstruction: true,
+        lineage: Some(document.nodeLineage()))
+    let indexes = HashMap<Int64, Int64>()
+    for (event in document.walk()) {
+        if (let NodeRefWalkEvent.Exit(node) <- event) {
+            let children = node.children()
+            let mapped = Array<Int64>(children.size, {index => indexes[children[index].index]})
+            let payload = detachedPayload(node)
+            indexes.add(node.index, builder.appendSessionNode(node, mapped, node.span, payload, Some(node.origin)))
+        }
+    }
+    builder.freeze(indexes[document.root().index]).withBindings(document.bindings.relocatedDefinitions(indexes))
+}
+
+private func detachedPayload(node: NodeRef): ArenaNodePayload {
+    match (node.kind) {
+        case NodeKind.Text =>
+            let value = node.asText().getOrThrow()
+            ArenaNodePayload.TextValue(LiteralStorage.Copy(value.raw), LiteralStorage.Copy(value.value),
+                value.normalized)
+        case NodeKind.CodeBlock =>
+            let value = node.asCodeBlock().getOrThrow()
+            ArenaNodePayload.CodeBlockValue(value.codeKind, LiteralStorage.Copy(value.literal), value.fenceCharacter,
+                value.fenceLength, value.openingFenceSpan, value.closingFenceSpan, value.infoRaw, value.language,
+                value.attributesRaw)
+        case NodeKind.HtmlBlock =>
+            let value = node.asHtmlBlock().getOrThrow()
+            ArenaNodePayload.HtmlBlockValue(LiteralStorage.Copy(value.literal), value.blockType)
+        case NodeKind.CustomBlock | NodeKind.CustomInline =>
+            let value = if (let NodeKind.CustomBlock <- node.kind) {
+                node.asCustomBlock().getOrThrow()
+            } else {
+                node.asCustomInline().getOrThrow()
+            }
+            if (!knownOwnedCustomPayload(value.payload)) {
+                throw MarkdownException(MarkdownErrorCode.UnsupportedNode, "cannot detach an opaque custom payload",
+                    phase: "detach", span: node.span)
+            }
+            node.snapshotPayload()
+        case _ => node.snapshotPayload()
+    }
+}
+
+internal func knownOwnedCustomPayload(payload: CustomPayload): Bool {
+    match (payload) {
+        case _: CodeGroupPayload | _: MathPayload | _: DefinitionListPayload | _: HeadingIdPayload
+            | _: FootnoteDefinitionPayload | _: FootnoteReferencePayload | _: SyntaxPayload => true
+        case _ => false
+    }
+}
+
 /** 对 arena AST 执行后序、非递归 transform 并重新验证结果。 */
 public class TreeRewriter {
     /**

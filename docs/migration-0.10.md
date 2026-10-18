@@ -22,7 +22,7 @@
 - 智能标点升为 2.0；保护自动链接的显示 URI，无内容变化时保留节点身份，并累计文本扫描预算。
 - `InlineSyntaxMatch` 增加 `rawLiteral` 和 `literalSpan`，分别提供原始捕获文本与精确范围；
   `literal` 仍是容器规范化后的匹配内容。
-- Extension SPI 为 `3`，parser plan 为 `5`，parse artifact 与 binary snapshot schema 为 `3`。
+- Extension SPI 为 `3`，parser plan 为 `6`，parse artifact 与 binary snapshot schema 为 `3`。
   旧缓存返回 CacheMiss；显式 `BinaryArtifactCodec.read` 遇到旧持久化版本报
   `MarkdownErrorCode.UnsupportedVersion`，不尝试旧格式解码。
 - 移除 ExtensionDocumentProcessor、ExtensionProcessingPhase 和 documentProcessor 注册。
@@ -69,7 +69,7 @@ Math 不再返回通用 `SyntaxPayload`。使用 `MathPayload.expression` 读取
 p1Dialect 组合。代码组有 Group/Item payload 和普通 CodeBlock children，HTML 默认保持
 完整静态可读。开启 `CodeGroupHtmlOptions(interactive: true)` 后仍需宿主显式加载静态
 资产；见[代码组](code-groups.md)。结构化 literal 容器的引用收集复用实际 block 边界，
-不会让公式或代码正文中的伪定义成为外部链接目标。parser plan 5 的 descriptor、engine
+不会让公式或代码正文中的伪定义成为外部链接目标。parser plan 6 的 descriptor、engine
 fingerprint 与 parse artifact 使用同一版本常量，旧配置缓存失效；binary layout 保持 3。
 
 ## 富内容准备

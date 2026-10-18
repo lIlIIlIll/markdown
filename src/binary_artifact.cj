@@ -368,7 +368,9 @@ private func appendBinaryCustomPayload(out: CanonicalDescriptor, payload: Custom
             out.append(value.name)
             out.append(value.parameters)
             out.append(value.literal)
-        case _ => ()
+            value.appendArtifactParameters(out)
+        case _ => throw MarkdownException(MarkdownErrorCode.InvalidArtifact,
+            "binary snapshots cannot verify an opaque custom payload", phase: "artifact_encode")
     }
 }
 

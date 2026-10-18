@@ -1,9 +1,10 @@
 package markdown
 
 import std.collection.*
+import std.sort.sort
 import std.unicode.*
 
-internal let MARKDOWN_PARSER_PLAN_VERSION: String = "5"
+internal let MARKDOWN_PARSER_PLAN_VERSION: String = "6"
 
 /** custom node 缺少 renderer rule 时的处理策略。 */
 public enum MissingRendererPolicy {
@@ -2434,7 +2435,10 @@ public class SyntaxPayload <: CustomPayload {
         this.name = name
         this.parameters = parameters
         this.literal = literal
-        this.typedValues = typedValues
+        this.typedValues = HashMap<String, SyntaxParameterValue>()
+        for ((key, value) in typedValues) {
+            this.typedValues.add(key, value)
+        }
     }
     /**
      * 返回稳定 payload type identity。
@@ -2449,6 +2453,32 @@ public class SyntaxPayload <: CustomPayload {
      */
     public func parameter(name: String): ?SyntaxParameterValue {
         typedValues.get(name)
+    }
+    internal func appendArtifactParameters(out: CanonicalDescriptor): Unit {
+        let keys = ArrayList<String>()
+        for ((key, _) in typedValues) {
+            keys.add(key)
+        }
+        let ordered = keys.toArray()
+        sort(ordered, lessThan: {left, right => left < right})
+        out.append(ordered.size)
+        for (key in ordered) {
+            out.append(key)
+            match (typedValues[key]) {
+                case SyntaxParameterValue.StringValue(value) =>
+                    out.append("string");
+                    out.append(value)
+                case SyntaxParameterValue.IdentifierValue(value) =>
+                    out.append("identifier");
+                    out.append(value)
+                case SyntaxParameterValue.IntegerValue(value) =>
+                    out.append("integer");
+                    out.append(value)
+                case SyntaxParameterValue.BooleanValue(value) =>
+                    out.append("boolean");
+                    out.append(value)
+            }
+        }
     }
 }
 

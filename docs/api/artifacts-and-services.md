@@ -61,6 +61,8 @@ profile、dialect、engine、UTF-8 policy、source、AST、CST 和 trailing byte
 
 decode 会验证 source 后重新解析 snapshot。它不会信任 artifact 中的未验证节点数据。
 解码得到新的 lineage/revision，语义 digest 不包含进程内节点编号。
+内建 `SyntaxPayload` 的 typed 参数按名称排序，连同类型和值参与摘要。未知 custom
+payload 缺少可验证的语义编码：encode 报 `InvalidArtifact`，decode 返回 CacheMiss。
 
 对显式提供的持久化文件，使用 `BinaryArtifactCodec.read(engine, bytes)`。旧版或未知版
 报 `MarkdownErrorCode.UnsupportedVersion`；无效内容报 `InvalidArtifact`。
