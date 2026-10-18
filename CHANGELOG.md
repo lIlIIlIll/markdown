@@ -41,8 +41,8 @@ CI 验证和 GitHub Release 发布是独立状态；0.9 不构成 1.x ABI/行为
 - GFM `671/671`；
 - 测试 `1511/1511`，`0` skipped，`0` failed；
 - public API snapshot `1436` declarations；
-- canonical CommonMark ratio `2.334814x`；
-- canonical GFM ratio `1.995218x`。
+- canonical CommonMark ratio `2.361586x`；
+- canonical GFM ratio `1.788010x`。
 
 原始数据和受测 commit identity 见 `docs/reports/benchmark-raw.json`。
 <!-- release-evidence:end -->
