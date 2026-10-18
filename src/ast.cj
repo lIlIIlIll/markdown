@@ -114,7 +114,7 @@ public struct NodeId <: Equatable<NodeId> & Hashable {
      * @return 节点身份的哈希值。
      */
     public func hashCode(): Int64 {
-        lineage ^ value
+        nodeIdentityHash(lineage, value)
     }
 }
 

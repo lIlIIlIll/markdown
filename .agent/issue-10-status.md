@@ -8,7 +8,7 @@ for automatic merge or publication.
 | --- | --- | --- |
 | Prerequisite baseline | PR #11 merged as `8b5227b`; official STS 1.2.0; final push/PR checks PASS; exact retained CI artifact rebuilt offline in Arch and Ubuntu | PASS |
 | Required checks | Replaced the three obsolete SDK contexts with the two passing STS 1.2.0 contexts; all other protection values verified equal | PASS |
-| MD-00.3 / EDT-T01 identity | NodeId lineage plus nonrecycled serial, distinct immutable revisions, persistent-fork allocation, stale CST/NodeRef/fix rejection; 1517/1517 full tests PASS with STS 1.2.0 after result/schema migration | In progress: performance cost not yet qualified |
+| MD-00.3 / EDT-T01 identity | NodeId lineage plus nonrecycled serial, distinct immutable revisions, bounded shared-arena reservations, distributed identity hashes, persistent-fork allocation and stale CST/NodeRef/fix rejection | Correctness/resource regression PASS in 1566-case run; final performance cost not yet qualified |
 | MD-00.4 / MD-00.5 / ARC-T02 | Success-only ParseResult, explicit ParseOutcome, removed aliases and content-hash StableNodeId; consumers migrated | PASS in the 1517-case full run |
 | MD-00.7 / ART-T01 | 0.10 API boundary, SPI 2, plan/schema 3; no old reader; explicit unsupported-version error | PASS in the 1517-case full run; API checker 47, evidence bundle 5 and evidence logic 18 tests PASS |
 | MD-00.1/.2, MD-01 batch | Typed footnote payloads, reachable-definition binding, first-definition/numbering/unique-anchor/backlink decisions, shared HTML/Text/Markdown output, exact source and snapshot/config identity; DocumentBindingTests | Batch and public append implemented; complete output-resource qualification pending |
@@ -98,3 +98,16 @@ build/smoke and benchmark-driver build PASS. Format/docs/API/evidence checks and
 70 API/evidence Python tests PASS; public API: 1573 declarations. Full lifecycle,
 remaining extension/rich-backend, editor/artifact and frozen release/performance
 qualification remain pending. No core push or PR is authorized.
+
+The identity-resource checkpoint uses official STS 1.2.0 and formatted product
+tree `bcd0999fe4d6daf2c6669c24f30bb1fe046df097a229c1f6b89eb2a1a749ac41`
+(workspace and disk-backed test tree verified equal). Full tests: 1566/1566 PASS,
+zero skips/errors/failures; format and unchanged 1573-declaration API PASS.
+In the actual internal probe, 1024 three-node arenas previously advanced their
+shared lineage to serial 4190211; the same fixture now ends at 3072. Independent
+batch arenas keep chunk reservations, while shared fragment/resolver/fork arenas
+grow bounded reservations geometrically. Rollback never recycles identities and
+the finite 32-bit exhaustion remains explicit. Distribution and lookup regressions
+cover sparse serials and distinct lineage/serial pairs; the actual SDK HashMap
+probe preserves checksums before/after. Exploratory process timings are not the
+frozen performance gate or evidence of end-to-end throughput/RSS qualification.

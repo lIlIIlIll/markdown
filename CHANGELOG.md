@@ -10,6 +10,7 @@
 ### Changed
 
 - 节点身份使用 lineage 与不回收编号，NodeRef 和 lint fix 绑定不可变 revision。
+- 共享 lineage 的短片段按构造规模预留编号，避免过早耗尽身份空间；改善稀疏编号的哈希分布。
 - ParseResult 只表示成功；tryParse 返回独立的成功/失败枚举。
 - 移除纯兼容别名、内容哈希型 StableNodeId 和旧 schema reader 路径。
 - Extension SPI 2、parser plan 3、artifact schema 3 与独立的 0.10 API snapshot。
@@ -30,7 +31,7 @@
 - benchmark evidence status `stale`；
 - CommonMark `652/652`；
 - GFM `671/671`；
-- 测试 `1564/1564`，`0` skipped，`0` failed；
+- 测试 `1566/1566`，`0` skipped，`0` failed；
 - public API snapshot `1573` declarations；
 - last complete CommonMark ratio `2.361586x`；
 - last complete GFM ratio `1.788010x`。

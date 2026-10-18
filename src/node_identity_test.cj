@@ -1,10 +1,60 @@
 package markdown
 
+import std.collection.*
 import std.unittest.*
 import std.unittest.testmacro.*
 
 @Test
 class NodeIdentityTests {
+    @TestCase
+    func shortSharedLineageArenasKeepSerialConsumptionProportionalToActualNodes(): Unit {
+        let lineage = NodeLineage()
+        let identities = HashSet<NodeId>()
+        var last: Int64 = 0
+        for (_ in 0..2048) {
+            let nodes = ParserNodeFactory(4, lineage: Some(lineage))
+            let text = nodes.text(LiteralStorage.Copy("x"), LiteralStorage.Copy("x"), SourceSpan(0, 1))
+            let paragraph = nodes.paragraph([text], SourceSpan(0, 1))
+            let document = nodes.finishDocument([paragraph], SourceSpan(0, 1), MarkdownProfile.commonMark0312(), "test",
+                [])
+            for (node in [document.root(), document.nodeAt(paragraph), document.nodeAt(text)]) {
+                @Expect(identities.add(node.nodeId), true)
+                last = max(last, node.nodeId.value)
+            }
+        }
+        @Expect(identities.size, 2048 * 3)
+        @Expect(last <= identities.size * 2, true)
+        @ExpectThrows[IllegalArgumentException](lineage.reserve(requested: 0))
+        @ExpectThrows[IllegalArgumentException](lineage.reserve(requested: AST_NODE_CHUNK_SIZE + 1))
+    }
+
+    @TestCase
+    func sparseSerialsAndIndependentLineagesHaveDistributedHashes(): Unit {
+        for (shape in [0, 1]) {
+            let buckets = HashSet<Int64>()
+            let values = HashMap<NodeId, Int64>()
+            for (index in 1..4097) {
+                let node = if (shape == 0) {
+                    NodeId(1, index * 4096)
+                } else {
+                    NodeId(index, index)
+                }
+                buckets.add(node.hashCode() & 1023)
+                values.add(node, index)
+            }
+            @Expect(buckets.size >= 768, true)
+            @Expect(values.size, 4096)
+            for (index in 1..4097) {
+                let node = if (shape == 0) {
+                    NodeId(1, index * 4096)
+                } else {
+                    NodeId(index, index)
+                }
+                @Expect(values[node], index)
+            }
+        }
+    }
+
     @TestCase
     func priorExtensionSpiIsRejectedAtTheNewIdentityBoundary(): Unit {
         let old = MarkdownDialect

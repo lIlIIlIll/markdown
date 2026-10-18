@@ -29,8 +29,19 @@ internal func nextDocumentRevision(): Int64 {
     reserveIdentityRange(NEXT_DOCUMENT_REVISION, 1, Int64.Max - 1)[0]
 }
 
+// Mix both identity components before power-of-two hash-table indexing. A
+// sparse serial stride must not turn fragment lookup into long bucket chains.
+@OverflowWrapping
+internal func nodeIdentityHash(lineage: Int64, serial: Int64): Int64 {
+    var value = UInt64(lineage) * 0x9E3779B97F4A7C15 ^ UInt64(serial)
+    value = (value ^ (value >> 30)) * 0xBF58476D1CE4E5B9
+    value = (value ^ (value >> 27)) * 0x94D049BB133111EB
+    value = value ^ (value >> 31)
+    Int64(value & 0x7FFFFFFFFFFFFFFF)
+}
+
 // Persistent forks share only this allocation sequence, never mutable arena
-// records. Each session reserves a range once per chunk and allocates locally.
+// records. Builders reserve bounded ranges and allocate locally within them.
 // Rollback deliberately does not rewind either reservation or local serial.
 internal class NodeLineage {
     let identity: Int64
@@ -40,7 +51,10 @@ internal class NodeLineage {
         identity = reserveIdentityRange(NEXT_NODE_LINEAGE, 1, Int64.Max - 1)[0]
     }
 
-    func reserve(): (Int64, Int64) {
-        reserveIdentityRange(serials, AST_NODE_CHUNK_SIZE, Int64(UInt32.Max))
+    func reserve(requested!: Int64 = AST_NODE_CHUNK_SIZE): (Int64, Int64) {
+        if (requested <= 0 || requested > AST_NODE_CHUNK_SIZE) {
+            throw IllegalArgumentException("identity reservation must fit one arena chunk")
+        }
+        reserveIdentityRange(serials, requested, Int64(UInt32.Max))
     }
 }

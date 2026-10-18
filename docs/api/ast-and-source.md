@@ -158,6 +158,8 @@ for (event in result.document.walk()) {
 `NodeId(lineage, value)` 包含文档 lineage 和不回收的局部编号。编号不是 arena 下标。
 独立解析即使文本相同，也具有不同 lineage；持久化分叉保留共享节点的 NodeId，新节点
 分配新编号，回滚不回收已分配编号。完整重新解析产生新的 lineage。
+局部编号从 `1` 到 `UInt32.Max`；耗尽时明确失败，不回绕或复用。共享 lineage 的短
+arena 按实际构造规模逐步预留编号，避免每个片段浪费一个完整节点 chunk。
 
 `Document.revision` 标识具体不可变视图，`NodeRef.revision` 绑定该视图。共享节点的
 NodeId 可以不变，但旧视图的 NodeRef 不能传给新视图的访问器。查询新视图时使用

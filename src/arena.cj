@@ -1344,6 +1344,7 @@ internal class AstArenaBuilder {
     private let lineageAllocator: NodeLineage
     private var nextLocalIdentity: Int64 = 0
     private var reservedIdentityEnd: Int64 = 0
+    private var identityReservationSize: Int64 = AST_NODE_CHUNK_SIZE
     private let maximumNodes: Int64
     private let constructionBudget: ?NodeConstructionBudget
     private let trustedParserConstruction: Bool
@@ -1375,6 +1376,11 @@ internal class AstArenaBuilder {
             case Some(value) => value;
             case None => NodeLineage()
         }
+        // Short append/resolver arenas share a lineage. Start with one serial
+        // and grow geometrically instead of abandoning a full 4096-node range.
+        if (lineage.isSome()) {
+            identityReservationSize = 1
+        }
         this.maximumNodes = maximumNodes
         this.constructionBudget = constructionBudget
         this.trustedParserConstruction = trustedParserConstruction
@@ -1400,6 +1406,7 @@ internal class AstArenaBuilder {
         // A transformed snapshot is a different Document identity even when
         // it shares immutable chunks with its source snapshot.
         lineageAllocator = base.nodeLineage()
+        identityReservationSize = 1
         constructionBudget = None
         this.maximumNodes = if (maximumNodes == Int64.Max) {
             Int64.Max
@@ -1893,9 +1900,10 @@ internal class AstArenaBuilder {
 
     private func allocateLocalIdentity(): Int64 {
         if (nextLocalIdentity == reservedIdentityEnd) {
-            let (start, end) = lineageAllocator.reserve()
+            let (start, end) = lineageAllocator.reserve(requested: identityReservationSize)
             nextLocalIdentity = start
             reservedIdentityEnd = end
+            identityReservationSize = min(AST_NODE_CHUNK_SIZE, identityReservationSize * 2)
         }
         let identity = nextLocalIdentity
         nextLocalIdentity++
