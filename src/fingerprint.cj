@@ -221,7 +221,7 @@ private func hexWords(words: Array<UInt32>): String {
 
 internal func parserConfigurationFingerprint(dialectFingerprint: String, limits: ParseLimits, options: BindingOptions): String {
     let out = CanonicalDescriptor()
-    out.append("engine-0.10-plan-3")
+    out.append("engine-0.10-plan-${MARKDOWN_PARSER_PLAN_VERSION}")
     out.append(options.idScope)
     out.append(options.strictUndefinedFootnotes)
     out.append(dialectFingerprint)

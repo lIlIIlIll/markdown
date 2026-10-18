@@ -29,6 +29,7 @@ internal enum HtmlCursorAction {
     | Table(NodeRef, Int64, Int64)
     | TableRow(NodeRef, Bool)
     | TableCells(NodeRef, Int64, Bool)
+    | CodeGroupLines(CodeGroupLineState)
     | ImageAlt(NodeRef)
     | ImageChildren(NodeRef, Int64)
     | Footnotes(Document, Int64, Int64, Int64)
@@ -180,6 +181,11 @@ internal class HtmlOutputCursor {
                     }
                     actions.add(HtmlCursorAction.TableCells(row, index + 1, header))
                     actions.add(HtmlCursorAction.Node(ArenaRenderFrame(cell, false, tableHeader: header)))
+                }
+            case HtmlCursorAction.CodeGroupLines(state) =>
+                renderer.expandCursorCodeGroupLine(state, planner, cancellation, budget)
+                if (state.offset < state.code.size) {
+                    planner.emit(HtmlCursorAction.CodeGroupLines(state))
                 }
             case HtmlCursorAction.ImageAlt(node) => expandImageAlt(node)
             case HtmlCursorAction.ImageChildren(parent, index) =>

@@ -272,6 +272,17 @@ public class CanonicalMarkdownRenderer {
             case NodeKind.CustomBlock =>
                 let custom = node.asCustomBlock().getOrThrow()
                 requireSemanticRendererContract(custom, extensionRules, phase: "format")
+                if (let value: CodeGroupPayload <- custom.payload) {
+                    if (let CodeGroupRole.Group <- value.role) {
+                        stack.add(FormatAction.TextValue("\n:::"))
+                        pushSeparated(node.children(), "\n\n", stack)
+                        stack.add(FormatAction.TextValue(":::code-group\n"))
+                    } else {
+                        let code = node.children()[0].asCodeBlock().getOrThrow()
+                        formatCodeBlock(code, out, info: Some(codeGroupInfo(code, value)))
+                    }
+                    return
+                }
                 if (let value: MathPayload <- custom.payload) {
                     out.append("$$\n${value.expression}\n$$")
                     return
@@ -499,12 +510,53 @@ public class CanonicalMarkdownRenderer {
         out.append(value[start..])
     }
 
-    private func formatCodeBlock(code: CodeBlockNodeView, out: StringBuilder): Unit {
-        let fence = chooseFence(code.literal)
-        out.append(fence)
-        if (!code.language.isEmpty()) {
-            out.append(code.language)
+    private func codeGroupInfo(code: CodeBlockNodeView, value: CodeGroupPayload): String {
+        if (code.language.isEmpty()) {
+            return ""
         }
+        let out = StringBuilder()
+        out.append(code.language)
+        out.append(" title=\"")
+        var start: Int64 = 0
+        for (index in 0..value.title.size) {
+            if (value.title[index] == b'\\' || value.title[index] == b'"') {
+                out.append(value.title[start..index])
+                out.append("\\")
+                out.append(value.title[index..index + 1])
+                start = index + 1
+            }
+        }
+        out.append(value.title[start..])
+        out.append("\"")
+        if (!value.highlightedLines.isEmpty()) {
+            out.append(" {")
+            for (index in 0..value.highlightedLines.size) {
+                if (index > 0) {
+                    out.append(",")
+                }
+                let range = value.highlightedLines[index]
+                out.append("${range.firstLine}")
+                if (range.lastLine != range.firstLine) {
+                    out.append("-${range.lastLine}")
+                }
+            }
+            out.append("}")
+        }
+        out.toString()
+    }
+
+    private func formatCodeBlock(code: CodeBlockNodeView, out: StringBuilder, info!: ?String = None): Unit {
+        let header = match (info) {
+            case Some(value) => value;
+            case None => code.language
+        }
+        let fence = if (options.fenceMarker == "`" && header.contains("`")) {
+            chooseFenceWith(code.literal, "~")
+        } else {
+            chooseFence(code.literal)
+        }
+        out.append(fence)
+        out.append(header)
         out.append("\n")
         out.append(code.literal)
         if (!code.literal.isEmpty() && !code.literal.endsWith("\n")) {
@@ -514,7 +566,10 @@ public class CanonicalMarkdownRenderer {
     }
 
     private func chooseFence(literal: String): String {
-        let marker = options.fenceMarker
+        chooseFenceWith(literal, options.fenceMarker)
+    }
+
+    private func chooseFenceWith(literal: String, marker: String): String {
         var longest: Int64 = 0
         var current: Int64 = 0
         var index: Int64 = 0

@@ -198,6 +198,7 @@ internal class AppendTreeAssembler {
                 budget.consumeScan(steps: value.labelRaw.size)
                 FootnoteDefinitionPayload(value.labelRaw, shiftSpan(value.labelSpan, offset))
             case value: HeadingIdPayload => HeadingIdPayload(value.rawId, shiftSpan(value.idSpan, offset))
+            case value: CodeGroupPayload => value
             case value: SyntaxPayload => value
             case _ => throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
                 "append assembly has no source relocation contract for this custom payload", phase: "append_assembly")

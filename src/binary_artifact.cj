@@ -313,6 +313,19 @@ private func appendBinarySemantic(out: CanonicalDescriptor, node: NodeRef): Unit
 private func appendBinaryCustomPayload(out: CanonicalDescriptor, payload: CustomPayload): Unit {
     out.append(payload.payloadTypeId())
     match (payload) {
+        case value: CodeGroupPayload =>
+            out.append(if (let CodeGroupRole.Group <- value.role) {
+                "group"
+            } else {
+                "item"
+            })
+            out.append(value.title)
+            out.append(value.copyText)
+            out.append(value.highlightedLines.size)
+            for (index in 0..value.highlightedLines.size) {
+                out.append(value.highlightedLines[index].firstLine)
+                out.append(value.highlightedLines[index].lastLine)
+            }
         case value: MathPayload =>
             out.append(value.display)
             out.append(value.expression)

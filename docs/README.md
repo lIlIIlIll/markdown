@@ -91,5 +91,6 @@
 
 [返回项目首页](../README.md) · [开始使用](getting-started.md) · [API 速查](api/quick-reference.md)
 
+- [代码组](code-groups.md)：版本化代码、复制原文与可选 tabs。
 - [公式模型](math.md)：Math 2.0 的语义、原文和默认可读输出。
 - [0.10 模型迁移（开发中）](migration-0.10.md)：破坏性修改与实际交付边界。

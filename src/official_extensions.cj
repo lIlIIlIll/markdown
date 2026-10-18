@@ -52,6 +52,7 @@ public class OfficialExtensions {
             OfficialExtensionDescriptor("footnotes", "2.0", false),
             OfficialExtensionDescriptor("front-matter", "1.0", false),
             OfficialExtensionDescriptor("math", "2.0", false),
+            OfficialExtensionDescriptor("code-groups", "1.0", false),
             OfficialExtensionDescriptor("definition-lists", "2.0", false),
             OfficialExtensionDescriptor("heading-ids", "2.0", false),
             OfficialExtensionDescriptor("smart-punctuation", "2.0", false),
@@ -169,6 +170,13 @@ public class OfficialExtensions {
                 ExtensionManifest("smart-punctuation", "2.0.0", "builtin-2",
                     capabilities: ExtensionCapabilities(parse: false, transform: true)))
             .astTransform(SmartPunctuationTransform())
+    }
+
+    /** 显式添加 Code Groups 1.0；不属于 p1Dialect 的默认组合。 */
+    public static func codeGroups(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
+        builder
+            .enable(ExtensionManifest("code-groups", "1.0.0", "builtin-1", capabilities: renderCapabilities()))
+            .block(BlockSyntax.define("code-groups", "code-group").codeGroup())
     }
 
     private static func renderCapabilities(): ExtensionCapabilities {

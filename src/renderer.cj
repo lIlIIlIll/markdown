@@ -450,6 +450,7 @@ public class HtmlRenderer {
     private let extensionManifests: ImmutableArray<ExtensionManifest>
     private let extensionFallbacks: ImmutableArray<ExtensionRendererFallback>
     private let maximumOutputBytes: ?Int64
+    private let codeGroups: CodeGroupHtmlOptions
 
     /**
      * 创建 HTML renderer。
@@ -460,11 +461,12 @@ public class HtmlRenderer {
      * @param extensionFallbacks custom node 的显式 HTML fallback。
      * @param rawHtmlHandler 宿主提供的 raw HTML handler。
      * @param maximumOutputBytes 输出字节数上限。
+     * @param codeGroups 可选代码组渐进增强数据和复制上限。
      */
     public init(options!: HtmlOptions = HtmlOptions.safe(), extensionRules!: Array<RendererRule> = [],
         sanitizer!: ?HtmlSanitizerPort = None, extensionManifests!: Array<ExtensionManifest> = [],
         extensionFallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None,
-        maximumOutputBytes!: ?Int64 = None) {
+        maximumOutputBytes!: ?Int64 = None, codeGroups!: CodeGroupHtmlOptions = CodeGroupHtmlOptions.defaults()) {
         for (rule in extensionRules) {
             validateRendererRuleForRuntime(rule)
         }
@@ -501,12 +503,13 @@ public class HtmlRenderer {
             }
         }
         this.maximumOutputBytes = maximumOutputBytes
+        this.codeGroups = codeGroups
     }
 
     /** 返回包含策略、扩展和 adapter identity 的稳定 renderer fingerprint。 */
     public func fingerprint(): String {
         let out = CanonicalDescriptor()
-        out.append("html-renderer-v3|")
+        out.append("html-renderer-v4|")
         match (options.policy.kind) {
             case HtmlPolicyKind.SpecCompatible => out.append("spec")
             case HtmlPolicyKind.GfmCompatible => out.append("gfm")
@@ -574,6 +577,16 @@ public class HtmlRenderer {
         match (maximumOutputBytes) {
             case Some(value) => out.append(value)
             case None => out.append("none")
+        }
+        out.append("|code-groups/1=")
+        out.append(codeGroups.interactive)
+        if (codeGroups.interactive) {
+            out.append(codeGroups.groupLabel)
+            out.append(codeGroups.copyLabel)
+            out.append(codeGroups.copiedLabel)
+            out.append(codeGroups.copyFailedLabel)
+            out.append(codeGroups.copyUnavailableLabel)
+            out.append(codeGroups.maximumCopyBytes)
         }
         for (manifest in rendererCanonicalManifests(extensionManifests)) {
             out.append("|manifest=")
@@ -677,6 +690,66 @@ public class HtmlRenderer {
         cancellation.throwIfCancelled(phase: "render")
     }
 
+    private func writeCodeGroupAttribute(name: String, value: String, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        write(" ${name}=\"", sink, cancellation, budget)
+        writeEscapedAttribute(value, sink, cancellation, budget)
+        write("\"", sink, cancellation, budget)
+    }
+
+    private func writeCodeCopyHex(value: String, start: Int64, end: Int64, sink: TextSink,
+        cancellation: CancellationToken, budget: OperationBudget): Unit {
+        let digits = "0123456789abcdef"
+        var cursor = start
+        while (cursor < end) {
+            cancellation.throwIfCancelled(phase: "render")
+            let stop = min(cursor + 128, end)
+            budget.consumeScan(steps: stop - cursor)
+            let out = StringBuilder()
+            while (cursor < stop) {
+                let high = Int64(value[cursor] >> 4)
+                let low = Int64(value[cursor] & 0x0F)
+                out.append(digits[high..high + 1])
+                out.append(digits[low..low + 1])
+                cursor++
+            }
+            write(out.toString(), sink, cancellation, budget)
+        }
+    }
+
+    internal func expandCursorCodeGroupLine(state: CodeGroupLineState, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        if (state.offset >= state.code.size) {
+            return
+        }
+        cancellation.throwIfCancelled(phase: "render")
+        var end = state.offset
+        while (end < state.code.size && state.code[end] != b'\n') {
+            end++
+            if (end % 256 == 0) {
+                cancellation.throwIfCancelled(phase: "render")
+            }
+        }
+        budget.consumeScan(steps: end - state.offset + 1)
+        while (state.rangeIndex < state.ranges.size && state.ranges[state.rangeIndex].lastLine < state.line) {
+            budget.consumeScan()
+            state.rangeIndex++
+        }
+        let highlight = state.rangeIndex < state.ranges.size && state.ranges[state.rangeIndex].firstLine <= state.line
+        if (highlight) {
+            write("<mark class=\"code-line\">", sink, cancellation, budget)
+        }
+        writeEscapedTextFromNode(state.code[state.offset..end], state.node, sink, cancellation, budget)
+        if (highlight) {
+            write("</mark>", sink, cancellation, budget)
+        }
+        if (end < state.code.size) {
+            writeFromNode("\n", state.node, sink, cancellation, budget)
+        }
+        state.offset = min(end + 1, state.code.size)
+        state.line++
+    }
+
     internal func requireCursorCustomContract(node: NodeRef): Unit {
         if (let NodeKind.CustomInline <- node.kind) {
             requireSemanticRendererContract(node.asCustomInline().getOrThrow(), extensionRules)
@@ -721,6 +794,7 @@ public class HtmlRenderer {
             case 3 => writeEncodedUriAttribute(emission.value[start..end], sink, cancellation, budget)
             case 4 => writeGfmTagFilteredRange(emission.value, start, end, emission.node.getOrThrow(), sink,
                 cancellation, budget)
+            case 5 => writeCodeCopyHex(emission.value, start, end, sink, cancellation, budget)
             case _ => throw IllegalStateException("unknown cursor encoding")
         }
         sink.content()
@@ -1046,6 +1120,60 @@ public class HtmlRenderer {
             case _ => throw IllegalStateException("arena custom renderer received a core node")
         }
         requireSemanticRendererContract(custom, extensionRules)
+        if (let value: CodeGroupPayload <- custom.payload) {
+            if (let CodeGroupRole.Group <- value.role) {
+                write("<div class=\"code-group\"", sink, cancellation, budget)
+                if (codeGroups.interactive) {
+                    write(" data-code-group=\"1\" role=\"group\"", sink, cancellation, budget)
+                    writeCodeGroupAttribute("aria-label", codeGroups.groupLabel, sink, cancellation, budget)
+                    writeCodeGroupAttribute("data-copy-label", codeGroups.copyLabel, sink, cancellation, budget)
+                    writeCodeGroupAttribute("data-copied-label", codeGroups.copiedLabel, sink, cancellation, budget)
+                    writeCodeGroupAttribute("data-copy-failed-label", codeGroups.copyFailedLabel, sink, cancellation,
+                        budget)
+                    writeCodeGroupAttribute("data-copy-unavailable-label", codeGroups.copyUnavailableLabel, sink,
+                        cancellation, budget)
+                    write(" data-copy-limit=\"${codeGroups.maximumCopyBytes}\"", sink, cancellation, budget)
+                }
+                write(">\n", sink, cancellation, budget)
+                pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
+            } else {
+                let code = node.children()[0].asCodeBlock().getOrThrow()
+                budget.consumeRenderedNode()
+                write("<figure class=\"code-group-item\"", sink, cancellation, budget)
+                if (codeGroups.interactive) {
+                    if (value.copyText.size <= codeGroups.maximumCopyBytes) {
+                        write(" data-code-copy-hex=\"", sink, cancellation, budget)
+                        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+                            plan.output(5, value.copyText)
+                        } else {
+                            writeCodeCopyHex(value.copyText, 0, value.copyText.size, sink, cancellation, budget)
+                        }
+                        write("\"", sink, cancellation, budget)
+                    } else {
+                        write(" data-copy-unavailable=\"size\"", sink, cancellation, budget)
+                    }
+                }
+                write(">\n<figcaption>", sink, cancellation, budget)
+                writeEscapedTextFromNode(value.title, node, sink, cancellation, budget)
+                write("</figcaption>\n<pre><code", sink, cancellation, budget)
+                if (!code.language.isEmpty()) {
+                    write(" class=\"language-", sink, cancellation, budget)
+                    writeEscapedAttribute(code.language, sink, cancellation, budget)
+                    write("\"", sink, cancellation, budget)
+                }
+                write(">", sink, cancellation, budget)
+                let state = CodeGroupLineState(code.node, code.literal, value.highlightedLines)
+                if (let Some(plan) <- htmlOutputPlanner(sink)) {
+                    plan.emit(HtmlCursorAction.CodeGroupLines(state))
+                } else {
+                    while (state.offset < state.code.size) {
+                        expandCursorCodeGroupLine(state, sink, cancellation, budget)
+                    }
+                }
+                write("</code></pre>\n</figure>\n", sink, cancellation, budget)
+            }
+            return
+        }
         if (let value: MathPayload <- custom.payload) {
             let tag = if (value.display) {
                 "div"
@@ -1156,6 +1284,12 @@ public class HtmlRenderer {
             case NodeKind.CustomBlock => node.asCustomBlock().getOrThrow()
             case NodeKind.CustomInline => node.asCustomInline().getOrThrow()
             case _ => throw IllegalStateException("arena custom renderer received a core node")
+        }
+        if (let value: CodeGroupPayload <- custom.payload) {
+            if (let CodeGroupRole.Group <- value.role) {
+                write("</div>\n", sink, cancellation, budget)
+            }
+            return
         }
         if (let value: DefinitionListPayload <- custom.payload) {
             requireDefinitionListBinding(node)
@@ -1932,13 +2066,15 @@ extend MarkdownEngine {
      * @param sanitizer Sanitize policy 使用的 sanitizer。
      * @param fallbacks custom node 的 fallback 列表。
      * @param rawHtmlHandler CustomHandler 使用的 handler。
+     * @param codeGroups 可选代码组渐进增强数据和复制上限。
      * @return 配置好的 `HtmlRenderer`。
      */
     public func htmlRenderer(options!: HtmlOptions = HtmlOptions.safe(), sanitizer!: ?HtmlSanitizerPort = None,
-        fallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None): HtmlRenderer {
+        fallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None,
+        codeGroups!: CodeGroupHtmlOptions = CodeGroupHtmlOptions.defaults()): HtmlRenderer {
         HtmlRenderer(options: options, extensionRules: dialect.rendererRules.toArray(), sanitizer: sanitizer,
             extensionManifests: dialect.manifests.toArray(), extensionFallbacks: fallbacks,
-            rawHtmlHandler: rawHtmlHandler, maximumOutputBytes: Some(limits.maximumOutputBytes))
+            rawHtmlHandler: rawHtmlHandler, maximumOutputBytes: Some(limits.maximumOutputBytes), codeGroups: codeGroups)
     }
 }
 
@@ -2067,6 +2203,14 @@ public class PlainTextRenderer {
                         stack.add(ArenaRenderFrame(frame.node, true))
                         continue
                     }
+                    if (let value: CodeGroupPayload <- custom.payload) {
+                        if (let CodeGroupRole.Item <- value.role) {
+                            out.append(value.title);
+                            out.append("\n")
+                        }
+                        pushPlainContainer(frame, stack)
+                        continue
+                    }
                     if (custom.payload is DefinitionListPayload) {
                         requireDefinitionListBinding(frame.node)
                         pushPlainContainer(frame, stack)
@@ -2172,8 +2316,13 @@ private func arenaPlainTextValue(root: NodeRef): String {
 internal func requireSemanticRendererContract(custom: CustomNodeView, rules: ImmutableArray<RendererRule>,
     phase!: String = "render"): Unit {
     if (!(custom.payload is FootnoteReferencePayload || custom.payload is FootnoteDefinitionPayload ||
-        custom.payload is HeadingIdPayload || custom.payload is DefinitionListPayload || custom.payload is MathPayload)) {
+        custom.payload is HeadingIdPayload || custom.payload is DefinitionListPayload || custom.payload is MathPayload ||
+        custom.payload is CodeGroupPayload)) {
         return
+    }
+    if (!custom.node.documentBindings.semanticPayloadsValidated) {
+        throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
+            "structured payload rendering requires a bound document", phase: phase, span: custom.node.span)
     }
     for (index in 0..rules.size) {
         let rule = rules[index]

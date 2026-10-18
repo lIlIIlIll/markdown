@@ -300,3 +300,10 @@ let trusted = unsafe { TrustedHtml.fromString(value) }
 - [安全 HTML 与 URI](../security.md)
 - [Renderer DSL](../renderer-dsl.md)
 - [Formatting](../formatting.md)
+
+## 代码组渐进增强
+
+`HtmlRenderer(codeGroups: CodeGroupHtmlOptions(...))` 或
+`engine.htmlRenderer(codeGroups: ...)` 显式输出 tabs/copy 数据，默认关闭且不加载 JS。
+本地化标签、复制上限和完整静态回退见[代码组](../code-groups.md)。选项进入 renderer
+fingerprint；未启用时不活跃的标签不改变 fingerprint，也不改变 parser 或 source 身份。

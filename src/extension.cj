@@ -3,6 +3,8 @@ package markdown
 import std.collection.*
 import std.unicode.*
 
+internal let MARKDOWN_PARSER_PLAN_VERSION: String = "5"
+
 /** custom node 缺少 renderer rule 时的处理策略。 */
 public enum MissingRendererPolicy {
     /** 抛出异常。 */
@@ -330,6 +332,7 @@ internal class ParserHotPlan {
     internal let hasDocumentStages: Bool
     internal let hasFootnotes: Bool
     internal let hasMath: Bool
+    internal let hasCodeGroups: Bool
     internal let definitionListRule: ?BlockSyntaxRule
     internal let headingIdRule: ?InlineSyntaxRule
     private let inlineDslByFirstByte: Array<ImmutableArray<InlineSyntaxRule>>
@@ -348,6 +351,7 @@ internal class ParserHotPlan {
         let spiBuckets = Array<ArrayList<InlineParserSpi>>(256) {_ => ArrayList<InlineParserSpi>()}
         var footnotes = false
         var math = false
+        var codeGroups = false
         var headingRule: ?InlineSyntaxRule = None
         var definitionRule: ?BlockSyntaxRule = None
         for (rule in inlineRules) {
@@ -369,6 +373,9 @@ internal class ParserHotPlan {
             if (let BlockSyntaxKind.DisplayMath <- rule.syntaxKind) {
                 math = true
             }
+            if (let BlockSyntaxKind.CodeGroup <- rule.syntaxKind) {
+                codeGroups = true
+            }
             if (let BlockSyntaxKind.FootnoteDefinition <- rule.syntaxKind) {
                 footnotes = true
             }
@@ -378,6 +385,7 @@ internal class ParserHotPlan {
         }
         hasFootnotes = footnotes
         hasMath = math
+        hasCodeGroups = codeGroups
         definitionListRule = definitionRule
         headingIdRule = headingRule
         for (spi in parserSpis) {
@@ -861,6 +869,8 @@ public enum BlockSyntaxKind {
     | DefinitionList
     /** 独占一行的 `$$` 边界和不解析 Markdown 的公式正文。 */
     | DisplayMath
+    /** 显式代码组，只包含有界的 fenced-code 条目。 */
+    | CodeGroup
 }
 
 // cjlint-ignore -end Public BlockContentMode.Markdown is the frozen DSL spelling.
@@ -1125,6 +1135,16 @@ public class BlockSyntaxBuilder {
         openerPrefixValue = "$$"
         closerValue = "$$"
         contentModeValue = BlockContentMode.Literal
+        kindFromFirstWordValue = false
+        allowNestingValue = false
+        this
+    }
+    /** 定义 Code Groups 1.0；只解析 fenced-code 条目，不执行代码。 */
+    public func codeGroup(): BlockSyntaxBuilder {
+        syntaxKindValue = BlockSyntaxKind.CodeGroup
+        openerPrefixValue = ":::code-group"
+        closerValue = ":::"
+        contentModeValue = BlockContentMode.Markdown
         kindFromFirstWordValue = false
         allowNestingValue = false
         this
@@ -1620,7 +1640,8 @@ public class CompiledMarkdownDialect {
 
     internal func requiresFullAst(): Bool {
         parserHotPlan.hasDocumentStages || (parserOptions.extensionsEnabled && (parserHotPlan.hasFootnotes ||
-            parserHotPlan.headingIdRule.isSome() || parserHotPlan.definitionListRule.isSome() || parserHotPlan.hasMath))
+            parserHotPlan.headingIdRule.isSome() || parserHotPlan.definitionListRule.isSome() || parserHotPlan.hasMath ||
+            parserHotPlan.hasCodeGroups))
     }
 
     internal init(
@@ -1995,6 +2016,9 @@ public class DialectCompiler {
             return true
         }
         for (rule in dialect.blockBuilders) {
+            if (rule.extensionId == extensionId && let BlockSyntaxKind.CodeGroup <- rule.syntaxKindValue) {
+                return true
+            }
             if (rule.extensionId == extensionId && let BlockSyntaxKind.DisplayMath <- rule.syntaxKindValue) {
                 return true
             }
@@ -2098,6 +2122,15 @@ public class DialectCompiler {
             case BlockSyntaxKind.SingleLine =>
                 if (!rule.closerValue.isEmpty()) {
                     fail("single-line block must not have a closer")
+                }
+            case BlockSyntaxKind.CodeGroup =>
+                if (rule.openerPrefixValue != ":::code-group" || rule.closerValue != ":::" || rule
+                    .kindFromFirstWordValue || rule.emitterValue.isSome() || !rule.parameterValues.isEmpty() || rule
+                    .allowNestingValue || rule.documentStartOnlyValue) {
+                    fail("code groups require the fixed structured grammar and payload")
+                }
+                if (let BlockContentMode.Literal <- rule.contentModeValue) {
+                    fail("code groups require fenced-code children")
                 }
             case BlockSyntaxKind.DisplayMath =>
                 if (rule.openerPrefixValue != "$$" || rule.closerValue != "$$" || rule.kindFromFirstWordValue ||
@@ -2235,6 +2268,10 @@ public class DialectCompiler {
                 continue
             }
             match (rule.syntaxKindValue) {
+                case BlockSyntaxKind.CodeGroup =>
+                    if (renderer.localKindId == "code-group" || renderer.localKindId == "code-group-item") {
+                        return true
+                    }
                 case BlockSyntaxKind.DisplayMath =>
                     if (renderer.localKindId == rule.ruleId) {
                         return true
@@ -2729,7 +2766,7 @@ private func canonicalDescriptor(
     block: Array<BlockSyntaxRule>
 ): String {
     let out = CanonicalDescriptor()
-    out.append("parser-plan-4|dialect=");
+    out.append("parser-plan-${MARKDOWN_PARSER_PLAN_VERSION}|dialect=");
     out.append(dialect.id);
     out.append("@");
     out.append(dialect.version)
@@ -2894,6 +2931,7 @@ private func canonicalDescriptor(
             case BlockSyntaxKind.FootnoteDefinition => out.append("footnote")
             case BlockSyntaxKind.DefinitionList => out.append("definition-list/2")
             case BlockSyntaxKind.DisplayMath => out.append("display-math/2")
+            case BlockSyntaxKind.CodeGroup => out.append("code-group/1")
         }
         out.append(":dynamic-kind=");
         out.append(rule.kindFromFirstWord)
@@ -2973,7 +3011,7 @@ private func canonicalDescriptor(
         out.append("@");
         out.append(provider.version)
     }
-    out.append("|spi=3|plan=4")
+    out.append("|spi=3|plan=${MARKDOWN_PARSER_PLAN_VERSION}")
     out.toString()
 }
 

@@ -8,13 +8,17 @@
 | Extension SPI | `3` | dialect 编译失败 |
 | Dialect DSL schema | `1` | descriptor 拒绝加载 |
 | Syntax DSL schema | `1` | descriptor 拒绝加载 |
-| Parser plan | `4` | parse artifact cache miss |
+| Parser plan | `5` | parse artifact cache miss |
 | Binary artifact | schema `3` | 拒绝或 cache miss，不猜测恢复 |
 | Public API snapshot | `v0.10` | `check_public_api.py` 报告差异 |
 
 `ExtensionManifest.semanticVersion` 必须是完整 SemVer，并按 prerelease 规则比较。
 `implementationVersion` 是构建身份；它可以参与缓存/实现身份，但不参与 dependency 的
 SemVer 排序。
+
+parser plan 的 descriptor、engine fingerprint 和 `MarkdownParseArtifact.parserPlanVersion`
+使用同一版本常量。schema 3 表示 wire layout，不代替 parser plan 5。Code Groups 1.0、
+结构化 literal 的引用隔离与完整 payload 验证使用 plan 5；旧配置缓存直接失效。
 
 ## Fingerprint 边界
 

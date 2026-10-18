@@ -6,7 +6,8 @@ import markdown.core.{AppendReplica, AppendState, CancellationToken, Diagnostic,
 import markdown.editor.AstQuery
 import markdown.extensions.{DefinitionListPayload, DefinitionListRole, MathPayload, BlockSyntax, ExtensionCapabilities, 
     ExtensionDocumentAnalysis, ExtensionManifest, MarkdownDialect, OfficialExtensions, RendererRule}
-import markdown.render.{AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, HtmlOptions, HtmlRenderer}
+import markdown.render.{CodeGroupHtmlOptions, AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, HtmlOptions, 
+    HtmlRenderer}
 
 class CookbookOutputSink <: AsyncTextSink {
     private let out = StringBuilder()
@@ -116,6 +117,20 @@ main(): Int64 {
         }
     }
     println(mathEngine.htmlRenderer().render(formula.document))
+
+    println("== code-groups ==")
+    let groupEngine = MarkdownEngine
+        .builder()
+        .dialect(OfficialExtensions.codeGroups(MarkdownDialect.define("cookbook-code", "1")).build())
+        .build()
+    let grouped = groupEngine.parse(
+        ":::code-group\r\n```js title=\"示例😀\" {2}\r\n\u{FEFF}const x = 1;\r\n中😀\r\n```\r\n\r\n```cangjie title=\"空块\"\r\n```\r\n:::\r\n")
+    println(
+        groupEngine
+            .htmlRenderer(
+                codeGroups: CodeGroupHtmlOptions(interactive: true, groupLabel: "代码示例", copyLabel: "复制代码",
+                    copiedLabel: "已复制", copyFailedLabel: "复制失败", copyUnavailableLabel: "不可复制"))
+            .render(grouped.document))
 
     println("== append ==")
     let appendEngine = MarkdownEngine.builder().build()

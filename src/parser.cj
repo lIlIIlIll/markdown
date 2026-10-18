@@ -1176,7 +1176,9 @@ internal class ParserSession {
 
     private func collectReferences(lines: Array<LineRecord>): Array<ReferenceDefinition> {
         if (dialect.parserOptions.extensionsEnabled && (dialect.parserHotPlan.hasFootnotes ||
-            dialect.parserHotPlan.definitionListRule.isSome())) {
+            dialect.parserHotPlan.definitionListRule.isSome() || dialect.parserHotPlan.hasMath || dialect
+            .parserHotPlan
+            .hasCodeGroups)) {
             return collectStructuredReferences(lines)
         }
         let out = ArrayList<ReferenceDefinition>()
@@ -3539,6 +3541,12 @@ internal class ParserSession {
                     continue
                 }
             }
+            if (let BlockSyntaxKind.CodeGroup <- rule.syntaxKind) {
+                if (trimmed != rule.openerPrefix || leadingIndentColumns(lines[start].text) > 3) {
+                    continue
+                }
+                return scanCodeGroup(lines, start, rule)
+            }
             let captured = trimAscii(trimmed[rule.openerPrefix.size..])
             if (captured.size > rule.maximumCaptureLength) {
                 throw LimitExceededException("extension_capture", rule.maximumCaptureLength, captured.size,
@@ -3700,6 +3708,125 @@ internal class ParserSession {
         None
     }
 
+    private func scanCodeGroup(lines: Array<LineRecord>, start: Int64, rule: BlockSyntaxRule): ?ExtensionBlockScan {
+        var index = start + 1
+        var fence: ?Byte = None
+        var fenceLength: Int64 = 0
+        var invalid = false
+        var fences: Int64 = 0
+        while (index < lines.size) {
+            let line = lines[index]
+            scanSteps(line.text.size + 1)
+            if (fence.isNone() && trimAscii(line.text) == ":::") {
+                break
+            }
+            let bytes = line.endWithNewline - lines[start].endWithNewline
+            if (bytes > rule.maximumBlockBytes) {
+                throw LimitExceededException("extension_block_bytes", rule.maximumBlockBytes, bytes, "extension_parse",
+                    span: Some(mappedSpan(lines[start].startByte, line.endByte)), extensionId: Some(rule.extensionId))
+            }
+            if (let Some(marker) <- fence) {
+                if (isFenceClose(line.text, marker, fenceLength)) {
+                    fence = None
+                }
+            } else if (trimAscii(line.text) == ":::") {
+                break
+            } else if (isFenceStart(line.text)) {
+                let leading = leadingSpaces(line.text)
+                let marker = line.text[leading]
+                fence = Some(marker)
+                fenceLength = 0
+                while (leading + fenceLength < line.text.size && line.text[leading + fenceLength] == marker) {
+                    fenceLength++
+                }
+                fences++
+            } else if (!isBlank(line.text)) {
+                invalid = true
+            }
+            index++
+        }
+        if (index == lines.size) {
+            if (!collectingReferences && dialect.parserOptions.emitUnclosedExtensionDiagnostics) {
+                diagnostics.add(
+                    Diagnostic("MD3002_UNCLOSED_EXTENSION", DiagnosticSeverity.Warning,
+                        "unclosed code group or code fence", mappedSpan(lines[start].startByte, lines[start].endByte),
+                        extensionId: Some(rule.extensionId), ruleId: Some(rule.ruleId)))
+            }
+            return None
+        }
+        let span = mappedSpan(lines[start].startByte, lines[index].endByte)
+        if (invalid || fences == 0) {
+            if (!collectingReferences) {
+                invalidCodeGroupSyntax(span, rule)
+            }
+            return None
+        }
+        if (collectingReferences) {
+            let noNode: ?Int64 = None
+            let noPending: ?PendingExtensionState = None
+            return Some(ExtensionBlockScan(noNode, noPending, index + 1))
+        }
+        budget.consumeScan(steps: syntaxRuleCost(rule.resourceCost, span.length()))
+        let checkpoint = nodes.checkpoint()
+        let items = ArrayList<Int64>()
+        var cursor = start + 1
+        while (cursor < index) {
+            if (isBlank(lines[cursor].text)) {
+                cursor++;
+                continue
+            }
+            let (codeIndex, next) = parseFencedCode(lines, cursor)
+            let code = nodes.snapshotNode(codeIndex).asCodeBlock().getOrThrow()
+            let maximum = min(rule.maximumCaptureLength, limits.maximumExtensionCaptureBytes)
+            if (code.infoRaw.size > maximum) {
+                throw LimitExceededException("extension_capture", maximum, code.infoRaw.size, "extension_parse",
+                    span: code.node.span, extensionId: Some(rule.extensionId))
+            }
+            let codeLiteral = code.literal
+            budget.consumeScan(steps: code.infoRaw.size + codeLiteral.size)
+            let word = firstWord(code.infoRaw)
+            let languageValid = isCodeGroupLanguage(word)
+            let fallback = if (word.isEmpty()) {
+                "text"
+            } else {
+                word
+            }
+            let header = CodeGroupHeaderParser(code.infoRaw[word.size..], codeLineCount(codeLiteral)).parse(fallback)
+            if (!languageValid || header.isNone()) {
+                nodes.rollback(checkpoint)
+                invalidCodeGroupSyntax(span, rule)
+                return None
+            }
+            let copy = BoundedLiteralBuilder(limits.maximumLiteralBytes, budget, cancellation, "code_group_parse")
+            let leading = leadingSpaces(lines[cursor].text)
+            for (body in cursor + 1..next - 1) {
+                copy.append(stripUpToSpaces(lines[body].text, leading))
+                copy.append(source.text()[lines[body].endByte..lines[body].endWithNewline])
+            }
+            let item = CodeGroupPayload(CodeGroupRole.Item, title: header.getOrThrow().title,
+                highlightedLines: header.getOrThrow().ranges, copyText: copy.finish())
+            items.add(
+                nodes.customBlock(rule.extensionId, manifestVersion(rule.extensionId), "code-group-item", item,
+                    [codeIndex], code.node.span,
+                    NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: code.node.span,
+                        extensionId: Some(rule.extensionId))))
+            cursor = next
+        }
+        budget.consumeExtensionCallback()
+        let node = nodes.customBlock(rule.extensionId, manifestVersion(rule.extensionId), "code-group",
+            CodeGroupPayload(CodeGroupRole.Group), items.toArray(), Some(span),
+            NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: Some(span), extensionId: Some(rule.extensionId)))
+        let noPending: ?PendingExtensionState = None
+        Some(ExtensionBlockScan(Some(node), noPending, index + 1))
+    }
+
+    private func invalidCodeGroupSyntax(span: SourceSpan, rule: BlockSyntaxRule): Unit {
+        diagnostics.add(
+            Diagnostic("MD5001_INVALID_CODE_GROUP", DiagnosticSeverity.Warning,
+                "code groups require fenced blocks with supported titles and ordered line ranges", span,
+                extensionId: Some(rule.extensionId), ruleId: Some(rule.ruleId)))
+    }
+
     private func mathSourcePart(line: LineRecord, includeNewline: Bool): MathSourcePart {
         let original = source.text()
         budget.consumeScan(steps: line.text.size)
@@ -3757,6 +3884,11 @@ internal class ParserSession {
                 if (rule.documentStartOnly &&
                     !isDocumentStart(lines[index].startByte + leadingWhitespace(lines[index].text))) {
                     continue
+                }
+                if (let BlockSyntaxKind.CodeGroup <- rule.syntaxKind) {
+                    if (trimmed != rule.openerPrefix || leadingIndentColumns(lines[index].text) > 3) {
+                        continue
+                    }
                 }
                 if (let BlockSyntaxKind.DisplayMath <- rule.syntaxKind) {
                     if (trimmed != "$$" || leadingIndentColumns(lines[index].text) > 3) {

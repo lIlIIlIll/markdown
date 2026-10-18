@@ -61,7 +61,7 @@ class OfficialExtensionsTest {
     @TestCase
     func catalogAndDefaultEnablementMatrixAreVersioned(): Unit {
         let catalog = OfficialExtensions.catalog()
-        @Expect(catalog.size, 12)
+        @Expect(catalog.size, 13)
         @Expect(findOfficial(catalog, "footnotes").targetVersion, "2.0")
         @Expect(findOfficial(catalog, "footnotes").defaultEnabled, false)
         @Expect(findOfficial(catalog, "gfm-tables").isDefaultFor("gfm-modern-v1"), true)

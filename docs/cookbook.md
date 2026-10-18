@@ -157,3 +157,10 @@ println(Markdown.format("#  Title\n\n* item"))
 ---
 
 [← 开始使用](getting-started.md) · [文档首页](README.md) · [API 速查 →](api/quick-reference.md)
+
+## 公式来源与代码组
+
+可运行 cookbook 的 `math-source` 段展示 MathPayload 的语义与来源片段；`code-groups`
+段生成包含中文标题、BOM、CRLF、多语言和空代码的真实 HTML。规则分别见
+[公式模型](math.md)和[代码组](code-groups.md)。代码组控件需要宿主显式加载静态资产；
+cookbook 不执行代码或启动第三方排版后端。

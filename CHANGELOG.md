@@ -9,13 +9,15 @@
 
 ### Changed
 
+- Code Groups 1.0：普通 fenced code、标题、行高亮、原始换行复制与可选的本地化 tabs。
+
 - Math 2.0 typed payload：TeX、精确来源片段与 delimiter 分离，默认可读输出。
 
 - 节点身份使用 lineage 与不回收编号，NodeRef 和 lint fix 绑定不可变 revision。
 - 共享 lineage 的短片段按构造规模预留编号，避免过早耗尽身份空间；改善稀疏编号的哈希分布。
 - ParseResult 只表示成功；tryParse 返回独立的成功/失败枚举。
 - 移除纯兼容别名、内容哈希型 StableNodeId 和旧 schema reader 路径。
-- Extension SPI 3、parser plan 4、artifact schema 3 与独立的 0.10 API snapshot。
+- Extension SPI 3、parser plan 5、artifact schema 3 与独立的 0.10 API snapshot。
 - 整文处理分为绑定前 AST transform 和绑定后只读 analysis；共享实际 limits、预算和取消。
 - 可恢复 HTML 遍历与部分 UTF-8 字节确认，移除预先渲染整份 HTML 的 buffered 输出实现。
 - 实际分块解析的追加会话、带身份与版本的原子更新、参考消费端与最终后置引用绑定。
@@ -35,8 +37,8 @@
 - benchmark evidence status `stale`；
 - CommonMark `652/652`；
 - GFM `671/671`；
-- 测试 `1590/1590`，`0` skipped，`0` failed；
-- public API snapshot `1593` declarations；
+- 测试 `1600/1600`，`0` skipped，`0` failed；
+- public API snapshot `1620` declarations；
 - last complete CommonMark ratio `2.361586x`；
 - last complete GFM ratio `1.788010x`。
 

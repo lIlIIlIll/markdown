@@ -161,7 +161,7 @@ public class MarkdownParseArtifact {
     internal init(engine: MarkdownEngine, result: ParseResult) {
         schemaVersion = "3"
         libraryVersion = "0.10.0"
-        parserPlanVersion = "3"
+        parserPlanVersion = MARKDOWN_PARSER_PLAN_VERSION
         profileId = engine.profile.id
         dialectFingerprint = engine.dialect.fingerprint
         engineFingerprint = parserConfigurationFingerprint(engine.dialect.fingerprint, engine.limits,
@@ -255,7 +255,7 @@ extend MarkdownEngine {
         if (artifact.schemaVersion != "3") {
             return ArtifactLoadResult.CacheMiss("schema version")
         }
-        if (artifact.parserPlanVersion != "3") {
+        if (artifact.parserPlanVersion != MARKDOWN_PARSER_PLAN_VERSION) {
             return ArtifactLoadResult.CacheMiss("parser plan version")
         }
         if (artifact.profileId != profile.id) {

@@ -1297,6 +1297,33 @@ public class RawBlockEventSession {
     private func classifyCompletedRawLine(lineStart: Int64, lineEnd: Int64): Bool {
         completedBlockDslBodyLine = false
         if (let Some(rule) <- openBlockDslRule) {
+            if (let BlockSyntaxKind.CodeGroup <- rule.syntaxKind) {
+                if (let Some(marker) <- openFenceMarker) {
+                    completeOpenBlockDslBodyLine(lineStart, lineEnd)
+                    if (rawLineClosesFence(pending, lineStart, lineEnd, marker, openFenceLength)) {
+                        clearOpenFenceState()
+                    } else {
+                        consumeOpenFenceLiteralBytes(
+                            rawFencedLiteralContentBytes(pending, lineStart, lineEnd, openFenceIndent) + 1)
+                    }
+                    resetOpenBlockDslCloserCandidate(rule)
+                    return false
+                }
+                let length = rawFenceOpenerLength(pending, lineStart, lineEnd)
+                if (length > 0) {
+                    completeOpenBlockDslBodyLine(lineStart, lineEnd)
+                    var marker = lineStart
+                    while (marker < lineEnd && pending[marker] == b' ') {
+                        marker++
+                    }
+                    openFenceMarker = Some(pending[marker])
+                    openFenceLength = length
+                    openFenceIndent = marker - lineStart
+                    openFenceLiteralBytes = 0
+                    resetOpenBlockDslCloserCandidate(rule)
+                    return false
+                }
+            }
             if (openBlockDslCloserCandidatePossible && openBlockDslCloserInTrailingWhitespace) {
                 if (openBlockDslDepth == 0) {
                     clearOpenBlockDslState()
@@ -1392,7 +1419,7 @@ public class RawBlockEventSession {
                 case BlockSyntaxKind.SingleLine =>
                     indentedCodeMayStart = true
                     return true
-                case BlockSyntaxKind.PairedContainer | BlockSyntaxKind.DisplayMath =>
+                case BlockSyntaxKind.PairedContainer | BlockSyntaxKind.DisplayMath | BlockSyntaxKind.CodeGroup =>
                     openBlockDslRule = Some(rule)
                     openBlockDslDepth = 0
                     openBlockDslStart = lineStart
@@ -1543,6 +1570,29 @@ public class RawBlockEventSession {
             if (rule.documentStartOnly && !(absoluteStart == 0 || (absoluteStart == 3 && leadingBom))) {
                 continue
             }
+            if (let BlockSyntaxKind.CodeGroup <- rule.syntaxKind) {
+                if (contentEnd - contentStart != rule.openerPrefix.size ||
+                    contentStart - lineStart - (if (leadingBom) {
+                    3
+                } else {
+                    0
+                }) > 3) {
+                    continue
+                }
+                var tab = false
+                for (prefix in (lineStart + (if (leadingBom) {
+                    3
+                } else {
+                    0
+                }))..contentStart) {
+                    if (pending[prefix] == b'\t') {
+                        tab = true
+                    }
+                }
+                if (tab) {
+                    continue
+                }
+            }
             if (let BlockSyntaxKind.DisplayMath <- rule.syntaxKind) {
                 if (contentEnd - contentStart != 2 || contentStart - lineStart - (if (leadingBom) {
                     3
@@ -1614,6 +1664,11 @@ public class RawBlockEventSession {
         openBlockDslCloserMatchLength = 0
         openBlockDslCloserInTrailingWhitespace = rule.closer.isEmpty()
         openBlockDslCloserCandidatePossible = true
+        if (let BlockSyntaxKind.CodeGroup <- rule.syntaxKind) {
+            if (openFenceMarker.isSome()) {
+                openBlockDslCloserCandidatePossible = false
+            }
+        }
     }
 
     private func completeOpenBlockDslBodyLine(lineStart: Int64, lineEnd: Int64): Unit {

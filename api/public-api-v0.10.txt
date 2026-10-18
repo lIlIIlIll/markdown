@@ -409,6 +409,30 @@ capabilities.cj:package=markdown:owner=extend/extend%20MarkdownEngine%20%7B:publ
 capabilities.cj:package=markdown:public class EngineCapabilities {
 capabilities.cj:package=markdown:public class ExecutionModelCapabilities {
 capabilities.cj:package=markdown:public class ExtensionCapabilityReport {
+code_groups.cj:package=markdown:owner=class/CodeGroupHtmlOptions:public init(interactive!: Bool = false, groupLabel!: String = "Code examples", copyLabel!: String = "Copy code", copiedLabel!: String = "Copied", copyFailedLabel!: String = "Copy failed", copyUnavailableLabel!: String = "Copy unavailable", maximumCopyBytes!: Int64 = 1048576) {
+code_groups.cj:package=markdown:owner=class/CodeGroupHtmlOptions:public let copiedLabel: String
+code_groups.cj:package=markdown:owner=class/CodeGroupHtmlOptions:public let copyFailedLabel: String
+code_groups.cj:package=markdown:owner=class/CodeGroupHtmlOptions:public let copyLabel: String
+code_groups.cj:package=markdown:owner=class/CodeGroupHtmlOptions:public let copyUnavailableLabel: String
+code_groups.cj:package=markdown:owner=class/CodeGroupHtmlOptions:public let groupLabel: String
+code_groups.cj:package=markdown:owner=class/CodeGroupHtmlOptions:public let interactive: Bool
+code_groups.cj:package=markdown:owner=class/CodeGroupHtmlOptions:public let maximumCopyBytes: Int64
+code_groups.cj:package=markdown:owner=class/CodeGroupHtmlOptions:public static func defaults(): CodeGroupHtmlOptions {
+code_groups.cj:package=markdown:owner=class/CodeGroupPayload:public func payloadTypeId(): String {
+code_groups.cj:package=markdown:owner=class/CodeGroupPayload:public init(role: CodeGroupRole, title!: String = "", highlightedLines!: Array<CodeLineRange> = [], copyText!: String = "") {
+code_groups.cj:package=markdown:owner=class/CodeGroupPayload:public let copyText: String
+code_groups.cj:package=markdown:owner=class/CodeGroupPayload:public let highlightedLines: ImmutableArray<CodeLineRange>
+code_groups.cj:package=markdown:owner=class/CodeGroupPayload:public let role: CodeGroupRole
+code_groups.cj:package=markdown:owner=class/CodeGroupPayload:public let title: String
+code_groups.cj:package=markdown:owner=class/CodeLineRange:public init(firstLine: Int64, lastLine: Int64) {
+code_groups.cj:package=markdown:owner=class/CodeLineRange:public let firstLine: Int64
+code_groups.cj:package=markdown:owner=class/CodeLineRange:public let lastLine: Int64
+code_groups.cj:package=markdown:owner=enum/CodeGroupRole:enum-variant | Group
+code_groups.cj:package=markdown:owner=enum/CodeGroupRole:enum-variant | Item
+code_groups.cj:package=markdown:public class CodeGroupHtmlOptions {
+code_groups.cj:package=markdown:public class CodeGroupPayload <: CustomPayload {
+code_groups.cj:package=markdown:public class CodeLineRange {
+code_groups.cj:package=markdown:public enum CodeGroupRole {
 core/core.cj:package=markdown.core:public import markdown.{AppendLimits, AppendBlockView, AppendChange, AppendState, AppendProgress, AppendUpdateBatch, AppendInputSession, AppendReplica, AcceleratedMarkdownEngine, AstInvariantValidator, CancellationSource, CancellationToken, BindingOptions, CodeBlockKind, CodeBlockNodeView, CodeSpanNodeView, Diagnostic, DiagnosticSeverity, Document, DocumentBindings, DocumentNodeView, EngineCapabilities, EventParseResult, EventParseSummary, ExecutionModelCapabilities, HardBreakKind, HardBreakNodeView, HeadingBinding, HeadingNodeView, TocEntry, HtmlExecutionMode, HtmlExecutionPath, HtmlExecutionResult, HtmlBlockNodeView, HtmlInlineNodeView, ImageNodeView, ImmutableArray, InputReadFailureException, LimitExceededException, LineScanRecords, LineScannerAccelerator, LinkBinding, LinkNodeView, LinkSyntaxKind, ListDelimiter, ListItemNodeView, ListKind, ListNodeView, Markdown, MarkdownEngine, MarkdownEventAttribute, MarkdownEventMode, MarkdownEventSink, MarkdownSourceEvent, MarkdownSourceEventKind, MarkdownEngineBuilder, MarkdownErrorCode, MarkdownException, MarkdownProfile, NodeCategory, NodeId, NodeKind, NodeOrigin, NodeOriginKind, NodeRef, OperationBudget, OwnedUtf8Input, ParseLimits, ParseOutcome, ParseResult, ProfileKind, RawBlockEventSession, ReferenceDefinition, ReusableUtf8Input, SourceBuffer, SourcePosition, SourcePositionMap, SourceSlice, SourceSpan, TableAlignment, TaskState, TextNodeView, Utf16Position, Utf8Policy, VisualPosition}
 definition_lists.cj:package=markdown:owner=class/DefinitionListPayload:public func payloadTypeId(): String {
 definition_lists.cj:package=markdown:owner=class/DefinitionListPayload:public init(role: DefinitionListRole, markerSpan!: ?SourceSpan = None) {
@@ -666,6 +690,7 @@ execution.cj:package=markdown:public enum HtmlExecutionMode {
 execution.cj:package=markdown:public enum HtmlExecutionPath {
 extension.cj:package=markdown:owner=class/BlockSyntax:public static func define(extensionId: String, ruleId: String): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func closer(exact: String): BlockSyntaxBuilder {
+extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func codeGroup(): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func conflictGroup(value: String): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func content(mode: BlockContentMode): BlockSyntaxBuilder {
 extension.cj:package=markdown:owner=class/BlockSyntaxBuilder:public func definitionList(): BlockSyntaxBuilder {
@@ -881,6 +906,7 @@ extension.cj:package=markdown:owner=class/SyntaxResourceCost:public let baseCost
 extension.cj:package=markdown:owner=class/SyntaxResourceCost:public let perByteCost: Int64
 extension.cj:package=markdown:owner=enum/BlockContentMode:enum-variant | Literal
 extension.cj:package=markdown:owner=enum/BlockContentMode:enum-variant | Markdown
+extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | CodeGroup
 extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | DefinitionList
 extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | DisplayMath
 extension.cj:package=markdown:owner=enum/BlockSyntaxKind:enum-variant | FootnoteDefinition
@@ -992,7 +1018,7 @@ extension_stages.cj:package=markdown:owner=interface/ExtensionDocumentAnalysis:i
 extension_stages.cj:package=markdown:owner=interface/ExtensionDocumentAnalysis:interface-member prop version: String
 extension_stages.cj:package=markdown:public interface ExtensionAstTransform {
 extension_stages.cj:package=markdown:public interface ExtensionDocumentAnalysis {
-extensions/extensions.cj:package=markdown.extensions:public import markdown.{BlockContentMode, BlockPayloadEmitter, BlockSyntax, BlockSyntaxBuilder, BlockSyntaxKind, BlockSyntaxMatch, BlockSyntaxRule, MathPayload, MathSourcePart, CompiledDialectExplanation, CompiledMarkdownDialect, DialectCompiler, DialectParserOptions, DefinitionListPayload, DefinitionListRole, ExtensionCapabilities, ExtensionCapabilityReport, ExtensionDependency, ExtensionAstTransform, ExtensionDocumentAnalysis, ExtensionFailureException, ExtensionLintProvider, ExtensionManifest, FootnoteDefinitionBinding, FootnoteDefinitionPayload, FootnoteReferenceBinding, FootnoteReferencePayload, HeadingBinding, HeadingIdPayload, TocEntry, ExternalDialectDescriptor, InlineFlankingRule, InlineParserSpi, InlineParserSpiContext, InlineParserSpiResult, InlinePayloadEmitter, InlineSyntax, InlineSyntaxBuilder, InlineSyntaxKind, InlineSyntaxMatch, InlineSyntaxRule, MarkdownBlockLowering, MarkdownDialect, MarkdownDialectBuilder, OfficialExtensionDescriptor, OfficialExtensions, RendererAttributeKind, RendererAttributeSource, RendererAttributeSpec, RendererRule, SyntaxBacktrackingPolicy, SyntaxParameterSpec, SyntaxParameterType, SyntaxParameterValue, SyntaxPayload, SyntaxPhase, SyntaxResourceCost}
+extensions/extensions.cj:package=markdown.extensions:public import markdown.{BlockContentMode, BlockPayloadEmitter, BlockSyntax, BlockSyntaxBuilder, BlockSyntaxKind, BlockSyntaxMatch, BlockSyntaxRule, CodeGroupPayload, CodeGroupRole, CodeLineRange, MathPayload, MathSourcePart, CompiledDialectExplanation, CompiledMarkdownDialect, DialectCompiler, DialectParserOptions, DefinitionListPayload, DefinitionListRole, ExtensionCapabilities, ExtensionCapabilityReport, ExtensionDependency, ExtensionAstTransform, ExtensionDocumentAnalysis, ExtensionFailureException, ExtensionLintProvider, ExtensionManifest, FootnoteDefinitionBinding, FootnoteDefinitionPayload, FootnoteReferenceBinding, FootnoteReferencePayload, HeadingBinding, HeadingIdPayload, TocEntry, ExternalDialectDescriptor, InlineFlankingRule, InlineParserSpi, InlineParserSpiContext, InlineParserSpiResult, InlinePayloadEmitter, InlineSyntax, InlineSyntaxBuilder, InlineSyntaxKind, InlineSyntaxMatch, InlineSyntaxRule, MarkdownBlockLowering, MarkdownDialect, MarkdownDialectBuilder, OfficialExtensionDescriptor, OfficialExtensions, RendererAttributeKind, RendererAttributeSource, RendererAttributeSpec, RendererRule, SyntaxBacktrackingPolicy, SyntaxParameterSpec, SyntaxParameterType, SyntaxParameterValue, SyntaxPayload, SyntaxPhase, SyntaxResourceCost}
 external_descriptor.cj:package=markdown:owner=class/ExternalDialectDescriptor:public func compile(): CompiledMarkdownDialect {
 external_descriptor.cj:package=markdown:owner=class/ExternalDialectDescriptor:public func toDialect(): MarkdownDialect {
 external_descriptor.cj:package=markdown:owner=class/ExternalDialectDescriptor:public let baseProfileId: String
@@ -1259,6 +1285,7 @@ official_extensions.cj:package=markdown:owner=class/OfficialExtensionDescriptor:
 official_extensions.cj:package=markdown:owner=class/OfficialExtensionDescriptor:public let extensionId: String
 official_extensions.cj:package=markdown:owner=class/OfficialExtensionDescriptor:public let targetVersion: String
 official_extensions.cj:package=markdown:owner=class/OfficialExtensions:public static func catalog(): Array<OfficialExtensionDescriptor> {
+official_extensions.cj:package=markdown:owner=class/OfficialExtensions:public static func codeGroups(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
 official_extensions.cj:package=markdown:owner=class/OfficialExtensions:public static func definitionLists(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
 official_extensions.cj:package=markdown:owner=class/OfficialExtensions:public static func footnotes(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
 official_extensions.cj:package=markdown:owner=class/OfficialExtensions:public static func frontMatter(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
@@ -1330,7 +1357,7 @@ profile.cj:package=markdown:public class HtmlPolicy {
 profile.cj:package=markdown:public class MarkdownProfile {
 profile.cj:package=markdown:public enum HtmlPolicyKind {
 profile.cj:package=markdown:public enum ProfileKind {
-render/render.cj:package=markdown.render:public import markdown.{AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, HtmlOutputSession, CanonicalMarkdownRenderer, ExtensionRendererFallback, HtmlFidelityPolicy, HtmlInputPolicy, HtmlOptions, HtmlPolicy, HtmlPolicyKind, HtmlRenderer, HtmlSanitizerPort, HtmlToMarkdownConverter, HtmlToMarkdownOptions, ImageUriPolicy, InlineEscapePolicy, LinkUriPolicy, MissingRendererPolicy, PlainTextOptions, PlainTextRenderer, RawHtmlPolicyKind, RenderStatistics, RenderedOutput, RenderedSourceMapEntry, SinkError, SinkFailureException, SinkWriteResult, StringTextSink, TextSink, TrustedHtml}
+render/render.cj:package=markdown.render:public import markdown.{AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, HtmlOutputSession, CodeGroupHtmlOptions, CanonicalMarkdownRenderer, ExtensionRendererFallback, HtmlFidelityPolicy, HtmlInputPolicy, HtmlOptions, HtmlPolicy, HtmlPolicyKind, HtmlRenderer, HtmlSanitizerPort, HtmlToMarkdownConverter, HtmlToMarkdownOptions, ImageUriPolicy, InlineEscapePolicy, LinkUriPolicy, MissingRendererPolicy, PlainTextOptions, PlainTextRenderer, RawHtmlPolicyKind, RenderStatistics, RenderedOutput, RenderedSourceMapEntry, SinkError, SinkFailureException, SinkWriteResult, StringTextSink, TextSink, TrustedHtml}
 render/render.cj:package=markdown.render:public import markdown.{ExternalLinkRewriterPort, RawHtmlHandlerPort}
 renderer.cj:package=markdown:owner=class/HtmlOptions:public init(policy: HtmlPolicy, rawHtmlPolicy: RawHtmlPolicyKind, linkUriPolicy: LinkUriPolicy, imageUriPolicy: ImageUriPolicy, rewriteExternalLinks!: ?ExternalLinkRewriterPort = None, externalLinkRel!: String = "", externalLinkTarget!: String = "") {
 renderer.cj:package=markdown:owner=class/HtmlOptions:public let externalLinkRel: String
@@ -1347,7 +1374,7 @@ renderer.cj:package=markdown:owner=class/HtmlOptions:public static unsafe func s
 renderer.cj:package=markdown:owner=class/HtmlRenderer:public func fingerprint(): String {
 renderer.cj:package=markdown:owner=class/HtmlRenderer:public func render(ast: Document, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): String {
 renderer.cj:package=markdown:owner=class/HtmlRenderer:public func renderTo(ast: Document, sink: TextSink, cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()): Unit {
-renderer.cj:package=markdown:owner=class/HtmlRenderer:public init(options!: HtmlOptions = HtmlOptions.safe(), extensionRules!: Array<RendererRule> = [], sanitizer!: ?HtmlSanitizerPort = None, extensionManifests!: Array<ExtensionManifest> = [], extensionFallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None, maximumOutputBytes!: ?Int64 = None) {
+renderer.cj:package=markdown:owner=class/HtmlRenderer:public init(options!: HtmlOptions = HtmlOptions.safe(), extensionRules!: Array<RendererRule> = [], sanitizer!: ?HtmlSanitizerPort = None, extensionManifests!: Array<ExtensionManifest> = [], extensionFallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None, maximumOutputBytes!: ?Int64 = None, codeGroups!: CodeGroupHtmlOptions = CodeGroupHtmlOptions.defaults()) {
 renderer.cj:package=markdown:owner=class/HtmlRenderer:public let options: HtmlOptions
 renderer.cj:package=markdown:owner=class/ImageUriPolicy:public init(allowRelative: Bool, allowRemoteImages: Bool, allowDataImages: Bool, allowedDataMimeTypes!: Array<String> = []) {
 renderer.cj:package=markdown:owner=class/ImageUriPolicy:public let allowDataImages: Bool
@@ -1388,7 +1415,7 @@ renderer.cj:package=markdown:owner=enum/RawHtmlPolicyKind:enum-variant | PassThr
 renderer.cj:package=markdown:owner=enum/RawHtmlPolicyKind:enum-variant | Sanitize
 renderer.cj:package=markdown:owner=enum/SinkWriteResult:enum-variant | Failure(SinkError)
 renderer.cj:package=markdown:owner=enum/SinkWriteResult:enum-variant | Success
-renderer.cj:package=markdown:owner=extend/extend%20MarkdownEngine%20%7B:public func htmlRenderer(options!: HtmlOptions = HtmlOptions.safe(), sanitizer!: ?HtmlSanitizerPort = None, fallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None): HtmlRenderer {
+renderer.cj:package=markdown:owner=extend/extend%20MarkdownEngine%20%7B:public func htmlRenderer(options!: HtmlOptions = HtmlOptions.safe(), sanitizer!: ?HtmlSanitizerPort = None, fallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None, codeGroups!: CodeGroupHtmlOptions = CodeGroupHtmlOptions.defaults()): HtmlRenderer {
 renderer.cj:package=markdown:owner=interface/AsyncTextSink:interface-member func write(slice: String): AsyncSinkWriteResult
 renderer.cj:package=markdown:owner=interface/ExtensionRendererFallback:interface-member func renderHtml(node: NodeRef): TrustedHtml
 renderer.cj:package=markdown:owner=interface/ExtensionRendererFallback:interface-member prop extensionId: String

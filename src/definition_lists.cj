@@ -457,7 +457,7 @@ private func invalidDefinitionList(node: NodeRef, message: String): Nothing {
 }
 
 internal func requireDefinitionListBinding(node: NodeRef): Unit {
-    if (!node.documentBindings.definitionListsValidated) {
+    if (!node.documentBindings.semanticPayloadsValidated) {
         throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
             "definition list rendering requires a validated complete document", phase: "render", span: node.span)
     }

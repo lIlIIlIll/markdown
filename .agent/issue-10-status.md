@@ -10,7 +10,7 @@ for automatic merge or publication.
 | Required checks | Replaced the three obsolete SDK contexts with the two passing STS 1.2.0 contexts; all other protection values verified equal | PASS |
 | MD-00.3 / EDT-T01 identity | NodeId lineage plus nonrecycled serial, distinct immutable revisions, bounded shared-arena reservations, distributed identity hashes, persistent-fork allocation and stale CST/NodeRef/fix rejection | Correctness/resource regression PASS in 1566-case run; final performance cost not yet qualified |
 | MD-00.4 / MD-00.5 / ARC-T02 | Success-only ParseResult, explicit ParseOutcome, removed aliases and content-hash StableNodeId; consumers migrated | PASS in the 1517-case full run |
-| MD-00.7 / ART-T01 | 0.10 API boundary, SPI 3, plan 4, artifact schema 3; no old reader; explicit unsupported-version error | Current lifecycle checkpoint: 1585/1585 full tests and 70 API/evidence Python tests PASS |
+| MD-00.7 / ART-T01 | 0.10 API boundary, SPI 3, plan 5, artifact schema 3; no old reader; explicit unsupported-version error | Current code-group checkpoint: 1600/1600 full tests and 70 API/evidence Python tests PASS |
 | MD-00.1/.2, MD-01 batch | Typed footnote payloads, reachable-definition binding, first-definition/numbering/unique-anchor/backlink decisions, shared HTML/Text/Markdown output, exact source and snapshot/config identity; DocumentBindingTests | Batch and public append implemented; complete output-resource qualification pending |
 | MD-03 batch | Heading-only typed suffix, explicit-ID reservation, shared anchor allocator, authoritative heading/fragment queries, structured TOC, source/Markdown/snapshot preservation; HeadingBindingTests | Batch and public append implemented; edit dependency qualification pending |
 | MD-02 / EXT-T03 | Definition Lists 2.0 with typed List/Entry/Term/Definition, ordinary block bodies, source markers, full binding validation and shared HTML/Text/Markdown/snapshot/append/output traversal | Implemented; 1564-case full run and consumer gates PASS |
@@ -19,7 +19,8 @@ for automatic merge or publication.
 | MD-06.8 | Public append scaling tests for long loose lists, deferred-reference paragraphs, unclosed fences and many closed blocks; real scan/node-construction/patch counters | Correctness and work growth PASS; latency, peak RSS and release performance qualification pending |
 | MD-04 / EXT-T05..06 | Versioned official capability matrix, exact enable/disable/profile output, literal Front Matter boundaries and bounded deterministic smart punctuation | Correctness verified; final release gates pending |
 | MD-00.6 | Actual AST transform → binding → read-only analysis, shared batch/append pipeline, early whole-document execution gates and meaningful capability validation | Implemented; 1585-case run, consumers and API/evidence gates PASS |
-| MD-05 | Math 2.0 typed TeX/provenance and safe literal fallback implemented; source tab expansion regression fixed | Formula model PASS; code groups, preparation boundary and real optional backends pending |
+| MD-05 | Math 2.0 typed TeX/provenance and Code Groups 1.0 with safe static output and opt-in controls | Source models/UI PASS; shared preparation boundary and real optional backends pending |
+| MD-05.7 / code-group portion of RND-T02 | Group/Item with ordinary fenced children, titles, line ranges and exact copy text; optional localized tabs/copy and static fallback | 1600-case Cangjie run, all normal consumers and actual Chrome clipboard/keyboard/AX checks PASS |
 | MD-07..08 | Existing editor/artifact phase baseline and real process/backend capability probes retained privately; no optimization verdict yet | Pending |
 | DONE-02..06 | Complete task-to-test ledger, new performance qualification, docs/consumer gates and core hosted evidence | Pending |
 
@@ -185,3 +186,57 @@ steps PASS; cookbook imports the public MathPayload and emits
 `expression=x + y, source=x + y`. Format/docs/API/evidence consistency and 70
 API/evidence Python tests PASS. This checkpoint is not real formula typesetting,
 code groups, rich-output preparation, frozen performance or hosted core proof.
+
+The Code Groups 1.0 checkpoint uses official STS 1.2.0 and product tree
+`1a3208158bbeaf5ed219591eb64f31d3717372810beab0152b245642c5feda17`
+(workspace and disk-backed test tree verified equal). Full tests: 1600/1600 PASS,
+zero skips/errors/failures; API: 1620 declarations. The group owns typed Item nodes
+with ordinary fenced-code children, fixed title/range grammar and source-derived
+copyText preserving BOM/CR/LF/CRLF after container normalization. Default HTML is
+complete static figure/figcaption/pre/code with visible mark elements. Canonical
+Markdown keeps metadata and selects a safe fence. Combined footnote, heading, math
+and definition-list cases, snapshots, source maps, bytewise append, invalid UTF-8,
+resource bounds, cancellation, resumable output and actual nested-closer scaling
+PASS. Invalid info/body stays visible with diagnostics; code is never executed.
+
+Optional CodeGroupHtmlOptions emits bounded UTF-8 hex data and localized labels
+without loading JavaScript. The independent script progressively creates linked
+tabs/panels, keyboard navigation and click-only Clipboard API controls. Disabled
+copy is visibly explained; missing JS leaves every block visible. Browser checks
+use actual cookbook HTML, not handwritten output: Node 24.22.0, Puppeteer 25.14.0,
+Chrome 155.0.8059.84. Real clipboard round trips preserve leading BOM, CRLF, Chinese
+and emoji; empty-block copy also succeeds. Four AX tabs, duplicate fragments,
+ID collisions, repeated initialization, arrow/Home/End keys, localized failure,
+copy-limit fallback, no-script output, light/mobile-dark layouts and zero unexpected
+page requests PASS. Both screenshots were visually inspected. Browser execution
+is a separate trusted fixture test and does not claim an OS sandbox or other-OS proof.
+
+The generated fixture SHA is
+`069877d52a872a34339e232f1dca1fd56329b03b1f60ff7acab4778c8ba7a541`;
+final script/CSS hashes are
+`aa73761fb9873081f4ac323b4f3a42dfe8dcbaf9ca16d0216f93ce47fc3e820f` /
+`d65aec4f30581756675bc21a79d9704aaa75a2fd84e407fd0718c758641b4875`.
+The first browser timeout was diagnosed as missing sanitized-write permission in
+the independent test context, not silently turned into a mock success. Granting
+the required scoped permission allowed actual clipboard writes; denied writes
+remain an explicit tested failure state. A Cangjie declaration-order compile
+error in the shared default was fixed using the repository's class-static pattern.
+
+All nine normal consumer steps, 70 API/evidence Python tests and format/docs/API/
+evidence/privacy checks PASS. Parser plan 5 now uses one constant across canonical
+descriptors, engine fingerprints and parse artifacts; binary layout stays 3. Rich
+literal containers collect references through real block boundaries. All structured
+payload renderers require completed binding. Real KaTeX/Mermaid/Shiki preparation,
+process cleanup qualification, measured editor/cache decisions, frozen performance
+and hosted core gates remain pending. No core push, PR, merge or release is authorized.
+
+The final canonical regression was run against the actual prior implementation:
+changed typed titles/ranges were replaced by the old info string, and deleting
+the first unnamed block left an ordinal caption inconsistent with reparse. The
+same case now passes. Canonical headers consume typed metadata with quote,
+backslash and backtick protection; raw info remains source-only. Unnamed blocks
+use the stable `text` label. Controls and unrepresentable metadata fail binding.
+The final 1600-case tree above also passed all nine normal consumer steps and 70
+API/evidence Python tests. The newly generated cookbook fixture matches the hash
+recorded above, and the actual browser gate was rerun. Its runner hash is
+`b204f782ff7cb53c0396b0ce2c7a7766b0941f6d13aa154d8213812998117c00`.

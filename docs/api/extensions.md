@@ -302,6 +302,11 @@ Front Matter 只保留 literal，不执行配置。Math 2.0 使用 `MathPayload`
 Smart Punctuation 2.0 仅声明 transform，不声明 parser rule；Front Matter 与 Math 的
 当前版本分别为 1.0.0 与 2.0.0。边界见[官方能力矩阵](../extensions.md#官方扩展能力矩阵)。
 
+Code Groups 1.0 单独使用 `OfficialExtensions.codeGroups(builder)`。Group/Item 由
+`CodeGroupPayload` 表达，Item 的普通 CodeBlock child 保存语言和 fence；payload 保存标题、
+`CodeLineRange` 与原始换行的 copyText。它不执行代码，规则和可选 renderer 见
+[代码组](../code-groups.md)。
+
 ## External descriptor
 
 `ExternalDialectDescriptor` 解析数据型 JSON/YAML descriptor。descriptor 不能携带
