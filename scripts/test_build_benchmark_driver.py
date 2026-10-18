@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 import hashlib
@@ -172,6 +173,27 @@ class BenchmarkDriverBuildTest(unittest.TestCase):
                 sdk_extract_dir=Path(temporary) / "extracted",
                 target="x86_64-unknown-linux-gnu")
             sdk = build_benchmark_driver.prepare_sdk(args)
+            link_root = Path(temporary) / "link-inputs"
+            (link_root / "sysroot/lib").mkdir(parents=True)
+            startup = link_root / "sysroot/lib/startup.o"
+            startup.write_bytes(b"\x7fELFtest-startup-object")
+            startup.chmod(0o644)
+            cpp = link_root / "sysroot" / build_benchmark_driver.link_inputs.SDK_CPP_ROOT
+            cpp.mkdir(parents=True)
+            for name in build_benchmark_driver.link_inputs.SDK_CPP_LIBRARIES:
+                (cpp / name).write_bytes(b"\x7fELFtest-" + name.encode())
+                (cpp / name).chmod(0o644)
+            link_files = build_benchmark_driver.link_inputs.inventory(link_root / "sysroot")
+            link_identity = {"schemaVersion": 1, "target": args.target, "files": link_files,
+                "libraryDirectories": sorted({str(Path(value).parent) for value in link_files}),
+                "treeSha256": build_benchmark_driver.link_inputs.canonical_digest(link_files)}
+            launcher = Path(temporary) / "linker"
+            build_benchmark_driver.link_inputs.install_cpp_runtime(
+                link_root / "sysroot", link_identity, sdk.root)
+            sdk = replace(sdk, link_inputs={"root": str(link_root), "launcher": str(launcher),
+                "identity": link_identity,
+                "compilerOptions": build_benchmark_driver.link_inputs.option_arguments(
+                    link_root / "sysroot", link_identity, launcher)})
             recorded_environment = dict(sdk.environment)
             driver = {"build": {"command": [str(sdk.cjpm), "build"],
                 "environment": recorded_environment},
@@ -190,6 +212,8 @@ class BenchmarkDriverBuildTest(unittest.TestCase):
                 identity = build_benchmark_driver.build_identity(args, driver, cli, sdk)
             self.assertEqual(identity["sdk"]["archiveSha256"], sdk_sha)
             self.assertEqual(identity["sdk"]["archiveBytes"], archive.stat().st_size)
+            self.assertEqual(identity["linkInputs"], sdk.link_inputs)
+            self.assertIn("benchmarks/link_inputs.py", identity["sourceIdentity"]["files"])
             self.assertEqual(identity["builds"]["markdownDriver"], driver)
             self.assertEqual(identity["tools"]["cjpm"]["path"], str(sdk.cjpm))
             self.assertEqual(identity["tools"]["cjpm"]["sha256"],

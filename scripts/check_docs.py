@@ -148,8 +148,8 @@ def main() -> int:
     for argument in required_benchmark_arguments:
         if argument not in contributing:
             failures.append(f"CONTRIBUTING benchmark verifier is missing: {argument}")
-    if "schema v4" in contributing or "schema v5" not in contributing:
-        failures.append("CONTRIBUTING must document the current same-language schema v5")
+    if "schema v4" in contributing or "schema v5" in contributing or "schema v6" not in contributing:
+        failures.append("CONTRIBUTING must document the current same-language schema v6")
 
     if failures:
         for failure in failures:

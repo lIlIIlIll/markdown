@@ -41,7 +41,7 @@ benchmark driver 使用显式 `ReusableUtf8Input` 和可选 native scanner，并
 证明共同的 CommonMark parse-only 子集。GitHub Actions 会在每个 PR 上重新运行这项比较，
 但它不替代 cmark/cmark-gfm 的端到端 canonical release evidence。
 
-同语言 schema v5 在计时外对每个 timed corpus 生成 CommonMark spec HTML，并要求两侧
+同语言 schema v6 在计时外对每个 timed corpus 生成 CommonMark spec HTML，并要求两侧
 输出 byte length 和 SHA-256 完全一致。只有语义门禁通过的 corpus 才会进入计时。build
 identity 绑定 SDK archive、实际 compiler/archiver executable bytes 与 SHA-256、完整版本
 命令和输出、target triple、native scanner 最小 child environment、manifest 和命令、build

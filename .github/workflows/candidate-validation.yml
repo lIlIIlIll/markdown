@@ -146,6 +146,7 @@ jobs:
           export TMPDIR=/workspace/tmp TMP=/workspace/tmp TEMP=/workspace/tmp
           cd "${benchmark_root}"
           python3 scripts/test_verify_committed_benchmark.py
+          python3 benchmarks/test_link_inputs.py
           python3 benchmarks/test_compare_markdown4cj.py
           mkdir -p target/same-language-benchmark
           CC=clang AR=ar python3 scripts/build_native_scanner.py \

@@ -74,7 +74,7 @@ python3 benchmarks/compare_markdown4cj.py \
 `markdown4cj` CommonMark parse-only 子集。计时前，每个语料还必须通过 exact spec-HTML
 byte length 和 SHA-256 对比。门禁要求共享行为 `12/12`、几何平均加速至少 `1.20×`、
 任何单语料回退不超过 `10%`，并且最大峰值 RSS 不超过 comparator 的 `1.20×`。
-schema v5 同时绑定 SDK archive、target、工具、build 命令、源码和 binary。verifier 从
+schema v6 同时绑定 SDK archive、target、工具、build 命令、源码和 binary。verifier 从
 retained product、markdown4cj 和 commonmark4cj Git objects 重算源码身份，再使用保留的
 toolchain/runtime 在 fresh root 可复现重建 driver、CLI、comparator 与 DSO，并逐字节比较
 retained outputs；旧祖先冒名、nested/indirect Git source、replace refs、工具或 binary

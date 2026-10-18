@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 import copy
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import hashlib
 import json
 import os
@@ -14,6 +14,7 @@ from pathlib import Path
 import posixpath
 import re
 import shutil
+import shlex
 import subprocess
 import sys
 import tarfile
@@ -27,7 +28,7 @@ NATIVE = ROOT / "target" / "native"
 NATIVE_MANIFEST = NATIVE / "markdown_scanner.cache.json"
 CANONICAL_OPTIMIZATION = "-O2 --lto thin --obf-seed 0"
 COMPATIBILITY_OPTIMIZATION = "-O2 --obf-seed 0"
-IDENTITY_SCHEMA_VERSION = 5
+IDENTITY_SCHEMA_VERSION = 6
 NATIVE_CACHE_SCHEMA_VERSION = 3
 NATIVE_ENVIRONMENT_SCHEMA_VERSION = 1
 
@@ -42,6 +43,7 @@ from benchmark_identity import (  # noqa: E402
     exact_environment,
     reject_ambient_benchmark_environment,
 )
+import link_inputs  # noqa: E402
 
 
 def sha256(path: Path) -> str:
@@ -72,6 +74,7 @@ class SdkToolchain:
     cjc: Path
     cjpm: Path
     environment: dict[str, str]
+    link_inputs: dict[str, object] | None = None
 
 
 def command_record(arguments: list[str], cwd: Path, *, check: bool,
@@ -241,6 +244,23 @@ def prepare_sdk(args: argparse.Namespace) -> SdkToolchain:
     return sdk
 
 
+def prepare_link_inputs(sdk: SdkToolchain, retained: Path | None = None) -> SdkToolchain:
+    if retained is None:
+        root = sdk.extraction.with_name(sdk.extraction.name + "-link-inputs")
+        root.mkdir()
+        identity = link_inputs.capture_inputs(sdk.root, sdk.environment, root / "sysroot")
+        atomic_json(root / "identity.json", identity)
+    else:
+        root = retained.resolve()
+        identity = json.loads((root / "identity.json").read_text(encoding="utf-8"))
+        link_inputs.validate_inputs(root / "sysroot", identity)
+    launcher = sdk.extraction.with_name(sdk.extraction.name + "-linker")
+    link_inputs.install_cpp_runtime(root / "sysroot", identity, sdk.root)
+    options = link_inputs.compiler_options(root / "sysroot", identity, sdk.root, launcher)
+    return replace(sdk, link_inputs={"root": str(root), "launcher": str(launcher),
+        "identity": identity, "compilerOptions": options})
+
+
 def compatibility_manifest(source: str, root: Path) -> str:
     replacements = {
         f'compile-option = "{CANONICAL_OPTIMIZATION}"':
@@ -265,22 +285,25 @@ def manifest_option(text: str, name: str) -> str:
     return match.group(1)
 
 
-def trimpath_manifest(text: str, source_root: Path) -> str:
+def trimpath_manifest(text: str, source_root: Path, extra_options: list[str] | None = None) -> str:
     option = manifest_option(text, "compile-option")
     if "--trimpath" in option:
         raise ValueError("benchmark manifest already contains --trimpath")
-    replacement = f'compile-option = "{option} --trimpath {source_root.resolve()}"'
+    options = f"{option} --trimpath {source_root.resolve()}"
+    if extra_options:
+        options += " " + shlex.join(extra_options)
+    replacement = 'compile-option = ' + json.dumps(options)
     return re.sub(r'^\s*compile-option\s*=\s*"[^"]*"\s*$', replacement,
         text, count=1, flags=re.MULTILINE)
 
 
 @contextmanager
-def reproducible_manifests(source_root: Path, package: Path):
+def reproducible_manifests(source_root: Path, package: Path, extra_options: list[str] | None = None):
     paths = (source_root / "cjpm.toml", package / "cjpm.toml")
     originals = {path: path.read_text(encoding="utf-8") for path in paths}
     try:
         for path, text in originals.items():
-            path.write_text(trimpath_manifest(text, source_root), encoding="utf-8")
+            path.write_text(trimpath_manifest(text, source_root, extra_options), encoding="utf-8")
         yield originals
     finally:
         for path, text in originals.items():
@@ -313,6 +336,7 @@ def prepare_build_workspace(destination: Path) -> Path:
         destination / "benchmarks" / "benchmark_identity.py")
     for name in ("build_benchmark_driver.py", "build_native_scanner.py"):
         shutil.copy2(ROOT / "scripts" / name, destination / "scripts" / name)
+    shutil.copy2(ROOT / "benchmarks/link_inputs.py", destination / "benchmarks/link_inputs.py")
     native = destination / "target" / "native"
     native.mkdir(parents=True)
     copied = 0
@@ -337,7 +361,8 @@ def build_canonical(sdk: SdkToolchain | None = None,
     source_identity = benchmark_product_tree_sha256(source_root)
     cjpm = str(sdk.cjpm) if sdk is not None else "cjpm"
     if source_root != ROOT:
-        with reproducible_manifests(source_root, package):
+        with reproducible_manifests(source_root, package,
+                sdk.link_inputs["compilerOptions"] if sdk is not None and sdk.link_inputs else None):
             manifest = manifest_path.read_text(encoding="utf-8")
             root_manifest = (source_root / "cjpm.toml").read_text(encoding="utf-8")
             build = command_record([cjpm, "build", "-j", "1"], package, check=True,
@@ -402,7 +427,8 @@ def build_cli(sdk: SdkToolchain | None = None, source_root: Path = ROOT
     source_identity = benchmark_product_tree_sha256(source_root)
     cjpm = str(sdk.cjpm) if sdk is not None else "cjpm"
     if source_root != ROOT:
-        with reproducible_manifests(source_root, package):
+        with reproducible_manifests(source_root, package,
+                sdk.link_inputs["compilerOptions"] if sdk is not None and sdk.link_inputs else None):
             manifest = manifest_path.read_text(encoding="utf-8")
             root_manifest = (source_root / "cjpm.toml").read_text(encoding="utf-8")
             build = command_record([cjpm, "build", "-j", "1"], package, check=True,
@@ -578,6 +604,11 @@ def build_identity(args: argparse.Namespace, driver: dict[str, object],
             raise RuntimeError(f"{name} source changed while the benchmark was being built")
     if f"Target: {args.target}" not in str(cjc["stdout"] + cjc["stderr"]):
         raise RuntimeError("cjc target does not match --target")
+    if sdk.link_inputs is None:
+        raise RuntimeError("attested builds require retained Cangjie system link inputs")
+    link_inputs.validate_inputs(Path(str(sdk.link_inputs["root"])) / "sysroot",
+        sdk.link_inputs["identity"])
+    link_inputs.validate_cpp_runtime(sdk.root.parent / "cpp-runtime", sdk.link_inputs["identity"])
     return {
         "schemaVersion": IDENTITY_SCHEMA_VERSION,
         "sdk": {"archiveUrl": args.sdk_url, "archivePath": str(sdk.archive),
@@ -592,6 +623,7 @@ def build_identity(args: argparse.Namespace, driver: dict[str, object],
             "files": benchmark_product_file_sha256s(ROOT),
         },
         "nativeScanner": native_identity(args.target),
+        "linkInputs": sdk.link_inputs,
         "builds": {"markdownDriver": driver, "markdownCli": cli},
     }
 
@@ -608,6 +640,8 @@ def main() -> int:
     parser.add_argument("--sdk-archive", type=Path)
     parser.add_argument("--sdk-extract-dir", type=Path)
     parser.add_argument("--target")
+    parser.add_argument("--link-inputs-root", type=Path,
+        help="verified retained link-input directory; otherwise capture the measurement host inputs")
     args = parser.parse_args()
     identity_values = (args.sdk_url, args.sdk_sha256, args.sdk_archive,
         args.sdk_extract_dir, args.target)
@@ -620,6 +654,8 @@ def main() -> int:
         if args.identity_output is not None:
             reject_ambient_benchmark_environment(dict(os.environ))
         sdk = prepare_sdk(args) if args.identity_output is not None else None
+        if sdk is not None:
+            sdk = prepare_link_inputs(sdk, args.link_inputs_root)
         if sdk is not None and args.mode == "canonical":
             with tempfile.TemporaryDirectory(prefix="markdown-pinned-sdk-build-") as temporary:
                 build_root = prepare_build_workspace(Path(temporary) / "markdown")

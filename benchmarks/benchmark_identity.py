@@ -19,6 +19,7 @@ PRODUCT_FILES = (
     "cjpm.lock",
     "build.cj",
     "benchmarks/benchmark_identity.py",
+    "benchmarks/link_inputs.py",
     "benchmarks/driver/cjpm.toml",
     "benchmarks/driver/cjpm.lock",
     "tools/markdown/cjpm.toml",
@@ -157,7 +158,7 @@ def canonical_build_environment(root: Path, target: str) -> dict[str, str]:
     paths = (root / "bin", root / "tools" / "bin",
         *(Path(value) for value in SYSTEM_EXECUTABLE_PATHS))
     libraries = (root / "runtime" / "lib" / f"linux_{architecture}_cjnative",
-        root / "tools" / "lib")
+        root / "tools" / "lib", root.parent / "cpp-runtime")
     return exact_environment({
         "CANGJIE_HOME": str(root),
         "CANGJIE_SDK_ROOT": str(root),

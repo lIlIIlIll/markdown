@@ -194,3 +194,20 @@ python3 scripts/verify_committed_benchmark.py \
 This performs the same complete source-to-binary rebuild. The work directory
 must not already exist. The CI archive is retained for 90 days; keep an offline
 copy before it expires.
+
+Schema v6 also retains the system startup objects and link-library closure under
+`binaries/toolchain/cangjie-link-inputs`. The attested builder captures these
+inputs once, resolves linker-script references, and records every file's bytes,
+mode and digest. Rebuilds validate this set and regenerate a launcher for the
+official SDK's LLD. Both the compiler's sysroot and the linker's library search
+use the retained set. They do not substitute the verifier host's linker or GCC
+startup objects. Compiler and package-manager jobs are both fixed at one; a
+single `cjpm` job alone does not fix the compiler's default parallel code generation.
+LLVM linker and thin-LTO worker counts are also fixed at one. The retained set
+includes the SDK tools' external C++ runtime libraries. Controlled build and
+execution environments load validated copies from a sibling of the extracted
+SDK, preserving the official SDK files.
+
+Schema v5 reports lack these inputs and must be measured again. The input
+identity rejects symlinks, extra or missing files, path traversal, unsupported
+linker-script directives, unresolved references, and retention-limit violations.

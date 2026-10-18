@@ -5,10 +5,12 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
 from io import StringIO
 import os
 from pathlib import Path
 import shutil
+import shlex
 import struct
 import subprocess
 import sys
@@ -214,6 +216,21 @@ def setUpModule() -> None:
     runtime_library.parent.mkdir()
     runtime_library.write_bytes(elf64_with_needed(("ld-linux-x86-64.so.2",)))
     runtime_library.chmod(0o644)
+    link_root = binary_root / comparison.LINK_INPUT_ROOT
+    (link_root / "sysroot/lib").mkdir(parents=True)
+    link_object = link_root / "sysroot/lib/startup.o"
+    link_object.write_bytes(elf64_with_needed(()))
+    link_object.chmod(0o644)
+    cpp = link_root / "sysroot" / comparison.link_inputs.SDK_CPP_ROOT
+    cpp.mkdir(parents=True)
+    for name in comparison.link_inputs.SDK_CPP_LIBRARIES:
+        (cpp / name).write_bytes(elf64_with_needed(("libc.so.6",)))
+        (cpp / name).chmod(0o644)
+    files = comparison.link_inputs.inventory(link_root / "sysroot")
+    link_identity = {"schemaVersion": 1, "target": comparison.TARGET_TRIPLE,
+        "files": files, "libraryDirectories": sorted({str(Path(value).parent) for value in files}),
+        "treeSha256": comparison.link_inputs.canonical_digest(files)}
+    (link_root / "identity.json").write_text(json.dumps(link_identity))
     BINARY_ROOT = binary_root
 
 
@@ -275,6 +292,15 @@ def binary(path: str, value: str, length: int = 1234) -> dict[str, object]:
     return {"path": path, "bytes": length, "sha256": value}
 
 
+def fixture_link_inputs() -> dict[str, object]:
+    assert BINARY_ROOT is not None
+    identity = json.loads((BINARY_ROOT / comparison.LINK_INPUT_ROOT / "identity.json").read_text())
+    root = Path("/fresh/link-inputs")
+    launcher = Path("/fresh/linker")
+    return {"root": str(root), "launcher": str(launcher), "identity": identity,
+        "compilerOptions": comparison.link_inputs.option_arguments(root / "sysroot", identity, launcher)}
+
+
 def build_record(name: str, binary_identity: dict[str, object],
         source_snapshot: dict[str, object]) -> dict[str, object]:
     if name == "markdownDriver":
@@ -297,7 +323,8 @@ def build_record(name: str, binary_identity: dict[str, object],
             "cwd": str(manifest.parent),
             "exitCode": 0, "stdout": "build succeeded\n", "stderr": "",
             "environment": sdk_command_environment()},
-        "compileOption": f"{compile_option} --trimpath {trim_path}",
+        "compileOption": f"{compile_option} --trimpath {trim_path} " +
+            shlex.join(fixture_link_inputs()["compilerOptions"]),
         "linkOption": link_option,
         "canonicalManifestSha256": manifest_digest,
         "effectiveManifestSha256": "e" * 64,
@@ -426,6 +453,7 @@ def valid_report() -> dict[str, object]:
             "archiver": copy.deepcopy(native_archiver),
             "buildEnvironment": copy.deepcopy(native_manifest["buildEnvironment"]),
             "object": native_object, "archive": native_archive},
+        "linkInputs": fixture_link_inputs(),
         "builds": {
             "markdownDriver": build_record("markdownDriver", markdown_binary,
                 source_snapshot),
@@ -444,9 +472,8 @@ def valid_report() -> dict[str, object]:
         **{key: copy.deepcopy(value) for key, value in provenance.items()
             if key != "repositories"},
         "trimPath": "/tmp/adapter",
-        "manifestSha256": digest(comparison.MANIFEST.format(
-            commonmark=comparison.ADAPTER_COMMONMARK_PATH,
-            trimpath="/tmp/adapter").encode("utf-8")),
+        "manifestSha256": digest(comparison.adapter_manifest(
+            "/tmp/adapter", fixture_link_inputs()["compilerOptions"]).encode("utf-8")),
         "dependencyManifestSha256": digest(comparison.adapter_dependency_manifest(
             (COMMONMARK_ROOT / "cjpm.toml").read_bytes(),
             "/tmp/adapter")),
@@ -711,6 +738,37 @@ class SameLanguageBenchmarkTest(unittest.TestCase):
 
     def test_valid_report_rederives_every_gate(self) -> None:
         self.assertEqual(comparison.validate_report(valid_report(), True), [])
+
+    def test_missing_system_link_inputs_cannot_use_the_host_implicitly(self) -> None:
+        report = valid_report()
+        del report["buildIdentity"]["linkInputs"]
+        errors = comparison.validate_report(report, True)
+        self.assertTrue(any("link input" in error for error in errors), errors)
+
+    def test_changed_compiler_parallelism_is_not_canonical(self) -> None:
+        report = valid_report()
+        report["buildIdentity"]["linkInputs"]["compilerOptions"][0] = "-j8"
+        errors = comparison.validate_report(report, True)
+        self.assertTrue(any("compiler/linker controls are not derived" in error for error in errors), errors)
+
+    def test_compiler_controls_change_only_the_package_table(self) -> None:
+        target = '[target.example]\ncompile-option = "-B \\"${SDK}/bin\\""\n'
+        manifest = target + '[package]\ncompile-option = "--obf-seed 0"\n[profile]\nincremental = false\n'
+        actual = comparison.manifest_compiler_options(manifest, ["-j1", "--sysroot", "/link-inputs"])
+        self.assertTrue(actual.startswith(target))
+        self.assertIn('compile-option = "--obf-seed 0 -j1 --sysroot /link-inputs"', actual)
+        self.assertTrue(actual.endswith('[profile]\nincremental = false\n'))
+
+    def test_retained_startup_object_bytes_are_checked(self) -> None:
+        assert BINARY_ROOT is not None
+        path = BINARY_ROOT / comparison.LINK_INPUT_ROOT / "sysroot/lib/startup.o"
+        original = path.read_bytes()
+        try:
+            path.write_bytes(original + b"changed")
+            errors = comparison.validate_report(valid_report(), True)
+            self.assertTrue(any("retained Cangjie link inputs are invalid" in error for error in errors), errors)
+        finally:
+            path.write_bytes(original)
 
     def test_native_runtime_loader_satisfies_only_its_named_dependency(self) -> None:
         assert BINARY_ROOT is not None
@@ -1172,7 +1230,8 @@ class SameLanguageBenchmarkTest(unittest.TestCase):
 
             with patch.object(comparison, "command", side_effect=fake_build):
                 _, build = comparison.build_adapter(comparator, commonmark, workspace,
-                    Path("/fresh/cangjie/tools/bin/cjpm"), sdk_command_environment())
+                    Path("/fresh/cangjie/tools/bin/cjpm"), sdk_command_environment(),
+                    link_options=fixture_link_inputs()["compilerOptions"])
             self.assertEqual(build["buildOutputRuntimeLibraries"][
                 "libcommonmark4cj.commonmark.so"]["mode"], 0o644)
             provenance, adapted, commonmark_contents = comparison.adapter_source_inputs(
@@ -1181,8 +1240,9 @@ class SameLanguageBenchmarkTest(unittest.TestCase):
                 adapted["core_plugin.cj"])
             self.assertNotEqual(dirty.read_bytes(), adapted["core_plugin.cj"])
             self.assertEqual((workspace / "deps/commonmark4cj/cjpm.toml").read_bytes(),
-                comparison.adapter_dependency_manifest(commonmark_contents["cjpm.toml"],
-                    str(workspace.resolve())))
+                comparison.manifest_compiler_options(comparison.adapter_dependency_manifest(
+                    commonmark_contents["cjpm.toml"], str(workspace.resolve())).decode("utf-8"),
+                    fixture_link_inputs()["compilerOptions"]).encode("utf-8"))
             self.assertEqual(build["adapterInputSha256"],
                 provenance["adapterInputSha256"])
 
@@ -1550,6 +1610,10 @@ class SameLanguageBenchmarkTest(unittest.TestCase):
                 "archiveSha256": digest(archive.read_bytes()),
                 "root": str(root), "envsetupSha256": digest(envsetup.read_bytes()),
                 "environment": comparison.build_environment_attestation(environment)})
+            assert BINARY_ROOT is not None
+            comparison.link_inputs.install_cpp_runtime(
+                BINARY_ROOT / comparison.LINK_INPUT_ROOT / "sysroot",
+                identity["linkInputs"]["identity"], root)
             for name, path in (("cjc", cjc), ("cjpm", cjpm)):
                 identity["tools"][name].update({"path": str(path),
                     "bytes": path.stat().st_size, "sha256": digest(path.read_bytes())})

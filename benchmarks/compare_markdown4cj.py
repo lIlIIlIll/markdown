@@ -52,6 +52,7 @@ from benchmark_identity import (
     reject_ambient_benchmark_environment,
 )
 from measure import benchmark_corpora
+import link_inputs
 
 ROOT = Path(__file__).resolve().parents[1]
 COMPARATOR_URL = "https://gitcode.com/Cangjie-TPC/markdown4cj.git"
@@ -64,8 +65,8 @@ CORPUS_BYTES = 256 * 1024
 MIN_SPEEDUP = 1.20
 MAX_REGRESSION = 1.10
 MAX_RSS_RATIO = 1.20
-SCHEMA_VERSION = 5
-BUILD_IDENTITY_SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
+BUILD_IDENTITY_SCHEMA_VERSION = 6
 NATIVE_CACHE_SCHEMA_VERSION = 3
 NATIVE_ENVIRONMENT_SCHEMA_VERSION = 1
 RUN_TIMEOUT_SECONDS = 600.0
@@ -86,6 +87,7 @@ NATIVE_TOOL_ARTIFACTS = {
 NATIVE_RESOURCE_ARTIFACT = "toolchain/native/clang-resource.tar"
 NATIVE_RUNTIME_ROOT = Path("toolchain/native/runtime")
 RUNTIME_LIBRARY_ROOT = Path("libraries/commonmark4cj")
+LINK_INPUT_ROOT = Path("toolchain/cangjie-link-inputs")
 ADAPTER_LIBRARY_PREFIX = "libcommonmark4cj"
 HARNESS_FILES = (
     "benchmarks/compare_markdown4cj.py",
@@ -93,6 +95,8 @@ HARNESS_FILES = (
     "benchmarks/measure.py",
     "benchmarks/generate_corpus.py",
     "benchmarks/benchmark_identity.py",
+    "benchmarks/link_inputs.py",
+    "benchmarks/test_link_inputs.py",
     "scripts/build_benchmark_driver.py",
     "scripts/build_native_scanner.py",
     "scripts/test_build_benchmark_driver.py",
@@ -1211,6 +1215,18 @@ def validate_retained_binaries(report: dict[str, object],
                     f"same-language retained native runtime identity is not canonical: {name}")
                 continue
             expected_native_runtime_paths.add(expected_path)
+    expected_link_paths: set[str] = set()
+    try:
+        link = report["buildIdentity"]["linkInputs"]
+        link_inputs.validate_inputs(root / LINK_INPUT_ROOT / "sysroot", link["identity"])
+        recorded = json.loads((root / LINK_INPUT_ROOT / "identity.json").read_text(encoding="utf-8"))
+        if recorded != link["identity"]:
+            raise ValueError("retained Cangjie link metadata differs")
+        expected_link_paths.add((LINK_INPUT_ROOT / "identity.json").as_posix())
+        expected_link_paths.update((LINK_INPUT_ROOT / "sysroot" / relative).as_posix()
+            for relative in link["identity"]["files"])
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        errors.append(f"same-language retained Cangjie link inputs are invalid: {error}")
     try:
         observed_paths = list(root.rglob("*"))
         observed = {path.relative_to(root).as_posix() for path in observed_paths}
@@ -1219,11 +1235,11 @@ def validate_retained_binaries(report: dict[str, object],
     if any(path.is_symlink() for path in observed_paths):
         errors.append("same-language retained binary root contains a symlink")
     expected_paths = set(BINARY_ARTIFACTS.values()) | expected_library_paths | \
-        expected_native_paths | expected_native_runtime_paths
+        expected_native_paths | expected_native_runtime_paths | expected_link_paths
     if resource_identity is not None:
         expected_paths.add(NATIVE_RESOURCE_ARTIFACT)
     for artifact_path in expected_library_paths | expected_native_paths | \
-            expected_native_runtime_paths:
+            expected_native_runtime_paths | expected_link_paths:
         parent = Path(artifact_path).parent
         while parent != Path("."):
             expected_paths.add(parent.as_posix())
@@ -1575,6 +1591,7 @@ def reproducibly_rebuild_binaries(report: dict[str, object], product_source: Pat
             "--build-cli", "--identity-output", str(identity_output),
             "--sdk-url", SDK_URL, "--sdk-sha256", SDK_SHA256,
             "--sdk-archive", str(archive), "--sdk-extract-dir", str(sdk_extract),
+            "--link-inputs-root", str(binary_root / LINK_INPUT_ROOT),
             "--target", TARGET_TRIPLE], cwd=product, env=product_environment,
             text=True, capture_output=True, check=False)
         if build_result.returncode != 0:
@@ -1584,7 +1601,8 @@ def reproducibly_rebuild_binaries(report: dict[str, object], product_source: Pat
         cjpm, sdk_environment = attested_sdk_environment(rebuilt_identity)
         adapter_workspace = root / "adapter"
         comparator, _ = build_adapter(comparator_source, commonmark_source,
-            adapter_workspace, cjpm, sdk_environment)
+            adapter_workspace, cjpm, sdk_environment,
+            link_options=canonical_link_options(rebuilt_identity))
         runtime = adapter_runtime_library_sources(comparator,
             adapter_workspace / "target/release/commonmark4cj", allow_static=True)
         rebuilt = {
@@ -1732,6 +1750,25 @@ def validate_repository_identity(value: object, require_current_product: bool,
     return errors, snapshot
 
 
+def canonical_link_options(build_identity: dict[str, object]) -> list[str]:
+    value = build_identity.get("linkInputs")
+    if not isinstance(value, dict) or set(value) != {
+        "root", "launcher", "identity", "compilerOptions",
+    }:
+        raise ValueError("Cangjie system link input metadata is missing")
+    for field in ("root", "launcher"):
+        path = value[field]
+        if not isinstance(path, str) or not Path(path).is_absolute() or \
+                ".." in Path(path).parts:
+            raise ValueError("Cangjie system link input path is invalid")
+    identity = link_inputs.validate_identity(value["identity"])
+    expected = link_inputs.option_arguments(Path(value["root"]) / "sysroot", identity,
+        Path(value["launcher"]))
+    if value["compilerOptions"] != expected:
+        raise ValueError("Cangjie compiler/linker controls are not derived from retained inputs")
+    return expected
+
+
 def validate_build_identity(value: object, drivers: object,
         source_snapshot: dict[str, object] | None) -> list[str]:
     if not isinstance(value, dict):
@@ -1755,6 +1792,11 @@ def validate_build_identity(value: object, drivers: object,
             "same-language declared Git commit lacks required benchmark build inputs")
     if value.get("schemaVersion") != BUILD_IDENTITY_SCHEMA_VERSION:
         errors.append("same-language build identity schema is unsupported")
+    try:
+        compiler_options = canonical_link_options(value)
+    except (ValueError, KeyError, TypeError) as error:
+        compiler_options = []
+        errors.append(f"same-language system link inputs are invalid: {error}")
     sdk = value.get("sdk")
     expected_sdk = {"archiveUrl": SDK_URL, "archiveSha256": SDK_SHA256,
         "target": TARGET_TRIPLE}
@@ -1937,7 +1979,7 @@ def validate_build_identity(value: object, drivers: object,
                 errors.append(f"same-language {name} trimpath is not canonical")
             if build.get("mode") != "canonical" or \
                     build.get("compileOption") != \
-                    f"{compile_option} --trimpath {trim_path}" or \
+                    f"{compile_option} --trimpath {trim_path} {shlex.join(compiler_options)}" or \
                     build.get("linkOption") != link_option:
                 errors.append(f"same-language {name} build flags are not canonical")
             if build.get("sourceProductTreeSha256") != expected_product_tree:
@@ -2018,6 +2060,12 @@ def validate_adapter_build(value: object, drivers: object,
         build_identity: object, provenance: dict[str, object] | None) -> list[str]:
     if not isinstance(value, dict):
         return ["same-language comparator adapter build identity is missing"]
+    try:
+        if not isinstance(build_identity, dict):
+            raise ValueError("benchmark build identity is missing")
+        compiler_options = canonical_link_options(build_identity)
+    except (ValueError, KeyError, TypeError) as error:
+        return [f"same-language comparator link inputs are invalid: {error}"]
     tools = build_identity.get("tools") if isinstance(build_identity, dict) else None
     cjpm = tools.get("cjpm") if isinstance(tools, dict) else None
     cjpm_path = str(cjpm.get("path", "")) if isinstance(cjpm, dict) else ""
@@ -2049,9 +2097,8 @@ def validate_adapter_build(value: object, drivers: object,
         trim_path = value.get("trimPath")
         if not isinstance(trim_path, str) or not Path(trim_path).is_absolute() or \
                 value.get("cwd") != trim_path or \
-                value.get("manifestSha256") != hashlib.sha256(MANIFEST.format(
-                    commonmark=ADAPTER_COMMONMARK_PATH,
-                    trimpath=trim_path).encode("utf-8")).hexdigest() or \
+                value.get("manifestSha256") != hashlib.sha256(adapter_manifest(
+                    trim_path, compiler_options).encode("utf-8")).hexdigest() or \
                 not is_sha256(value.get("dependencyManifestSha256")):
             errors.append("same-language comparator trimpath manifest is not canonical")
     if value.get("excluded") != ["components/**", "plugin/**", "cj_res/**"] or \
@@ -2471,24 +2518,53 @@ def attested_sdk_environment(build_identity: dict[str, object]) -> tuple[Path, d
             Path(shutil.which("cjc", path=environment["PATH"]) or "").resolve() != \
             Path(str(cjc["path"])).resolve():
         raise RuntimeError("attested SDK tools are shadowed during comparator build")
+    try:
+        link_inputs.validate_cpp_runtime(root.parent / "cpp-runtime",
+            build_identity["linkInputs"]["identity"])
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        raise RuntimeError(f"attested SDK C++ runtime changed after the product build: {error}") from error
     return Path(str(cjpm["path"])), environment
 
 
+def manifest_compiler_options(manifest: str, options: list[str]) -> str:
+    tables = list(re.finditer(r"(?m)^\[package\][ \t]*\r?$", manifest))
+    if len(tables) != 1:
+        raise ValueError("adapter package table is missing or ambiguous")
+    start = tables[0].end()
+    following = re.search(r"(?m)^[ \t]*\[", manifest[start:])
+    end = start + following.start() if following else len(manifest)
+    package = manifest[start:end]
+    def replace_option(match: re.Match) -> str:
+        value = json.loads(match.group(2))
+        return match.group(1) + json.dumps(value + " " + shlex.join(options))
+    result, count = re.subn(r'(?m)^([ \t]*compile-option\s*=\s*)("(?:\\.|[^"\\\n])*")',
+        replace_option, package)
+    if count != 1:
+        raise ValueError("adapter compile option is missing or ambiguous")
+    return manifest[:start] + result + manifest[end:]
+
+
+def adapter_manifest(trim_path: str, options: list[str]) -> str:
+    return manifest_compiler_options(MANIFEST.format(commonmark=ADAPTER_COMMONMARK_PATH,
+        trimpath=trim_path), options)
+
+
 def build_adapter(source: Path, commonmark: Path, workspace: Path, cjpm: Path,
-        environment: dict[str, str]) -> tuple[Path, dict[str, object]]:
+        environment: dict[str, str], *, link_options: list[str]
+        ) -> tuple[Path, dict[str, object]]:
     provenance, adapted, commonmark_contents = adapter_source_inputs(source,
         commonmark)
     workspace.mkdir(parents=True, exist_ok=False)
     target = workspace / "src/core"
     write_source_files(target, adapted)
     write_source_files(workspace / ADAPTER_COMMONMARK_PATH, commonmark_contents)
-    (workspace / "cjpm.toml").write_text(MANIFEST.format(
-        commonmark=ADAPTER_COMMONMARK_PATH, trimpath=str(workspace.resolve())),
+    (workspace / "cjpm.toml").write_text(adapter_manifest(str(workspace.resolve()), link_options),
         encoding="utf-8")
     (workspace / "src/main.cj").write_text(DRIVER, encoding="utf-8")
     dependency_manifest_path = workspace / ADAPTER_COMMONMARK_PATH / "cjpm.toml"
-    dependency_manifest_path.write_bytes(adapter_dependency_manifest(
-        dependency_manifest_path.read_bytes(), str(workspace.resolve())))
+    dependency_manifest_path.write_text(manifest_compiler_options(adapter_dependency_manifest(
+        dependency_manifest_path.read_bytes(), str(workspace.resolve())).decode("utf-8"),
+        link_options), encoding="utf-8")
     build = command([str(cjpm), "build", "-j", "1", "-V"], workspace, environment)
     build.update({key: value for key, value in provenance.items()
                   if key != "repositories"})
@@ -2748,7 +2824,7 @@ def main() -> int:
     try:
         cjpm, sdk_environment = attested_sdk_environment(build_identity)
         theirs, build = build_adapter(source, commonmark, args.workspace.resolve(), cjpm,
-            sdk_environment)
+            sdk_environment, link_options=canonical_link_options(build_identity))
     except Exception as error:
         report["reason"] = str(error)
         atomic_write(args.output, json.dumps(report, ensure_ascii=False, indent=2) + "\n")
@@ -2762,6 +2838,12 @@ def main() -> int:
             runtime_sources)
         native_tools, native_resource, native_runtime = retain_native_tools(
             binary_root, build_identity)
+        source_link = Path(build_identity["linkInputs"]["root"])
+        link_identity = build_identity["linkInputs"]["identity"]
+        link_inputs.validate_inputs(source_link / "sysroot", link_identity)
+        shutil.copytree(source_link / "sysroot", binary_root / LINK_INPUT_ROOT / "sysroot")
+        (binary_root / LINK_INPUT_ROOT / "identity.json").write_text(
+            json.dumps(link_identity, indent=2) + "\n", encoding="utf-8")
     except Exception as error:
         report["reason"] = str(error)
         atomic_write(args.output, json.dumps(report, ensure_ascii=False, indent=2) + "\n")

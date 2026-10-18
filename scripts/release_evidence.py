@@ -425,7 +425,7 @@ def validate_execution_manifest(data: dict[str, object], path: Path) -> list[str
         "format", "docs", "native-build-tests", "api-checker-tests", "api",
         "static-check", "release-evidence-consistency", "release-evidence-bundle-tests",
         "release-evidence-tests",
-        "benchmark-driver-tests", "build", "native-build", "benchmark-driver",
+        "benchmark-driver-tests", "link-input-tests", "build", "native-build", "benchmark-driver",
         "native-fuzz", "benchmark-profile-tests", "tests", "cli-build", "cli-smoke",
         "quickstart", "cookbook", "differential-setup", "differential",
         "benchmark-smoke", "bundle",
