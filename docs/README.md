@@ -87,6 +87,7 @@
 - [性能方法与当前结果](performance.md)
 - [追加与可恢复输出成本](reports/append-cost.md)
 - [编辑与缓存测量和取舍](reports/editor-cache-cost.md)
+- [扩展开关与真实富内容成本](reports/feature-cost.md)
 - [CommonMark/GFM、benchmark 与 fuzz 报告索引](reports/README.md)
 - [release-evidence.json](../release-evidence.json)
 - [贡献指南](../CONTRIBUTING.md)

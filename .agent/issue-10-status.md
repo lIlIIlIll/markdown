@@ -21,7 +21,7 @@ for automatic merge or publication.
 | MD-00.6 | Actual AST transform → binding → read-only analysis, shared batch/append pipeline, early whole-document execution gates and meaningful capability validation | Implemented; 1585-case run, consumers and API/evidence gates PASS |
 | MD-05 / RND-T01..02 | Math 2.0, Code Groups 1.0, typed preparation and pinned actual KaTeX/Shiki/Mermaid Linux adapter with explicit offline runtime, licenses, bounded proxy/subreaper, validated outputs and full source fallback | Local real Cangjie/Chrome/clipboard/process/offline qualification PASS; frozen performance and hosted core gates remain pending |
 | MD-05.7 / code-group portion of RND-T02 | Group/Item with ordinary fenced children, titles, line ranges and exact copy text; optional localized tabs/copy and static fallback | 1600-case Cangjie run, all normal consumers and actual Chrome clipboard/keyboard/AX checks PASS |
-| MD-07 / MD-08.1..5/.7 | Public editor semantics and phase costs; restricted variable-local and AST/token experiments; independent public encoder proof; complete measured adoption decisions | Correctness PASS; no candidate adopted; feature on/off costs (08.6) and frozen release qualification pending |
+| MD-07 / MD-08.1..5/.7 | Public editor semantics and phase costs; restricted variable-local and AST/token experiments; independent public encoder proof; complete measured adoption decisions | Correctness and measured decisions PASS; no candidate adopted; 08.6 cost report complete; frozen release qualification pending |
 | DONE-02..06 | Complete task-to-test ledger, new performance qualification, docs/consumer gates and core hosted evidence | Pending |
 
 The prior 0.9 raw reports remain historical measurements of their recorded
@@ -428,3 +428,21 @@ The formatted experimental source was rebuilt from the retained measured source;
 is a new smoke qualification, not a timing rerun. Docs (55 Markdown pages),
 format and privacy checks PASS. Raw historical executable/source hashes stay
 unchanged in the report.
+
+The MD-08.6 feature-cost checkpoint uses production revision `88db33b`, tree
+`6c777aa402a9de37ca65bfc86b1fabcc5af9420678dfc78d9e31a40b1e6f1ce1`, STS 1.2.0,
+and the unchanged fixed runtime identity. `docs/reports/feature-cost.md` contains
+all scale groups; its numeric projection preserves 1056 feature and 48 actual
+rich/fallback processes, plus excluded warmups and A/A comparisons. All own-mode
+source/binding/snapshot/HTML/SourceMap/token oracles PASS. Timed on/off workloads
+have intentionally different semantics; their ratios measure feature cost.
+Dense P1, 512 repeated footnote references, 256 colliding headings, byte-array
+and warm-filesystem source-reparse decodes are covered. Actual cold four-product
+preparation median is 9.090s on the recorded single-CPU environment; validated
+Ready cache median is 0.222ms. Both are observed costs, not latency guarantees.
+Cangjie VmHWM and sampled process-tree RSS are reported separately; tree samples
+include setup and double-count shared pages. No mock or implicit download ran,
+all job directories were removed. The immutable raw report SHA-256 is
+`7f490f7c042e2e56d914fc51203eaa885475640bb6872086c411474f2c5802da`.
+Fresh complete frozen performance/release/offline and hosted core qualification
+remain required; core is still unpublished.

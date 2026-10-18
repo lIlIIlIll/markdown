@@ -4,6 +4,12 @@ The [editor/cache decision report](../docs/reports/editor-cache-cost.md) records
 the measured alternatives and their adoption decisions. Reproduction tools and
 their restricted scope are documented in [probes/README.md](probes/README.md).
 
+The [feature cost report](../docs/reports/feature-cost.md) separates explicit
+extension switches, source-reparse cache paths, actual backend startup, Ready
+cache hits, and prepared rendering. `measure_features.py` consumes an explicitly
+installed runtime; it does not prepare or download one. Its 20ms process-tree RSS
+samples include setup and shared pages and are separate from Cangjie VmHWM.
+
 The separate [append/output workload report](../docs/reports/append-cost.md)
 records per-feed latency, first closed block, finish, charged work and a Linux
 RSS checkpoint. Run `measure_append.py` against an explicitly built library and
