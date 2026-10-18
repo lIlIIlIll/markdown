@@ -2034,6 +2034,7 @@ class PublicApiCheckerCliTest(unittest.TestCase):
             scripts / "build_benchmark_driver.py", "benchmark-driver-build"
         )
         self.write_python_stub(scripts / "test_benchmark_input_profiles.py", "benchmark-input-profiles")
+        self.write_python_stub(gate_root / "benchmarks" / "test_link_inputs.py", "link-input-tests")
         self.write_shell_stub(scripts / "cli_smoke.sh", "cli-smoke")
         self.write_shell_stub(scripts / "setup_differential_tools.sh", "differential-tools")
         self.write_python_stub(scripts / "differential_test.py", "differential")
@@ -2055,6 +2056,7 @@ class PublicApiCheckerCliTest(unittest.TestCase):
         self.assertEqual(success.returncode, 0, success.stderr)
         self.assertEqual(success_log[:5], ["format", "docs", "native-build-test", "checker-test", "checker"])
         self.assertTrue(success_log[5].startswith("cjpm:check"))
+        self.assertIn("link-input-tests", success_log)
 
     def write_shell_stub(self, path: Path, label: str) -> None:
         path.write_text(

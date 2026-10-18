@@ -4,7 +4,7 @@
 
 ## 对比边界
 
-- 产品提交：`b721f64070cbce18dd53189c583fed92b13d53af`，Git tree `a3038d99b7cc5501a45d9c1b7c276825f962e2d6`。
+- 产品提交：`545872aa56288a59d71016a94fe68d930ce94afb`，Git tree `f77b3e0b9a8d363d5dd46518b68be7f19134ff3b`。
 - `markdown4cj` 固定提交 `f43cfb3ae1cd3092d9a8a94332c64815fc4572f9`。
 - `commonmark4cj` 固定提交 `41499e6d6e50efac71db3bba64d5300d251d9c90`，用于当前 SDK adapter。
 - SDK：`Cangjie Compiler: 1.2.0 (cjnative)`。
@@ -36,21 +36,21 @@
 
 | 语料 | parse 加速 | 峰值 RSS 比值 |
 | --- | ---: | ---: |
-| official-spec | 7.52× | 0.461× |
-| readme-api | 4.23× | 0.439× |
-| large-code | 2.98× | 0.485× |
-| large-table | 60.81× | 0.032× |
-| many-references | 11.98× | 0.181× |
-| cjk | 11.49× | 0.201× |
-| emoji | 10.62× | 0.169× |
-| deep-list | 8.49× | 0.518× |
-| pathological-delimiters | 15.20× | 0.217× |
-| long-line | 9.76× | 0.412× |
-| ordinary | 9.56× | 0.411× |
-| **几何平均** | **10.01×** | — |
+| official-spec | 7.65× | 0.469× |
+| readme-api | 4.99× | 0.445× |
+| large-code | 2.78× | 0.501× |
+| large-table | 64.65× | 0.033× |
+| many-references | 12.03× | 0.182× |
+| cjk | 11.85× | 0.203× |
+| emoji | 10.54× | 0.171× |
+| deep-list | 8.05× | 0.527× |
+| pathological-delimiters | 15.86× | 0.208× |
+| long-line | 9.26× | 0.422× |
+| ordinary | 8.61× | 0.427× |
+| **几何平均** | **10.04×** | — |
 
-11 个语料的最小加速为 `2.98×`。最大峰值 RSS 比值为
-`0.518×`。共享行为用例为
+11 个语料的最小加速为 `2.78×`。最大峰值 RSS 比值为
+`0.527×`。共享行为用例为
 `12/12`。
 
 ## 合入门禁
