@@ -10,6 +10,9 @@
 | 领域 | 人类可读报告 | 原始数据 |
 | --- | --- | --- |
 | Release benchmark | [Canonical benchmark](benchmark.md) | [`benchmark-raw.json`](benchmark-raw.json) |
+| 追加与可恢复输出成本 | [Append/output cost](append-cost.md) | [`append-cost-raw.json`](append-cost-raw.json) |
+| 编辑与缓存取舍 | [Editor/cache cost](editor-cache-cost.md) | [`editor-cache-cost-raw.json`](editor-cache-cost-raw.json) |
+| 扩展开关与实际后端成本 | [Feature/rich cost](feature-cost.md) | [`feature-cost-raw.json`](feature-cost-raw.json) |
 | 同语言功能与性能对比 | [markdown4cj comparison](markdown4cj-comparison.md) | [`markdown4cj-comparison-raw.json`](markdown4cj-comparison-raw.json) |
 | CommonMark 0.31.2 | [Conformance report](commonmark-0.31.2-conformance.md) | 结果绑定在 release evidence 中 |
 | GFM 0.29 | [Conformance report](gfm-0.29-conformance.md) | 结果绑定在 release evidence 中 |
@@ -22,7 +25,7 @@
 2. 区分 `parse-only`、完整 AST、renderer-only 与 AST + HTML 工作负载。
 3. 使用 raw report 复核聚合值，不把单个语料或单轮结果当作发布结论。
 4. 只在能力边界一致时比较实现；event/pull parser 与完整 AST parser 应分组报告。
-5. 同语言报告必须是 schema v5，并包含每个 timed corpus 的 untimed spec-HTML digest、
+5. 同语言报告必须是 schema v6，并包含每个 timed corpus 的 untimed spec-HTML digest、
    SDK archive、target、完整 build identity、从声明 Git commit blobs 重算的产品/harness
    identity、从显式本地 Git 输入重算的 comparator core/完整依赖/迁移身份，以及独立重算
    的 gate。验证还必须取得专用 binary root，并从实际保留的三份执行文件重新计算路径、

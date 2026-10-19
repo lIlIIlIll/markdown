@@ -6,17 +6,17 @@ import std.collection.*
 public class RenderedSourceMapEntry {
     /** 输出中的 byte range。 */
     public let outputRange: SourceSpan
-    /** 对应的 source span；generated 内容为 `None`。 */
+    /** 对应的粗粒度 source span；纯结构标记为 None，派生展示可保留来源。 */
     public let sourceSpan: ?SourceSpan
-    /** 产生该输出的 AST 节点 id；generated 内容为 `None`。 */
+    /** 产生该输出的 AST 节点 id；纯结构标记为 None，派生展示可保留节点。 */
     public let nodeId: ?NodeId
-    /** 是否为 renderer 生成的非 source 内容。 */
+    /** 是否为生成内容；true 且带来源表示派生展示，不表示字符级映射。 */
     public let generated: Bool
     /**
      * 创建 source map 记录。
      * @param outputRange 输出中的 byte range。
-     * @param sourceSpan 对应的 source span，generated 内容为 `None`。
-     * @param nodeId 产生该输出的节点 id，generated 内容为 `None`。
+     * @param sourceSpan 粗粒度来源；纯结构标记为 None，派生展示可保留来源。
+     * @param nodeId 原始节点；纯结构标记为 None，派生展示可保留节点。
      * @param generated 是否为 renderer 生成的非 source 内容。
      */
     public init(outputRange: SourceSpan, sourceSpan: ?SourceSpan, nodeId: ?NodeId, generated: Bool) {
@@ -45,7 +45,7 @@ public class RenderedOutput {
 
     /** 查询 output byte 对应的 source span；无 source 对应的 generated 片段返回 None。
      * @param outputByte 输出中的字节偏移。
-     * @return 对应的 source span；generated 片段为 `None`。
+     * @return 粗粒度来源；没有来源的结构标记为 None。
      * @throws IllegalArgumentException outputByte 越界时。
      */
     public func sourceSpanAt(outputByte: Int64): ?SourceSpan {
@@ -55,9 +55,9 @@ public class RenderedOutput {
         findEntry(outputByte).sourceSpan
     }
 
-    /** 查询 output byte 对应的 NodeId；generated 片段返回 None。
+    /** 查询 output byte 对应的 NodeId；无来源的结构标记返回 None。
      * @param outputByte 输出中的字节偏移。
-     * @return 对应的 `NodeId`；generated 片段为 `None`。
+     * @return 对应的 NodeId；没有来源的结构标记为 None。
      * @throws IllegalArgumentException outputByte 越界时。
      */
     public func nodeIdAt(outputByte: Int64): ?NodeId {
@@ -151,7 +151,7 @@ public class MarkdownParseArtifact {
     /** 偏移映射 digest。 */
     public let offsetMappingDigest: String
     /** 解析得到的 Document。 */
-    public let ast: Document
+    public let document: Document
     /** 文档级引用定义。 */
     public let references: ImmutableArray<ReferenceDefinition>
     /** 解析诊断。 */
@@ -159,19 +159,20 @@ public class MarkdownParseArtifact {
     internal let profileIdentity: String
 
     internal init(engine: MarkdownEngine, result: ParseResult) {
-        schemaVersion = "2"
-        libraryVersion = "0.9.0"
-        parserPlanVersion = "2"
+        schemaVersion = "3"
+        libraryVersion = "0.10.0"
+        parserPlanVersion = MARKDOWN_PARSER_PLAN_VERSION
         profileId = engine.profile.id
         dialectFingerprint = engine.dialect.fingerprint
-        engineFingerprint = computeEngineFingerprint(engine)
+        engineFingerprint = parserConfigurationFingerprint(engine.dialect.fingerprint, engine.limits,
+            engine.bindingOptions)
         let originalBytes = result.source.originalBytesForArtifact()
         sourceDigest = Sha256.digestBytes(originalBytes)
         decodedTextDigest = Sha256.digest(result.source.text())
         utf8PolicyId = artifactUtf8PolicyId(result.source.decodePolicy())
         offsetMappingDigest = identityOffsetMappingDigest(originalBytes.size)
-        ast = result.ast
-        references = result.ast.root().asDocument().getOrThrow().references
+        document = result.document
+        references = result.document.root().asDocument().getOrThrow().references
         diagnostics = result.diagnostics
         profileIdentity = profileIdentityDescriptor(engine.profile)
     }
@@ -181,7 +182,7 @@ public class MarkdownParseArtifact {
      * @return 用于诊断的简短 JSON 文本。
      */
     public func debugJson(): String {
-        "{\"debug\":true,\"profile\":\"${profileId}\",\"nodes\":${ast.nodeCount}}"
+        "{\"debug\":true,\"profile\":\"${profileId}\",\"nodes\":${document.nodeCount}}"
     }
 }
 
@@ -190,12 +191,13 @@ extend MarkdownEngine {
      * 创建绑定当前 engine 和完整 parse result 的 artifact。
      * @param result 当前 engine 产生的完整 parse result。
      * @return 可用于 identity 校验和缓存加载的 artifact。
-     * @throws MarkdownException result 不完整、mapping 非 identity 或 provenance 不匹配时。
+     * @throws MarkdownException mapping 非 identity 或 provenance 不匹配时。
      */
     public func createArtifact(result: ParseResult): MarkdownParseArtifact {
-        if (!result.isComplete) {
-            throw MarkdownException(MarkdownErrorCode.InvalidArtifact, "partial parse results cannot be cached",
-                phase: "artifact_encode")
+        if (result.document.bindings.footnotesEnabled && result.document.bindings.engineFingerprint !=
+            parserConfigurationFingerprint(dialect.fingerprint, limits, bindingOptions)) {
+            throw MarkdownException(MarkdownErrorCode.InvalidArtifact,
+                "bound document configuration does not match the artifact engine", phase: "artifact_encode")
         }
         if (!result.source.hasIdentityMapping()) {
             throw MarkdownException(MarkdownErrorCode.InvalidArtifact,
@@ -203,7 +205,7 @@ extend MarkdownEngine {
         }
         let originalBytes = result.source.originalBytesForArtifact()
         match (artifactDocumentProvenanceFailure(
-            result.ast,
+            result.document,
             profile,
             dialect.fingerprint,
             Sha256.digestBytes(originalBytes),
@@ -250,10 +252,10 @@ extend MarkdownEngine {
 
     private func loadArtifactIdentity(artifact: MarkdownParseArtifact, originalBytes: Array<Byte>, decoded: String,
         utf8PolicyId: String): ArtifactLoadResult {
-        if (artifact.schemaVersion != "2") {
+        if (artifact.schemaVersion != "3") {
             return ArtifactLoadResult.CacheMiss("schema version")
         }
-        if (artifact.parserPlanVersion != "2") {
+        if (artifact.parserPlanVersion != MARKDOWN_PARSER_PLAN_VERSION) {
             return ArtifactLoadResult.CacheMiss("parser plan version")
         }
         if (artifact.profileId != profile.id) {
@@ -265,8 +267,12 @@ extend MarkdownEngine {
         if (artifact.dialectFingerprint != dialect.fingerprint) {
             return ArtifactLoadResult.CacheMiss("dialect fingerprint")
         }
-        if (artifact.engineFingerprint != computeEngineFingerprint(this)) {
+        if (artifact.engineFingerprint != parserConfigurationFingerprint(dialect.fingerprint, limits, bindingOptions)) {
             return ArtifactLoadResult.CacheMiss("engine fingerprint")
+        }
+        if (artifact.document.bindings.footnotesEnabled && artifact.document.bindings.engineFingerprint != artifact
+            .engineFingerprint) {
+            return ArtifactLoadResult.CacheMiss("document binding identity")
         }
         if (artifact.utf8PolicyId != utf8PolicyId) {
             return ArtifactLoadResult.CacheMiss("UTF-8 policy")
@@ -281,7 +287,7 @@ extend MarkdownEngine {
             return ArtifactLoadResult.CacheMiss("offset mapping digest")
         }
         match (artifactDocumentProvenanceFailure(
-            artifact.ast,
+            artifact.document,
             profile,
             dialect.fingerprint,
             artifact.sourceDigest,
@@ -293,11 +299,11 @@ extend MarkdownEngine {
             case None => ()
         }
         try {
-            AstInvariantValidator().validate(artifact.ast, limits: limits)
+            AstInvariantValidator().validate(artifact.document, limits: limits)
         } catch (_: Exception) {
             return ArtifactLoadResult.CacheMiss("AST invariants")
         }
-        ArtifactLoadResult.Hit(artifact.ast)
+        ArtifactLoadResult.Hit(artifact.document)
     }
 }
 
@@ -354,23 +360,4 @@ private func identityOffsetMappingDigest(byteLength: Int64): String {
     descriptor.append("identity-offset-mapping")
     descriptor.append(byteLength)
     Sha256.digest(descriptor.toString())
-}
-
-private func computeEngineFingerprint(engine: MarkdownEngine): String {
-    let limits = engine.limits
-    let out = CanonicalDescriptor()
-    out.append("engine")
-    out.append(engine.dialect.fingerprint)
-    out.append(limits.maximumInputBytes)
-    out.append(limits.maximumLineBytes)
-    out.append(limits.maximumNestingDepth)
-    out.append(limits.maximumAstNodes)
-    out.append(limits.maximumReferences)
-    out.append(limits.maximumTableColumns)
-    out.append(limits.maximumUrlBytes)
-    out.append(limits.maximumLiteralBytes)
-    out.append(limits.maximumOutputBytes)
-    out.append(limits.maximumExtensionCaptureBytes)
-    out.append(limits.maximumExtensionLookaheadBytes)
-    Sha256.digest(out.toString())
 }

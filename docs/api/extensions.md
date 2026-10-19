@@ -58,7 +58,7 @@ SourceSpan 和 origin。
 
 | 参数 | 默认值 |
 | --- | --- |
-| `requiredSpiVersion` | `"1"` |
+| `requiredSpiVersion` | `"3"` |
 | `supportedProfiles` | CommonMark 0.31.2、GFM modern v1 |
 | `dependencies` | `[]` |
 | `dependencyConstraints` | `[]` |
@@ -70,7 +70,7 @@ SourceSpan 和 origin。
 | `shareable` | `true` |
 
 `ExtensionCapabilities` 分别声明 parse、spec HTML、safe HTML、plain text、
-Markdown、CST、format、serialize、incremental、lint、postprocess 和 transform。
+Markdown、CST、format、serialize、incremental、lint、analysis 和 transform。
 声明能力后必须提供对应实现或明确 fallback。
 
 ## `MarkdownDialectBuilder`
@@ -85,14 +85,15 @@ MarkdownDialect.define(id, version)
     .block(blockRule)
     .renderer(rendererRule)
     .parserSpi(spi)
-    .documentProcessor(processor)
+    .astTransform(transform)
+    .documentAnalysis(analysis)
     .lint(provider)
     .disable(extensionId)
     .build()
 ```
 
-`disable` 会在编译前移除该扩展的 manifest、syntax、renderer、SPI、processor 和
-lint provider。
+`disable` 会在编译前移除该扩展的 manifest、syntax、renderer、SPI、transform、analysis
+和 lint provider。
 
 `DialectCompiler.compile` 验证：
 
@@ -228,7 +229,7 @@ link/image 相同的 policy。
 
 ## `InlineParserSpi`
 
-DSL 无法表达的有限行内语法可实现 SPI v1。实现必须声明：
+DSL 无法表达的有限行内语法可实现 SPI v3。实现必须声明：
 
 - `extensionId`
 - `ruleId`
@@ -241,14 +242,50 @@ DSL 无法表达的有限行内语法可实现 SPI v1。实现必须声明：
 `triggerBytes` 是所有可能 opener 的首 byte，必须非空且无重复。parser 只在这些位置
 调用 SPI。runtime 会验证 consumed range、node identity 和 SourceSpan。
 
-## Processor 和 lint provider
+## 完整文档阶段
 
-`ExtensionDocumentProcessor` 在声明的 `ExtensionProcessingPhase` 运行。
-`ExtensionLintProvider` 为 snapshot 提供诊断。callback 抛出的错误会包装成
-`ExtensionFailureException`，并保留 extension、version、phase 和 rule ID。
+用 `ExtensionAstTransform` 在绑定前返回修改后的 Document；用
+`ExtensionDocumentAnalysis` 在绑定后返回 `Array<Diagnostic>`。两种接口都声明
+extensionId、transformId 或 analysisId、version、priority、deterministic。
+当前编译器只接受 deterministic 为 true 的实现。
 
-包含 document processor 的 dialect 不能使用 source Event API，因为 processor 需要
-完整 AST。
+callback 签名中的参数均由引擎提供：
+
+| 参数 | 类型 | 含义 |
+| --- | --- | --- |
+| document | Document | 完整 AST；analysis 接收到最终 bindings |
+| source | SourceBuffer | 与当前文档关联的作者输入 |
+| limits | ParseLimits | 引擎实际使用的结构上限 |
+| budget | OperationBudget | 跨阶段累计的工作预算 |
+| cancellation | CancellationToken | 同一操作的取消信号 |
+
+注册方法分别是 `.astTransform(transform)` 和 `.documentAnalysis(analysis)`，manifest
+必须声明对应能力。阶段内按 priority 降序、extension ID、stage ID 排序。
+transform 返回值必须保留实际 source、profile 和 dialect，且通过有预算及取消检查的
+AST 验证。TreeRewriter 接受同一 limits/budget/cancellation，构造时限制新节点数量。
+
+analysis 返回值的主范围、relatedSpans 和 fixes 范围必须位于输入内并满足解码边界。
+诊断代码、消息及 fix 文本消耗累计预算，并受 literal 上限限制。省略的 extensionId 和
+ruleId 分别补为当前扩展与 analysis ID；不能冒用另一个扩展的身份。
+callback 自身的临时分配需要宿主实现约束，此接口不是进程隔离。
+
+Cancelled、BudgetExceeded 和 LimitExceeded 保持原错误类别。其它 callback 错误包装为
+ExtensionFailureException，保留扩展版本、stage ID 与 ast_transform/document_analysis
+阶段。本次解析不会因此返回成功的空文档。
+
+append 在 finish 时执行整文阶段。source events 与独立 raw-block 会话在 callback 前
+拒绝；RequireFused 失败，PreferFused 回退完整 AST。运行
+cookbook 可检查绑定后的标题诊断。选择 STS 1.2.0 SDK 后，从仓库根目录执行：
+
+```sh
+cd examples/cookbook
+cjpm build
+cjpm run --skip-build
+```
+
+输出的 `== bound-analysis ==` 段包含 `heading=analyzed`。
+完整实现见 [cookbook 源码](../../examples/cookbook/src/main.cj)。ExtensionLintProvider
+仍为显式 snapshot lint 操作提供诊断。
 
 ## Official extensions
 
@@ -256,7 +293,19 @@ DSL 无法表达的有限行内语法可实现 SPI v1。实现必须声明：
 Definition Lists、Heading IDs 和 Smart Punctuation。使用 `catalog()` 查询 enablement
 信息，或用 `p1Dialect()` 创建组合方言。
 
-Front Matter 和 Math 只保留 literal，不执行配置或数学引擎。
+Front Matter 只保留 literal，不执行配置。Math 2.0 使用 `MathPayload` 保存 TeX 与精确来源，默认渲染不调用数学引擎。
+
+脚注和标题 ID 使用 2.0 语义与 typed payload；编号、目标和目录来自
+`Document.bindings`。定义列表 2.0 使用 List/Entry/Term/Definition typed 结构，支持多 term、
+多定义和普通 Markdown 块正文。规则见[结构化定义列表](../definition-lists.md)；脚注和标题
+见[文档绑定](../semantic-binding.md)。不能从 p1Dialect 的名字推断全部 issue #10 目标已验收。
+Smart Punctuation 2.0 仅声明 transform，不声明 parser rule；Front Matter 与 Math 的
+当前版本分别为 1.0.0 与 2.0.0。边界见[官方能力矩阵](../extensions.md#官方扩展能力矩阵)。
+
+Code Groups 1.0 单独使用 `OfficialExtensions.codeGroups(builder)`。Group/Item 由
+`CodeGroupPayload` 表达，Item 的普通 CodeBlock child 保存语言和 fence；payload 保存标题、
+`CodeLineRange` 与原始换行的 copyText。它不执行代码，规则和可选 renderer 见
+[代码组](../code-groups.md)。
 
 ## External descriptor
 

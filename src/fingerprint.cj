@@ -218,3 +218,23 @@ private func hexWords(words: Array<UInt32>): String {
     }
     out.toString()
 }
+
+internal func parserConfigurationFingerprint(dialectFingerprint: String, limits: ParseLimits, options: BindingOptions): String {
+    let out = CanonicalDescriptor()
+    out.append("engine-0.10-plan-${MARKDOWN_PARSER_PLAN_VERSION}")
+    out.append(options.idScope)
+    out.append(options.strictUndefinedFootnotes)
+    out.append(dialectFingerprint)
+    out.append(limits.maximumInputBytes)
+    out.append(limits.maximumLineBytes)
+    out.append(limits.maximumNestingDepth)
+    out.append(limits.maximumAstNodes)
+    out.append(limits.maximumReferences)
+    out.append(limits.maximumTableColumns)
+    out.append(limits.maximumUrlBytes)
+    out.append(limits.maximumLiteralBytes)
+    out.append(limits.maximumOutputBytes)
+    out.append(limits.maximumExtensionCaptureBytes)
+    out.append(limits.maximumExtensionLookaheadBytes)
+    Sha256.digest(out.toString())
+}

@@ -17,11 +17,14 @@
 
 </div>
 
-当前版本是 `0.9.0` breaking pre-GA preview。规范语料、全量测试和性能发布门槛已经
-通过。0.9 仍允许在 GA 前调整公开 API。
+当前开发版本是 `0.10.0` breaking pre-GA preview，正在实施新的语义、身份和流式模型。
+本次开发尚未完成全部发布门槛；破坏性修改和状态见[0.10 迁移](docs/migration-0.10.md)。
 
 > [!NOTE]
 > 基础包是纯仓颉实现，不需要 C 编译器。原生 line scanner 是可选加速器，不是运行依赖。
+
+真实公式、图表与代码高亮可选择[显式安装的 Node 后端](docs/node-rich-backend.md)；
+默认解析和输出独立可用，不下载或启动该运行时。
 
 ## 为什么选择 markdown
 
@@ -146,7 +149,7 @@ let engine = MarkdownEngine.builder().dialect(dialect).build()
 
 ## 包结构
 
-新代码应导入用途明确的子包。根包 `markdown.*` 只作为兼容门面。
+新代码应导入用途明确的子包。根包 `markdown.*` 是共享实现包。
 
 | 子包 | 用途 |
 | --- | --- |
@@ -158,6 +161,7 @@ let engine = MarkdownEngine.builder().dialect(dialect).build()
 | `markdown.document` | document graph 和跨文档引用 |
 | `markdown.testkit` | 第三方扩展 TCK |
 | `markdown.native` | 可选原生 line scanner |
+| `markdown.node` | 显式、可选的 KaTeX/Shiki/Mermaid 准备端口 |
 
 ## 性能对比
 
@@ -183,9 +187,10 @@ markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、�
 ## 执行模型
 
 - `parse(String)`、bytes 和 stream 入口构造完整 AST。
+- `newAppendSession()` 在 feed 中交付结构闭合块，通过原子更新在 finish 完成后置引用和绑定。
 - `BufferedInputSession` 在 `finish()` 时解析，不降低峰值内存。
 - `parseEvents` 和 `emitEvents` 产生不持有 AST 的 source events。
-- `BufferedAsyncHtmlOutputSession` 先生成完整 HTML，再处理 sink backpressure。
+- `renderer.newOutputSession()` 保存实际遍历和转义状态，按 UTF-8 前缀确认暂停与恢复。
 - Safe HTML 默认转义 raw HTML，并拒绝危险 URI。
 
 需要选择输入 API、流式接口或资源上限时，查看[输入、限制和取消](docs/input-and-resources.md)。
@@ -207,20 +212,20 @@ markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、�
 <!-- release-evidence:start -->
 | Release evidence | Value |
 | --- | --- |
-| Version / status | `0.9.0` / `evidence-ready` |
+| Version / status | `0.10.0` / `evidence-ready` |
 | Offline evidence ready | `ready` |
 | CI verified at evidence repository HEAD | `no` |
 | Published release | `no` |
-| Tests | `1511/1511` passed; `0` skipped; `0` failed |
+| Tests | `1621/1621` passed; `0` skipped; `0` failed |
 | CommonMark conformance | `652/652` |
 | GFM conformance | `671/671` |
-| Public API snapshot | `1436` declarations |
-| Artifact commit | `6e5a207d07903a60f8270c41badac1bb4cb104b5` |
-| Evidence subject commit | `6e5a207d07903a60f8270c41badac1bb4cb104b5` |
+| Public API snapshot | `1706` declarations |
+| Artifact commit | `b930377c2ea52f4afbd5e4c93a354bda41809c82` |
+| Evidence subject commit | `b930377c2ea52f4afbd5e4c93a354bda41809c82` |
 | Execution identity | `target/release-evidence/manifest.json` records and verifies the clean gate commit/tree |
-| CommonMark / cmark | `2.36x` / limit `2.5x` |
-| GFM HTML / cmark-gfm | `1.79x` / limit `2.5x` |
-| Benchmark identity | `current`; commit `6e5a207d07903a60f8270c41badac1bb4cb104b5`; SDK `Cangjie Compiler: 1.2.0 (cjnative)` |
+| CommonMark / cmark | `2.27x` / limit `2.5x` |
+| GFM HTML / cmark-gfm | `1.80x` / limit `2.5x` |
+| Benchmark identity | `current`; commit `b930377c2ea52f4afbd5e4c93a354bda41809c82`; SDK `Cangjie Compiler: 1.2.0 (cjnative)` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
 `evidenceReady` describes reproducible offline artifacts and gates only. It does not claim that

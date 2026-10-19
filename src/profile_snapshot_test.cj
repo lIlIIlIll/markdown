@@ -20,8 +20,6 @@ class ProfileBehaviorSnapshotTest {
         let commonHtml = HtmlRenderer(options: unsafe { HtmlOptions.specCompatible() }).render(common)
         @Expect(commonHtml.contains("<del>"), false)
         @Expect(commonHtml.contains("<table>"), false)
-        @Expect(MarkdownProfile.gfm().sameIdentity(MarkdownProfile.gfmModernV1()), true)
-        @Expect(MarkdownProfile.commonMark().sameIdentity(MarkdownProfile.commonMark0312()), true)
 
         let commonProfile = MarkdownProfile.commonMark0312()
         let customAlias = MarkdownProfile.custom(commonProfile.id, commonProfile.standardVersion)

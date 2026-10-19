@@ -98,7 +98,7 @@ public class DocumentGraph {
             let snapshot = engine.parseSnapshot(input.source)
             ids.add(input.id);
             snapshots.add(input.id, snapshot)
-            for (link in AstQuery.links(snapshot.result.ast)) {
+            for (link in AstQuery.links(snapshot.result.document)) {
                 if (documentDestination(link.destination)) {
                     edges.add(DocumentGraphEdge(input.id, link.destination, link.node.nodeId))
                 }
@@ -123,7 +123,7 @@ public class DocumentGraph {
         let normalized = normalizeGraphLabel(label)
         for (id in documentIds.toArray()) {
             if (let Some(snapshot) <- snapshots.get(id)) {
-                let root = snapshot.result.ast.root().asDocument().getOrThrow()
+                let root = snapshot.result.document.root().asDocument().getOrThrow()
                 for (definition in root.references.toArray()) {
                     if (definition.isEffective && definition.labelNormalized == normalized) {
                         return Some(CrossDocumentReference(id, definition))

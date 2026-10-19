@@ -211,13 +211,11 @@ class NamedBlockEmitter <: BlockPayloadEmitter {
     }
 }
 
-class PrefixProcessor <: ExtensionDocumentProcessor {
+class PrefixTransform <: ExtensionAstTransform {
     private let prefix: String
-    private let phaseValue: ExtensionProcessingPhase
     private let idValue: String
-    public init(prefix: String, phase: ExtensionProcessingPhase, id: String) {
+    public init(prefix: String, id: String) {
         this.prefix = prefix
-        this.phaseValue = phase
         this.idValue = id
     }
     public prop extensionId: String {
@@ -225,7 +223,7 @@ class PrefixProcessor <: ExtensionDocumentProcessor {
             "pipeline"
         }
     }
-    public prop processorId: String {
+    public prop transformId: String {
         get() {
             idValue
         }
@@ -233,11 +231,6 @@ class PrefixProcessor <: ExtensionDocumentProcessor {
     public prop version: String {
         get() {
             "1"
-        }
-    }
-    public prop phase: ExtensionProcessingPhase {
-        get() {
-            phaseValue
         }
     }
     public prop priority: Int64 {
@@ -250,13 +243,14 @@ class PrefixProcessor <: ExtensionDocumentProcessor {
             true
         }
     }
-    public func process(document: Document, budget: OperationBudget, cancellation: CancellationToken): Document {
+    public func transform(document: Document, _: SourceBuffer, limits: ParseLimits, budget: OperationBudget,
+        cancellation: CancellationToken): Document {
         TreeRewriter.rewrite(document, {
             node => match (node.kind) {
                 case NodeKind.Text => RewriteAction.MapText(prefix + node.asText().getOrThrow().value)
                 case _ => RewriteAction.Keep
             }
-        }, budget: budget, cancellation: cancellation)
+        }, limits: limits, budget: budget, cancellation: cancellation)
     }
 }
 
@@ -713,14 +707,14 @@ class ExtensionDslTest {
     }
 
     @TestCase
-    func extensionPostprocessTransformLintAndFormatterCategoriesRunInFixedOrder(): Unit {
+    func extensionTransformsLintAndFormatterCategoriesRunInFixedOrder(): Unit {
         let manifest = ExtensionManifest("pipeline", "1.0.0", "build-1",
-            capabilities: ExtensionCapabilities(postprocess: true, transform: true, lint: true))
+            capabilities: ExtensionCapabilities(transform: true, lint: true))
         let dialect = MarkdownDialect
             .define("pipeline", "1")
             .enable(manifest)
-            .documentProcessor(PrefixProcessor("T:", ExtensionProcessingPhase.AstTransform, "transform"))
-            .documentProcessor(PrefixProcessor("P:", ExtensionProcessingPhase.DocumentPostprocess, "post"))
+            .astTransform(PrefixTransform("T:", "second"))
+            .astTransform(PrefixTransform("P:", "first"))
             .lint(PipelineLintProvider())
             .build()
         let engine = MarkdownEngine.builder().dialect(dialect).build()
@@ -730,8 +724,8 @@ class ExtensionDslTest {
             case NodeOriginKind.Transformed => @Expect(true)
             case _ => @Expect(false)
         }
-        @Expect(engine.dialect.documentProcessors[0].processorId, "post")
-        @Expect(engine.dialect.documentProcessors[1].processorId, "transform")
+        @Expect(engine.dialect.astTransforms[0].transformId, "first")
+        @Expect(engine.dialect.astTransforms[1].transformId, "second")
         let lint = engine.lint(engine.parseSnapshot("x"))
         var found = false
         for (diagnostic in lint) {
@@ -746,7 +740,7 @@ class ExtensionDslTest {
             MarkdownDialect
                 .define("missing-pipeline-capability", "1")
                 .enable(missingCapabilities)
-                .documentProcessor(PrefixProcessor("P:", ExtensionProcessingPhase.DocumentPostprocess, "post"))
+                .astTransform(PrefixTransform("P:", "first"))
                 .build())
     }
 

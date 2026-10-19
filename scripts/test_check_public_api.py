@@ -18,7 +18,7 @@ from urllib.parse import quote
 HERE = Path(__file__).resolve().parent
 CHECKER = HERE / "check_public_api.py"
 RELEASE_GATE = HERE / "release_gate.sh"
-HEADER = "# markdown public API snapshot v0.9"
+HEADER = "# markdown public API snapshot v0.10"
 
 
 class PublicApiCheckerCliTest(unittest.TestCase):
@@ -48,10 +48,10 @@ class PublicApiCheckerCliTest(unittest.TestCase):
     def update_snapshot(self) -> str:
         result = self.run_checker("--update")
         self.assertEqual(result.returncode, 0, result.stderr)
-        return (self.root / "api" / "public-api-v0.9.txt").read_text(encoding="utf-8")
+        return (self.root / "api" / "public-api-v0.10.txt").read_text(encoding="utf-8")
 
     def write_snapshot(self, content: str) -> None:
-        (self.root / "api" / "public-api-v0.9.txt").write_bytes(content.encode("utf-8"))
+        (self.root / "api" / "public-api-v0.10.txt").write_bytes(content.encode("utf-8"))
 
     def assert_snapshot_fails(self, content: str, message: str | None = None) -> subprocess.CompletedProcess[str]:
         self.write_snapshot(content)
@@ -90,7 +90,7 @@ class PublicApiCheckerCliTest(unittest.TestCase):
 
                 updated = self.run_checker("--update")
                 self.assertEqual(updated.returncode, 0, updated.stderr)
-                self.assertEqual((self.root / "api" / "public-api-v0.9.txt").read_text(encoding="utf-8"), raw)
+                self.assertEqual((self.root / "api" / "public-api-v0.10.txt").read_text(encoding="utf-8"), raw)
 
     def test_real_constructor_signature_differences_fail_with_raw_diff(self) -> None:
         declaration = 'public init<T>(value: Int64, name!: String = "x") where T <: Any {'
@@ -493,7 +493,7 @@ class PublicApiCheckerCliTest(unittest.TestCase):
         self.write_source(source.replace("package sample", "package beta"), "b.cj")
         distinct_packages = self.run_checker("--update")
         self.assertEqual(distinct_packages.returncode, 0, distinct_packages.stderr)
-        distinct_raw = (self.root / "api" / "public-api-v0.9.txt").read_text(encoding="utf-8")
+        distinct_raw = (self.root / "api" / "public-api-v0.10.txt").read_text(encoding="utf-8")
         self.assertIn("a.cj:package=alpha:owner=class/Box:", distinct_raw)
         self.assertIn("b.cj:package=beta:owner=class/Box:", distinct_raw)
 
@@ -1619,7 +1619,7 @@ class PublicApiCheckerCliTest(unittest.TestCase):
         result = self.run_checker("--update")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("canonical collision", result.stderr)
-        self.assertFalse((self.root / "api" / "public-api-v0.9.txt").exists())
+        self.assertFalse((self.root / "api" / "public-api-v0.10.txt").exists())
 
     def test_implicit_public_interface_members_are_snapshotted(self) -> None:
         self.write_source(
@@ -1841,7 +1841,7 @@ class PublicApiCheckerCliTest(unittest.TestCase):
         result = self.run_checker("--update")
         self.assertNotEqual(result.returncode, 0, result.stdout)
         self.assertIn("nonempty type body", result.stderr)
-        self.assertFalse((self.root / "api" / "public-api-v0.9.txt").exists())
+        self.assertFalse((self.root / "api" / "public-api-v0.10.txt").exists())
 
     def test_private_and_internal_owners_hide_nested_public_declarations(self) -> None:
         self.write_source(
@@ -2003,10 +2003,13 @@ class PublicApiCheckerCliTest(unittest.TestCase):
         (gate_root / "examples" / "quickstart").mkdir(parents=True)
         (gate_root / "examples" / "cookbook").mkdir(parents=True)
         (gate_root / "benchmarks" / "driver").mkdir(parents=True)
+        (gate_root / "tests" / "rich_backend").mkdir(parents=True)
         shutil.copy2(RELEASE_GATE, scripts / "release_gate.sh")
 
         self.write_shell_stub(scripts / "check_format.sh", "format")
         self.write_python_stub(scripts / "check_docs.py", "docs")
+        self.write_python_stub(gate_root / "tests" / "rich_backend" / "test_supervisor_capabilities.py",
+            "node-supervisor-capabilities")
         self.write_python_stub(scripts / "test_build_native_scanner.py", "native-build-test")
         self.write_python_stub(scripts / "build_native_scanner.py", "native-build")
         self.write_python_stub(scripts / "fuzz_native_scanner.py", "native-fuzz")
@@ -2043,19 +2046,19 @@ class PublicApiCheckerCliTest(unittest.TestCase):
 
         failed_tests, failed_tests_log = self.run_release_gate(gate_root, checker_test_exit=7, checker_exit=0)
         self.assertEqual(failed_tests.returncode, 7)
-        self.assertEqual(failed_tests_log, ["format", "docs", "native-build-test", "checker-test"])
+        self.assertEqual(failed_tests_log, ["format", "docs", "node-supervisor-capabilities", "native-build-test", "checker-test"])
         self.assertNotIn("checker", failed_tests_log)
         self.assertFalse(any(entry.startswith("cjpm:") for entry in failed_tests_log))
 
         failed_checker, failed_checker_log = self.run_release_gate(gate_root, checker_test_exit=0, checker_exit=9)
         self.assertEqual(failed_checker.returncode, 9)
-        self.assertEqual(failed_checker_log, ["format", "docs", "native-build-test", "checker-test", "checker"])
+        self.assertEqual(failed_checker_log, ["format", "docs", "node-supervisor-capabilities", "native-build-test", "checker-test", "checker"])
         self.assertFalse(any(entry.startswith("cjpm:") for entry in failed_checker_log))
 
         success, success_log = self.run_release_gate(gate_root, checker_test_exit=0, checker_exit=0)
         self.assertEqual(success.returncode, 0, success.stderr)
-        self.assertEqual(success_log[:5], ["format", "docs", "native-build-test", "checker-test", "checker"])
-        self.assertTrue(success_log[5].startswith("cjpm:check"))
+        self.assertEqual(success_log[:6], ["format", "docs", "node-supervisor-capabilities", "native-build-test", "checker-test", "checker"])
+        self.assertTrue(success_log[6].startswith("cjpm:check"))
         self.assertIn("link-input-tests", success_log)
 
     def write_shell_stub(self, path: Path, label: str) -> None:

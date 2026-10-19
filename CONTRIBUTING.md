@@ -20,7 +20,7 @@ cjpm check
 ## 修改原则
 
 - 解析行为、renderer 输出和文档必须一致。
-- 新增公开 API 时同步更新 `api/public-api-v0.9.txt` 和对应 API 文档。
+- 新增公开 API 时同步更新 `api/public-api-v0.10.txt` 和对应 API 文档。
 - parser 创建的每个节点都必须经过统一 node limit；literal 必须执行累计 byte limit。
 - extension 必须声明有限 lookahead/capture，并提供 renderer 或明确 fallback。
 - Safe HTML 默认值不能因便利入口或扩展而绕过。

@@ -1,17 +1,17 @@
 {
   "schemaVersion": 4,
   "release": {
-    "version": "0.9.0",
+    "version": "0.10.0",
     "channel": "preview",
     "status": "evidence-ready",
     "evidenceReady": true,
     "ciVerifiedAtHead": false,
-    "ciVerifiedCommit": null,
+    "ciVerifiedCommit": "d383eaca35c1c70802105cbf1ab8e942da6c4ea2",
     "published": false
   },
   "identity": {
-    "artifactCommit": "6e5a207d07903a60f8270c41badac1bb4cb104b5",
-    "evidenceCommit": "6e5a207d07903a60f8270c41badac1bb4cb104b5",
+    "artifactCommit": "b930377c2ea52f4afbd5e4c93a354bda41809c82",
+    "evidenceCommit": "b930377c2ea52f4afbd5e4c93a354bda41809c82",
     "repositoryHeadAtGeneration": null,
     "repositoryGitTreeAtGeneration": null,
     "treeStateAtGeneration": "validated-by-execution-manifest",
@@ -43,13 +43,13 @@
     }
   },
   "api": {
-    "snapshotPath": "api/public-api-v0.9.txt",
-    "declarations": 1436,
-    "sha256": "d056c91147c54e8afb0388fae47b9b6509714ab726646bca3135306f03051722"
+    "snapshotPath": "api/public-api-v0.10.txt",
+    "declarations": 1706,
+    "sha256": "e736a95e63ca67956554fd2f68226c6ebd322deca73327f2f0151b6fb5fd33fb"
   },
   "tests": {
-    "total": 1511,
-    "passed": 1511,
+    "total": 1621,
+    "passed": 1621,
     "skipped": 0,
     "errors": 0,
     "failed": 0
@@ -57,21 +57,21 @@
   "benchmark": {
     "status": "current",
     "rawPath": "docs/reports/benchmark-raw.json",
-    "rawSha256": "49e72c7b6049cddee2cb85dbb3d783a11b1c8a5652287dc9acf72ce1764bdef3",
-    "sourceCommit": "6e5a207d07903a60f8270c41badac1bb4cb104b5",
-    "sourceGitTree": "0979d233f8c3e30436f71e5d60d7564572004382",
+    "rawSha256": "0f4f838cafefebdefea784c54b487b88241a1d3f1afb79fdef352f46b82bfe2c",
+    "sourceCommit": "b930377c2ea52f4afbd5e4c93a354bda41809c82",
+    "sourceGitTree": "6e5719ad9ed84ffb3a02cdffd1720f9cd307a0eb",
     "sdkVersion": "Cangjie Compiler: 1.2.0 (cjnative)",
-    "productSourceArchiveSha256": "6ac0f505e809a70d5d4d7a7ebe23e174f83a8357d2acacfc9aea65970eaf831b",
-    "productTreeSha256": "23055eea1568b2155794f0ed442b641ce3a33a9c3d5611e81e0a3eac85de1564",
+    "productSourceArchiveSha256": "4e927fc560c880cb5f5f85da9cddbd629d92a773d957dbef2116cf7b6010688d",
+    "productTreeSha256": "6c777aa402a9de37ca65bfc86b1fabcc5af9420678dfc78d9e31a40b1e6f1ce1",
     "benchmarkHarnessSha256": "ba095c3ed6464805959a2af907d18c16023f605ab172253c47e0b78872de5a4a",
-    "markdownDriverSha256": "21967044f6439a8ca5fded8eab99e1b030494ed82052507e32547bfe632ef07a",
+    "markdownDriverSha256": "a4911c0419924247b8cee26d5ab5c49378edf135fb78ed5ec38a85ba52de2a7c",
     "cmarkDriverSha256": "ade49af75b9eac2371dc65f2712262d6b0834997b39d2d60488a45de068cf88e",
     "cmarkGfmDriverSha256": "c2160a6ccb910e5357ad3d56090dc19c9847136836c6e32da44b34aacd55570b",
-    "commonmarkRatio": 2.361586034975156,
-    "gfmRatio": 1.7880103789446966,
+    "commonmarkRatio": 2.2662144957475965,
+    "gfmRatio": 1.7966549618996306,
     "ratioLimit": 2.5,
     "cmark": "0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8",
     "cmarkGfm": "0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b",
-    "note": "Canonical local Linux run at 2026-10-18T01:40:46.839212+00:00 with the official STS 1.2.0 SDK, a pinned CPU, root -O2, benchmark consumer -O2 --lto thin, a 2 GiB heap, cjGCInterval=500ms and seven alternating paired samples. All frozen ratio, growth and memory gates passed. Environment, raw samples, corpus identities and executable digests are retained in the raw report; this is local execution evidence, not hosted CI or publication proof."
+    "note": "Frozen 0.10 product measurement with unchanged thresholds. Source-to-binary replay passed offline in Arch and Ubuntu; hosted core CI and release publication remain unverified."
   }
 }

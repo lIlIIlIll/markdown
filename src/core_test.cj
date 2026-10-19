@@ -7,9 +7,9 @@ import std.unittest.testmacro.*
 class CoreContractTest {
     @TestCase
     func freezesVersionedProfilesAndSafeDefault(): Unit {
-        @Expect(MarkdownProfile.commonMark().id, "commonmark-0.31.2")
+        @Expect(MarkdownProfile.commonMark0312().id, "commonmark-0.31.2")
         @Expect(MarkdownProfile.gfm029().id, "gfm-0.29")
-        @Expect(MarkdownProfile.gfm().id, "gfm-modern-v1")
+        @Expect(MarkdownProfile.gfmModernV1().id, "gfm-modern-v1")
         @Expect(HtmlPolicy.safe().rawHtmlPassThrough, false)
     }
 

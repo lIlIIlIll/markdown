@@ -15,6 +15,7 @@
 | 获取标题、链接和 LSP 位置 | [读取标题、链接和位置](#读取标题链接和位置) |
 | 限制资源或取消请求 | [限制资源并取消操作](#限制资源并取消操作) |
 | 注册 `:::` 容器 | [自定义容器语法](#自定义容器语法) |
+| 读取最终标题绑定并产生诊断 | [完整文档阶段](api/extensions.md#完整文档阶段) |
 | lint 或格式化 | [Lint 和格式化](#lint-和格式化) |
 
 ```sh
@@ -87,17 +88,20 @@ for (link in AstQuery.links(result.document)) {
 取消由调用方持有 `CancellationSource`：
 
 ```cangjie
-import markdown.core.{CancellationSource, MarkdownEngine}
+import markdown.core.{CancellationSource, MarkdownEngine, ParseOutcome}
 
 let source = CancellationSource()
 source.cancel()
 let engine = MarkdownEngine.builder().build()
 let result = engine.tryParse("# cancelled", cancellation: source.token)
-println(result.isComplete) // false
+match (result) {
+    case ParseOutcome.Success(_) => println("parsed")
+    case ParseOutcome.Failure(error) => println(error.phase) // input
+}
 ```
 
 正常的 `parse` 在取消或超限时抛出 `MarkdownException`；`tryParse` 返回
-`isComplete == false`、空文档和结构化 `errors`，不会返回部分 AST。
+`ParseOutcome.Failure(error)`，不会返回空文档或部分 AST。
 
 ## 自定义容器语法
 
@@ -153,3 +157,10 @@ println(Markdown.format("#  Title\n\n* item"))
 ---
 
 [← 开始使用](getting-started.md) · [文档首页](README.md) · [API 速查 →](api/quick-reference.md)
+
+## 公式来源与代码组
+
+可运行 cookbook 的 `math-source` 段展示 MathPayload 的语义与来源片段；`code-groups`
+段生成包含中文标题、BOM、CRLF、多语言和空代码的真实 HTML。规则分别见
+[公式模型](math.md)和[代码组](code-groups.md)。代码组控件需要宿主显式加载静态资产；
+cookbook 不执行代码或启动第三方排版后端。

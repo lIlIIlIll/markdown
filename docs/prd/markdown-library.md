@@ -140,14 +140,14 @@ CommonMark 官方规范仓库包含规范本身和可执行一致性测试数据
 
 不得使用语义随时间变化的内部 `latest` profile。
 
-允许提供便利别名：
+使用显式版本入口：
 
 ```cangjie
-MarkdownProfile.commonMark()
-MarkdownProfile.gfm()
+MarkdownProfile.commonMark0312()
+MarkdownProfile.gfmModernV1()
 ```
 
-但便利别名在同一主版本中必须固定。
+不提供无版本号的 profile 别名；新语义使用新的版本入口。
 
 例如：
 

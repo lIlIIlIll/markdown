@@ -32,7 +32,7 @@ public class Markdown {
      * @return 转义 raw HTML 后的 HTML 文本。
      */
     public static func toSafeHtml(source: String, profile!: MarkdownProfile = MarkdownProfile.commonMark0312()): String {
-        HtmlRenderer().render(parse(source, profile: profile).ast)
+        HtmlRenderer().render(parse(source, profile: profile).document)
     }
 
     /**
@@ -44,7 +44,7 @@ public class Markdown {
      * @return 规范兼容的 HTML 文本。
      */
     public static unsafe func toSpecHtml(source: String, profile!: MarkdownProfile = MarkdownProfile.commonMark0312()): String {
-        HtmlRenderer(options: HtmlOptions.specCompatible()).render(parse(source, profile: profile).ast)
+        HtmlRenderer(options: HtmlOptions.specCompatible()).render(parse(source, profile: profile).document)
     }
 
     /**
@@ -72,17 +72,11 @@ public class Markdown {
 extend Document {
     /**
      * 将 source-backed 的文本、代码块和 raw HTML literal 转为拥有独立存储的文本，
-     * 并返回新的文档；其他节点保持语义和 origin 关系。
+     * 并将可达节点复制到不保留原 arena/source 的新文档；节点身份和绑定保持不变。
      * @return 独立于 source buffer 的 `Document` 副本。
+     * @throws MarkdownException 自定义 payload 的 ownership 无法验证时。
      */
     public func detach(): Document {
-        TreeRewriter.rewrite(this, {
-            node => match (node.kind) {
-                case NodeKind.CodeBlock => RewriteAction.DetachLiteral
-                case NodeKind.HtmlBlock => RewriteAction.DetachLiteral
-                case NodeKind.Text => RewriteAction.DetachLiteral
-                case _ => RewriteAction.Keep
-            }
-        })
+        detachDocument(this)
     }
 }

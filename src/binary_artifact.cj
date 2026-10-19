@@ -12,7 +12,7 @@ public class BinarySnapshotArtifact {
      * @param data 快照的完整二进制内容，构造时会复制一份。
      */
     public init(data: Array<Byte>) {
-        this.schemaVersion = "markdown-snapshot-binary-2"
+        this.schemaVersion = "markdown-snapshot-binary-3"
         this.data = data.clone()
     }
     /**
@@ -34,6 +34,28 @@ public enum BinaryArtifactLoadResult {
 
 /** 编解码包含 AST、CST 和身份 digest 的 binary snapshot。 */
 public class BinaryArtifactCodec {
+    /** 读取显式提供的持久化快照；旧版和未知版明确报 UnsupportedVersion。
+     * @param engine 用于身份及资源校验的目标 engine。
+     * @param data 持久化快照字节。
+     * @return 经当前格式校验的 snapshot。
+     * @throws MarkdownException 版本不支持、身份不符或内容无效时。
+     */
+    public static func read(engine: MarkdownEngine, data: Array<Byte>): DocumentSnapshot {
+        if (data.size >= 4 && data[0] == b'M' && data[1] == b'C' && data[2] == b'J' && data[3] != b'3') {
+            throw MarkdownException(MarkdownErrorCode.UnsupportedVersion, "unsupported binary snapshot version",
+                phase: "artifact_decode")
+        }
+        if (data.size > engine.limits.maximumInputBytes && data.size - engine.limits.maximumInputBytes > 1024 * 1024) {
+            throw MarkdownException(MarkdownErrorCode.InvalidArtifact, "binary snapshot exceeds the input limit",
+                phase: "artifact_decode")
+        }
+        match (decode(engine, BinarySnapshotArtifact(data))) {
+            case BinaryArtifactLoadResult.Hit(snapshot) => snapshot
+            case BinaryArtifactLoadResult.CacheMiss(reason) => throw MarkdownException(
+                MarkdownErrorCode.InvalidArtifact, "invalid binary snapshot: ${reason}", phase: "artifact_decode")
+        }
+    }
+
     /** 编码完整且 identity-preserving 的 snapshot；不支持非 identity UTF-8 mapping。
      * @param snapshot 要编码的完整 snapshot。
      * @return 编码后的二进制快照。
@@ -46,17 +68,19 @@ public class BinaryArtifactCodec {
         }
         let out = ArrayList<Byte>()
         let originalBytes = snapshot.result.source.originalBytesForArtifact()
-        out.add(all: "MCJ2".toArray())
-        let root = snapshot.result.ast.root().asDocument().getOrThrow()
+        out.add(all: "MCJ3".toArray())
+        let root = snapshot.result.document.root().asDocument().getOrThrow()
         binaryWriteString(out, root.profile.id)
         binaryWriteString(out, root.dialectFingerprint)
-        binaryWriteString(out, binaryEngineFingerprint(snapshot.engine))
+        binaryWriteString(out,
+            parserConfigurationFingerprint(snapshot.engine.dialect.fingerprint, snapshot.engine.limits,
+                snapshot.engine.bindingOptions))
         binaryWriteString(out, binaryUtf8PolicyId(snapshot.result.source.decodePolicy()))
         binaryWriteString(out, Sha256.digestBytes(originalBytes))
         binaryWriteString(out, Sha256.digest(snapshot.result.source.text()))
         binaryWriteString(out,
             binaryIdentityOffsetMappingDigest(originalBytes.size, snapshot.result.source.decodePolicy()))
-        binaryWriteString(out, binaryAstDigest(snapshot.result.ast))
+        binaryWriteString(out, binaryAstDigest(snapshot.result.document))
         binaryWriteString(out, Sha256.digest(snapshot.syntaxTree.losslessText()))
         binaryWriteString(out, snapshot.result.source.text())
         BinarySnapshotArtifact(out.toArray())
@@ -69,12 +93,12 @@ public class BinaryArtifactCodec {
      */
     public static func decode(engine: MarkdownEngine, artifact: BinarySnapshotArtifact): BinaryArtifactLoadResult {
         let data = artifact.bytes()
-        if (data.size > engine.limits.maximumInputBytes + 1024 * 1024) {
+        if (data.size > engine.limits.maximumInputBytes && data.size - engine.limits.maximumInputBytes > 1024 * 1024) {
             return BinaryArtifactLoadResult.CacheMiss("artifact size")
         }
         try {
             let reader = BinaryArtifactReader(data)
-            if (reader.readFixed(4) != "MCJ2") {
+            if (reader.readFixed(4) != "MCJ3") {
                 return BinaryArtifactLoadResult.CacheMiss("schema magic")
             }
             let profile = reader.readString()
@@ -96,7 +120,8 @@ public class BinaryArtifactCodec {
             if (dialect != engine.dialect.fingerprint) {
                 return BinaryArtifactLoadResult.CacheMiss("dialect fingerprint")
             }
-            if (engineFingerprint != binaryEngineFingerprint(engine)) {
+            if (engineFingerprint != parserConfigurationFingerprint(engine.dialect.fingerprint, engine.limits,
+                engine.bindingOptions)) {
                 return BinaryArtifactLoadResult.CacheMiss("engine fingerprint")
             }
             let utf8Policy = match (utf8PolicyId) {
@@ -115,7 +140,7 @@ public class BinaryArtifactCodec {
                 return BinaryArtifactLoadResult.CacheMiss("offset mapping digest")
             }
             let snapshot = DocumentSnapshot(engine, 1, engine.parse(sourceBytes, utf8Policy: utf8Policy))
-            if (astDigest != binaryAstDigest(snapshot.result.ast)) {
+            if (astDigest != binaryAstDigest(snapshot.result.document)) {
                 return BinaryArtifactLoadResult.CacheMiss("AST digest")
             }
             if (cstDigest != Sha256.digest(snapshot.syntaxTree.losslessText())) {
@@ -192,25 +217,6 @@ private func binaryWriteU64(out: ArrayList<Byte>, value: UInt64): Unit {
     }
 }
 
-private func binaryEngineFingerprint(engine: MarkdownEngine): String {
-    let limits = engine.limits
-    let out = CanonicalDescriptor()
-    out.append("engine")
-    out.append(engine.dialect.fingerprint)
-    out.append(limits.maximumInputBytes)
-    out.append(limits.maximumLineBytes)
-    out.append(limits.maximumNestingDepth)
-    out.append(limits.maximumAstNodes)
-    out.append(limits.maximumReferences)
-    out.append(limits.maximumTableColumns)
-    out.append(limits.maximumUrlBytes)
-    out.append(limits.maximumLiteralBytes)
-    out.append(limits.maximumOutputBytes)
-    out.append(limits.maximumExtensionCaptureBytes)
-    out.append(limits.maximumExtensionLookaheadBytes)
-    Sha256.digest(out.toString())
-}
-
 private func binaryAstDigest(document: Document): String {
     let out = CanonicalDescriptor()
     for (event in document.walk()) {
@@ -218,8 +224,6 @@ private func binaryAstDigest(document: Document): String {
             case NodeRefWalkEvent.Enter(node) =>
                 out.append("+");
                 out.append(binaryNodeKind(node));
-                out.append(":");
-                out.append(node.nodeId.value)
                 if (let Some(span) <- node.span) {
                     out.append("@");
                     out.append(span.startByte);
@@ -294,13 +298,79 @@ private func appendBinarySemantic(out: CanonicalDescriptor, node: NodeRef): Unit
             out.append(value.extensionId);
             out.append(":");
             out.append(value.localKindId)
+            appendBinaryCustomPayload(out, value.payload)
         case NodeKind.CustomInline =>
             let value = node.asCustomInline().getOrThrow()
             out.append("=");
             out.append(value.extensionId);
             out.append(":");
             out.append(value.localKindId)
+            appendBinaryCustomPayload(out, value.payload)
         case _ => ()
+    }
+}
+
+private func appendBinaryCustomPayload(out: CanonicalDescriptor, payload: CustomPayload): Unit {
+    out.append(payload.payloadTypeId())
+    match (payload) {
+        case value: CodeGroupPayload =>
+            out.append(if (let CodeGroupRole.Group <- value.role) {
+                "group"
+            } else {
+                "item"
+            })
+            out.append(value.title)
+            out.append(value.copyText)
+            out.append(value.highlightedLines.size)
+            for (index in 0..value.highlightedLines.size) {
+                out.append(value.highlightedLines[index].firstLine)
+                out.append(value.highlightedLines[index].lastLine)
+            }
+        case value: MathPayload =>
+            out.append(value.display)
+            out.append(value.expression)
+            out.append(value.openerSpan.startByte)
+            out.append(value.openerSpan.endByte)
+            out.append(value.closerSpan.startByte)
+            out.append(value.closerSpan.endByte)
+            out.append(value.expressionSource.size)
+            for (index in 0..value.expressionSource.size) {
+                let part = value.expressionSource[index]
+                out.append(part.span.startByte)
+                out.append(part.span.endByte)
+                out.append(part.expandedPrefixBytes)
+                out.append(part.expandedPrefixSpaces)
+            }
+        case value: DefinitionListPayload =>
+            out.append(definitionListKind(value.role))
+            match (value.markerSpan) {
+                case Some(marker) =>
+                    out.append(true);
+                    out.append(marker.startByte);
+                    out.append(marker.endByte)
+                case None => out.append(false)
+            }
+        case value: HeadingIdPayload =>
+            out.append(value.rawId)
+            out.append(value.idSpan.startByte)
+            out.append(value.idSpan.endByte)
+        case value: FootnoteDefinitionPayload =>
+            out.append(value.labelRaw)
+            out.append(value.labelNormalized)
+            out.append(value.labelSpan.startByte)
+            out.append(value.labelSpan.endByte)
+        case value: FootnoteReferencePayload =>
+            out.append(value.labelRaw)
+            out.append(value.labelNormalized)
+            out.append(value.labelSpan.startByte)
+            out.append(value.labelSpan.endByte)
+        case value: SyntaxPayload =>
+            out.append(value.name)
+            out.append(value.parameters)
+            out.append(value.literal)
+            value.appendArtifactParameters(out)
+        case _ => throw MarkdownException(MarkdownErrorCode.InvalidArtifact,
+            "binary snapshots cannot verify an opaque custom payload", phase: "artifact_encode")
     }
 }
 

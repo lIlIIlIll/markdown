@@ -1,7 +1,7 @@
 # API 速查
 
-本页只列常用公开入口。签名对应 `0.9.0`；完整声明以
-[`api/public-api-v0.9.txt`](../../api/public-api-v0.9.txt) 为准。
+本页只列常用公开入口。签名对应 `0.10.0`；完整声明以
+[`api/public-api-v0.10.txt`](../../api/public-api-v0.10.txt) 为准。
 
 [文档首页](../README.md) · **API 速查** · [完整 API](../api.md) · [Cookbook](../cookbook.md)
 
@@ -34,7 +34,6 @@
 | `MarkdownProfile.commonMark0312()` | CommonMark 0.31.2，默认 |
 | `MarkdownProfile.gfm029()` | GFM 0.29 |
 | `MarkdownProfile.gfmModernV1()` | 仓库版本化 modern GFM |
-| `MarkdownProfile.gfm()` | `gfmModernV1()` 的稳定便捷入口 |
 | `MarkdownProfile.custom(id, version)` | 自定义 profile identity |
 
 ## Engine
@@ -53,7 +52,7 @@ let engine = MarkdownEngine.builder()
 | `engine.parse(value, cancellation:, budget:)` | `CancellationToken.none()`、`OperationBudget.safe()`；失败时抛异常 |
 | `engine.parse(bytes, utf8Policy:, cancellation:, budget:)` | `Utf8Policy.Strict`；保留原始 byte offset 语义 |
 | `engine.parse(inputStream, utf8Policy:, ...)` | 全量缓冲后解析，不降低峰值内存 |
-| `engine.tryParse(value, ...)` | 失败时返回不完整结果、空文档和 `errors` |
+| `engine.tryParse(value, ...)` | 返回 `ParseOutcome.Success(ParseResult)` 或 `Failure(MarkdownException)` |
 | `engine.newBufferedInputSession(...)` | `finish()` 时解析，不提前产出 AST |
 | `engine.parseEvents(source, mode:, ...)` | 返回不持有 AST 的 source events |
 | `engine.renderHtml(source, mode:, options:, ...)` | 默认 `FullAst` + `HtmlOptions.safe()` |
@@ -67,9 +66,7 @@ let engine = MarkdownEngine.builder()
 | `result.document` | `Document` | 不可变完整 AST |
 | `result.source` | `SourceBuffer` | 原始文本、slice 和位置转换 |
 | `result.diagnostics` | `ImmutableArray<Diagnostic>` | 可恢复诊断 |
-| `result.isComplete` | `Bool` | 是否完成 |
-| `result.errors` | `ImmutableArray<MarkdownException>` | `tryParse` 捕获的错误 |
-| `node.nodeId` | `NodeId` | 当前文档内稳定 identity |
+| `node.nodeId` | `NodeId` | lineage 内不回收的节点身份 |
 | `node.kind` | `NodeKind` | 节点类型 |
 | `node.span` | `?SourceSpan` | 半开 UTF-8 byte range |
 | `node.children()` | `NodeChildren` | 零复制子节点视图，可按索引访问 |

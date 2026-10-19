@@ -54,8 +54,8 @@ class ArtifactSourceMapTest {
         let engine = MarkdownEngine.builder().build()
         let result = engine.parse("text")
         let artifact = engine.createArtifact(result)
-        @Expect(artifact.schemaVersion, "2")
-        @Expect(artifact.parserPlanVersion, "2")
+        @Expect(artifact.schemaVersion, "3")
+        @Expect(artifact.parserPlanVersion, "6")
         @Expect(artifact.utf8PolicyId, "strict")
         @Expect(artifact.sourceDigest, artifact.decodedTextDigest)
         match (engine.loadArtifact(artifact, "text")) {
@@ -96,12 +96,11 @@ class ArtifactSourceMapTest {
     func artifactRejectsParseResultWithMismatchedSourceOrEngine(): Unit {
         let commonmark = MarkdownEngine.builder().build()
         let parsed = commonmark.parse("original")
-        let wrongSource = ParseResult(
+        @ExpectThrows[IllegalArgumentException](ParseResult(
             parsed.document,
             SourceBuffer("different"),
             parsed.diagnostics.toArray()
-        )
-        expectInvalidArtifact(commonmark, wrongSource, "AST source digest")
+        ))
 
         let gfm = MarkdownEngine.builder().profile(MarkdownProfile.gfmModernV1()).build()
         expectInvalidArtifact(gfm, parsed, "AST profile")

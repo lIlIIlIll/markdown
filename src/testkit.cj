@@ -50,7 +50,7 @@ public class MarkdownExtensionTestKit {
             failures.add("ast-invariants")
         }
 
-        let session = engine.newSession()
+        let session = engine.newBufferedInputSession()
         for (byte in sample.toArray()) {
             session.feed([byte])
         }
@@ -114,7 +114,7 @@ public class MarkdownExtensionTestKit {
                 }
             }
         }
-        if (spansValid && spanNodes > 0 && (customNodes.size > 0 || engine.dialect.documentProcessors.size > 0)) {
+        if (spansValid && spanNodes > 0 && (customNodes.size > 0 || engine.dialect.parserHotPlan.hasDocumentStages)) {
             passed++
         } else {
             failures.add("source-spans")

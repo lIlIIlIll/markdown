@@ -33,31 +33,22 @@ public interface LineScannerAccelerator {
      */
     func implementationId(): String
     /**
-     * 返回 packed record 格式版本；默认是 1。
+     * 返回 packed record 格式版本；当前只支持 4。
      * @return packed record 格式版本。
      */
     func recordFormatVersion(): Int64 {
-        1
+        4
     }
     /**
-     * 将输入按行扫描为 packed records；不受支持或失败时返回 `None`。
-     * @param input 待扫描的 UTF-8 字节输入。
-     * @param capacity 本次扫描允许的容量上限。
-     * @return packed records；不受支持时为 `None`。
-     */
-    func scanLines(input: Array<Byte>, capacity: Int64): ?Array<UInt64>
-
-    /** 返回 packed-record buffer 和有效前缀长度；默认把 scanLines 全部视为有效。
+     * 返回 v4 packed-record buffer 和有效前缀长度。
+     * 高位为含换行的行末 byte offset（左移 6）；低位依次为换行宽度（2 bits）、
+     * core inline special、delimiter、text lowering 与 reference opener 标志。
+     * 不支持当前输入或容量不足时返回 `None`，由纯 Cangjie scanner 完成扫描。
      * @param input 待扫描的 UTF-8 字节输入。
      * @param capacity 本次扫描允许的容量上限。
      * @return packed records 及有效前缀；不受支持时为 `None`。
      */
-    func scanLineRecords(input: Array<Byte>, capacity: Int64): ?LineScanRecords {
-        match (scanLines(input, capacity)) {
-            case Some(records) => Some(LineScanRecords(records, records.size))
-            case None => None
-        }
-    }
+    func scanLineRecords(input: Array<Byte>, capacity: Int64): ?LineScanRecords
 }
 
 /** 使用显式 line scanner 的 engine view；foreign 加速是可选依赖。 */

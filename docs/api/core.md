@@ -13,6 +13,7 @@ import markdown.core.{
     MarkdownProfile,
     OperationBudget,
     ParseLimits,
+    ParseOutcome,
     Utf8Policy
 }
 ```
@@ -53,6 +54,7 @@ let engine = MarkdownEngine.builder()
 | `profile(profile)` | `MarkdownProfile` | 选择 profile，并清除之前设置的 dialect |
 | `limits(limits)` | `ParseLimits` | 覆盖 parser 限制 |
 | `dialect(dialect)` | `MarkdownDialect` | 编译并安装方言；未显式设置 limits 时使用 dialect limits |
+| `bindingOptions(options)` | `BindingOptions` | 配置文档片段 ID scope 和未定义脚注策略 |
 | `nativeScannerEnabled(enabled)` | `Bool` | 允许或禁止已注入 accelerator；不会自动链接 native library |
 | `build()` | 无 | 返回不可变 `MarkdownEngine` |
 
@@ -87,29 +89,35 @@ utf8Policy: Utf8Policy = Utf8Policy.Strict
 | 字段 | 类型 | 含义 |
 | --- | --- | --- |
 | `document` | `Document` | 完整不可变 AST |
-| `ast` | `Document` | `document` 的兼容属性 |
 | `source` | `SourceBuffer` | 源文本、切片和位置转换 |
 | `diagnostics` | `ImmutableArray<Diagnostic>` | parser 恢复后保留的诊断 |
-| `isComplete` | `Bool` | 正常 parse 为 true |
-| `stoppedAt` | `?SourceSpan` | `tryParse` 失败位置 |
-| `unfinishedPhase` | `String` | `tryParse` 失败阶段 |
-| `errors` | `ImmutableArray<MarkdownException>` | `tryParse` 捕获的错误 |
 
-## `tryParse` 和 `parsePartial`
+`document.bindings` 提供脚注、标题和结构化目录的共享决策，详见
+[文档绑定](../semantic-binding.md)。`ParseResult(document, source, diagnostics)` 验证实际
+来源归属；给同一个 Document 配上另一份 SourceBuffer 会抛出 `IllegalArgumentException`。
 
-`tryParse` 捕获 `MarkdownException`，并返回 `isComplete=false` 的结果。失败结果
-包含空 `Document`，不包含已完成的 AST 前缀。
+## `tryParse`
+
+`ParseResult` 只表示成功。`tryParse` 返回 `ParseOutcome`：成功携带完整结果，致命
+失败只携带 `MarkdownException`，不会分配空 Document 冒充成功，也不返回 AST 前缀。
+`parsePartial` 与 `ParseResult.ast` 已移除。
 
 ```cangjie
-let result = engine.tryParse(source)
-if (!result.isComplete) {
-    for (error in result.errors.toArray()) {
-        println("code=${error.code}, phase=${error.phase}")
-    }
+match (engine.tryParse(source)) {
+    case ParseOutcome.Success(result) => println(result.document.nodeCount)
+    case ParseOutcome.Failure(error) => println("code=${error.code}, phase=${error.phase}")
 }
 ```
 
-`parsePartial` 是同一行为的兼容名称。
+可恢复问题仍在成功结果的 `diagnostics` 中。需要流式待定状态时使用对应 session 协议，
+不将待定状态放入 `ParseResult`。
+
+## Append input
+
+`newAppendSession()` 返回 `AppendInputSession`。`feed(String/Array<Byte>)` 和 `finish()`
+返回 `AppendUpdateBatch`；`AppendReplica.apply(batch)` 按会话、版本和目标身份验证并
+原子应用更新。结构闭合块可在 feed 中出现，完整 ParseResult 只在最终绑定与整文分析成功后出现。
+资源限制跨 feed 累计。用法、失败和重启规则见[追加输入与更新消费](../append-input.md)。
 
 ## Buffered input
 
@@ -123,8 +131,7 @@ let result = session.finish()
 ```
 
 `feed` 只累计输入。`finish` 才执行解析。session 不能在 `finish` 后继续使用，也
-不支持并发调用。PRD 保留的 `newSession` 入口同样返回 `BufferedInputSession`；它不会
-提前产生 AST。
+不支持并发调用。旧 `newSession` 别名已移除。
 
 ## Source events
 
@@ -152,8 +159,8 @@ for (event in events.events.toArray()) {
 返回事件，`finish()` 发出最后一个 block 和 `DocumentEnd`。`feed()` 只扫描新增 bytes，
 并立即检查 input 和 line limits。逐 byte feed 不会反复复制或扫描全部 pending input。
 
-Event 值不持有 `Document` 或 `NodeRef`。配置 document processor 的 dialect 需要
-完整 AST，因此 Event preflight 会失败。
+Event 值不持有 `Document` 或 `NodeRef`。配置 AST transform、只读 analysis、脚注、标题 ID 或定义列表绑定的
+dialect 需要完整 AST，因此 Event preflight 会失败。
 
 ## HTML execution mode
 
@@ -171,7 +178,7 @@ let output = engine.renderHtml(
 | `PreferFused` | 只有 preflight 证明等价时使用 fused path，否则回退 FullAst |
 | `RequireFused` | 无法证明等价时抛出 RenderFailure |
 
-Fused path 不会静默关闭扩展、processor 或安全策略。
+Fused path 不会静默关闭扩展、整文阶段或安全策略。
 FullAst 和 fused path 都执行 input、line、literal、output、cancellation 和 operation
 budget。`maximumAstNodes` 只统计实际 AST 分配；fused path 不创建 AST，因此不会模拟
 逻辑节点数。需要该限制参与执行结果时，使用 `FullAst`。
@@ -225,6 +232,11 @@ token 在下一个检查点抛出取消错误。
 rule 和可选 fix。程序应根据 code 分支。
 
 ## Capability discovery
+
+可选 `LineScannerAccelerator` 只接受 packed record v4。实现 `scanLineRecords(input,
+capacity)`，返回 `LineScanRecords(records, count)`；只读取有效前缀。容量不足或输入
+不受支持时返回 `None`，继续走纯仓颉 scanner。旧 v1–v3 和未知版本在扫描前拒绝，
+不提供旧 `scanLines` 包装。格式位定义见公开接口注释，C scanner 使用同一格式。
 
 ```cangjie
 let capabilities = engine.capabilities()

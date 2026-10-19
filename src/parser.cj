@@ -20,48 +20,34 @@ public enum Utf8Policy {
  * 保留可恢复诊断。
  */
 public class ParseResult {
-    /** 完整且不可变的 arena AST；失败的 `tryParse` 结果包含空文档。 */
+    /** 成功解析得到的完整、不可变 arena AST。 */
     public let document: Document
     /** 与结果对应的原始文本、byte range 和位置映射。 */
     public let source: SourceBuffer
     /** 解析过程中保留的可恢复诊断。 */
     public let diagnostics: ImmutableArray<Diagnostic>
-    /** 是否完成了完整解析；正常 `parse` 结果为 true。 */
-    public let isComplete: Bool
-    /** `tryParse` 失败时可用的停止位置。 */
-    public let stoppedAt: ?SourceSpan
-    /** `tryParse` 失败时记录的阶段名称。 */
-    public let unfinishedPhase: String
-    /** `tryParse` 捕获的异常；正常结果为空。 */
-    public let errors: ImmutableArray<MarkdownException>
 
     /**
      * 创建解析结果。
      * @param document 完整且不可变的 arena AST。
      * @param source 与结果对应的原始文本和位置映射。
      * @param diagnostics 解析过程中保留的可恢复诊断。
-     * @param isComplete 是否完成了完整解析。
-     * @param stoppedAt `tryParse` 失败时的停止位置。
-     * @param unfinishedPhase `tryParse` 失败时记录的阶段名称。
-     * @param errors `tryParse` 捕获的异常。
+     * @throws IllegalArgumentException Document 与 source 不属于同一次不可变来源视图时。
      */
-    public init(document: Document, source: SourceBuffer, diagnostics: Array<Diagnostic>, isComplete!: Bool = true,
-        stoppedAt!: ?SourceSpan = None, unfinishedPhase!: String = "", errors!: Array<MarkdownException> = []) {
+    public init(document: Document, source: SourceBuffer, diagnostics: Array<Diagnostic>) {
+        document.requireSource(source)
         this.document = document
         this.source = source
         this.diagnostics = ImmutableArray<Diagnostic>(diagnostics)
-        this.isComplete = isComplete
-        this.stoppedAt = stoppedAt
-        this.unfinishedPhase = unfinishedPhase
-        this.errors = ImmutableArray<MarkdownException>(errors)
     }
+}
 
-    /** 兼容别名：返回解析得到的 `Document`。 */
-    public prop ast: Document {
-        get() {
-            document
-        }
-    }
+/** 完整解析的成功或致命失败；失败不携带空文档或 AST 前缀。 */
+public enum ParseOutcome {
+    /** 成功文档及其可恢复诊断。 */
+    | Success(ParseResult)
+    /** 致命错误，保留类别、阶段及可用的来源范围。 */
+    | Failure(MarkdownException)
 }
 
 /**
@@ -77,6 +63,7 @@ public class MarkdownEngineBuilder {
     private var dialectValue: ?MarkdownDialect = None
     private var limitsExplicit = false
     private var nativeScannerEnabledValue = true
+    private var bindingOptionsValue = BindingOptions()
 
     /** 创建默认配置的 builder。 */
     public init() {}
@@ -123,6 +110,15 @@ public class MarkdownEngineBuilder {
         this
     }
 
+    /** 设置文档语义绑定策略。
+     * @param options 片段 ID scope 与严格引用策略。
+     * @return 当前 builder。
+     */
+    public func bindingOptions(options: BindingOptions): MarkdownEngineBuilder {
+        bindingOptionsValue = options
+        this
+    }
+
     /**
      * 编译 dialect 并返回不可变 engine。
      * @return 编译完成的不可变 engine。
@@ -133,7 +129,7 @@ public class MarkdownEngineBuilder {
             case Some(dialect) => DialectCompiler.compile(dialect)
             case None => CompiledMarkdownDialect.builtin(profileValue)
         }
-        MarkdownEngine(profileValue, limitsValue, compiled, nativeScannerEnabledValue)
+        MarkdownEngine(profileValue, limitsValue, compiled, nativeScannerEnabledValue, bindingOptionsValue)
     }
 }
 
@@ -150,14 +146,17 @@ public class MarkdownEngine {
     public let limits: ParseLimits
     /** engine 的已编译 dialect。 */
     public let dialect: CompiledMarkdownDialect
+    /** 文档的语义绑定配置。 */
+    public let bindingOptions: BindingOptions
     internal let nativeScannerEnabledValue: Bool
 
     internal init(profile: MarkdownProfile, limits: ParseLimits, dialect: CompiledMarkdownDialect,
-        nativeScannerEnabled: Bool) {
+        nativeScannerEnabled: Bool, bindingOptions: BindingOptions) {
         this.profile = profile
         this.limits = limits
         this.dialect = dialect
         this.nativeScannerEnabledValue = nativeScannerEnabled
+        this.bindingOptions = bindingOptions
     }
 
     /**
@@ -191,40 +190,21 @@ public class MarkdownEngine {
     }
 
     /**
-     * `tryParse` 的兼容名称；失败时返回不完整结果和空文档。
+     * 捕获 `MarkdownException`，以独立的 Failure 表达致命失败。
      * @param value 要解析的 Markdown 文本。
      * @param cancellation 可选取消 token。
      * @param budget 可选 operation budget。
-     * @return 完整或不完整的 `ParseResult`。
-     */
-    public func parsePartial(
-        value: String,
-        cancellation!: CancellationToken = CancellationToken.none(),
-        budget!: OperationBudget = OperationBudget.safe()
-    ): ParseResult {
-        tryParse(value, cancellation: cancellation, budget: budget)
-    }
-
-    /**
-     * 捕获 `MarkdownException` 并返回 `isComplete=false` 的结果，不暴露 AST 前缀。
-     * @param value 要解析的 Markdown 文本。
-     * @param cancellation 可选取消 token。
-     * @param budget 可选 operation budget。
-     * @return 成功结果或包含 `errors` 的不完整结果。
+     * @return Success 包含完整结果；Failure 只包含错误。
      */
     public func tryParse(
         value: String,
         cancellation!: CancellationToken = CancellationToken.none(),
         budget!: OperationBudget = OperationBudget.safe()
-    ): ParseResult {
+    ): ParseOutcome {
         try {
-            parse(value, cancellation: cancellation, budget: budget)
+            ParseOutcome.Success(parse(value, cancellation: cancellation, budget: budget))
         } catch (error: MarkdownException) {
-            let source = SourceBuffer(value)
-            let document = ParserNodeFactory(limits.maximumAstNodes).finishDocument([],
-                SourceSpan(0, source.byteLength()), profile, dialect.fingerprint, [])
-            ParseResult(document, source, [], isComplete: false, stoppedAt: error.span, unfinishedPhase: error.phase,
-                errors: [error])
+            ParseOutcome.Failure(error)
         }
     }
 
@@ -385,21 +365,6 @@ public class MarkdownEngine {
         parseBytesWithAccelerator(bytes.toArray(), utf8Policy, cancellation, budget, accelerator)
     }
 
-    /**
-     * 创建只在 `finish()` 时解析的 buffered input session。
-     * @param utf8Policy 输入解码策略。
-     * @param cancellation 可选取消 token。
-     * @param budget 可选 operation budget。
-     * @return 新的 `BufferedInputSession`。
-     */
-    public func newSession(
-        utf8Policy!: Utf8Policy = Utf8Policy.Strict,
-        cancellation!: CancellationToken = CancellationToken.none(),
-        budget!: OperationBudget = OperationBudget.safe()
-    ): BufferedInputSession {
-        BufferedInputSession(this, utf8Policy, cancellation, budget)
-    }
-
     /** 创建 `feed` 只累计输入、`finish()` 才执行解析的 session。
      * @param utf8Policy 输入解码策略。
      * @param cancellation 协作式取消信号。
@@ -421,8 +386,8 @@ public class MarkdownEngine {
         budget: OperationBudget,
         accelerator: ?LineScannerAccelerator
     ): ParseResult {
-        ParserSession(profile, limits, cancellation, budget, source, dialect, nativeScannerEnabledValue, accelerator)
-            .parse(inputDiagnostics)
+        ParserSession(profile, limits, cancellation, budget, source, dialect, nativeScannerEnabledValue, accelerator,
+            bindingOptions: bindingOptions).parse(inputDiagnostics)
     }
 }
 
@@ -611,6 +576,7 @@ internal enum BlockFrameCompletionKind {
     | Root
     | Quote
     | ListItemFrame
+    | DefinitionBodyFrame
     | Extension
 }
 
@@ -672,7 +638,7 @@ internal class PendingExtensionState {
 
     init(rule: BlockSyntaxRule, name: String, parameters: String, literal: String,
         values: HashMap<String, SyntaxParameterValue>, span: SourceSpan, kindId: String, lines: Array<LineRecord>,
-        suppressedRule: String, nextIndex: Int64) {
+        suppressedRule: String, nextIndex: Int64, payloadOverride!: ?CustomPayload = None) {
         this.rule = rule
         this.name = name
         this.parameters = parameters
@@ -683,7 +649,9 @@ internal class PendingExtensionState {
         this.lines = lines
         this.suppressedRule = suppressedRule
         this.nextIndex = nextIndex
+        this.payloadOverride = payloadOverride
     }
+    let payloadOverride: ?CustomPayload
 }
 
 internal class ExtensionBlockScan {
@@ -706,12 +674,14 @@ internal class BlockParseFrame {
     let quoteState: ?PendingQuoteState
     let list: ?PendingListState
     let extension: ?PendingExtensionState
+    let definitionList: ?PendingDefinitionList
     let blocks = ArrayList<Int64>()
     var index: Int64 = 0
 
     init(lines: Array<LineRecord>, depth: Int64, suppressedRule: String,
         completion!: BlockFrameCompletionKind = BlockFrameCompletionKind.Root, quoteState!: ?PendingQuoteState = None,
-        list!: ?PendingListState = None, extension!: ?PendingExtensionState = None) {
+        list!: ?PendingListState = None, extension!: ?PendingExtensionState = None,
+        definitionList!: ?PendingDefinitionList = None) {
         this.lines = lines
         this.depth = depth
         this.suppressedRule = suppressedRule
@@ -719,6 +689,7 @@ internal class BlockParseFrame {
         this.quoteState = quoteState
         this.list = list
         this.extension = extension
+        this.definitionList = definitionList
     }
 }
 
@@ -734,10 +705,21 @@ internal class ParserSession {
     private let nativeScannerEnabled: Bool
     private let lineScannerAccelerator: ?LineScannerAccelerator
     private let eventEmitter: ?ParserEventEmitter
+    private let bindingOptions: BindingOptions
+    private let deferReferenceInlines: Bool
+    private let documentOffset: Int64
     private let diagnostics = ArrayList<Diagnostic>()
     private var references: Array<ReferenceDefinition> = []
-    private let referenceIndex = HashMap<String, ReferenceDefinition>()
+    private var collectingReferences = false
+    private let collectedReferences = ArrayList<ReferenceDefinition>()
+    private let collectedReferenceLabels = HashSet<String>()
+    private var referenceBlockCheckpoint: ?AstArenaCheckpoint = None
+    private let referenceIndex: HashMap<String, ReferenceDefinition>
+    private let hasPreparedReferences: Bool
     private let referenceLineStarts = HashSet<Int64>()
+    private let draftDefinitionsByStart: ?HashMap<Int64, ReferenceDefinition>
+    private var draftReferenceCursor: Int64 = 0
+    private var draftDiagnosticCursor: Int64 = 0
     private var checkpointSteps: Int64 = 0
     private var suppressedInlineRule = ""
     private var suppressedBlockRule = ""
@@ -747,7 +729,14 @@ internal class ParserSession {
 
     init(profile: MarkdownProfile, limits: ParseLimits, cancellation: CancellationToken, budget: OperationBudget,
         source: SourceBuffer, dialect: CompiledMarkdownDialect, nativeScannerEnabled: Bool,
-        lineScannerAccelerator: ?LineScannerAccelerator, eventEmitter!: ?ParserEventEmitter = None) {
+        lineScannerAccelerator: ?LineScannerAccelerator, eventEmitter!: ?ParserEventEmitter = None,
+        bindingOptions!: BindingOptions = BindingOptions(), lineage!: ?NodeLineage = None,
+        deferReferenceInlines!: Bool = false, preparedReferences!: ?PreparedReferences = None,
+        documentOffset!: Int64 = 0, estimatedInputBytes!: ?Int64 = None,
+        constructionBudget!: ?NodeConstructionBudget = None) {
+        if (documentOffset < 0 || documentOffset > limits.maximumInputBytes) {
+            throw IllegalArgumentException("fragment offset is outside the document input limit")
+        }
         this.profile = profile
         this.limits = limits
         this.cancellation = cancellation
@@ -755,14 +744,50 @@ internal class ParserSession {
         this.source = source
         this.decodedSourceBytes = source.decodedBytesForNative()
         this.dialect = dialect
-        this.nodes = ParserNodeFactory(limits.maximumAstNodes, estimatedInputBytes: source.byteLength(),
-            source: Some(source))
+        let estimate = match (estimatedInputBytes) {
+            case Some(value) => value;
+            case None => source.byteLength()
+        }
+        this.nodes = ParserNodeFactory(limits.maximumAstNodes, estimatedInputBytes: estimate, source: Some(source),
+            lineage: lineage, constructionBudget: constructionBudget)
         this.nativeScannerEnabled = nativeScannerEnabled
         this.lineScannerAccelerator = lineScannerAccelerator
         this.eventEmitter = eventEmitter
+        this.bindingOptions = bindingOptions
+        this.deferReferenceInlines = deferReferenceInlines
+        draftDefinitionsByStart = if (deferReferenceInlines) {
+            Some(HashMap<Int64, ReferenceDefinition>())
+        } else {
+            None
+        }
+        this.documentOffset = documentOffset
+        hasPreparedReferences = preparedReferences.isSome()
+        referenceIndex = match (preparedReferences) {
+            case Some(value) => value.values
+            case None => HashMap<String, ReferenceDefinition>()
+        }
     }
 
-    func parse(inputDiagnostics: Array<Diagnostic>): ParseResult {
+    func parseDraft(inputDiagnostics: Array<Diagnostic>): ParsedDraft {
+        if (!deferReferenceInlines || hasPreparedReferences) {
+            throw IllegalStateException("draft parsing requires its own definition discovery")
+        }
+        let document = parseStructure(inputDiagnostics)
+        ParsedDraft(document, source, diagnostics.toArray())
+    }
+
+    func resolvePendingInline(task: PendingInlineTask): ResolvedInline {
+        if (deferReferenceInlines || !refEq(source, task.source)) {
+            throw IllegalStateException("pending inline work requires its original source and a final resolver")
+        }
+        normalizedInlineOffsets = task.offsets
+        normalizedInlineBase = task.mapBase
+        suppressedInlineRule = task.suppressedRule
+        let values = parseInline(task.text, task.baseOffset, task.depth, sourceIdentity: task.sourceIdentity)
+        ResolvedInline(nodes.snapshotNodes(values), diagnostics.toArray())
+    }
+
+    private func parseStructure(inputDiagnostics: Array<Diagnostic>): Document {
         for (diagnostic in inputDiagnostics) {
             diagnostics.add(diagnostic)
         }
@@ -777,7 +802,7 @@ internal class ParserSession {
                 []
             }
             for (reference in references) {
-                if (reference.isEffective) {
+                if (reference.isEffective && referenceIndex.get(reference.labelNormalized).isNone()) {
                     referenceIndex.add(reference.labelNormalized, reference)
                 }
             }
@@ -785,37 +810,21 @@ internal class ParserSession {
         }
         let arena = nodes.finishDocument(blocks, SourceSpan(0, source.byteLength()), profile, dialect.fingerprint,
             references)
+        arena
+    }
+
+    func parse(inputDiagnostics: Array<Diagnostic>): ParseResult {
+        if (deferReferenceInlines || hasPreparedReferences) {
+            throw IllegalStateException("pending input cannot produce a successful ParseResult")
+        }
+        let arena = parseStructure(inputDiagnostics)
         // Parser construction maintains dense NodeIds, category-safe children,
         // and nested spans as local invariants. Rewalking every node here would
         // duplicate the whole parse on the production hot path. Publicly
         // supplied and extension-transformed trees are still validated at their
         // trust boundaries below and by AstInvariantValidator.
-        if (dialect.parserHotPlan.hasDocumentProcessors) {
-            var document = arena
-            for (index in 0..dialect.documentProcessors.size) {
-                let processor = dialect.documentProcessors[index]
-                cancellation.throwIfCancelled(phase: "extension_process")
-                budget.consumeExtensionCallback()
-                budget.consumeTransform()
-                try {
-                    document = processor.process(document, budget, cancellation)
-                } catch (error: ExtensionFailureException) {
-                    throw error
-                } catch (error: Exception) {
-                    let manifest = extensionManifest(processor.extensionId)
-                    throw ExtensionFailureException(processor.extensionId, manifest.semanticVersion,
-                        manifest.implementationVersion, "extension_process", error, ruleId: Some(processor.processorId))
-                }
-                let root = document.root().asDocument().getOrThrow()
-                if (!root.profile.sameIdentity(profile) || root.dialectFingerprint != dialect.fingerprint) {
-                    throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation,
-                        "document processor changed profile or dialect identity", phase: "extension_process")
-                }
-                AstInvariantValidator().validate(document, limits: limits)
-            }
-            return ParseResult(document, source, diagnostics.toArray())
-        }
-        ParseResult(arena, source, diagnostics.toArray())
+        finishParsedDocument(arena, source, diagnostics, profile, dialect, bindingOptions, limits, budget, cancellation,
+            requiresBinding: nodes.requiresBinding)
     }
 
     /** Two-pass source-event execution. Reference definitions are collected
@@ -826,13 +835,17 @@ internal class ParserSession {
         if (eventEmitter.isNone()) {
             throw IllegalStateException("source-event parsing requires an event emitter")
         }
-        if (dialect.parserHotPlan.hasDocumentProcessors) {
+        if (hasPreparedReferences || deferReferenceInlines != eventEmitter.getOrThrow().captureDrafts) {
+            throw IllegalStateException("event and draft parser modes do not match their lowering target")
+        }
+        if (!deferReferenceInlines && dialect.requiresFullAst()) {
             throw MarkdownException(MarkdownErrorCode.ExtensionFailure,
-                "document processors require the full AST execution path", phase: "event_preflight")
+                "document-wide processors and binding require the full AST execution path", phase: "event_preflight")
         }
         for (diagnostic in inputDiagnostics) {
             diagnostics.add(diagnostic)
         }
+        draftDiagnosticCursor = diagnostics.size
         let lines = splitLines(source)
         references = if (resolveReferences && linesHaveCoreInlineSpecial(lines) && source.text().contains("[")) {
             collectReferences(lines)
@@ -842,6 +855,9 @@ internal class ParserSession {
         for (reference in references) {
             if (reference.isEffective) {
                 referenceIndex.add(reference.labelNormalized, reference)
+            }
+            if (deferReferenceInlines) {
+                draftDefinitionsByStart.getOrThrow().add(reference.sourceSpan.startByte, reference)
             }
         }
         eventBlockCheckpoint = Some(nodes.checkpoint())
@@ -858,7 +874,7 @@ internal class ParserSession {
         }
         let value = source.text()
         var openerStart: Int64 = 0
-        if (value.size >= 3 && value[0] == 0xEF && value[1] == 0xBB && value[2] == 0xBF) {
+        if (documentOffset == 0 && value.size >= 3 && value[0] == 0xEF && value[1] == 0xBB && value[2] == 0xBF) {
             openerStart = 3
         }
         if (openerStart + 3 > value.size) {
@@ -907,7 +923,7 @@ internal class ParserSession {
         }
         let contentStart = cursor
         var contentEnd = cursor
-        var blockEnd = openerEnd
+        var blockEnd = cursor
         var closingSpan: ?SourceSpan = None
         var lineCount: Int64 = 1
         var cancellationCheckpoint = cursor + 4096
@@ -961,7 +977,7 @@ internal class ParserSession {
                 break
             }
             contentEnd = nextLine
-            blockEnd = lineEnd
+            blockEnd = nextLine
             cursor = nextLine
         }
         scanSteps(value.size + lineCount)
@@ -980,7 +996,7 @@ internal class ParserSession {
 
     private func splitLines(source: SourceBuffer): Array<LineRecord> {
         let value = source.text()
-        if (nativeScannerEnabled) {
+        if (nativeScannerEnabled && documentOffset == 0) {
             if (let Some(accelerator) <- lineScannerAccelerator) {
                 if (let Some(bytes) <- source.decodedBytesForNative()) {
                     if (let Some(acceleratedLines) <- splitLinesAccelerated(value, bytes, accelerator)) {
@@ -1006,24 +1022,14 @@ internal class ParserSession {
         bytes: Array<Byte>,
         accelerator: LineScannerAccelerator
     ): ?Array<LineRecord> {
+        if (accelerator.recordFormatVersion() != 4) {
+            throw IllegalStateException("line scanner accelerator returned an unsupported record format")
+        }
         if (value.size == 0) {
             scanSteps(0)
             return Some(
                 [LineRecord("", 0, 0, 0, hasCoreInlineSpecial: false, hasCoreDelimiter: false,
                     hasTextLoweringCandidate: false)])
-        }
-        let recordFormat = accelerator.recordFormatVersion()
-        if (recordFormat != 1 && recordFormat != 2 && recordFormat != 3 && recordFormat != 4) {
-            throw IllegalStateException("line scanner accelerator returned an unsupported record format")
-        }
-        let recordShift: Int64 = if (recordFormat == 4) {
-            6
-        } else if (recordFormat == 3) {
-            5
-        } else if (recordFormat == 2) {
-            4
-        } else {
-            3
         }
         // One packed UInt64 per line is bounded and compact. A 16-byte average
         // covers the standard/profile corpora while halving the GC array that
@@ -1044,14 +1050,15 @@ internal class ParserSession {
         // final parser-owned array directly instead of growing an ArrayList
         // and copying every LineRecord again in toArray().
         let lines = Array<LineRecord>(recordCount, repeat: LineRecord("", 0, 0, 0))
-        var start: Int64 = if (bytes.size >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF) {
+        var start: Int64 = if (documentOffset == 0 && bytes.size >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB &&
+            bytes[2] == 0xBF) {
             3
         } else {
             0
         }
         for (lineIndex in 0..recordCount) {
             let packed = records[lineIndex]
-            let endWithNewline = Int64(packed >> recordShift)
+            let endWithNewline = Int64(packed >> 6)
             let newlineWidth = Int64(packed & 0x3u64)
             let end = endWithNewline - newlineWidth
             if (endWithNewline < start || endWithNewline > bytes.size || end < start || newlineWidth > 2 || (lineIndex +
@@ -1064,20 +1071,8 @@ internal class ParserSession {
                     span: Some(mappedSpan(start, end)))
             }
             lines[lineIndex] = LineRecord(value[start..end], start, end, endWithNewline,
-                hasCoreInlineSpecial: (packed & 0x4u64) != 0u64,
-                hasCoreDelimiter: if (recordFormat == 2 || recordFormat == 3 || recordFormat == 4) {
-                    (packed & 0x8u64) != 0u64
-                } else {
-                    true
-                }, hasTextLoweringCandidate: if (recordFormat == 3 || recordFormat == 4) {
-                    (packed & 0x10u64) != 0u64
-                } else {
-                    true
-                }, hasReferenceOpener: if (recordFormat == 4) {
-                    (packed & 0x20u64) != 0u64
-                } else {
-                    true
-                })
+                hasCoreInlineSpecial: (packed & 0x4u64) != 0u64, hasCoreDelimiter: (packed & 0x8u64) != 0u64,
+                hasTextLoweringCandidate: (packed & 0x10u64) != 0u64, hasReferenceOpener: (packed & 0x20u64) != 0u64)
             start = endWithNewline
         }
         Some(lines)
@@ -1100,7 +1095,7 @@ internal class ParserSession {
         var lineHasCoreDelimiter = false
         var lineHasTextLoweringCandidate = false
         var lineHasReferenceOpener = false
-        if (value.size >= 3 && value[0] == 0xEF && value[1] == 0xBB && value[2] == 0xBF) {
+        if (documentOffset == 0 && value.size >= 3 && value[0] == 0xEF && value[1] == 0xBB && value[2] == 0xBF) {
             start = 3
             index = 3
         }
@@ -1158,6 +1153,12 @@ internal class ParserSession {
     }
 
     private func collectReferences(lines: Array<LineRecord>): Array<ReferenceDefinition> {
+        if (dialect.parserOptions.extensionsEnabled && (dialect.parserHotPlan.hasFootnotes ||
+            dialect.parserHotPlan.definitionListRule.isSome() || dialect.parserHotPlan.hasMath || dialect
+            .parserHotPlan
+            .hasCodeGroups)) {
+            return collectStructuredReferences(lines)
+        }
         let out = ArrayList<ReferenceDefinition>()
         let effectiveLabels = HashSet<String>()
         var index: Int64 = 0
@@ -1167,11 +1168,21 @@ internal class ParserSession {
                 index++
                 continue
             }
+            if (dialect.parserOptions.extensionsEnabled && dialect.parserHotPlan.hasFootnotes && startsFootnoteSyntax(
+                lines[index].text)) {
+                index++
+                continue
+            }
             if (isQuoteLine(lines[index].text)) {
                 let marker = quoteMarker(lines[index].text)
                 var contentStart = marker + 1
                 if (contentStart < lines[index].text.size && lines[index].text[contentStart] == b' ') {
                     contentStart++
+                }
+                if (dialect.parserOptions.extensionsEnabled && dialect.parserHotPlan.hasFootnotes &&
+                    startsFootnoteSyntax(lines[index].text[contentStart..])) {
+                    index++
+                    continue
                 }
                 if (let Some((labelRaw, destinationRaw, titleRaw)) <- referenceParts(lines[index].text[contentStart..])) {
                     let label = labelRaw
@@ -1243,6 +1254,32 @@ internal class ParserSession {
         out.toArray()
     }
 
+    private func collectStructuredReferences(lines: Array<LineRecord>): Array<ReferenceDefinition> {
+        // Reuse the actual block driver for container boundaries. Inline work,
+        // callbacks, events and retained AST storage are suppressed in this pass.
+        // This recognizes definitions inside footnote bodies without treating
+        // fenced/indented/literal code as global link definitions.
+        let checkpoint = nodes.checkpoint()
+        let diagnosticCount = diagnostics.size
+        collectingReferences = true
+        referenceBlockCheckpoint = Some(checkpoint)
+        try {
+            let _ = parseBlocks(lines)
+            nodes.rollback(checkpoint)
+            collectingReferences = false
+            referenceBlockCheckpoint = None
+            while (diagnostics.size > diagnosticCount) {
+                diagnostics.remove(at: diagnostics.size - 1)
+            }
+            return collectedReferences.toArray()
+        } catch (error: Exception) {
+            nodes.rollback(checkpoint)
+            collectingReferences = false
+            referenceBlockCheckpoint = None
+            throw error
+        }
+    }
+
     private func parseBlocks(lines: Array<LineRecord>, extensionDepth!: Int64 = 0): Array<Int64> {
         let frames = ArrayList<BlockParseFrame>()
         frames.add(BlockParseFrame(lines, extensionDepth, suppressedBlockRule))
@@ -1286,10 +1323,44 @@ internal class ParserSession {
                             }, state.marker.startNumber, state.marker.delimiter, state.tight, state.nodes, state.span)
                             appendParsedBlock(frames[frames.size - 1], listNode)
                         }
+                    case BlockFrameCompletionKind.DefinitionBodyFrame =>
+                        let state = frame.definitionList.getOrThrow()
+                        let entry = state.entries[state.entryIndex]
+                        let body = entry.definitions[state.definitionIndex]
+                        state
+                            .entryNodes
+                            .add(
+                                definitionNode(DefinitionListRole.Definition, children, body.span, state.rule,
+                                    markerSpan: Some(body.markerSpan)))
+                        state.definitionIndex++
+                        if (state.definitionIndex >= entry.definitions.size) {
+                            state
+                                .nodes
+                                .add(
+                                    definitionNode(DefinitionListRole.Entry, state.entryNodes.toArray(), entry.span,
+                                        state.rule))
+                            state.entryIndex++
+                            if (state.entryIndex < state.entries.size) {
+                                prepareDefinitionTerms(state)
+                            }
+                        }
+                        if (state.entryIndex < state.entries.size) {
+                            let next = state.entries[state.entryIndex].definitions[state.definitionIndex]
+                            frames.add(
+                                BlockParseFrame(next.lines, frame.depth, frame.suppressedRule,
+                                    completion: BlockFrameCompletionKind.DefinitionBodyFrame,
+                                    definitionList: Some(state)))
+                        } else {
+                            appendParsedBlock(frames[frames.size - 1],
+                                definitionNode(DefinitionListRole.List, state.nodes.toArray(), state.span, state.rule))
+                        }
                     case BlockFrameCompletionKind.Extension =>
                         let state = frame.extension.getOrThrow()
-                        let payload = emitBlockPayload(state.rule, state.kindId, state.parameters, state.literal,
-                            state.span, children, state.values)
+                        let payload = match (state.payloadOverride) {
+                            case Some(value) => value
+                            case None => emitBlockPayload(state.rule, state.kindId, state.parameters, state.literal,
+                                state.span, children, state.values)
+                        }
                         let origin = NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: Some(state.span),
                             extensionId: Some(state.rule.extensionId))
                         let customNode = nodes.customBlock(state.rule.extensionId,
@@ -1303,9 +1374,43 @@ internal class ParserSession {
             let lines = frame.lines
             let index = frame.index
             let line = lines[index]
-            if (isBlank(line.text) || referenceLineStarts.contains(line.startByte)) {
+            if (referenceLineStarts.contains(line.startByte)) {
+                if (deferReferenceInlines && eventEmitter.isSome() && !collectingReferences && let BlockFrameCompletionKind
+                    .Root <- frame.completion) {
+                    let position = mappedSpan(line.startByte, line.startByte).startByte
+                    if (let Some(reference) <- draftDefinitionsByStart.getOrThrow().get(position)) {
+                        eventEmitter
+                            .getOrThrow()
+                            .emitDraftReference(nodes, reference, source, profile, dialect.fingerprint)
+                        let _ = takeDraftReferences(reference.sourceSpan)
+                        nodes.rollback(eventBlockCheckpoint.getOrThrow())
+                        eventBlockCheckpoint = Some(nodes.checkpoint())
+                    }
+                }
                 frame.index++
                 continue
+            }
+            if (isBlank(line.text)) {
+                frame.index++
+                continue
+            }
+            if (collectingReferences && line.hasReferenceOpener && !startsFootnoteSyntax(line.text)) {
+                if (let Some((label, normalized, destinationRaw, destination, titleRaw, title, next)) <- ReferenceDefinitionParser
+                    .parse(lines, index)) {
+                    if (collectedReferences.size >= limits.maximumReferences) {
+                        throw LimitExceededException("references", limits.maximumReferences, collectedReferences.size + 1,
+                            "reference_collection", span: Some(mappedSpan(line.startByte, lines[next - 1].endByte)))
+                    }
+                    collectedReferences.add(
+                        ReferenceDefinition(label, normalized, destinationRaw, destination, titleRaw, title,
+                            mappedSpan(line.startByte, lines[next - 1].endByte),
+                            isEffective: collectedReferenceLabels.add(normalized)))
+                    for (lineIndex in index..next) {
+                        referenceLineStarts.add(lines[lineIndex].startByte)
+                    }
+                    frame.index = next
+                    continue
+                }
             }
             if (dialect.parserOptions.extensionsEnabled && dialect.parserHotPlan.hasBlockDsl) {
                 if (let Some(scan) <- scanExtensionBlock(lines, index, frame.depth)) {
@@ -1391,6 +1496,26 @@ internal class ParserSession {
                     continue
                 }
             }
+            if (dialect.parserOptions.extensionsEnabled && let Some(rule) <- dialect.parserHotPlan.definitionListRule) {
+                let scanner = DefinitionListScanner(lines, rule, budget, cancellation,
+                    {start, end => mappedSpan(start, end)}, {
+                        candidate => !referenceLineStarts.contains(lines[candidate].startByte) &&
+                            !isSetextMarkerLine(lines[candidate]) && !isAnyBlockStart(lines, candidate)
+                    })
+                if (let Some(state) <- scanner.scan(index)) {
+                    budget.consumeScan(steps: syntaxRuleCost(rule.resourceCost, state.span.length()))
+                    if (frame.depth >= limits.maximumNestingDepth) {
+                        throw LimitExceededException("nesting_depth", limits.maximumNestingDepth, frame.depth + 1,
+                            "definition_list_parse", span: Some(state.span), extensionId: Some(rule.extensionId))
+                    }
+                    frame.index = state.nextIndex
+                    prepareDefinitionTerms(state)
+                    frames.add(
+                        BlockParseFrame(state.entries[0].definitions[0].lines, frame.depth + 1, frame.suppressedRule,
+                            completion: BlockFrameCompletionKind.DefinitionBodyFrame, definitionList: Some(state)))
+                    continue
+                }
+            }
             let setextMarker = findSetextMarker(lines, index)
             if (setextMarker > index) {
                 let markerStart = leadingWhitespace(lines[setextMarker].text)
@@ -1399,7 +1524,7 @@ internal class ParserSession {
                 } else {
                     2
                 }
-                let children = parseInlineLineRange(lines, index, setextMarker)
+                let children = parseInlineLineRange(lines, index, setextMarker, heading: true)
                 appendParsedBlock(frame,
                     nodes.heading(level, children, mappedSpan(line.startByte, lines[setextMarker].endByte)))
                 frame.index = setextMarker + 1
@@ -1413,14 +1538,74 @@ internal class ParserSession {
         result
     }
 
+    private func prepareDefinitionTerms(state: PendingDefinitionList): Unit {
+        state.entryNodes.clear()
+        state.definitionIndex = 0
+        for (line in state.entries[state.entryIndex].terms) {
+            let children = parseInlineLineRange([line], 0, 1)
+            state
+                .entryNodes
+                .add(
+                    definitionNode(DefinitionListRole.Term, children,
+                        mappedSpan(line.startByte + leadingWhitespace(line.text), line.endByte), state.rule))
+        }
+    }
+
+    private func definitionNode(role: DefinitionListRole, children: Array<Int64>, span: SourceSpan,
+        rule: BlockSyntaxRule, markerSpan!: ?SourceSpan = None): Int64 {
+        nodes.requiresBinding = true
+        nodes.customBlock(rule.extensionId, manifestVersion(rule.extensionId), definitionListKind(role),
+            DefinitionListPayload(role, markerSpan: markerSpan), children, Some(span),
+            NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: Some(span), extensionId: Some(rule.extensionId)))
+    }
+
     private func appendParsedBlock(frame: BlockParseFrame, node: Int64): Unit {
+        if (collectingReferences && let BlockFrameCompletionKind.Root <- frame.completion) {
+            nodes.rollback(referenceBlockCheckpoint.getOrThrow())
+            referenceBlockCheckpoint = Some(nodes.checkpoint())
+            return
+        }
         if (eventEmitter.isSome() && let BlockFrameCompletionKind.Root <- frame.completion) {
-            eventEmitter.getOrThrow().emitTopLevel(nodes, node)
+            if (deferReferenceInlines) {
+                let span = nodes.span(node).getOrThrow()
+                eventEmitter
+                    .getOrThrow()
+                    .emitDraft(nodes, node, source, profile, dialect.fingerprint, takeDraftReferences(span),
+                        takeDraftDiagnostics(), budget, cancellation)
+            } else {
+                if (nodes.requiresBinding) {
+                    throw MarkdownException(MarkdownErrorCode.ExtensionFailure,
+                        "structured document binding requires the full AST execution path", phase: "event_preflight")
+                }
+                eventEmitter.getOrThrow().emitTopLevel(nodes, node)
+            }
             nodes.rollback(eventBlockCheckpoint.getOrThrow())
             eventBlockCheckpoint = Some(nodes.checkpoint())
         } else {
             frame.blocks.add(node)
         }
+    }
+
+    private func takeDraftReferences(span: SourceSpan): Array<ReferenceDefinition> {
+        let owned = ArrayList<ReferenceDefinition>()
+        while (draftReferenceCursor < references.size && references[draftReferenceCursor].sourceSpan.endByte <= span
+                .endByte) {
+            let reference = references[draftReferenceCursor]
+            if (span.containsSpan(reference.sourceSpan)) {
+                owned.add(reference)
+            }
+            draftReferenceCursor++
+        }
+        owned.toArray()
+    }
+
+    private func takeDraftDiagnostics(): Array<Diagnostic> {
+        let owned = ArrayList<Diagnostic>()
+        while (draftDiagnosticCursor < diagnostics.size) {
+            owned.add(diagnostics[draftDiagnosticCursor])
+            draftDiagnosticCursor++
+        }
+        owned.toArray()
     }
 
     private func parseAtxHeading(line: LineRecord): Int64 {
@@ -1434,8 +1619,59 @@ internal class ParserSession {
             contentStart++
         }
         let content = stripClosingAtx(line.text[contentStart..])
-        nodes.heading(level, parseInline(content, line.startByte + contentStart, 0),
+        if (dialect.parserOptions.extensionsEnabled && dialect.parserHotPlan.headingIdRule.isSome()) {
+            nodes.requiresBinding = true
+        }
+        nodes.heading(level, parseHeadingInline(content, line.startByte + contentStart),
             mappedSpan(line.startByte, line.endByte))
+    }
+
+    private func parseHeadingInline(text: String, baseOffset: Int64, sourceIdentity!: Bool = true): Array<Int64> {
+        if (collectingReferences) {
+            return []
+        }
+        if (!dialect.parserOptions.extensionsEnabled || dialect.parserHotPlan.headingIdRule.isNone() ||
+            !text.endsWith("}")) {
+            return parseInline(text, baseOffset, 0, sourceIdentity: sourceIdentity)
+        }
+        let rule = dialect.parserHotPlan.headingIdRule.getOrThrow()
+        var opener = text.size - 2
+        let minimum = max(0, text.size - min(rule.maximumLookahead, limits.maximumExtensionLookaheadBytes))
+        while (opener >= minimum) {
+            scanStep()
+            if (text[opener] == b'{') {
+                break
+            }
+            opener--
+        }
+        if (opener < minimum || opener + 2 >= text.size || text[opener + 1] != b'#' || (opener > 0 && text[opener - 1] !=
+            b' ' && text[opener - 1] != b'\t')) {
+            return parseInline(text, baseOffset, 0, sourceIdentity: sourceIdentity)
+        }
+        let captureBytes = text.size - opener - 3
+        if (captureBytes > limits.maximumExtensionCaptureBytes) {
+            throw LimitExceededException("extension_capture_bytes", limits.maximumExtensionCaptureBytes, captureBytes,
+                "heading_parse", span: Some(mappedSpan(baseOffset + opener, baseOffset + text.size)),
+                extensionId: Some(rule.extensionId))
+        }
+        let id = text[opener + 2..text.size - 1]
+        if (!validHeadingId(id)) {
+            return parseInline(text, baseOffset, 0, sourceIdentity: sourceIdentity)
+        }
+        budget.consumeScan(steps: syntaxRuleCost(rule.resourceCost, text.size - opener))
+        var contentEnd = opener
+        while (contentEnd > 0 && (text[contentEnd - 1] == b' ' || text[contentEnd - 1] == b'\t')) {
+            contentEnd--
+        }
+        let children = ArrayList<Int64>()
+        children.add(all: parseInline(text[..contentEnd], baseOffset, 0, sourceIdentity: sourceIdentity))
+        let span = mappedSpan(baseOffset + opener, baseOffset + text.size)
+        let payload = HeadingIdPayload(id, mappedSpan(baseOffset + opener + 2, baseOffset + text.size - 1))
+        children.add(
+            nodes.customInline(rule.extensionId, manifestVersion(rule.extensionId), rule.ruleId, payload, [], Some(span),
+                NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: Some(span),
+                    extensionId: Some(rule.extensionId))))
+        children.toArray()
     }
 
     private func parseParagraph(lines: Array<LineRecord>, start: Int64): (Int64, Int64) {
@@ -2005,14 +2241,14 @@ internal class ParserSession {
                     }
                 } else {
                     let raw = text[cellStart..cellEnd]
-                    let value = if (escapedPipe) {
-                        unescapeTablePipes(raw)
+                    if (escapedPipe) {
+                        parseEscapedTableCell(raw, sourceStart, !hasCoreInlineSpecial && !mayContainGfmAutolink,
+                            !hasCoreDelimiter, !mayContainGfmAutolink, !hasTextLoweringCandidate)
                     } else {
-                        raw
+                        parseInline(raw, sourceStart, 1, knownPlain: !hasCoreInlineSpecial && !mayContainGfmAutolink,
+                            knownDelimiterFree: !hasCoreDelimiter, knownNoGfmAutolink: !mayContainGfmAutolink,
+                            knownNoTextLowering: !hasTextLoweringCandidate)
                     }
-                    parseInline(value, sourceStart, 1, knownPlain: !hasCoreInlineSpecial && !mayContainGfmAutolink,
-                        knownDelimiterFree: !hasCoreDelimiter, sourceIdentity: !escapedPipe,
-                        knownNoGfmAutolink: !mayContainGfmAutolink, knownNoTextLowering: !hasTextLoweringCandidate)
                 }
                 cells.add(nodes.tableCell(alignments[column], inlineChildren, mappedSpan(sourceStart, sourceEnd)))
                 column++
@@ -2056,15 +2292,64 @@ internal class ParserSession {
         nodes.tableRow(header, cells, mappedSpan(line.startByte, line.endByte))
     }
 
+    private func parseEscapedTableCell(raw: String, sourceStart: Int64, knownPlain: Bool, knownDelimiterFree: Bool,
+        knownNoGfmAutolink: Bool, knownNoTextLowering: Bool): Array<Int64> {
+        let bytes = raw.toArray()
+        let normalized = ArrayList<Byte>()
+        let offsets = ArrayList<Int64>()
+        offsets.add(sourceStart)
+        var index: Int64 = 0
+        while (index < bytes.size) {
+            scanStep()
+            if (bytes[index] == b'\\' && index + 1 < bytes.size && bytes[index + 1] == b'|') {
+                normalized.add(b'|')
+                index += 2
+            } else {
+                normalized.add(bytes[index])
+                index++
+            }
+            offsets.add(sourceStart + index)
+        }
+        let previousOffsets = normalizedInlineOffsets
+        let previousBase = normalizedInlineBase
+        normalizedInlineOffsets = Some(offsets.toArray())
+        normalizedInlineBase = sourceStart
+        try {
+            let parsed = parseInline(String.fromUtf8(normalized.toArray()), sourceStart, 1, knownPlain: knownPlain,
+                knownDelimiterFree: knownDelimiterFree, sourceIdentity: false, knownNoGfmAutolink: knownNoGfmAutolink,
+                knownNoTextLowering: knownNoTextLowering)
+            normalizedInlineOffsets = previousOffsets
+            normalizedInlineBase = previousBase
+            parsed
+        } catch (error: Exception) {
+            normalizedInlineOffsets = previousOffsets
+            normalizedInlineBase = previousBase
+            throw error
+        }
+    }
+
     private func parseInline(text: String, baseOffset: Int64, depth: Int64, knownPlain!: Bool = false,
         knownDelimiterFree!: Bool = false, sourceIdentity!: Bool = true, knownNoGfmAutolink!: Bool = false,
         knownNoTextLowering!: Bool = false): Array<Int64> {
+        if (collectingReferences) {
+            return []
+        }
         if (depth > limits.maximumNestingDepth) {
             throw LimitExceededException("nesting_depth", limits.maximumNestingDepth, depth, "inline_parse",
                 span: Some(mappedSpan(baseOffset, baseOffset + text.size)))
         }
         if (text.isEmpty()) {
             return []
+        }
+        if (deferReferenceInlines) {
+            scanSteps(text.size)
+            if (text.contains("[")) {
+                let span = mappedSpan(baseOffset, baseOffset + text.size)
+                let task = PendingInlineTask(source, text, baseOffset, depth, normalizedInlineOffsets,
+                    normalizedInlineBase, suppressedInlineRule, sourceIdentity)
+                return [nodes.customInline("markdown-internal", "1", "pending-inline", task, [], Some(span),
+                    NodeOrigin(NodeOriginKind.Synthetic, sourceSpan: Some(span), transformId: Some("append")))]
+            }
         }
         let hasExtensionDispatch = dialect.parserOptions.extensionsEnabled && (dialect.parserHotPlan.hasInlineDsl || dialect
             .parserHotPlan
@@ -2315,6 +2600,9 @@ internal class ParserSession {
             let inlineRules = dialect.parserHotPlan.inlineRules(text[start])
             for (ruleIndex in 0..inlineRules.size) {
                 let rule = inlineRules[ruleIndex]
+                if (let InlineSyntaxKind.HeadingIdSuffix <- rule.syntaxKind) {
+                    continue
+                }
                 let identity = "${rule.extensionId}/${rule.ruleId}"
                 if (identity == suppressedInlineRule || !startsAt(text, rule.opener, start)) {
                     continue
@@ -2331,7 +2619,7 @@ internal class ParserSession {
                     budget.consumeScan(steps: syntaxRuleCost(rule.resourceCost, rule.opener.size))
                     let span = mappedSpan(baseOffset + start, baseOffset + next)
                     let children: Array<Int64> = []
-                    let payload = emitInlinePayload(rule, rule.opener, span, children)
+                    let payload = emitInlinePayload(rule, rule.opener, span, span, children)
                     let origin = NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: Some(span),
                         extensionId: Some(rule.extensionId))
                     return Some(
@@ -2354,6 +2642,14 @@ internal class ParserSession {
                 budget.consumeExtensionCallback()
                 budget.consumeScan(steps: syntaxRuleCost(rule.resourceCost, end + rule.closer.size - start))
                 let body = text[bodyStart..end]
+                if (body.size > limits.maximumExtensionCaptureBytes) {
+                    throw LimitExceededException("extension_capture", limits.maximumExtensionCaptureBytes, body.size,
+                        "extension_parse", span: Some(mappedSpan(baseOffset + bodyStart, baseOffset + end)),
+                        extensionId: Some(rule.extensionId))
+                }
+                if (!rule.allowLineBreaks && (body.contains("\n") || body.contains("\r"))) {
+                    return None
+                }
                 let children: Array<Int64>
                 if (rule.parseChildren) {
                     if (rule.allowNesting) {
@@ -2370,7 +2666,8 @@ internal class ParserSession {
                     children = [parsedText(body, body, baseOffset + bodyStart, baseOffset + end)]
                 }
                 let span = mappedSpan(baseOffset + start, baseOffset + end + rule.closer.size)
-                let payload = emitInlinePayload(rule, body, span, children)
+                let payload = emitInlinePayload(rule, body, span, mappedSpan(baseOffset + bodyStart, baseOffset + end),
+                    children)
                 let origin = NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: Some(span),
                     extensionId: Some(rule.extensionId))
                 return Some(
@@ -3191,20 +3488,42 @@ internal class ParserSession {
         let blockRules = dialect.parserHotPlan.blockRules(trimmed[0])
         for (ruleIndex in 0..blockRules.size) {
             let rule = blockRules[ruleIndex]
+            if (let BlockSyntaxKind.DefinitionList <- rule.syntaxKind) {
+                continue
+            }
             let identity = "${rule.extensionId}/${rule.ruleId}"
             if (identity == suppressedBlockRule) {
                 continue
             }
-            if (rule.documentStartOnly && lines[start].startByte > 3) {
+            if (rule.documentStartOnly && !isDocumentStart(lines[start].startByte + leadingWhitespace(lines[start].text))) {
                 continue
             }
             if (!trimmed.startsWith(rule.openerPrefix)) {
+                continue
+            }
+            if (let BlockSyntaxKind.FootnoteDefinition <- rule.syntaxKind) {
+                if (let Some(value) <- scanFootnoteDefinition(lines, start, rule, extensionDepth)) {
+                    budget.consumeScan(
+                        steps: syntaxRuleCost(rule.resourceCost, value.pending.getOrThrow().span.length()))
+                    return Some(value)
+                }
                 continue
             }
             if (extensionDepth >= limits.maximumNestingDepth) {
                 throw LimitExceededException("nesting_depth", limits.maximumNestingDepth, extensionDepth + 1,
                     "extension_parse", span: Some(mappedSpan(lines[start].startByte, lines[start].endByte)),
                     extensionId: Some(rule.extensionId))
+            }
+            if (let BlockSyntaxKind.DisplayMath <- rule.syntaxKind) {
+                if (trimmed != "$$" || leadingIndentColumns(lines[start].text) > 3) {
+                    continue
+                }
+            }
+            if (let BlockSyntaxKind.CodeGroup <- rule.syntaxKind) {
+                if (trimmed != rule.openerPrefix || leadingIndentColumns(lines[start].text) > 3) {
+                    continue
+                }
+                return scanCodeGroup(lines, start, rule)
             }
             let captured = trimAscii(trimmed[rule.openerPrefix.size..])
             if (captured.size > rule.maximumCaptureLength) {
@@ -3229,7 +3548,9 @@ internal class ParserSession {
                 return None
             }
             if (let BlockSyntaxKind.SingleLine <- rule.syntaxKind) {
-                budget.consumeExtensionCallback()
+                if (!collectingReferences) {
+                    budget.consumeExtensionCallback()
+                }
                 budget.consumeScan(
                     steps: syntaxRuleCost(rule.resourceCost, lines[start].endByte - lines[start].startByte))
                 let span = mappedSpan(lines[start].startByte, lines[start].endByte)
@@ -3300,8 +3621,18 @@ internal class ParserSession {
                 }
                 return None
             }
-            budget.consumeExtensionCallback()
+            if (!collectingReferences) {
+                budget.consumeExtensionCallback()
+            }
             budget.consumeScan(steps: syntaxRuleCost(rule.resourceCost, lines[index].endByte - lines[start].startByte))
+            if (let BlockSyntaxKind.DisplayMath <- rule.syntaxKind) {
+                let maximum = min(rule.maximumCaptureLength, limits.maximumExtensionCaptureBytes)
+                if (totalBytes > maximum) {
+                    throw LimitExceededException("extension_capture", maximum, totalBytes, "extension_parse",
+                        span: Some(mappedSpan(lines[start].startByte, lines[index].endByte)),
+                        extensionId: Some(rule.extensionId))
+                }
+            }
             let literal = joinLineRecords(lines, start + 1, index)
             ensureLiteralBytes(literal.size, "extension_parse")
             let span = mappedSpan(lines[start].startByte, lines[index].endByte)
@@ -3330,7 +3661,18 @@ internal class ParserSession {
                                     childSuppression, index + 1)), index + 1))
                 case BlockContentMode.Literal =>
                     let children: Array<Int64> = []
-                    let payload = emitBlockPayload(rule, kindId, parameters, literal, span, children, values)
+                    let payload = if (let BlockSyntaxKind.DisplayMath <- rule.syntaxKind) {
+                        let parts = ArrayList<MathSourcePart>()
+                        for (bodyIndex in start + 1..index) {
+                            parts.add(mathSourcePart(lines[bodyIndex], bodyIndex + 1 < index))
+                        }
+                        let openerStart = lines[start].startByte + leadingWhitespace(lines[start].text)
+                        let closerStart = lines[index].startByte + leadingWhitespace(lines[index].text)
+                        MathPayload(true, literal, parts.toArray(), mappedSpan(openerStart, openerStart + 2),
+                            mappedSpan(closerStart, closerStart + 2))
+                    } else {
+                        emitBlockPayload(rule, kindId, parameters, literal, span, children, values)
+                    }
                     let origin = NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: Some(span),
                         extensionId: Some(rule.extensionId))
                     let noPending: ?PendingExtensionState = None
@@ -3342,6 +3684,161 @@ internal class ParserSession {
             }
         }
         None
+    }
+
+    private func scanCodeGroup(lines: Array<LineRecord>, start: Int64, rule: BlockSyntaxRule): ?ExtensionBlockScan {
+        var index = start + 1
+        var fence: ?Byte = None
+        var fenceLength: Int64 = 0
+        var invalid = false
+        var fences: Int64 = 0
+        while (index < lines.size) {
+            let line = lines[index]
+            scanSteps(line.text.size + 1)
+            if (fence.isNone() && trimAscii(line.text) == ":::") {
+                break
+            }
+            let bytes = line.endWithNewline - lines[start].endWithNewline
+            if (bytes > rule.maximumBlockBytes) {
+                throw LimitExceededException("extension_block_bytes", rule.maximumBlockBytes, bytes, "extension_parse",
+                    span: Some(mappedSpan(lines[start].startByte, line.endByte)), extensionId: Some(rule.extensionId))
+            }
+            if (let Some(marker) <- fence) {
+                if (isFenceClose(line.text, marker, fenceLength)) {
+                    fence = None
+                }
+            } else if (trimAscii(line.text) == ":::") {
+                break
+            } else if (isFenceStart(line.text)) {
+                let leading = leadingSpaces(line.text)
+                let marker = line.text[leading]
+                fence = Some(marker)
+                fenceLength = 0
+                while (leading + fenceLength < line.text.size && line.text[leading + fenceLength] == marker) {
+                    fenceLength++
+                }
+                fences++
+            } else if (!isBlank(line.text)) {
+                invalid = true
+            }
+            index++
+        }
+        if (index == lines.size) {
+            if (!collectingReferences && dialect.parserOptions.emitUnclosedExtensionDiagnostics) {
+                diagnostics.add(
+                    Diagnostic("MD3002_UNCLOSED_EXTENSION", DiagnosticSeverity.Warning,
+                        "unclosed code group or code fence", mappedSpan(lines[start].startByte, lines[start].endByte),
+                        extensionId: Some(rule.extensionId), ruleId: Some(rule.ruleId)))
+            }
+            return None
+        }
+        let span = mappedSpan(lines[start].startByte, lines[index].endByte)
+        if (invalid || fences == 0) {
+            if (!collectingReferences) {
+                invalidCodeGroupSyntax(span, rule)
+            }
+            return None
+        }
+        if (collectingReferences) {
+            let noNode: ?Int64 = None
+            let noPending: ?PendingExtensionState = None
+            return Some(ExtensionBlockScan(noNode, noPending, index + 1))
+        }
+        budget.consumeScan(steps: syntaxRuleCost(rule.resourceCost, span.length()))
+        let checkpoint = nodes.checkpoint()
+        let items = ArrayList<Int64>()
+        var cursor = start + 1
+        while (cursor < index) {
+            if (isBlank(lines[cursor].text)) {
+                cursor++;
+                continue
+            }
+            let (codeIndex, next) = parseFencedCode(lines, cursor)
+            let code = nodes.snapshotNode(codeIndex).asCodeBlock().getOrThrow()
+            let maximum = min(rule.maximumCaptureLength, limits.maximumExtensionCaptureBytes)
+            if (code.infoRaw.size > maximum) {
+                throw LimitExceededException("extension_capture", maximum, code.infoRaw.size, "extension_parse",
+                    span: code.node.span, extensionId: Some(rule.extensionId))
+            }
+            let codeLiteral = code.literal
+            budget.consumeScan(steps: code.infoRaw.size + codeLiteral.size)
+            let word = firstWord(code.infoRaw)
+            let languageValid = isCodeGroupLanguage(word)
+            let fallback = if (word.isEmpty()) {
+                "text"
+            } else {
+                word
+            }
+            let header = CodeGroupHeaderParser(code.infoRaw[word.size..], codeLineCount(codeLiteral)).parse(fallback)
+            if (!languageValid || header.isNone()) {
+                nodes.rollback(checkpoint)
+                invalidCodeGroupSyntax(span, rule)
+                return None
+            }
+            let copy = BoundedLiteralBuilder(limits.maximumLiteralBytes, budget, cancellation, "code_group_parse")
+            let leading = leadingSpaces(lines[cursor].text)
+            for (body in cursor + 1..next - 1) {
+                copy.append(stripUpToSpaces(lines[body].text, leading))
+                copy.append(source.text()[lines[body].endByte..lines[body].endWithNewline])
+            }
+            let item = CodeGroupPayload(CodeGroupRole.Item, title: header.getOrThrow().title,
+                highlightedLines: header.getOrThrow().ranges, copyText: copy.finish())
+            items.add(
+                nodes.customBlock(rule.extensionId, manifestVersion(rule.extensionId), "code-group-item", item,
+                    [codeIndex], code.node.span,
+                    NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: code.node.span,
+                        extensionId: Some(rule.extensionId))))
+            cursor = next
+        }
+        budget.consumeExtensionCallback()
+        let node = nodes.customBlock(rule.extensionId, manifestVersion(rule.extensionId), "code-group",
+            CodeGroupPayload(CodeGroupRole.Group), items.toArray(), Some(span),
+            NodeOrigin(NodeOriginKind.ExtensionGenerated, sourceSpan: Some(span), extensionId: Some(rule.extensionId)))
+        let noPending: ?PendingExtensionState = None
+        Some(ExtensionBlockScan(Some(node), noPending, index + 1))
+    }
+
+    private func invalidCodeGroupSyntax(span: SourceSpan, rule: BlockSyntaxRule): Unit {
+        diagnostics.add(
+            Diagnostic("MD5001_INVALID_CODE_GROUP", DiagnosticSeverity.Warning,
+                "code groups require fenced blocks with supported titles and ordered line ranges", span,
+                extensionId: Some(rule.extensionId), ruleId: Some(rule.ruleId)))
+    }
+
+    private func mathSourcePart(line: LineRecord, includeNewline: Bool): MathSourcePart {
+        let original = source.text()
+        budget.consumeScan(steps: line.text.size)
+        var raw = line.endByte
+        var normalized = line.text.size
+        while (normalized > 0 && raw > 0 && original[raw - 1] == line.text[normalized - 1]) {
+            normalized--
+            raw--
+            if (raw % 256 == 0) {
+                cancellation.throwIfCancelled(phase: "extension_parse")
+            }
+        }
+        var prefix = raw
+        if (normalized > 0) {
+            for (index in 0..normalized) {
+                if (line.text[index] != b' ') {
+                    throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation,
+                        "math line has a non-whitespace synthetic prefix", phase: "extension_parse")
+                }
+            }
+            while (prefix > 0 && (original[prefix - 1] == b' ' || original[prefix - 1] == b'\t')) {
+                budget.consumeScan()
+                prefix--
+                if (prefix % 256 == 0) {
+                    cancellation.throwIfCancelled(phase: "extension_parse")
+                }
+            }
+        }
+        let span = mappedSpan(prefix, if (includeNewline) {
+            line.endWithNewline
+        } else {
+            line.endByte
+        })
+        MathSourcePart(span, expandedPrefixBytes: mappedSpan(prefix, raw).length(), expandedPrefixSpaces: normalized)
     }
 
     private func isAnyBlockStart(lines: Array<LineRecord>, index: Int64): Bool {
@@ -3359,8 +3856,30 @@ internal class ParserSession {
             let rules = dialect.parserHotPlan.blockRules(trimmed[0])
             for (ruleIndex in 0..rules.size) {
                 let rule = rules[ruleIndex]
+                if (let BlockSyntaxKind.DefinitionList <- rule.syntaxKind) {
+                    continue
+                }
+                if (rule.documentStartOnly &&
+                    !isDocumentStart(lines[index].startByte + leadingWhitespace(lines[index].text))) {
+                    continue
+                }
+                if (let BlockSyntaxKind.CodeGroup <- rule.syntaxKind) {
+                    if (trimmed != rule.openerPrefix || leadingIndentColumns(lines[index].text) > 3) {
+                        continue
+                    }
+                }
+                if (let BlockSyntaxKind.DisplayMath <- rule.syntaxKind) {
+                    if (trimmed != "$$" || leadingIndentColumns(lines[index].text) > 3) {
+                        continue
+                    }
+                }
                 let identity = "${rule.extensionId}/${rule.ruleId}"
                 if (identity != suppressedBlockRule && trimmed.startsWith(rule.openerPrefix)) {
+                    if (let BlockSyntaxKind.FootnoteDefinition <- rule.syntaxKind) {
+                        if (footnoteHeader(lines[index].text, rule.maximumCaptureLength).isNone()) {
+                            continue
+                        }
+                    }
                     return true
                 }
             }
@@ -3378,11 +3897,175 @@ internal class ParserSession {
         ""
     }
 
-    private func emitInlinePayload(rule: InlineSyntaxRule, literal: String, span: SourceSpan, children: Array<Int64>): CustomPayload {
+    private func startsFootnoteSyntax(text: String): Bool {
+        if (leadingIndentColumns(text) > 3) {
+            return false
+        }
+        let start = leadingWhitespace(text)
+        start + 1 < text.size && text[start] == b'[' && text[start + 1] == b'^'
+    }
+
+    private func isDocumentStart(position: Int64): Bool {
+        if (documentOffset != 0) {
+            return false
+        }
+        if (position == 0) {
+            return true
+        }
+        let value = source.text()
+        position == 3 && value.size >= 3 && value[0] == 0xEF && value[1] == 0xBB && value[2] == 0xBF
+    }
+
+    private func footnoteHeader(text: String, maximumLabelBytes: Int64): ?(Int64, Int64, Int64) {
+        if (leadingIndentColumns(text) > 3) {
+            return None
+        }
+        let opener = leadingWhitespace(text)
+        if (opener + 2 >= text.size || text[opener] != b'[' || text[opener + 1] != b'^') {
+            return None
+        }
+        let labelStart = opener + 2
+        var end = labelStart
+        let maximumEnd = labelStart + min(maximumLabelBytes, text.size - labelStart)
+        while (end < maximumEnd) {
+            scanStep()
+            if (text[end] == b']') {
+                break
+            }
+            if (text[end] == b'[') {
+                return None
+            }
+            if (text[end] == b'\\' && end + 1 < maximumEnd) {
+                end++
+            }
+            end++
+        }
+        if (end == labelStart || end + 1 >= text.size || text[end] != b']' || text[end + 1] != b':' ||
+            normalizeFootnoteLabel(text[labelStart..end]).isEmpty()) {
+            return None
+        }
+        var bodyStart = end + 2
+        if (bodyStart < text.size && (text[bodyStart] == b' ' || text[bodyStart] == b'\t')) {
+            bodyStart++
+        }
+        Some((labelStart, end, bodyStart))
+    }
+
+    private func scanFootnoteDefinition(lines: Array<LineRecord>, start: Int64, rule: BlockSyntaxRule, depth: Int64): ?ExtensionBlockScan {
+        let first = lines[start]
+        let header = match (footnoteHeader(first.text,
+            min(rule.maximumCaptureLength, limits.maximumExtensionCaptureBytes))) {
+            case Some(value) => value
+            case None => return None
+        }
+        if (depth >= limits.maximumNestingDepth) {
+            throw LimitExceededException("nesting_depth", limits.maximumNestingDepth, depth + 1, "footnote_parse",
+                span: Some(mappedSpan(first.startByte, first.endByte)), extensionId: Some("footnotes"))
+        }
+        let label = first.text[header[0]..header[1]]
+        let payload: CustomPayload = FootnoteDefinitionPayload(label,
+            mappedSpan(first.startByte + header[0], first.startByte + header[1]))
+        if (first.endWithNewline - first.startByte - header[2] > rule.maximumBlockBytes) {
+            throw LimitExceededException("extension_block_bytes", rule.maximumBlockBytes,
+                first.endWithNewline - first.startByte - header[2], "footnote_parse",
+                span: Some(mappedSpan(first.startByte, first.endByte)), extensionId: Some(rule.extensionId))
+        }
+        let body = ArrayList<LineRecord>()
+        body.add(
+            LineRecord(first.text[header[2]..], first.startByte + header[2], first.endByte, first.endWithNewline,
+                hasCoreInlineSpecial: first.hasCoreInlineSpecial))
+        var index = start + 1
+        var last = first
+        while (index < lines.size) {
+            scanStep()
+            var next = index
+            while (next < lines.size && isBlank(lines[next].text)) {
+                scanStep();
+                next++
+            }
+            if (next >= lines.size || leadingIndentColumns(lines[next].text) < 4) {
+                break
+            }
+            for (blank in index..next) {
+                body.add(LineRecord("", lines[blank].endByte, lines[blank].endByte, lines[blank].endWithNewline))
+            }
+            let line = lines[next]
+            let blockBytes = line.endWithNewline - first.startByte - header[2]
+            if (blockBytes > rule.maximumBlockBytes) {
+                throw LimitExceededException("extension_block_bytes", rule.maximumBlockBytes, blockBytes,
+                    "footnote_parse", span: Some(mappedSpan(first.startByte, line.endByte)),
+                    extensionId: Some(rule.extensionId))
+            }
+            // Four columns end at a tab stop, so source bytes can be removed
+            // directly without manufacturing spaces or changing source offsets.
+            var column: Int64 = 0
+            var prefix: Int64 = 0
+            while (column < 4) {
+                if (line.text[prefix] == b'\t') {
+                    column += 4 - column % 4
+                } else {
+                    column++
+                }
+                prefix++
+            }
+            body.add(
+                LineRecord(line.text[prefix..], line.startByte + prefix, line.endByte, line.endWithNewline,
+                    hasCoreInlineSpecial: line.hasCoreInlineSpecial))
+            last = line
+            index = next + 1
+        }
+        let values = HashMap<String, SyntaxParameterValue>()
+        let pending = PendingExtensionState(rule, label, "", "", values, mappedSpan(first.startByte, last.endByte),
+            "footnote-definition", body.toArray(), "", index, payloadOverride: Some(payload))
+        let noNode: ?Int64 = None
+        Some(ExtensionBlockScan(noNode, Some(pending), index))
+    }
+
+    private func findCustomInlineCloser(text: String, openerStart: Int64, bodyStart: Int64, rule: InlineSyntaxRule): Int64 {
+        let lookahead = min(rule.maximumLookahead, limits.maximumExtensionLookaheadBytes)
+        let end = openerStart + min(lookahead, text.size - openerStart)
+        var depth: Int64 = 0
+        var cursor = bodyStart
+        while (cursor <= end && cursor < text.size) {
+            scanStep()
+            if (!rule.allowLineBreaks && (text[cursor] == 10 || text[cursor] == 13)) {
+                return -1
+            }
+            if (let InlineEscapePolicy.CommonMarkBackslash <- rule.escapePolicy) {
+                if (text[cursor] == b'\\' && cursor + 1 < text.size && isAsciiPunctuation(text[cursor + 1])) {
+                    cursor += 2
+                    continue
+                }
+            }
+            if (rule.allowNesting && rule.opener != rule.closer && startsAt(text, rule.opener, cursor) &&
+                cursor + rule.opener.size <= end && customInlineOpenerAllowed(text, cursor, rule)) {
+                scanSteps(rule.opener.size)
+                depth++
+                cursor += rule.opener.size
+                continue
+            }
+            if (cursor + rule.closer.size <= text.size && startsAt(text, rule.closer, cursor)) {
+                scanSteps(rule.closer.size)
+                if (depth > 0) {
+                    depth--
+                } else if (customInlineCloserAllowed(text, openerStart, cursor + rule.closer.size, rule)) {
+                    return cursor
+                }
+                cursor += rule.closer.size
+            } else {
+                cursor++
+            }
+        }
+        -1
+    }
+
+    private func emitInlinePayload(rule: InlineSyntaxRule, literal: String, span: SourceSpan, literalSpan: SourceSpan,
+        children: Array<Int64>): CustomPayload {
         match (rule.emitter) {
             case Some(emitter) => try {
                 emitter.emit(
-                    InlineSyntaxMatch(rule.extensionId, rule.ruleId, literal, span, syntaxChildSummaries(children)))
+                    InlineSyntaxMatch(rule.extensionId, rule.ruleId, literal, source.slice(literalSpan), literalSpan,
+                        span, syntaxChildSummaries(children)))
             } catch (error: Exception) {
                 let manifest = extensionManifest(rule.extensionId)
                 throw ExtensionFailureException(rule.extensionId, manifest.semanticVersion,
@@ -3394,6 +4077,9 @@ internal class ParserSession {
 
     private func emitBlockPayload(rule: BlockSyntaxRule, name: String, parameters: String, literal: String,
         span: SourceSpan, children: Array<Int64>, values: HashMap<String, SyntaxParameterValue>): CustomPayload {
+        if (collectingReferences) {
+            return SyntaxPayload(name, parameters, literal, typedValues: values)
+        }
         match (rule.emitter) {
             case Some(emitter) => try {
                 emitter.emit(
@@ -3542,7 +4228,12 @@ internal class ParserSession {
     }
 
     private func parsedText(raw: String, value: String, decodedStart: Int64, decodedEnd: Int64): Int64 {
-        storedText(raw, value, mappedSpan(decodedStart, decodedEnd))
+        let span = mappedSpan(decodedStart, decodedEnd)
+        storedText(if (normalizedInlineOffsets.isSome()) {
+            source.slice(span)
+        } else {
+            raw
+        }, value, span)
     }
 
     private func parsedSourceText(decodedStart: Int64, decodedEnd: Int64): Int64 {
@@ -3746,7 +4437,7 @@ internal class ParserSession {
         }
     }
 
-    private func parseInlineLineRange(lines: Array<LineRecord>, start: Int64, end: Int64): Array<Int64> {
+    private func parseInlineLineRange(lines: Array<LineRecord>, start: Int64, end: Int64, heading!: Bool = false): Array<Int64> {
         let combined = StringBuilder()
         var hasDelimiter = false
         for (index in start..end) {
@@ -3759,9 +4450,42 @@ internal class ParserSession {
             }
             combined.append(content)
         }
-        if (hasDelimiter) {
-            return parseInline(combined.toString(), lines[start].startByte + leadingWhitespace(lines[start].text), 0,
-                sourceIdentity: false)
+        let boundHeading = heading && dialect.parserOptions.extensionsEnabled &&
+            dialect.parserHotPlan.headingIdRule.isSome()
+        if (boundHeading) {
+            nodes.requiresBinding = true
+        }
+        if (hasDelimiter || boundHeading) {
+            // Normalize container prefixes while retaining an exact boundary map
+            // for metadata and inline spans, including CRLF and quoted headings.
+            let offsets = ArrayList<Int64>()
+            for (index in start..end) {
+                let contentStart = leadingWhitespace(lines[index].text)
+                let content = stripTrailingSpaces(lines[index].text[contentStart..])
+                for (byteIndex in 0..content.size) {
+                    offsets.add(lines[index].startByte + contentStart + byteIndex)
+                }
+                offsets.add(lines[index].startByte + contentStart + content.size)
+            }
+            let previous = normalizedInlineOffsets
+            let previousBase = normalizedInlineBase
+            let base = lines[start].startByte + leadingWhitespace(lines[start].text)
+            normalizedInlineOffsets = Some(offsets.toArray())
+            normalizedInlineBase = base
+            try {
+                let result = if (heading) {
+                    parseHeadingInline(combined.toString(), base, sourceIdentity: false)
+                } else {
+                    parseInline(combined.toString(), base, 0, sourceIdentity: false)
+                }
+                normalizedInlineOffsets = previous
+                normalizedInlineBase = previousBase
+                return result
+            } catch (error: Exception) {
+                normalizedInlineOffsets = previous
+                normalizedInlineBase = previousBase
+                throw error
+            }
         }
         let out = ArrayList<Int64>()
         for (index in start..end) {
@@ -4019,7 +4743,11 @@ private func findReferenceLabelClose(text: String): Int64 {
     -1
 }
 
-private func normalizeReferenceLabel(label: String): String {
+internal func normalizeFootnoteLabel(label: String): String {
+    normalizeReferenceLabel(decodeLinkValue(label))
+}
+
+internal func normalizeReferenceLabel(label: String): String {
     let text = trimAscii(label)
     var needsNormalization = false
     var hasNonAscii = false
@@ -4792,22 +5520,6 @@ private func splitTableRanges(text: String): Array<TableCellRange> {
         index++
     }
     out.toArray()
-}
-
-private func unescapeTablePipes(value: String): String {
-    let out = StringBuilder()
-    var index: Int64 = 0
-    while (index < value.size) {
-        if (value[index] == b'\\' && index + 1 < value.size && value[index + 1] == b'|') {
-            out.append("|")
-            index += 2
-        } else {
-            let next = nextRuneOffset(value, index)
-            out.append(value[index..next])
-            index = next
-        }
-    }
-    out.toString()
 }
 
 private func tableAlignments(text: String): Array<TableAlignment> {
@@ -5814,49 +6526,6 @@ private func normalizeCodeLiteral(value: String): String {
     }
 }
 
-private func findCustomInlineCloser(text: String, openerStart: Int64, bodyStart: Int64, rule: InlineSyntaxRule): Int64 {
-    if (rule.allowNesting && rule.opener != rule.closer) {
-        var depth: Int64 = 0
-        var cursor = bodyStart
-        while (cursor <= text.size) {
-            let nextOpen = findString(text, rule.opener, cursor)
-            let nextClose = findString(text, rule.closer, cursor)
-            if (nextClose < 0 || nextClose - openerStart > rule.maximumLookahead) {
-                return -1
-            }
-            let nestedOpener = if (nextOpen >= 0 && nextOpen < nextClose) {
-                customInlineOpenerAllowed(text, nextOpen, rule)
-            } else {
-                false
-            }
-            if (nestedOpener) {
-                depth++
-                cursor = nextOpen + rule.opener.size
-            } else if (depth > 0) {
-                depth--
-                cursor = nextClose + rule.closer.size
-            } else if (customInlineCloserAllowed(text, openerStart, nextClose + rule.closer.size, rule)) {
-                return nextClose
-            } else {
-                cursor = nextClose + rule.closer.size
-            }
-        }
-        return -1
-    }
-    var search = bodyStart
-    while (search <= text.size) {
-        let found = findString(text, rule.closer, search)
-        if (found < 0 || found - openerStart > rule.maximumLookahead) {
-            return -1
-        }
-        if (customInlineCloserAllowed(text, openerStart, found + rule.closer.size, rule)) {
-            return found
-        }
-        search = found + rule.closer.size
-    }
-    -1
-}
-
 private func customInlineOpenerAllowed(text: String, start: Int64, rule: InlineSyntaxRule): Bool {
     var metadata = false
     if (let InlineSyntaxKind.MetadataSuffix <- rule.syntaxKind) {
@@ -6074,7 +6743,7 @@ private func isEscaped(text: String, index: Int64): Bool {
     count % 2 == 1
 }
 
-private func nextRuneOffset(text: String, offset: Int64): Int64 {
+internal func nextRuneOffset(text: String, offset: Int64): Int64 {
     if (offset >= text.size) {
         return text.size
     }

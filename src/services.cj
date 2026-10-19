@@ -30,7 +30,7 @@ public class AnnotationKey<T> {
 
 /** 以 NodeId 为键的可变 annotation channel。 */
 public class AnnotationChannel<T> {
-    private let values = HashMap<Int64, T>()
+    private let values = HashMap<NodeId, T>()
     private let closed: AtomicBool
     /** 创建本 channel 的 key。 */
     public let key: AnnotationKey<T>
@@ -47,7 +47,7 @@ public class AnnotationChannel<T> {
      */
     public func put(nodeId: NodeId, value: T): Unit {
         ensureOpen();
-        values.add(nodeId.value, value)
+        values.add(nodeId, value)
     }
     /** 读取节点 annotation；不存在时返回 `None`。
      * @param nodeId 目标节点 id。
@@ -56,7 +56,7 @@ public class AnnotationChannel<T> {
      */
     public func get(nodeId: NodeId): ?T {
         ensureOpen();
-        values.get(nodeId.value)
+        values.get(nodeId)
     }
     /** 移除并返回节点 annotation。
      * @param nodeId 目标节点 id。
@@ -65,7 +65,7 @@ public class AnnotationChannel<T> {
      */
     public func remove(nodeId: NodeId): ?T {
         ensureOpen();
-        values.remove(nodeId.value)
+        values.remove(nodeId)
     }
     /** 当前存储的 annotation 数量。 */
     public prop size: Int64 {

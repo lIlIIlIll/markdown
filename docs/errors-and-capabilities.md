@@ -34,8 +34,8 @@ try {
 `Diagnostic` 包含 code、severity、message、span、extension ID、rule ID 和可选
 `DiagnosticFix`。诊断表示 parser 已恢复的问题；收到诊断不等于 parse 不完整。
 
-`tryParse` 把 hard failure 放入 `ParseResult.errors`，并设置
-`isComplete=false`。它不返回已完成 AST 前缀。
+`tryParse` 将致命失败表示为 `ParseOutcome.Failure(error)`。只有 Success 包含
+`ParseResult`；失败不返回空 Document 或已完成 AST 前缀。
 
 ## Capability discovery
 
@@ -52,7 +52,7 @@ let execution = engine.executionModels()
 - native scanner availability 和 enablement
 - incremental、lossless、HTML-to-Markdown 等支持范围
 
-`ExecutionModelCapabilities` 报告 buffered stream/chunk、Event、async HTML 和 native
+`ExecutionModelCapabilities` 报告 buffered stream、追加 chunk、Event、可恢复 HTML 和 native
 accelerator 的真实语义。
 
 ## Explain

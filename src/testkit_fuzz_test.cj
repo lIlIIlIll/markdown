@@ -39,9 +39,9 @@ class ExtensionTckAndFuzzTest {
             let source = value.toString()
             let parsed = engine.parse(source)
             AstInvariantValidator().validate(parsed.document)
-            AstInvariantValidator().validate(parsed.ast)
+            AstInvariantValidator().validate(parsed.document)
             let bytes = engine.parse(source.toArray())
-            let session = engine.newSession()
+            let session = engine.newBufferedInputSession()
             var offset: Int64 = 0
             while (offset < source.size) {
                 let size = min(source.size - offset, (caseIndex % 7) + 1)
@@ -91,7 +91,7 @@ class ExtensionTckAndFuzzTest {
             } catch (_: MarkdownException) {
             }
             try {
-                let session = engine.newSession(utf8Policy: Utf8Policy.Strict)
+                let session = engine.newBufferedInputSession(utf8Policy: Utf8Policy.Strict)
                 feedFuzzPartitions(session, bytes, caseIndex)
                 let result = session.finish()
                 chunkedStrictSucceeded = true
@@ -104,7 +104,7 @@ class ExtensionTckAndFuzzTest {
             }
 
             let directReplace = engine.parse(bytes, utf8Policy: Utf8Policy.ReplaceInvalid)
-            let replaceSession = engine.newSession(utf8Policy: Utf8Policy.ReplaceInvalid)
+            let replaceSession = engine.newBufferedInputSession(utf8Policy: Utf8Policy.ReplaceInvalid)
             feedFuzzPartitions(replaceSession, bytes, caseIndex)
             let chunkedReplace = replaceSession.finish()
             @Expect(chunkedReplace.source.text(), directReplace.source.text())

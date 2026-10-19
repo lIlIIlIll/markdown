@@ -37,10 +37,10 @@ public interface TextSink {
 
 /** 异步 sink 一次写入后的 backpressure 状态。 */
 public enum AsyncSinkWriteResult {
-    /** 继续写出。 */
+    /** 确认接收本次完整片段并继续写出。 */
     | Continue
-    /** 暂停，等待宿主 resume。 */
-    | Pause
+    /** 确认本次片段的 UTF-8 前缀字节数后暂停；0 表示未接收，全部接收也可暂停。 */
+    | Pause(Int64)
     /** 写入失败，携带错误详情。 */
     | Failed(SinkError)
 }
@@ -53,14 +53,14 @@ public interface AsyncTextSink {
     func write(slice: String): AsyncSinkWriteResult
 }
 
-/** buffered async 输出的 session 状态。 */
+/** 实际 renderer 遍历和输出确认的会话状态。 */
 public enum AsyncRenderState {
     /** 全部输出已写出。 */
     | Complete
     /** 因 sink `Pause` 暂停。 */
     | Paused
-    /** 因 sink 失败终止。 */
-    | Failed(SinkError)
+    /** 因 sink、取消、预算或 renderer 错误终止。 */
+    | Failed(MarkdownException)
 }
 
 /** 将同步 renderer 输出收集到一个 String 的内建 sink。 */
@@ -95,6 +95,12 @@ public class StringTextSink <: TextSink {
 
     internal func writeFromNode(slice: String, node: NodeRef): SinkWriteResult {
         record(slice, node.span, Some(node.nodeId), false)
+        builder.append(slice)
+        SinkWriteResult.Success
+    }
+
+    internal func writeDerivedFromNode(slice: String, node: NodeRef): SinkWriteResult {
+        record(slice, node.span, Some(node.nodeId), true)
         builder.append(slice)
         SinkWriteResult.Success
     }
@@ -450,6 +456,8 @@ public class HtmlRenderer {
     private let extensionManifests: ImmutableArray<ExtensionManifest>
     private let extensionFallbacks: ImmutableArray<ExtensionRendererFallback>
     private let maximumOutputBytes: ?Int64
+    private let codeGroups: CodeGroupHtmlOptions
+    private let prepared: ?RichContentPreparation
 
     /**
      * 创建 HTML renderer。
@@ -460,11 +468,14 @@ public class HtmlRenderer {
      * @param extensionFallbacks custom node 的显式 HTML fallback。
      * @param rawHtmlHandler 宿主提供的 raw HTML handler。
      * @param maximumOutputBytes 输出字节数上限。
+     * @param codeGroups 可选代码组渐进增强数据和复制上限。
+     * @param prepared 仅属于目标 Document revision 的已校验富内容注解。
      */
     public init(options!: HtmlOptions = HtmlOptions.safe(), extensionRules!: Array<RendererRule> = [],
         sanitizer!: ?HtmlSanitizerPort = None, extensionManifests!: Array<ExtensionManifest> = [],
         extensionFallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None,
-        maximumOutputBytes!: ?Int64 = None) {
+        maximumOutputBytes!: ?Int64 = None, codeGroups!: CodeGroupHtmlOptions = CodeGroupHtmlOptions.defaults(),
+        prepared!: ?RichContentPreparation = None) {
         for (rule in extensionRules) {
             validateRendererRuleForRuntime(rule)
         }
@@ -501,12 +512,14 @@ public class HtmlRenderer {
             }
         }
         this.maximumOutputBytes = maximumOutputBytes
+        this.codeGroups = codeGroups
+        this.prepared = prepared
     }
 
     /** 返回包含策略、扩展和 adapter identity 的稳定 renderer fingerprint。 */
     public func fingerprint(): String {
         let out = CanonicalDescriptor()
-        out.append("html-renderer-v3|")
+        out.append("html-renderer-v5|")
         match (options.policy.kind) {
             case HtmlPolicyKind.SpecCompatible => out.append("spec")
             case HtmlPolicyKind.GfmCompatible => out.append("gfm")
@@ -573,6 +586,21 @@ public class HtmlRenderer {
         out.append("|max-output=")
         match (maximumOutputBytes) {
             case Some(value) => out.append(value)
+            case None => out.append("none")
+        }
+        out.append("|code-groups/1=")
+        out.append(codeGroups.interactive)
+        if (codeGroups.interactive) {
+            out.append(codeGroups.groupLabel)
+            out.append(codeGroups.copyLabel)
+            out.append(codeGroups.copiedLabel)
+            out.append(codeGroups.copyFailedLabel)
+            out.append(codeGroups.copyUnavailableLabel)
+            out.append(codeGroups.maximumCopyBytes)
+        }
+        out.append("|rich-content/1=")
+        match (prepared) {
+            case Some(value) => out.append(value.fingerprint)
             case None => out.append("none")
         }
         for (manifest in rendererCanonicalManifests(extensionManifests)) {
@@ -677,10 +705,334 @@ public class HtmlRenderer {
         cancellation.throwIfCancelled(phase: "render")
     }
 
+    internal func requirePreparedDocument(document: Document): Unit {
+        if (let Some(value) <- prepared) {
+            value.requireRevision(document.revision)
+        }
+    }
+
+    private func preparedProduct(node: NodeRef): ?RichContentProduct {
+        if (let Some(value) <- prepared) {
+            if (let Some(entry) <- value.entry(node)) {
+                if (let RichContentOutcome.Ready(product) <- entry.outcome) {
+                    return Some(product)
+                }
+            }
+        }
+        None
+    }
+
+    private func allowsPreparedPng(): Bool {
+        if (!options.imageUriPolicy.allowDataImages) {
+            return false
+        }
+        for (mime in rendererNormalizedMimeTypes(options.imageUriPolicy.allowedDataMimeTypes)) {
+            if (mime == "image/png") {
+                return true
+            }
+        }
+        false
+    }
+
+    private func writeRichDerived(value: String, node: NodeRef, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget, escaped!: Bool = false): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.output(if (escaped) {
+                7
+            } else {
+                6
+            }, value, node: Some(node))
+            return
+        }
+        let mapped = RichDerivedSink(sink, node)
+        if (escaped) {
+            writeEscapedTextFromNode(value, node, mapped, cancellation, budget)
+        } else {
+            write(value, mapped, cancellation, budget)
+        }
+    }
+
+    internal func expandRichMath(state: RichMathRenderState, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        cancellation.throwIfCancelled(phase: "render")
+        budget.consumeScan()
+        match (state.actions.remove(at: state.actions.size - 1)) {
+            case RichMathAction.Close(tag) => writeRichDerived("</${tag}>", state.sourceNode, sink, cancellation, budget)
+            case RichMathAction.Children(node, index) =>
+                if (index < node.children.size) {
+                    state.actions.add(RichMathAction.Children(node, index + 1))
+                    state.actions.add(RichMathAction.Node(node.children[index]))
+                }
+            case RichMathAction.Node(node) =>
+                if (node.tag.isEmpty()) {
+                    writeRichDerived(node.text, state.sourceNode, sink, cancellation, budget, escaped: true)
+                    return
+                }
+                writeRichDerived("<${node.tag}", state.sourceNode, sink, cancellation, budget)
+                if (node.tag == "math") {
+                    let mode = if (state.display) {
+                        "block"
+                    } else {
+                        "inline"
+                    }
+                    writeRichDerived(" xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"${mode}\"",
+                        state.sourceNode, sink, cancellation, budget)
+                }
+                for (attribute in node.attributes.toArray()) {
+                    if (attribute.name != "xmlns" && attribute.name != "display") {
+                        // Values already passed a fixed ASCII value grammar;
+                        // no style, URI, event or arbitrary attribute is allowed.
+                        writeRichDerived(" ${attribute.name}=\"${attribute.value}\"", state.sourceNode, sink,
+                            cancellation, budget)
+                    }
+                }
+                writeRichDerived(">", state.sourceNode, sink, cancellation, budget)
+                state.actions.add(RichMathAction.Close(node.tag))
+                state.actions.add(RichMathAction.Children(node, 0))
+        }
+    }
+
+    internal func expandRichPng(state: RichPngRenderState, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        cancellation.throwIfCancelled(phase: "render")
+        let end = min(state.offset + 96, state.image.data.size)
+        budget.consumeScan(steps: end - state.offset)
+        writeRichDerived(richBase64(state.image, state.offset, end), state.node, sink, cancellation, budget)
+        state.offset = end
+    }
+
+    private func writeRichCode(state: RichCodeRenderState, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.emit(HtmlCursorAction.RichCode(state))
+        } else {
+            while (state.offset < state.code.size || state.stage != 0) {
+                expandRichCode(state, sink, cancellation, budget)
+            }
+        }
+    }
+
+    internal func expandRichCode(state: RichCodeRenderState, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        cancellation.throwIfCancelled(phase: "render")
+        budget.consumeScan()
+        if (state.stage == 0) {
+            if (state.offset == state.code.size) {
+                return
+            }
+            state.lineEnd = state.offset
+            while (state.lineEnd < state.code.size && state.code[state.lineEnd] != b'\n') {
+                state.lineEnd++
+                if (state.lineEnd % 1024 == 0) {
+                    cancellation.throwIfCancelled(phase: "render")
+                }
+            }
+            budget.consumeScan(steps: state.lineEnd - state.offset)
+            while (state.rangeIndex < state.ranges.size && state.ranges[state.rangeIndex].lastLine < state.line) {
+                state.rangeIndex++
+            }
+            state.selected = state.rangeIndex < state.ranges.size && state.ranges[state.rangeIndex].firstLine <= state
+                .line
+            if (state.selected) {
+                write("<mark class=\"code-line\">", sink, cancellation, budget)
+            }
+            state.stage = 1
+            return
+        }
+        if (state.stage == 1 && state.offset < state.lineEnd) {
+            while (state.tokenIndex < state.tokens.size && state.tokens[state.tokenIndex].span.endByte <= state.offset) {
+                state.tokenIndex++
+                budget.consumeScan()
+            }
+            var end = state.lineEnd
+            var colored = false
+            if (state.tokenIndex < state.tokens.size) {
+                let token = state.tokens[state.tokenIndex]
+                if (token.span.startByte <= state.offset) {
+                    colored = true
+                    end = min(end, token.span.endByte)
+                    write("<span style=\"color:${token.color}", sink, cancellation, budget)
+                    if ((token.fontStyle & 1) != 0) {
+                        write(";font-style:italic", sink, cancellation, budget)
+                    }
+                    if ((token.fontStyle & 2) != 0) {
+                        write(";font-weight:bold", sink, cancellation, budget)
+                    }
+                    if ((token.fontStyle & 4) != 0) {
+                        write(";text-decoration:underline", sink, cancellation, budget)
+                    }
+                    write("\">", sink, cancellation, budget)
+                } else {
+                    end = min(end, token.span.startByte)
+                }
+            }
+            if (let Some(plan) <- htmlOutputPlanner(sink)) {
+                plan.output(1, state.code, node: Some(state.node), start: state.offset, end: end)
+            } else {
+                writeEscapedTextFromNode(state.code[state.offset..end], state.node, sink, cancellation, budget)
+            }
+            if (colored) {
+                write("</span>", sink, cancellation, budget)
+            }
+            state.offset = end
+            return
+        }
+        if (state.selected) {
+            write("</mark>", sink, cancellation, budget)
+        }
+        if (state.offset < state.code.size) {
+            writeFromNode("\n", state.node, sink, cancellation, budget)
+            state.offset++
+        }
+        state.line++
+        state.stage = 0
+    }
+
+    private func writeCodeGroupAttribute(name: String, value: String, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        write(" ${name}=\"", sink, cancellation, budget)
+        writeEscapedAttribute(value, sink, cancellation, budget)
+        write("\"", sink, cancellation, budget)
+    }
+
+    private func writeCodeCopyHex(value: String, start: Int64, end: Int64, sink: TextSink,
+        cancellation: CancellationToken, budget: OperationBudget): Unit {
+        let digits = "0123456789abcdef"
+        var cursor = start
+        while (cursor < end) {
+            cancellation.throwIfCancelled(phase: "render")
+            let stop = min(cursor + 128, end)
+            budget.consumeScan(steps: stop - cursor)
+            let out = StringBuilder()
+            while (cursor < stop) {
+                let high = Int64(value[cursor] >> 4)
+                let low = Int64(value[cursor] & 0x0F)
+                out.append(digits[high..high + 1])
+                out.append(digits[low..low + 1])
+                cursor++
+            }
+            write(out.toString(), sink, cancellation, budget)
+        }
+    }
+
+    internal func expandCursorCodeGroupLine(state: CodeGroupLineState, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        if (state.offset >= state.code.size) {
+            return
+        }
+        cancellation.throwIfCancelled(phase: "render")
+        var end = state.offset
+        while (end < state.code.size && state.code[end] != b'\n') {
+            end++
+            if (end % 256 == 0) {
+                cancellation.throwIfCancelled(phase: "render")
+            }
+        }
+        budget.consumeScan(steps: end - state.offset + 1)
+        while (state.rangeIndex < state.ranges.size && state.ranges[state.rangeIndex].lastLine < state.line) {
+            budget.consumeScan()
+            state.rangeIndex++
+        }
+        let highlight = state.rangeIndex < state.ranges.size && state.ranges[state.rangeIndex].firstLine <= state.line
+        if (highlight) {
+            write("<mark class=\"code-line\">", sink, cancellation, budget)
+        }
+        writeEscapedTextFromNode(state.code[state.offset..end], state.node, sink, cancellation, budget)
+        if (highlight) {
+            write("</mark>", sink, cancellation, budget)
+        }
+        if (end < state.code.size) {
+            writeFromNode("\n", state.node, sink, cancellation, budget)
+        }
+        state.offset = min(end + 1, state.code.size)
+        state.line++
+    }
+
+    internal func requireCursorCustomContract(node: NodeRef): Unit {
+        if (let NodeKind.CustomInline <- node.kind) {
+            requireSemanticRendererContract(node.asCustomInline().getOrThrow(), extensionRules)
+        }
+    }
+
+    internal func expandCursorNode(frame: ArenaRenderFrame, frames: ArrayList<ArenaRenderFrame>, sink: HtmlPlanSink,
+        cancellation: CancellationToken, budget: OperationBudget): Unit {
+        cancellation.throwIfCancelled(phase: "render")
+        if (frame.exiting) {
+            writeArenaExit(frame, sink, cancellation, budget)
+        } else {
+            budget.consumeRenderedNode()
+            writeArenaEnter(frame, frames, sink, cancellation, budget)
+        }
+        // Planning helpers keep only exits here; child iteration is lazy.
+        while (!frames.isEmpty()) {
+            sink.emit(HtmlCursorAction.Node(frames.remove(at: frames.size - 1)))
+        }
+    }
+
+    internal func expandCursorTableRow(row: NodeRef, header: Bool, sink: HtmlPlanSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        if (row.asTableRow().isNone()) {
+            throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation, "table contains non-row",
+                phase: "render", span: row.span)
+        }
+        budget.consumeRenderedNode()
+        write("<tr>\n", sink, cancellation, budget)
+        sink.emit(HtmlCursorAction.TableCells(row, 0, header))
+        write("</tr>\n", sink, cancellation, budget)
+    }
+
+    internal func encodeCursorEmission(emission: HtmlCursorEmission, start: Int64, end: Int64,
+        cancellation: CancellationToken, budget: OperationBudget): String {
+        let sink = StringTextSink()
+        match (emission.kind) {
+            case 0 => writeRange(emission.value, start, end, sink, cancellation, budget)
+            case 1 => writeEscapedTextFromNode(emission.value[start..end], emission.node.getOrThrow(), sink,
+                cancellation, budget)
+            case 2 => writeEscapedAttribute(emission.value[start..end], sink, cancellation, budget)
+            case 3 => writeEncodedUriAttribute(emission.value[start..end], sink, cancellation, budget)
+            case 4 => writeGfmTagFilteredRange(emission.value, start, end, emission.node.getOrThrow(), sink,
+                cancellation, budget)
+            case 5 => writeCodeCopyHex(emission.value, start, end, sink, cancellation, budget)
+            case 6 => writeRichDerived(emission.value[start..end], emission.node.getOrThrow(), sink, cancellation,
+                budget)
+            case 7 => writeRichDerived(emission.value[start..end], emission.node.getOrThrow(), sink, cancellation,
+                budget, escaped: true)
+            case _ => throw IllegalStateException("unknown cursor encoding")
+        }
+        sink.content()
+    }
+
+    internal func cursorFootnoteOpen(note: FootnoteDefinitionBinding, sink: HtmlPlanSink,
+        cancellation: CancellationToken, budget: OperationBudget): Unit {
+        write("<li id=\"", sink, cancellation, budget)
+        writeEscapedAttribute(note.definitionId, sink, cancellation, budget)
+        write("\">\n", sink, cancellation, budget)
+    }
+
+    internal func cursorFootnoteBacklink(note: FootnoteDefinitionBinding, index: Int64, node: NodeRef,
+        sink: HtmlPlanSink, cancellation: CancellationToken, budget: OperationBudget): Unit {
+        if (index > 0) {
+            write(" ", sink, cancellation, budget)
+        }
+        write("<a href=\"#", sink, cancellation, budget)
+        writeEncodedUriAttribute(note.references[index].referenceId, sink, cancellation, budget)
+        write("\" aria-label=\"Back to reference ${index + 1} for footnote ${note.number}\">", sink, cancellation,
+            budget)
+        writeFromNode("↩", node, sink, cancellation, budget)
+        write("</a>", sink, cancellation, budget)
+    }
+
     private func renderArenaTo(ast: Document, sink: TextSink, cancellation: CancellationToken, budget: OperationBudget): Unit {
+        requirePreparedDocument(ast)
+        renderArenaSubtree(ast.root(), sink, cancellation, budget)
+        renderFootnoteSection(ast, sink, cancellation, budget)
+    }
+
+    private func renderArenaSubtree(root: NodeRef, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
         cancellation.throwIfCancelled(phase: "render")
         let stack = ArrayList<ArenaRenderFrame>()
-        stack.add(ArenaRenderFrame(ast.root(), false))
+        stack.add(ArenaRenderFrame(root, false))
         var checkpoints: Int64 = 0
         while (!stack.isEmpty()) {
             let frame = stack.remove(at: stack.size - 1)
@@ -699,23 +1051,63 @@ public class HtmlRenderer {
         cancellation.throwIfCancelled(phase: "render")
     }
 
+    private func renderFootnoteSection(document: Document, sink: TextSink, cancellation: CancellationToken,
+        budget: OperationBudget): Unit {
+        let notes = document.bindings.footnotes
+        if (notes.isEmpty()) {
+            return
+        }
+        write("<section class=\"footnotes\" aria-label=\"Footnotes\">\n<ol>\n", sink, cancellation, budget)
+        for (note in notes.toArray()) {
+            let node = document.nodeRefAtPhysical(note.definitionIndex)
+            write("<li id=\"", sink, cancellation, budget)
+            writeEscapedAttribute(note.definitionId, sink, cancellation, budget)
+            write("\">\n", sink, cancellation, budget)
+            let children = node.children()
+            for (index in 0..children.size) {
+                renderArenaSubtree(children[index], sink, cancellation, budget)
+            }
+            write("<p class=\"footnote-backlinks\">", sink, cancellation, budget)
+            for (index in 0..note.references.size) {
+                let reference = note.references[index]
+                if (index > 0) {
+                    write(" ", sink, cancellation, budget)
+                }
+                write("<a href=\"#", sink, cancellation, budget)
+                writeEncodedUriAttribute(reference.referenceId, sink, cancellation, budget)
+                write("\" aria-label=\"Back to reference ${index + 1} for footnote ${note.number}\">", sink,
+                    cancellation, budget)
+                writeFromNode("↩", node, sink, cancellation, budget)
+                write("</a>", sink, cancellation, budget)
+            }
+            write("</p>\n</li>\n", sink, cancellation, budget)
+        }
+        write("</ol>\n</section>\n", sink, cancellation, budget)
+    }
+
     private func writeArenaEnter(frame: ArenaRenderFrame, stack: ArrayList<ArenaRenderFrame>, sink: TextSink,
         cancellation: CancellationToken, budget: OperationBudget): Unit {
         let node = frame.node
         match (node.kind) {
-            case NodeKind.DocumentNode => pushArenaContainer(frame, stack)
+            case NodeKind.DocumentNode => pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
             case NodeKind.Heading =>
                 let level = node.asHeading().getOrThrow().level
-                write("<h${level}>", sink, cancellation, budget)
-                pushArenaContainer(frame, stack)
+                write("<h${level}", sink, cancellation, budget)
+                if (let Some(binding) <- node.documentBindings.headingForNode(node.nodeId)) {
+                    write(" id=\"", sink, cancellation, budget)
+                    writeEscapedAttribute(binding.id, sink, cancellation, budget)
+                    write("\"", sink, cancellation, budget)
+                }
+                write(">", sink, cancellation, budget)
+                pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
             case NodeKind.Paragraph =>
                 if (!frame.suppressParagraph) {
                     write("<p>", sink, cancellation, budget)
                 }
-                pushArenaContainer(frame, stack)
+                pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
             case NodeKind.BlockQuote =>
                 write("<blockquote>\n", sink, cancellation, budget)
-                pushArenaContainer(frame, stack)
+                pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
             case NodeKind.List =>
                 let list = node.asList().getOrThrow()
                 match (list.listKind) {
@@ -728,7 +1120,7 @@ public class HtmlRenderer {
                         }
                 }
                 stack.add(ArenaRenderFrame(node, true))
-                pushArenaChildren(node, stack, suppressParagraph: list.tight)
+                pushArenaChildren(node, stack, suppressParagraph: list.tight, planner: htmlOutputPlanner(sink))
             case NodeKind.ListItem =>
                 let item = node.asListItem().getOrThrow()
                 match (item.taskState) {
@@ -750,6 +1142,10 @@ public class HtmlRenderer {
                     write("\n", sink, cancellation, budget)
                 }
                 stack.add(ArenaRenderFrame(node, true, suppressParagraph: frame.suppressParagraph))
+                if (let Some(plan) <- htmlOutputPlanner(sink)) {
+                    plan.children(node, suppressParagraph: frame.suppressParagraph, listItem: true)
+                    return
+                }
                 var childIndex = children.size - 1
                 while (childIndex >= 0) {
                     let childSuppress = if (frame.suppressParagraph) {
@@ -765,6 +1161,24 @@ public class HtmlRenderer {
             case NodeKind.ThematicBreak => write("<hr />\n", sink, cancellation, budget)
             case NodeKind.CodeBlock =>
                 let code = node.asCodeBlock().getOrThrow()
+                if (let Some(RichContentProduct.Diagram(image)) <- preparedProduct(node)) {
+                    if (allowsPreparedPng()) {
+                        writeRichDerived(
+                            "<img class=\"diagram\" width=\"${image.width}\" height=\"${image.height}\" alt=\"Mermaid diagram\"",
+                            node, sink, cancellation, budget)
+                        writeRichDerived(" src=\"data:image/png;base64,", node, sink, cancellation, budget)
+                        let state = RichPngRenderState(node, image)
+                        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+                            plan.emit(HtmlCursorAction.RichPng(state))
+                        } else {
+                            while (state.offset < image.data.size) {
+                                expandRichPng(state, sink, cancellation, budget)
+                            }
+                        }
+                        writeRichDerived("\" />\n", node, sink, cancellation, budget)
+                        return
+                    }
+                }
                 write("<pre><code", sink, cancellation, budget)
                 if (!code.language.isEmpty()) {
                     write(" class=\"language-", sink, cancellation, budget)
@@ -772,7 +1186,11 @@ public class HtmlRenderer {
                     write("\"", sink, cancellation, budget)
                 }
                 write(">", sink, cancellation, budget)
-                writeEscapedTextFromNode(code.literal, node, sink, cancellation, budget)
+                match (preparedProduct(node)) {
+                    case Some(RichContentProduct.Highlight(tokens)) => writeRichCode(
+                        RichCodeRenderState(node, code.literal, tokens), sink, cancellation, budget)
+                    case _ => writeEscapedTextFromNode(code.literal, node, sink, cancellation, budget)
+                }
                 if (!code.literal.isEmpty() && !code.literal.endsWith("\n")) {
                     writeFromNode("\n", node, sink, cancellation, budget)
                 }
@@ -784,7 +1202,7 @@ public class HtmlRenderer {
                 let row = node.asTableRow().getOrThrow()
                 write("<tr>\n", sink, cancellation, budget)
                 stack.add(ArenaRenderFrame(node, true, tableHeader: row.header))
-                pushArenaChildren(node, stack, tableHeader: row.header)
+                pushArenaChildren(node, stack, tableHeader: row.header, planner: htmlOutputPlanner(sink))
             case NodeKind.TableCell =>
                 let tag = if (frame.tableHeader) {
                     "th"
@@ -794,7 +1212,7 @@ public class HtmlRenderer {
                 let alignment = alignmentAttribute(node.asTableCell().getOrThrow().alignment)
                 write("<${tag}${alignment}>", sink, cancellation, budget)
                 stack.add(ArenaRenderFrame(node, true, tableHeader: frame.tableHeader))
-                pushArenaChildren(node, stack, tableHeader: frame.tableHeader)
+                pushArenaChildren(node, stack, tableHeader: frame.tableHeader, planner: htmlOutputPlanner(sink))
             case NodeKind.Text => writeEscapedTextFromNode(node.asText().getOrThrow().value, node, sink, cancellation,
                 budget)
             case NodeKind.SoftBreak => write("\n", sink, cancellation, budget)
@@ -805,17 +1223,21 @@ public class HtmlRenderer {
                 write("</code>", sink, cancellation, budget)
             case NodeKind.Emphasis =>
                 write("<em>", sink, cancellation, budget)
-                pushArenaContainer(frame, stack)
+                pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
             case NodeKind.Strong =>
                 write("<strong>", sink, cancellation, budget)
-                pushArenaContainer(frame, stack)
+                pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
             case NodeKind.Strikethrough =>
                 write("<del>", sink, cancellation, budget)
-                pushArenaContainer(frame, stack)
+                pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
             case NodeKind.Link =>
                 let link = node.asLink().getOrThrow()
-                let externalRewriteApplied = isExternalLinkRewriteApplied(link.destination, cancellation)
-                let destination = rewriteExternalLink(link.destination, externalRewriteApplied)
+                let boundDestination = match (node.documentBindings.linkForNode(node.nodeId)) {
+                    case Some(value) => value.renderedDestination
+                    case None => link.destination
+                }
+                let externalRewriteApplied = isExternalLinkRewriteApplied(boundDestination, cancellation)
+                let destination = rewriteExternalLink(boundDestination, externalRewriteApplied)
                 write("<a", sink, cancellation, budget)
                 if (isAllowedLink(destination, cancellation, rewrittenExternal: externalRewriteApplied)) {
                     write(" href=\"", sink, cancellation, budget)
@@ -829,7 +1251,7 @@ public class HtmlRenderer {
                 }
                 writeExternalAttributes(destination, sink, cancellation, budget)
                 write(">", sink, cancellation, budget)
-                pushArenaContainer(frame, stack)
+                pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
             case NodeKind.Image =>
                 let image = node.asImage().getOrThrow()
                 write("<img", sink, cancellation, budget)
@@ -891,15 +1313,21 @@ public class HtmlRenderer {
         }
     }
 
-    private func pushArenaContainer(frame: ArenaRenderFrame, stack: ArrayList<ArenaRenderFrame>): Unit {
+    private func pushArenaContainer(frame: ArenaRenderFrame, stack: ArrayList<ArenaRenderFrame>,
+        planner!: ?HtmlPlanSink = None): Unit {
         stack.add(
             ArenaRenderFrame(frame.node, true, tableHeader: frame.tableHeader,
                 suppressParagraph: frame.suppressParagraph, newlineAfter: frame.newlineAfter))
-        pushArenaChildren(frame.node, stack, tableHeader: frame.tableHeader, suppressParagraph: frame.suppressParagraph)
+        pushArenaChildren(frame.node, stack, tableHeader: frame.tableHeader, suppressParagraph: frame.suppressParagraph,
+            planner: planner)
     }
 
     private func pushArenaChildren(node: NodeRef, stack: ArrayList<ArenaRenderFrame>, tableHeader!: Bool = false,
-        suppressParagraph!: Bool = false): Unit {
+        suppressParagraph!: Bool = false, planner!: ?HtmlPlanSink = None): Unit {
+        if (let Some(plan) <- planner) {
+            plan.children(node, tableHeader: tableHeader, suppressParagraph: suppressParagraph)
+            return
+        }
         let children = node.children()
         var index = children.size - 1
         while (index >= 0) {
@@ -915,6 +1343,130 @@ public class HtmlRenderer {
             case NodeKind.CustomBlock => node.asCustomBlock().getOrThrow()
             case NodeKind.CustomInline => node.asCustomInline().getOrThrow()
             case _ => throw IllegalStateException("arena custom renderer received a core node")
+        }
+        requireSemanticRendererContract(custom, extensionRules)
+        if (let value: CodeGroupPayload <- custom.payload) {
+            if (let CodeGroupRole.Group <- value.role) {
+                write("<div class=\"code-group\"", sink, cancellation, budget)
+                if (codeGroups.interactive) {
+                    write(" data-code-group=\"1\" role=\"group\"", sink, cancellation, budget)
+                    writeCodeGroupAttribute("aria-label", codeGroups.groupLabel, sink, cancellation, budget)
+                    writeCodeGroupAttribute("data-copy-label", codeGroups.copyLabel, sink, cancellation, budget)
+                    writeCodeGroupAttribute("data-copied-label", codeGroups.copiedLabel, sink, cancellation, budget)
+                    writeCodeGroupAttribute("data-copy-failed-label", codeGroups.copyFailedLabel, sink, cancellation,
+                        budget)
+                    writeCodeGroupAttribute("data-copy-unavailable-label", codeGroups.copyUnavailableLabel, sink,
+                        cancellation, budget)
+                    write(" data-copy-limit=\"${codeGroups.maximumCopyBytes}\"", sink, cancellation, budget)
+                }
+                write(">\n", sink, cancellation, budget)
+                pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
+            } else {
+                let code = node.children()[0].asCodeBlock().getOrThrow()
+                budget.consumeRenderedNode()
+                write("<figure class=\"code-group-item\"", sink, cancellation, budget)
+                if (codeGroups.interactive) {
+                    if (value.copyText.size <= codeGroups.maximumCopyBytes) {
+                        write(" data-code-copy-hex=\"", sink, cancellation, budget)
+                        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+                            plan.output(5, value.copyText)
+                        } else {
+                            writeCodeCopyHex(value.copyText, 0, value.copyText.size, sink, cancellation, budget)
+                        }
+                        write("\"", sink, cancellation, budget)
+                    } else {
+                        write(" data-copy-unavailable=\"size\"", sink, cancellation, budget)
+                    }
+                }
+                write(">\n<figcaption>", sink, cancellation, budget)
+                writeEscapedTextFromNode(value.title, node, sink, cancellation, budget)
+                write("</figcaption>\n<pre><code", sink, cancellation, budget)
+                if (!code.language.isEmpty()) {
+                    write(" class=\"language-", sink, cancellation, budget)
+                    writeEscapedAttribute(code.language, sink, cancellation, budget)
+                    write("\"", sink, cancellation, budget)
+                }
+                write(">", sink, cancellation, budget)
+                match (preparedProduct(code.node)) {
+                    case Some(RichContentProduct.Highlight(tokens)) => writeRichCode(
+                        RichCodeRenderState(code.node, code.literal, tokens, ranges: value.highlightedLines), sink,
+                        cancellation, budget)
+                    case _ =>
+                        let state = CodeGroupLineState(code.node, code.literal, value.highlightedLines)
+                        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+                            plan.emit(HtmlCursorAction.CodeGroupLines(state))
+                        } else {
+                            while (state.offset < state.code.size) {
+                                expandCursorCodeGroupLine(state, sink, cancellation, budget)
+                            }
+                        }
+                }
+                write("</code></pre>\n</figure>\n", sink, cancellation, budget)
+            }
+            return
+        }
+        if (let value: MathPayload <- custom.payload) {
+            let tag = if (value.display) {
+                "div"
+            } else {
+                "span"
+            }
+            let kind = if (value.display) {
+                "block"
+            } else {
+                "inline"
+            }
+            write("<${tag} class=\"math-${kind}\">", sink, cancellation, budget)
+            match (preparedProduct(node)) {
+                case Some(RichContentProduct.MathMl(root)) =>
+                    let state = RichMathRenderState(node, root, value.display)
+                    if (let Some(plan) <- htmlOutputPlanner(sink)) {
+                        plan.emit(HtmlCursorAction.RichMath(state))
+                    } else {
+                        while (!state.actions.isEmpty()) {
+                            expandRichMath(state, sink, cancellation, budget)
+                        }
+                    }
+                case _ => writeEscapedTextFromNode(value.expression, node, sink, cancellation, budget)
+            }
+            write("</${tag}>", sink, cancellation, budget)
+            return
+        }
+        if (let value: DefinitionListPayload <- custom.payload) {
+            requireDefinitionListBinding(node)
+            match (value.role) {
+                case DefinitionListRole.List => write("<dl>\n", sink, cancellation, budget)
+                case DefinitionListRole.Entry =>
+                    pushArenaChildren(node, stack, planner: htmlOutputPlanner(sink))
+                    return
+                case DefinitionListRole.Term => write("<dt>", sink, cancellation, budget)
+                case DefinitionListRole.Definition => write("<dd>\n", sink, cancellation, budget)
+            }
+            pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
+            return
+        }
+        if (custom.payload is FootnoteReferencePayload || custom.payload is FootnoteDefinitionPayload) {
+            if (!node.documentBindings.footnotesEnabled) {
+                throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
+                    "footnote rendering requires a bound document", phase: "render", span: node.span)
+            }
+        }
+        if (custom.payload is FootnoteDefinitionPayload || custom.payload is HeadingIdPayload) {
+            return
+        }
+        if (let payload: FootnoteReferencePayload <- custom.payload) {
+            match (node.documentBindings.footnoteReference(node.nodeId)) {
+                case Some(binding) =>
+                    write("<sup class=\"footnote-ref\" id=\"", sink, cancellation, budget)
+                    writeEscapedAttribute(binding.referenceId, sink, cancellation, budget)
+                    write("\"><a href=\"#", sink, cancellation, budget)
+                    writeEncodedUriAttribute(binding.definitionId, sink, cancellation, budget)
+                    write("\" aria-label=\"Footnote ${binding.number}\">", sink, cancellation, budget)
+                    writeFromNode("${binding.number}", node, sink, cancellation, budget)
+                    write("</a></sup>", sink, cancellation, budget)
+                case None => writeEscapedTextFromNode("[^${payload.labelRaw}]", node, sink, cancellation, budget)
+            }
+            return
         }
         if (let Some(rule) <- findRendererRule(custom.extensionId, custom.localKindId)) {
             write("<${rule.htmlTag}", sink, cancellation, budget)
@@ -945,7 +1497,7 @@ public class HtmlRenderer {
             if (rule.renderPayloadLiteral) {
                 writeEscapedTextFromNode(arenaCustomLiteral(node, cancellation), node, sink, cancellation, budget)
             }
-            pushArenaContainer(frame, stack)
+            pushArenaContainer(frame, stack, planner: htmlOutputPlanner(sink))
             return
         }
         let policy = match (findExtensionManifest(custom.extensionId)) {
@@ -955,7 +1507,7 @@ public class HtmlRenderer {
         match (policy) {
             case MissingRendererPolicy.Error => throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
                 "missing renderer for ${custom.extensionId}/${custom.localKindId}", phase: "render", span: node.span)
-            case MissingRendererPolicy.RenderChildren => pushArenaChildren(node, stack)
+            case MissingRendererPolicy.RenderChildren => pushArenaChildren(node, stack, planner: htmlOutputPlanner(sink))
             case MissingRendererPolicy.RenderLiteral => writeEscapedTextFromNode(arenaCustomLiteral(node, cancellation),
                 node, sink, cancellation, budget)
             case MissingRendererPolicy.Drop => ()
@@ -975,6 +1527,26 @@ public class HtmlRenderer {
             case NodeKind.CustomInline => node.asCustomInline().getOrThrow()
             case _ => throw IllegalStateException("arena custom renderer received a core node")
         }
+        if (let value: CodeGroupPayload <- custom.payload) {
+            if (let CodeGroupRole.Group <- value.role) {
+                write("</div>\n", sink, cancellation, budget)
+            }
+            return
+        }
+        if (let value: DefinitionListPayload <- custom.payload) {
+            requireDefinitionListBinding(node)
+            match (value.role) {
+                case DefinitionListRole.List => write("</dl>\n", sink, cancellation, budget)
+                case DefinitionListRole.Entry => ()
+                case DefinitionListRole.Term => write("</dt>\n", sink, cancellation, budget)
+                case DefinitionListRole.Definition => write("</dd>\n", sink, cancellation, budget)
+            }
+            return
+        }
+        if (custom.payload is FootnoteReferencePayload || custom.payload is FootnoteDefinitionPayload ||
+            custom.payload is HeadingIdPayload) {
+            return
+        }
         if (let Some(rule) <- findRendererRule(custom.extensionId, custom.localKindId)) {
             write("</${rule.htmlTag}>", sink, cancellation, budget)
         }
@@ -987,6 +1559,7 @@ public class HtmlRenderer {
             case _ => return ""
         }
         match (payload) {
+            case value: MathPayload => value.expression
             case syntax: SyntaxPayload => syntax.literal
             case _ => arenaPlainText(node, cancellation)
         }
@@ -1048,6 +1621,10 @@ public class HtmlRenderer {
 
     private func renderArenaTable(table: NodeRef, sink: TextSink, cancellation: CancellationToken,
         budget: OperationBudget): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.emit(HtmlCursorAction.Table(table, 0, 0));
+            return
+        }
         let rows = table.children()
         let inlineFrames = ArrayList<ArenaRenderFrame>()
         write("<table>\n", sink, cancellation, budget)
@@ -1146,6 +1723,17 @@ public class HtmlRenderer {
             match (node.kind) {
                 case NodeKind.Text => out.append(node.asText().getOrThrow().value)
                 case NodeKind.CodeSpan => out.append(node.asCodeSpan().getOrThrow().literal)
+                case NodeKind.CustomInline =>
+                    if (let Some(value) <- mathPayload(node)) {
+                        out.append(value.expression)
+                    } else {
+                        let children = node.children()
+                        var index = children.size - 1
+                        while (index >= 0) {
+                            stack.add(children[index])
+                            index--
+                        }
+                    }
                 case NodeKind.SoftBreak => out.append("\n")
                 case NodeKind.HardBreak => out.append("\n")
                 case _ =>
@@ -1175,6 +1763,10 @@ public class HtmlRenderer {
         cancellation: CancellationToken,
         budget: OperationBudget
     ): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.output(0, value);
+            return
+        }
         cancellation.throwIfCancelled(phase: "render")
         consumeOutput(value.size, budget)
         let result = match (sink) {
@@ -1195,6 +1787,10 @@ public class HtmlRenderer {
         cancellation: CancellationToken,
         budget: OperationBudget
     ): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.output(0, value);
+            return
+        }
         cancellation.throwIfCancelled(phase: "render")
         consumeOutput(value.size, budget)
         let result = match (sink) {
@@ -1217,6 +1813,10 @@ public class HtmlRenderer {
         cancellation: CancellationToken,
         budget: OperationBudget
     ): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.output(0, value, start: start, end: end);
+            return
+        }
         cancellation.throwIfCancelled(phase: "render")
         consumeOutput(end - start, budget)
         let slice = value[start..end]
@@ -1239,6 +1839,10 @@ public class HtmlRenderer {
         cancellation: CancellationToken,
         budget: OperationBudget
     ): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.output(0, value, start: start, end: end);
+            return
+        }
         cancellation.throwIfCancelled(phase: "render")
         consumeOutput(end - start, budget)
         let slice = value[start..end]
@@ -1266,6 +1870,10 @@ public class HtmlRenderer {
     /** Writes escaped text without materializing a node-sized temporary String. */
     private func writeEscapedTextFromNode(value: String, node: NodeRef, sink: TextSink, cancellation: CancellationToken,
         budget: OperationBudget): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.output(1, value, node: Some(node));
+            return
+        }
         var segmentStart: Int64 = 0
         var index: Int64 = 0
         var nextCancellationCheck: Int64 = 0
@@ -1298,6 +1906,10 @@ public class HtmlRenderer {
 
     private func writeEscapedAttribute(value: String, sink: TextSink, cancellation: CancellationToken,
         budget: OperationBudget): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.output(2, value);
+            return
+        }
         var segmentStart: Int64 = 0
         var index: Int64 = 0
         var nextCancellationCheck: Int64 = 0
@@ -1341,6 +1953,10 @@ public class HtmlRenderer {
 
     private func writeEncodedUriAttribute(value: String, sink: TextSink, cancellation: CancellationToken,
         budget: OperationBudget): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.output(3, value);
+            return
+        }
         var segmentStart: Int64 = 0
         var index: Int64 = 0
         var nextCancellationCheck: Int64 = 0
@@ -1396,6 +2012,10 @@ public class HtmlRenderer {
 
     private func writeArenaPlainTextAttribute(root: NodeRef, sink: TextSink, cancellation: CancellationToken,
         budget: OperationBudget): Unit {
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.emit(HtmlCursorAction.ImageAlt(root));
+            return
+        }
         cancellation.throwIfCancelled(phase: "render")
         let stack = ArrayList<NodeRef>()
         stack.add(root)
@@ -1411,6 +2031,19 @@ public class HtmlRenderer {
                 case NodeKind.Text => writeEscapedAttribute(node.asText().getOrThrow().value, sink, cancellation, budget)
                 case NodeKind.CodeSpan => writeEscapedAttribute(node.asCodeSpan().getOrThrow().literal, sink,
                     cancellation, budget)
+                case NodeKind.CustomInline =>
+                    let custom = node.asCustomInline().getOrThrow()
+                    requireSemanticRendererContract(custom, extensionRules)
+                    if (let value: MathPayload <- custom.payload) {
+                        writeEscapedAttribute(value.expression, sink, cancellation, budget)
+                    } else {
+                        let children = node.children()
+                        var index = children.size - 1
+                        while (index >= 0) {
+                            stack.add(children[index])
+                            index--
+                        }
+                    }
                 case NodeKind.SoftBreak => writeEscapedAttribute("\n", sink, cancellation, budget)
                 case NodeKind.HardBreak => writeEscapedAttribute("\n", sink, cancellation, budget)
                 case _ =>
@@ -1435,10 +2068,19 @@ public class HtmlRenderer {
     /** Applies the GFM raw-tag filter while checking the output limit before every emitted segment. */
     private func writeGfmTagFilteredFromNode(value: String, node: NodeRef, sink: TextSink,
         cancellation: CancellationToken, budget: OperationBudget): Unit {
-        var segmentStart: Int64 = 0
-        var index: Int64 = 0
+        if (let Some(plan) <- htmlOutputPlanner(sink)) {
+            plan.output(4, value, node: Some(node));
+            return
+        }
+        writeGfmTagFilteredRange(value, 0, value.size, node, sink, cancellation, budget)
+    }
+
+    private func writeGfmTagFilteredRange(value: String, start: Int64, end: Int64, node: NodeRef, sink: TextSink,
+        cancellation: CancellationToken, budget: OperationBudget): Unit {
+        var segmentStart: Int64 = start
+        var index: Int64 = start
         var nextCancellationCheck: Int64 = 0
-        while (index < value.size) {
+        while (index < end) {
             if (index >= nextCancellationCheck) {
                 cancellation.throwIfCancelled(phase: "render")
                 nextCancellationCheck = index + RENDER_SCAN_CANCELLATION_BYTES
@@ -1461,8 +2103,8 @@ public class HtmlRenderer {
             index = rendererNextRune(value, index)
         }
         cancellation.throwIfCancelled(phase: "render")
-        if (segmentStart < value.size) {
-            writeRangeFromNode(value, segmentStart, value.size, node, sink, cancellation, budget)
+        if (segmentStart < end) {
+            writeRangeFromNode(value, segmentStart, end, node, sink, cancellation, budget)
         }
     }
 
@@ -1666,13 +2308,17 @@ extend MarkdownEngine {
      * @param sanitizer Sanitize policy 使用的 sanitizer。
      * @param fallbacks custom node 的 fallback 列表。
      * @param rawHtmlHandler CustomHandler 使用的 handler。
+     * @param codeGroups 可选代码组渐进增强数据和复制上限。
+     * @param prepared 仅属于目标 Document revision 的已校验富内容注解。
      * @return 配置好的 `HtmlRenderer`。
      */
     public func htmlRenderer(options!: HtmlOptions = HtmlOptions.safe(), sanitizer!: ?HtmlSanitizerPort = None,
-        fallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None): HtmlRenderer {
+        fallbacks!: Array<ExtensionRendererFallback> = [], rawHtmlHandler!: ?RawHtmlHandlerPort = None,
+        codeGroups!: CodeGroupHtmlOptions = CodeGroupHtmlOptions.defaults(), prepared!: ?RichContentPreparation = None): HtmlRenderer {
         HtmlRenderer(options: options, extensionRules: dialect.rendererRules.toArray(), sanitizer: sanitizer,
             extensionManifests: dialect.manifests.toArray(), extensionFallbacks: fallbacks,
-            rawHtmlHandler: rawHtmlHandler, maximumOutputBytes: Some(limits.maximumOutputBytes))
+            rawHtmlHandler: rawHtmlHandler, maximumOutputBytes: Some(limits.maximumOutputBytes), codeGroups: codeGroups,
+            prepared: prepared)
     }
 }
 
@@ -1686,60 +2332,6 @@ public interface HtmlSanitizerPort {
      * @param html 待清洗的 HTML 文本。
      */
     func sanitize(html: String): String
-}
-
-/**
- * 先生成完整 HTML，再以 bounded chunks 对 sink 应用 backpressure。
- *
- * 这是 buffered output，不是增量 renderer；构造 session 时已完成完整渲染。
- */
-public class BufferedAsyncHtmlOutputSession {
-    private let content: String
-    private let chunkBytes: Int64
-    private var offset: Int64 = 0
-
-    /**
-     * 渲染完整文档并准备分块输出。
-     * @param renderer 使用的 HTML renderer。
-     * @param document 要渲染的 Document。
-     * @param chunkBytes 每次 write 的最大字节数，必须为正。
-     * @param cancellation 渲染阶段的取消信号。
-     * @param budget 渲染阶段的操作预算。
-     */
-    public init(renderer: HtmlRenderer, document: Document, chunkBytes!: Int64 = 4096,
-        cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe()) {
-        if (chunkBytes <= 0) {
-            throw IllegalArgumentException("buffered async output chunk size must be positive")
-        }
-        this.content = renderer.render(document, cancellation: cancellation, budget: budget)
-        this.chunkBytes = chunkBytes
-    }
-
-    /**
-     * 从上次 offset 继续向 async sink 写出；`Pause` 后可再次 resume。
-     * @param sink 接收 bounded chunks 的 async sink。
-     * @param cancellation 可选取消 token。
-     * @return `Complete`、`Paused` 或 `Failed`。
-     * @throws MarkdownException 取消时。
-     */
-    public func resume(sink: AsyncTextSink, cancellation!: CancellationToken = CancellationToken.none()): AsyncRenderState {
-        while (offset < content.size) {
-            cancellation.throwIfCancelled(phase: "async_render")
-            let end = min(content.size, offset + chunkBytes)
-            let chunk = content[offset..end]
-            match (sink.write(chunk)) {
-                case AsyncSinkWriteResult.Continue => offset = end
-                case AsyncSinkWriteResult.Pause => return AsyncRenderState.Paused
-                case AsyncSinkWriteResult.Failed(error) => return AsyncRenderState.Failed(error)
-            }
-        }
-        AsyncRenderState.Complete
-    }
-
-    /** 返回 sink 已确认接收的 output byte 数。 */
-    public func bytesWritten(): Int64 {
-        offset
-    }
 }
 
 /** 纯文本 renderer 的链接和软换行选项。 */
@@ -1783,8 +2375,21 @@ public class PlainTextRenderer {
      */
     public func render(document: Document): String {
         let out = StringBuilder()
+        appendPlainSubtree(document.root(), out)
+        for (note in document.bindings.footnotes.toArray()) {
+            out.append("\n\n[${note.number}] ")
+            let definition = document.nodeRefAtPhysical(note.definitionIndex)
+            let children = definition.children()
+            for (index in 0..children.size) {
+                appendPlainSubtree(children[index], out)
+            }
+        }
+        trimTrailingNewlines(out.toString())
+    }
+
+    private func appendPlainSubtree(root: NodeRef, out: StringBuilder): Unit {
         let stack = ArrayList<ArenaRenderFrame>()
-        stack.add(ArenaRenderFrame(document.root(), false))
+        stack.add(ArenaRenderFrame(root, false))
         while (!stack.isEmpty()) {
             let frame = stack.remove(at: stack.size - 1)
             if (frame.exiting) {
@@ -1798,12 +2403,21 @@ public class PlainTextRenderer {
                     case NodeKind.Link =>
                         if (options.includeLinkDestinations) {
                             out.append(" (");
-                            out.append(frame.node.asLink().getOrThrow().destination);
+                            out.append(match (frame.node.documentBindings.linkForNode(frame.node.nodeId)) {
+                                case Some(value) => value.renderedDestination
+                                case None => frame.node.asLink().getOrThrow().destination
+                            });
                             out.append(")")
                         }
                     case NodeKind.CustomBlock =>
                         let custom = frame.node.asCustomBlock().getOrThrow()
-                        appendCustomTextSuffix(custom.extensionId, custom.localKindId, out)
+                        if (let value: DefinitionListPayload <- custom.payload) {
+                            if (let DefinitionListRole.Term <- value.role) {
+                                out.append("\n")
+                            }
+                        } else {
+                            appendCustomTextSuffix(custom.extensionId, custom.localKindId, out)
+                        }
                     case NodeKind.CustomInline =>
                         let custom = frame.node.asCustomInline().getOrThrow()
                         appendCustomTextSuffix(custom.extensionId, custom.localKindId, out)
@@ -1827,16 +2441,52 @@ public class PlainTextRenderer {
                 case NodeKind.ThematicBreak => out.append("\n")
                 case NodeKind.CustomBlock =>
                     let custom = frame.node.asCustomBlock().getOrThrow()
+                    requireSemanticRendererContract(custom, extensionRules)
+                    if (let value: MathPayload <- custom.payload) {
+                        out.append(value.expression)
+                        stack.add(ArenaRenderFrame(frame.node, true))
+                        continue
+                    }
+                    if (let value: CodeGroupPayload <- custom.payload) {
+                        if (let CodeGroupRole.Item <- value.role) {
+                            out.append(value.title);
+                            out.append("\n")
+                        }
+                        pushPlainContainer(frame, stack)
+                        continue
+                    }
+                    if (custom.payload is DefinitionListPayload) {
+                        requireDefinitionListBinding(frame.node)
+                        pushPlainContainer(frame, stack)
+                        continue
+                    }
+                    if (custom.payload is FootnoteDefinitionPayload) {
+                        continue
+                    }
                     appendCustomTextPrefix(custom.extensionId, custom.localKindId, frame.node, out)
                     pushPlainContainer(frame, stack)
                 case NodeKind.CustomInline =>
                     let custom = frame.node.asCustomInline().getOrThrow()
+                    requireSemanticRendererContract(custom, extensionRules)
+                    if (let value: MathPayload <- custom.payload) {
+                        out.append(value.expression)
+                        continue
+                    }
+                    if (custom.payload is HeadingIdPayload) {
+                        continue
+                    }
+                    if (let payload: FootnoteReferencePayload <- custom.payload) {
+                        match (frame.node.documentBindings.footnoteReference(frame.node.nodeId)) {
+                            case Some(value) => out.append("[${value.number}]")
+                            case None => out.append("[^${payload.labelRaw}]")
+                        }
+                        continue
+                    }
                     appendCustomTextPrefix(custom.extensionId, custom.localKindId, frame.node, out)
                     pushPlainContainer(frame, stack)
                 case _ => pushPlainContainer(frame, stack)
             }
         }
-        trimTrailingNewlines(out.toString())
     }
 
     private func pushPlainContainer(frame: ArenaRenderFrame, stack: ArrayList<ArenaRenderFrame>): Unit {
@@ -1882,6 +2532,17 @@ private func arenaPlainTextValue(root: NodeRef): String {
         match (node.kind) {
             case NodeKind.Text => out.append(node.asText().getOrThrow().value)
             case NodeKind.CodeSpan => out.append(node.asCodeSpan().getOrThrow().literal)
+            case NodeKind.CustomInline =>
+                if (let Some(value) <- mathPayload(node)) {
+                    out.append(value.expression)
+                } else {
+                    let children = node.children()
+                    var index = children.size - 1
+                    while (index >= 0) {
+                        stack.add(children[index])
+                        index--
+                    }
+                }
             case NodeKind.SoftBreak => out.append("\n")
             case NodeKind.HardBreak => out.append("\n")
             case _ =>
@@ -1896,6 +2557,27 @@ private func arenaPlainTextValue(root: NodeRef): String {
     out.toString()
 }
 
+internal func requireSemanticRendererContract(custom: CustomNodeView, rules: ImmutableArray<RendererRule>,
+    phase!: String = "render"): Unit {
+    if (!(custom.payload is FootnoteReferencePayload || custom.payload is FootnoteDefinitionPayload ||
+        custom.payload is HeadingIdPayload || custom.payload is DefinitionListPayload || custom.payload is MathPayload ||
+        custom.payload is CodeGroupPayload)) {
+        return
+    }
+    if (!custom.node.documentBindings.semanticPayloadsValidated) {
+        throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
+            "structured payload rendering requires a bound document", phase: phase, span: custom.node.span)
+    }
+    for (index in 0..rules.size) {
+        let rule = rules[index]
+        if (rule.extensionId == custom.extensionId && rule.localKindId == custom.localKindId) {
+            throw MarkdownException(MarkdownErrorCode.UnsupportedNode,
+                "structured semantic nodes do not support generic renderer overrides", phase: phase,
+                span: custom.node.span)
+        }
+    }
+}
+
 private func arenaCustomLiteralValue(node: NodeRef): String {
     let payload = match (node.kind) {
         case NodeKind.CustomBlock => node.asCustomBlock().getOrThrow().payload
@@ -1903,6 +2585,7 @@ private func arenaCustomLiteralValue(node: NodeRef): String {
         case _ => return ""
     }
     match (payload) {
+        case value: MathPayload => value.expression
         case syntax: SyntaxPayload => syntax.literal
         case _ => arenaPlainTextValue(node)
     }
@@ -2355,5 +3038,13 @@ private func rendererNextRune(value: String, offset: Int64): Int64 {
         end
     } else {
         value.size
+    }
+}
+
+private func htmlOutputPlanner(sink: TextSink): ?HtmlPlanSink {
+    if (let plan: HtmlPlanSink <- sink) {
+        Some(plan)
+    } else {
+        None
     }
 }

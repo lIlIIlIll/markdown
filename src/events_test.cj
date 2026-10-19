@@ -237,6 +237,37 @@ private func isCancelled(error: MarkdownException): Bool {
 @Test
 class SourceEventApiTest {
     @TestCase
+    func looseListLineFeedsKeepEventsExactAndScanGrowthLinear(): Unit {
+        let engine = MarkdownEngine.builder().build()
+        var previousSteps: Int64 = 0
+        for (count in [64, 128]) {
+            let text = StringBuilder()
+            for (_ in 0..count) {
+                text.append("- item\n\n  paragraph\n\n")
+            }
+            let input = text.toString()
+            let bytes = input.toArray()
+            let budget = OperationBudget.safe()
+            let session = engine.newRawBlockEventSession(budget: budget)
+            let events = ArrayList<MarkdownSourceEvent>()
+            var start: Int64 = 0
+            for (index in 0..bytes.size) {
+                if (bytes[index] == b'\n') {
+                    events.add(all: session.feed(bytes[start..index + 1]))
+                    start = index + 1
+                }
+            }
+            events.add(all: session.finish())
+            expectSameEventSequence(events.toArray(), collectRawSessionEvents(engine, bytes, [bytes.size]))
+            @Expect(budget.usedScanSteps() <= bytes.size * 32, true)
+            if (previousSteps > 0) {
+                @Expect(budget.usedScanSteps() <= previousSteps * 3, true)
+            }
+            previousSteps = budget.usedScanSteps()
+        }
+    }
+
+    @TestCase
     func resolvedModeUsesReferenceIndexBeforeSemanticEvents(): Unit {
         let result = MarkdownEngine.builder().build().parseEvents("[label][id]\n\n[id]: /target \"title\"\n")
         let events = result.events.toArray()
@@ -282,7 +313,7 @@ class SourceEventApiTest {
     func eventRangesAndStartEndPairsRemainBalanced(): Unit {
         let events = MarkdownEngine
             .builder()
-            .profile(MarkdownProfile.gfm())
+            .profile(MarkdownProfile.gfmModernV1())
             .build()
             .parseEvents("# 标题\n\nA *strong* value\n")
             .events
@@ -456,7 +487,7 @@ class SourceEventApiTest {
 
     @TestCase
     func rawSessionChunkPartitionDifferentialPreservesEventsAndSpans(): Unit {
-        let engine = MarkdownEngine.builder().profile(MarkdownProfile.gfm()).build()
+        let engine = MarkdownEngine.builder().profile(MarkdownProfile.gfmModernV1()).build()
         let bytes = "# head\n\n| a | b |\n| - | - |\n| 你 | 😀 |\n\nlast".toArray()
         let whole = collectRawSessionEvents(engine, bytes, [bytes.size])
         let partitioned = collectRawSessionEvents(engine, bytes, [1, 2, 5, 3, 8])

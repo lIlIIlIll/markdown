@@ -97,7 +97,7 @@ let second = engine.parse(input)
 | `dialectFingerprint` | `String` | 编译方言身份 |
 | `references` | `ImmutableArray<ReferenceDefinition>` | reference definitions |
 | `walk()` | `NodeRefWalker` | 深度优先 enter/exit iterator |
-| `detach()` | `Document` | 将 slice-backed text/code/html literal 转成 owned text |
+| `detach()` | `Document` | 独立 arena 与 owned text；未知 custom payload 报 UnsupportedNode |
 
 `NodeRef` 只能和其所属 `Document` 一起使用。把一个 snapshot 的 NodeRef 传给另一
 个 Document 会抛出 `IllegalArgumentException`。
@@ -155,8 +155,15 @@ for (event in result.document.walk()) {
 
 ## Node identity 和 origin
 
-`NodeId` 在一个 Document 内确定且唯一。编辑或重新解析后，不保证保留同一 NodeId。
-编辑器场景使用 `StableNodeId`。
+`NodeId(lineage, value)` 包含文档 lineage 和不回收的局部编号。编号不是 arena 下标。
+独立解析即使文本相同，也具有不同 lineage；持久化分叉保留共享节点的 NodeId，新节点
+分配新编号，回滚不回收已分配编号。完整重新解析产生新的 lineage。
+局部编号从 `1` 到 `UInt32.Max`；耗尽时明确失败，不回绕或复用。共享 lineage 的短
+arena 按实际构造规模逐步预留编号，避免每个片段浪费一个完整节点 chunk。
+
+`Document.revision` 标识具体不可变视图，`NodeRef.revision` 绑定该视图。共享节点的
+NodeId 可以不变，但旧视图的 NodeRef 不能传给新视图的访问器。查询新视图时使用
+`AstQuery.byNodeId`，找不到表示节点未保留。内容哈希型 `StableNodeId` 已移除。
 
 `NodeOriginKind` 包含 `Parsed`、`ExtensionGenerated`、`Transformed`、
 `Synthetic` 和 `Deserialized`。普通 parsed node 的 origin span 与 node span
@@ -165,11 +172,13 @@ for (event in result.document.walk()) {
 ## AST invariants
 
 ```cangjie
-AstInvariantValidator.validate(document, limits: ParseLimits.safe())
+AstInvariantValidator().validate(document, limits: ParseLimits.safe())
 ```
 
-validator 检查节点数量、范围包含、child category、acyclic ownership、NodeId 和自定义
-payload 契约。parser 热路径在构造时执行限制检查，不依赖 parse 后的全树扫描。
+validator 检查节点数量、范围包含、child category、acyclic ownership 和 NodeId。
+可传入 budget 与 cancellation，使验证参与同一操作的累计预算和取消。
+typed 扩展的语义 payload 由绑定器校验。parser 热路径在构造时执行限制检查，不依赖
+parse 后的全树扫描。
 
 ## 查询
 

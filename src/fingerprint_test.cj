@@ -41,13 +41,6 @@ class FingerprintTest {
         let builtinArtifact = builtinEngine.createArtifact(builtinEngine.parse("~~identity~~"))
         let customArtifact = customEngine.createArtifact(customEngine.parse("~~identity~~"))
         @Expect(builtinArtifact.engineFingerprint == customArtifact.engineFingerprint, false)
-
-        let gfmAlias = MarkdownEngine.builder().profile(MarkdownProfile.gfm()).build()
-        let gfmVersioned = MarkdownEngine.builder().profile(MarkdownProfile.gfmModernV1()).build()
-        @Expect(gfmAlias.dialect.fingerprint, gfmVersioned.dialect.fingerprint)
-        let aliasArtifact = gfmAlias.createArtifact(gfmAlias.parse("~~identity~~"))
-        let versionedArtifact = gfmVersioned.createArtifact(gfmVersioned.parse("~~identity~~"))
-        @Expect(aliasArtifact.engineFingerprint, versionedArtifact.engineFingerprint)
     }
 
     @TestCase

@@ -34,14 +34,17 @@ internal class ParserNodeFactory {
     private let maximumAstNodes: Int64
     private let source: ?SourceBuffer
     private var hasOrphans = false
+    internal var requiresBinding = false
 
-    init(maximumAstNodes: Int64, estimatedInputBytes!: Int64 = 0, source!: ?SourceBuffer = None) {
+    init(maximumAstNodes: Int64, estimatedInputBytes!: Int64 = 0, source!: ?SourceBuffer = None,
+        lineage!: ?NodeLineage = None, constructionBudget!: ?NodeConstructionBudget = None) {
         this.maximumAstNodes = maximumAstNodes
         this.source = source
         let estimatedNodes = parserInitialArenaCapacity(estimatedInputBytes, source)
         arena = AstArenaBuilder(maximumNodes: maximumAstNodes, trustedParserConstruction: true,
             initialNodeCapacity: min(AST_NODE_CHUNK_SIZE, estimatedNodes),
-            initialChildCapacity: min(AST_CHILD_CHUNK_SIZE, estimatedNodes), sourceBuffer: source)
+            initialChildCapacity: min(AST_CHILD_CHUNK_SIZE, estimatedNodes), sourceBuffer: source, lineage: lineage,
+            constructionBudget: constructionBudget)
     }
 
     func finishDocument(children: Array<Int64>, span: SourceSpan, profile: MarkdownProfile, dialectFingerprint: String,
@@ -153,6 +156,10 @@ internal class ParserNodeFactory {
 
     func customBlock(extensionId: String, extensionSemanticVersion: String, localKindId: String, payload: CustomPayload,
         children: Array<Int64>, span: ?SourceSpan, origin: NodeOrigin): Int64 {
+        if (payload is FootnoteDefinitionPayload || payload is FootnoteReferencePayload || payload is HeadingIdPayload ||
+            payload is DefinitionListPayload || payload is MathPayload || payload is CodeGroupPayload) {
+            requiresBinding = true
+        }
         arena.appendParserOwned(NodeKind.CustomBlock, NodeCategory.Block, span, origin.kind, children,
             payload: ArenaNodePayload.CustomValue(extensionId, extensionSemanticVersion, localKindId, payload),
             origin: Some(origin))
@@ -271,6 +278,10 @@ internal class ParserNodeFactory {
 
     func customInline(extensionId: String, extensionSemanticVersion: String, localKindId: String,
         payload: CustomPayload, children: Array<Int64>, span: ?SourceSpan, origin: NodeOrigin): Int64 {
+        if (payload is FootnoteDefinitionPayload || payload is FootnoteReferencePayload || payload is HeadingIdPayload ||
+            payload is DefinitionListPayload || payload is MathPayload || payload is CodeGroupPayload) {
+            requiresBinding = true
+        }
         arena.appendParserOwned(NodeKind.CustomInline, NodeCategory.Inline, span, origin.kind, children,
             payload: ArenaNodePayload.CustomValue(extensionId, extensionSemanticVersion, localKindId, payload),
             origin: Some(origin))
@@ -279,6 +290,11 @@ internal class ParserNodeFactory {
     func snapshotNode(index: Int64): NodeRef {
         let snapshot = arena.snapshotView()
         snapshot.nodeAt(index)
+    }
+
+    func snapshotNodes(indexes: Array<Int64>): Array<NodeRef> {
+        let snapshot = arena.snapshotView()
+        Array<NodeRef>(indexes.size) {index => snapshot.nodeAt(indexes[index])}
     }
 
     /** Read-only access used by the source-event lowering path while the

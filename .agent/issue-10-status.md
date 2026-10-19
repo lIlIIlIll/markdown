@@ -1,0 +1,500 @@
+# Issue 10 implementation status
+
+The scope remains MD-00..08 and all original acceptance IDs in issue #10. This is
+an implementation ledger, not a release claim. The current per-ID matrix is
+[issue-10-matrix.md](issue-10-matrix.md). No core PR or release is authorized
+for automatic merge or publication.
+
+| Task | Implementation and evidence | State |
+| --- | --- | --- |
+| Prerequisite baseline | PR #11 merged as `8b5227b`; official STS 1.2.0; final push/PR checks PASS; exact retained CI artifact rebuilt offline in Arch and Ubuntu | PASS |
+| Required checks | Replaced the three obsolete SDK contexts with the two passing STS 1.2.0 contexts; all other protection values verified equal | PASS |
+| MD-00.3 / EDT-T01 identity | NodeId lineage plus nonrecycled serial, distinct immutable revisions, bounded shared-arena reservations, distributed identity hashes, persistent-fork allocation and stale CST/NodeRef/fix rejection | F1 correctness/resource PASS; P1 frozen cost gates PASS |
+| MD-00.4 / MD-00.5 / ARC-T02 | Success-only ParseResult, explicit ParseOutcome, removed aliases and content-hash StableNodeId; consumers migrated | F1 1621-case full run and compatibility cleanup PASS |
+| MD-00.7 / ART-T01 | 0.10 API boundary, SPI 3, plan 6, artifact schema 3; no old reader; explicit unsupported-version error | Current F1/G1 checkpoint: 1621/1621 full tests and 70 API/evidence Python tests PASS |
+| MD-00.1/.2, MD-01 batch | Typed footnote payloads, reachable-definition binding, first-definition/numbering/unique-anchor/backlink decisions, shared HTML/Text/Markdown output, exact source and snapshot/config identity; DocumentBindingTests | F1 semantics, S1/C1 costs and P1 gates PASS |
+| MD-03 batch | Heading-only typed suffix, explicit-ID reservation, shared anchor allocator, authoritative heading/fragment queries, structured TOC, source/Markdown/snapshot preservation; HeadingBindingTests | F1 edit dependency and C1 collision cost PASS |
+| MD-02 / EXT-T03 | Definition Lists 2.0 with typed List/Entry/Term/Definition, ordinary block bodies, source markers, full binding validation and shared HTML/Text/Markdown/snapshot/append/output traversal | Implemented; 1564-case full run and consumer gates PASS |
+| MD-00.8 / MD-06.1..6 | Shared block/inline parser, pre-binding transforms, final binder and read-only analysis; actual feed-time closed AST fragments, atomic identity/version updates and replica, terminal failure, cumulative limits | F1/S1/C1/P1 local qualification PASS |
+| MD-06.7 | Real resumable HTML cursor over shared renderer rules; UTF-8 prefix acknowledgement, lazy tables/footnotes/escaping, terminal failure and cumulative output budgets; old buffered implementation removed | F1/S1/P1 correctness and frozen performance/RSS PASS |
+| MD-06.8 | Public append scaling tests for long loose lists, deferred-reference paragraphs, unclosed fences and many closed blocks; real scan/node-construction/patch counters | S1 costs and P1 frozen performance PASS |
+| MD-04 / EXT-T05..06 | Versioned official capability matrix, exact enable/disable/profile output, literal Front Matter boundaries and bounded deterministic smart punctuation | F1/C1/P1/G1 local qualification PASS |
+| MD-00.6 | Actual AST transform → binding → read-only analysis, shared batch/append pipeline, early whole-document execution gates and meaningful capability validation | Implemented; 1585-case run, consumers and API/evidence gates PASS |
+| MD-05 / RND-T01..02 | Math 2.0, Code Groups 1.0, typed preparation and pinned actual KaTeX/Shiki/Mermaid Linux adapter with explicit offline runtime, licenses, bounded proxy/subreaper, validated outputs and full source fallback | Current formal-library actual browser/process gate and P1/G1 PASS; recorded-head hosted CI PASS; live final checks in PR #12 |
+| MD-05.7 / code-group portion of RND-T02 | Group/Item with ordinary fenced children, titles, line ranges and exact copy text; optional localized tabs/copy and static fallback | 1600-case Cangjie run, all normal consumers and actual Chrome clipboard/keyboard/AX checks PASS |
+| MD-07 / MD-08.1..5/.7 | Public editor semantics and phase costs; restricted variable-local and AST/token experiments; independent public encoder proof; complete measured adoption decisions | F1/S1/E1/C1/P1/G1 local PASS; no experimental candidate adopted |
+| DONE-02..06 | Per-ID matrix, fresh frozen/offline performance, all local release steps and readiness validation | Local/offline PASS; H1 actual hosted evidence PASS; live final checks in PR #12 |
+
+The prior 0.9 raw reports remain historical measurements of their recorded
+commits. They do not qualify the changed 0.10 product. No measurements are rebound
+to a new commit by editing report identities.
+
+The 1517-case run product tree digest is `9c27f722877fc46d2aff564065b36cc788866c730470f6a8f0f08e29f9aaeafc` (work tree and disk-backed test tree verified equal). API snapshot: 1434 declarations.
+
+The subsequent semantic-binding full run passed 1534/1534 with STS 1.2.0, zero
+skips/errors/failures. It adds ordinary reference definitions inside footnote
+containers, excludes code from definition discovery, checks typed-payload source
+ownership, bounds definition bytes and unmatched inline lookahead, and preserves
+GFM table inline semantics with exact escaped-label offsets. API snapshot: 1508
+declarations. These results do not qualify the pending append, editor, rich-backend
+or end-to-end performance goals.
+
+Additional foundation validation: both examples built and ran; CLI build/smoke and canonical benchmark-driver build PASS. Format, docs, public API and release-evidence consistency checks PASS. The complete 0.10 release/performance gate remains pending. Main post-merge CI run `39089161613` is PASS.
+
+The final formatted binding product tree digest is `6873bd666d7b6cb0a4d7eb50fd233a65d09f3056f9b33b502948aba516c24cd2` (workspace and disk test tree verified equal). The exact tree passed all 1534 tests, both example builds/runs, CLI build/smoke and benchmark-driver build. API checker, evidence logic and bundle tests: 70/70 PASS. Docs/API/evidence consistency checks PASS. Complete release/performance gates and hosted core CI remain pending.
+
+The append checkpoint uses official STS 1.2.0 and formatted product tree
+`7376a44fc342a9e022355e008a3b52fd291c778dfdf3b9cab6e10bb63bb99cf5` (workspace and disk-backed test tree verified equal).
+Full tests: 1548/1548 PASS, zero skips/errors/failures. The public session runs all
+652 CommonMark and 671 GFM cases through six chunk patterns (7938 equivalence
+checks), including reproducible random widths; final semantic AST digest,
+HTML/Text/Markdown, source maps, reference definitions, diagnostics and snapshot
+round trips match batch. Invalid-byte replacement fuzz covers 256 inputs through
+three partitions; strict failures are terminal. Processor deletion exercises
+Replace/Remove against the old version. Pending/input/node-work/patch/batch quotas,
+wrong ordering/cross-session rejection and source-coordinate regressions PASS.
+
+Normal check/build, both example builds/runs, CLI build/smoke and benchmark-driver
+build PASS on that tree. Public API: 1559 declarations. The source-event loose-list
+scheduler changed from quadratic prefix replay to geometric retry; the public
+append tests assert linear scan/construction growth. These counters are not heap
+allocation or RSS measurements. Full resumable HTML traversal (MD-06.7), the new
+definition-list model, rich backends, edit/cache work and final release gates are
+still pending. Historical benchmark reports remain bound to their original source.
+
+The resumable-output checkpoint uses official STS 1.2.0 and formatted product
+tree `94adfef5e05b4a5a61b9cb7652469fa957259859f06a07dbae0211d718694d27`
+(workspace and disk-backed test tree verified equal). Full tests: 1554/1554 PASS,
+zero skips/errors/failures. All 1323 pinned standard inputs run through three
+HTML policies and three output widths (11907 output checks), with rejected,
+partial and fully acknowledged pauses. Output bytes and rendered-node counters
+match synchronous rendering; the existing 7938 append checks remain enabled.
+Additional cases cover host callback timing, UTF-8 acknowledgement validation,
+sink exceptions/failures, empty output, cancellation before/during/after a pause,
+long flat documents and a single long escaped literal. No full HTML is built by
+the session constructor; repeated refusal does not advance traversal or budgets.
+
+Normal check/build, both example builds/runs, CLI build/smoke and benchmark-driver
+build PASS. Format/docs/API/evidence checks and 70 API/evidence Python tests PASS.
+Public API: 1561 declarations. The old buffered output class is removed and
+Pause now carries the accepted UTF-8 prefix byte count. Buffered byte counters
+exclude the AST, source and host port allocations. These correctness results do
+not qualify peak RSS, frozen performance gates or the remaining issue scope.
+
+The definition-list checkpoint uses official STS 1.2.0 and formatted product tree
+`ad689322d84c832de70f8e1e82ca647ec4f3ec29a2b16429f56560171a6b85a0`
+(workspace and disk-backed test tree verified equal). Full tests: 1564/1564 PASS,
+zero skips/errors/failures. DefinitionListTests cover exact grouped HTML/Text and
+canonical Markdown, multiple terms/definitions, empty definitions, ordinary
+paragraph/list/quote/fence bodies, nesting, Unicode/CRLF and invalid-byte source
+mapping, lossless CST, footnote/heading/link binding, snapshot equivalence,
+single-byte/mixed/whole append and resumable output. Disabled/default profiles,
+orphan markers, setext ambiguity, unsupported execution paths, malformed typed
+payloads, grammar flags, declared resource costs, limits and cancellation are
+checked explicitly. Canonical quote/list/task continuations keep their ownership;
+four additional container fixtures check HTML round trips and idempotence.
+
+Nested literal closures no longer trigger repeated whole definition-list prefix
+retries. Public scaling cases check scan/construction growth at 16/32/64 entries
+against batch output, including indented bodies. These are actual work counters,
+not latency or RSS evidence. Normal check/build, both example builds/runs, CLI
+build/smoke and benchmark-driver build PASS. Format/docs/API/evidence checks and
+70 API/evidence Python tests PASS; public API: 1573 declarations. Full lifecycle,
+remaining extension/rich-backend, editor/artifact and frozen release/performance
+qualification remain pending. No core push or PR is authorized.
+
+The identity-resource checkpoint uses official STS 1.2.0 and formatted product
+tree `bcd0999fe4d6daf2c6669c24f30bb1fe046df097a229c1f6b89eb2a1a749ac41`
+(workspace and disk-backed test tree verified equal). Full tests: 1566/1566 PASS,
+zero skips/errors/failures; format and unchanged 1573-declaration API PASS.
+In the actual internal probe, 1024 three-node arenas previously advanced their
+shared lineage to serial 4190211; the same fixture now ends at 3072. Independent
+batch arenas keep chunk reservations, while shared fragment/resolver/fork arenas
+grow bounded reservations geometrically. Rollback never recycles identities and
+the finite 32-bit exhaustion remains explicit. Distribution and lookup regressions
+cover sparse serials and distinct lineage/serial pairs; the actual SDK HashMap
+probe preserves checksums before/after. Exploratory process timings are not the
+frozen performance gate or evidence of end-to-end throughput/RSS qualification.
+
+The official-extension checkpoint uses official STS 1.2.0 and formatted product
+tree `194f6e67bb1322678dfde0a1edcac4f238a0032084d208e34f786655a481c1f2`
+(workspace and disk-backed test tree verified equal). Full tests: 1573/1573 PASS,
+zero skips/errors/failures. The actual old smart-punctuation implementation failed
+the new automatic-link, unchanged-identity and scan-budget regressions; all now
+pass. Smart Punctuation 2.0 preserves automatic URI labels, code/raw HTML/literal
+payloads, destinations and titles; it uses longest matches within semantic Text,
+preserves raw source, keeps unchanged revisions and checks cumulative work/cancel.
+Entities/escapes are decoded before this transform; no quote engine is claimed.
+
+The matrix checks six optional extensions under both supported profiles with
+exact HTML, versions, lossless source, enable/disable and builder immutability.
+Duplicate registrations and the declared unsupported GFM 0.29 combinations are
+explicitly rejected, rather than expanding profile declarations to fit the test.
+Front Matter additionally covers CRLF/BOM ranges, normalized literal content,
+ordinary body separators, canonical output and single-byte/mixed/whole append.
+The combined punctuation/footnote/heading/definition/math/front-matter fixture
+checks batch/append, source maps, diagnostics, canonical output and snapshots.
+The API remains at 1573 declarations. Frozen performance, full lifecycle, real
+rich backends, edit/cache work, final consumers and hosted core gates are pending.
+
+The lifecycle checkpoint uses official STS 1.2.0 and formatted product tree
+`4caf6ae2e200c241d9b7d841aed63cdb1e1ff52e5c3d7e92bd4f4c6cd429d85a`
+(workspace and disk-backed test tree verified equal). Full tests: 1585/1585 PASS,
+zero skips/errors/failures. ExtensionAstTransform executes before binding and
+ExtensionDocumentAnalysis reads final bindings to return diagnostics. Both receive
+the actual source/limits/budget/cancellation. Old DocumentPostprocess/processor
+interfaces, registration and the obsolete execution-model field are removed.
+SPI is 3, parser plan is 4; the binary layout remains schema 3 and configuration
+identity changes invalidate prior caches. No compatibility wrapper is introduced.
+
+Lifecycle tests verify transform/bind/analysis ordering, exactly-once final append
+execution, analysis-only edit fallback, callback-free events/fused rejection and
+PreferFused fallback. Callback resource errors retain their categories; invalid
+source/profile ownership and host failures carry stage identity. Diagnostic main,
+related and fix spans are validated, including Chinese/emoji scalar boundaries and
+invalid-byte replacement mapping; attribution, literal budgets and defensive
+related-span copying are checked. AST validation and TreeRewriter share operation
+budgets/cancellation, and construction uses the configured node bound.
+
+Typed grammar flags and generic renderer overrides fail explicitly; footnote and
+heading matches charge configured resource costs. Heading suffixes obey global
+lookahead/capture limits. Existing full append/output and standard corpus checks
+remain enabled. All nine normal consumer steps PASS; the cookbook's actual
+post-binding analysis emits `heading=analyzed`. CLI validation reads the engine's
+current SPI and tests default/3 success plus obsolete 1/2 rejection. Format, docs,
+public API (1578 declarations), evidence consistency, 70 API/evidence Python tests
+and privacy checks PASS. Real rich backends, measured edit/cache decisions and
+frozen release/performance/hosted core evidence remain pending. Core stays local.
+
+The Math 2.0 checkpoint uses official STS 1.2.0 and product tree
+`21b6fd28f1150949f5c8a3fd032d489876d1916ca94b491fd9145e4406d029b5`
+(workspace and disk-backed test tree verified equal). Full tests: 1590/1590 PASS,
+zero skips/errors/failures. API: 1593 declarations. MathPayload separates TeX,
+inline/display mode, exact delimiter ranges and immutable MathSourcePart records
+from any backend output. The actual first full run found a four-column opener
+incorrectly taking indented code; the actual container probe found partial tab
+expansion could not be validated as a contiguous raw string. Both regressions now
+pass. Prefix layout preserves the physical tab span and normalized spaces without
+changing the shared parser's line storage. Validation compares bounded source
+bytes without materializing a second full normalized expression.
+
+Cases cover quote/list, multiple tabs, empty/multiline formulas, CRLF/BOM, Chinese
+and emoji, invalid-byte replacement, canonical/lossless Markdown, source maps,
+snapshot identity, single-byte/mixed/whole append and resumable output including
+image alternatives. Fixed grammar options and renderer overrides reject explicitly;
+limits, cumulative scan and cancellation are exercised. All nine normal consumer
+steps PASS; cookbook imports the public MathPayload and emits
+`expression=x + y, source=x + y`. Format/docs/API/evidence consistency and 70
+API/evidence Python tests PASS. This checkpoint is not real formula typesetting,
+code groups, rich-output preparation, frozen performance or hosted core proof.
+
+The Code Groups 1.0 checkpoint uses official STS 1.2.0 and product tree
+`1a3208158bbeaf5ed219591eb64f31d3717372810beab0152b245642c5feda17`
+(workspace and disk-backed test tree verified equal). Full tests: 1600/1600 PASS,
+zero skips/errors/failures; API: 1620 declarations. The group owns typed Item nodes
+with ordinary fenced-code children, fixed title/range grammar and source-derived
+copyText preserving BOM/CR/LF/CRLF after container normalization. Default HTML is
+complete static figure/figcaption/pre/code with visible mark elements. Canonical
+Markdown keeps metadata and selects a safe fence. Combined footnote, heading, math
+and definition-list cases, snapshots, source maps, bytewise append, invalid UTF-8,
+resource bounds, cancellation, resumable output and actual nested-closer scaling
+PASS. Invalid info/body stays visible with diagnostics; code is never executed.
+
+Optional CodeGroupHtmlOptions emits bounded UTF-8 hex data and localized labels
+without loading JavaScript. The independent script progressively creates linked
+tabs/panels, keyboard navigation and click-only Clipboard API controls. Disabled
+copy is visibly explained; missing JS leaves every block visible. Browser checks
+use actual cookbook HTML, not handwritten output: Node 24.22.0, Puppeteer 25.14.0,
+Chrome 155.0.8059.84. Real clipboard round trips preserve leading BOM, CRLF, Chinese
+and emoji; empty-block copy also succeeds. Four AX tabs, duplicate fragments,
+ID collisions, repeated initialization, arrow/Home/End keys, localized failure,
+copy-limit fallback, no-script output, light/mobile-dark layouts and zero unexpected
+page requests PASS. Both screenshots were visually inspected. Browser execution
+is a separate trusted fixture test and does not claim an OS sandbox or other-OS proof.
+
+The generated fixture SHA is
+`069877d52a872a34339e232f1dca1fd56329b03b1f60ff7acab4778c8ba7a541`;
+final script/CSS hashes are
+`aa73761fb9873081f4ac323b4f3a42dfe8dcbaf9ca16d0216f93ce47fc3e820f` /
+`d65aec4f30581756675bc21a79d9704aaa75a2fd84e407fd0718c758641b4875`.
+The first browser timeout was diagnosed as missing sanitized-write permission in
+the independent test context, not silently turned into a mock success. Granting
+the required scoped permission allowed actual clipboard writes; denied writes
+remain an explicit tested failure state. A Cangjie declaration-order compile
+error in the shared default was fixed using the repository's class-static pattern.
+
+All nine normal consumer steps, 70 API/evidence Python tests and format/docs/API/
+evidence/privacy checks PASS. Parser plan 5 now uses one constant across canonical
+descriptors, engine fingerprints and parse artifacts; binary layout stays 3. Rich
+literal containers collect references through real block boundaries. All structured
+payload renderers require completed binding. Real KaTeX/Mermaid/Shiki preparation,
+process cleanup qualification, measured editor/cache decisions, frozen performance
+and hosted core gates remain pending. No core push, PR, merge or release is authorized.
+
+The final canonical regression was run against the actual prior implementation:
+changed typed titles/ranges were replaced by the old info string, and deleting
+the first unnamed block left an ordinal caption inconsistent with reparse. The
+same case now passes. Canonical headers consume typed metadata with quote,
+backslash and backtick protection; raw info remains source-only. Unnamed blocks
+use the stable `text` label. Controls and unrepresentable metadata fail binding.
+The final 1600-case tree above also passed all nine normal consumer steps and 70
+API/evidence Python tests. The newly generated cookbook fixture matches the hash
+recorded above, and the actual browser gate was rerun. Its runner hash is
+`b204f782ff7cb53c0396b0ce2c7a7766b0941f6d13aa154d8213812998117c00`.
+
+## Shared rich preparation checkpoint
+
+Official STS 1.2.0, formatted product tree
+`cfb10b735a826eab269e6623c17fa279165677e7289d1a0a0b1340c107120ae0`
+matches the actual disk-backed test tree. Full suite: 1611/1611, zero skips,
+errors or failures. Public API: 1705 declarations. Nine normal consumer steps,
+70 API/evidence Python tests, format/docs/API/evidence and privacy checks PASS.
+The cookbook actually reports `math preparation=missing` and retains full TeX.
+
+MD-05.1/.4/.5/.6/.8 now have a shared typed boundary: immutable MathML trees,
+UTF-8 color/font tokens and RGB/RGBA PNG containers; fixed tag/attribute/value
+validation, token order/scalar boundaries, PNG bounds/chunks/CRC/end, explicit
+disabled/missing/unsupported/timeout/failure/limit states and strict opt-in.
+No third-party HTML/SVG is promoted to TrustedHtml. PNG display additionally
+requires an explicit PNG data-image policy; otherwise full source is rendered.
+Prepared entries reject another Document revision before output. Text/Markdown
+and source AST remain unchanged. Derived MathML/PNG maps are marked generated
+with coarse provenance; expression source parts remain available separately.
+HTML fingerprint is 5; no prepared data is persisted in parser artifacts.
+
+RichContentTests exercise default/missing behavior, hostile structured outputs,
+Unicode/ranges, raw CRLF code-group copy, explicit image policy, source/config/
+actual-theme cache keys, non-cached failures, current stricter limits, total
+output/cache capacity, stale identities, cancellation and resumed byte equality.
+The boundary fixtures are explicitly not real-engine qualification. The real
+KaTeX/Mermaid/Shiki adapter remains pending.
+
+A real first run crashed all nine new cases while the prior 1600 passed. A
+standalone std-only probe isolates STS 1.2.0: direct tuple destructuring of
+ArrayList.remove returns a corrupt reference at -O2; -O0 and a named popped
+frame at -O2 pass. The preparation and validator use the existing repository's
+named-frame pattern. No SDK or optimization flag changed. Two compile-only test
+type errors and two incorrect output expectations were also corrected; retained
+logs distinguish those from the actual runtime failure.
+
+Separate Linux supervision probes cover exact 256 KiB simultaneous binary pipes,
+worker crash, detached descendants retaining pipes and ignoring TERM, timeout,
+output-limit cancellation and launcher death. Actual Chrome 155.0.8059.84 creates
+nine descendants; Node crash and cancellation both terminate and reap all nine.
+The STS 1.2.0 bridge passes concurrent pipe/timeout/limit checks. This establishes
+a viable Linux optional-adapter mechanism, not a production backend or an OS
+sandbox. Frozen performance, editor/cache decisions and hosted core gates remain
+pending. Core changes remain local; no push, PR or release is authorized.
+
+## Actual optional Node backend checkpoint
+
+Official STS 1.2.0, formatted product tree
+`92bdbc2bd3a68fe43ebecee0da259c583ed9e71a9c5252f23cb89abbfa84103e`
+matches the test tree. Full suite 1614/1614 includes three missing-runtime/config
+cases in markdown.node; no skips/errors/failures. Nine normal consumer steps,
+70 API/evidence Python tests and format/docs/API/evidence/privacy checks PASS.
+Public API: 1710 declarations. The base paths still run without a Node runtime.
+
+MD-05.2/.3 now deliver NodeRichContentBackend and explicit prepare/gate scripts,
+with KaTeX 0.19.0, Shiki 4.5.0, Mermaid CLI 12.0.0, parse5 8.0.0, Node 24.22.0,
+Chrome 155.0.8059.84 and Noto Sans CJK SC 2.004. The official npm lock fixes the
+transitive closure; install scripts and ambient npm configuration are excluded.
+Pinned archives/font/license, vendor notices and npm license files are retained.
+The first Mermaid delivery supports strict flowcharts; unsupported syntax returns
+an explicit state with full source fallback. Host-only themes/paths and explicit
+no-sandbox opt-in cannot be selected by author content.
+
+The 39274-file runtime identity is
+`66482adc432167538bbcccac7a431bcbf9d6d93653981333609ef0ede5d0ba39`.
+A clean network-unshared offline rebuild produces the exact manifest/identity.
+The same compiled STS consumer runs against that rebuilt runtime with networking
+unshared and produces byte-identical HTML:
+`cb42c140c0fb6877dea3b3c7345a6212c92e7dbc86e711875f007697f72e70ad`.
+The consumer source hash is
+`2922bbff9fd82d2cd19a5de43d1e5be626b71d075a4030d7a4755c4a4e14f5e4`.
+It checks real batch/single-byte append preparation, four Ready products, current
+revision/source binding, warm cache, exact resumed HTML, provenance, timeout and
+cancel categories. All five linked static libraries still match the hashes in
+the actual gate after final normal consumer builds.
+
+Actual Chrome renders native fraction/square-root MathML with 11 math AX roles,
+a 784x140 Chinese flowchart with 297 pixel colors and Shiki-colored Unicode code.
+Real clipboard content retains BOM and CRLF independently of the LF display.
+The screenshot was visually inspected. There are zero unexpected page requests;
+two external/outside-file probes are rejected before the upstream reader, which
+receives neither. No mock stands in for any of these engine outputs.
+
+MD-05.8 uses a fixed binary protocol and concurrent bounded Cangjie pipes. The
+Linux supervisor proxies child I/O, so detached descendants never own the caller
+pipe, enforces wall/output bounds, reaps its full subtree and cleans private disk
+jobs. Seven process-fixture cases PASS: blocked input, cancellation, output limit,
+launcher death, timeout, worker exit and signal crash. Separate actual Chrome
+cancel/Node-kill cases observe five or more descendants and reap every one; cleanup
+returns only after ECHILD. A V8 limit is not reported as full process-tree RSS,
+and ordinary processes/request interception are not an OS sandbox.
+
+Retained actual failures explain narrow fixes: upstream did not serve OTF fonts;
+the owned exact font response supplies its MIME type. Long disk TMP paths exceeded
+Chromium's Unix socket path limit; a held /proc directory descriptor supplies a
+short path without moving storage to tmpfs. Purpose imports needed their static
+libraries in the standalone gate. An expected task cancellation is caught inside
+the task to avoid SDK diagnostic output. A process-fixture SIGUSR1 readiness race
+activated Node's debugger; the fixture now registers SIGUSR2 before readiness and
+asserts empty stderr. The final complete gate passes all actual and fixture cases.
+
+Remaining scope is MD-06 resource measurements, MD-07/08 measured editor/cache
+decisions and retention audit, fresh frozen performance/release evidence and the
+complete final ID ledger. No core push, PR, merge or release is authorized.
+
+## Ownership and binary identity audit
+
+The public pre-fix probe reproduced both retained parser provenance after
+`detach()` and acceptance of an opaque binary payload. The final build now
+rejects both. Detachment copies only reachable records into a source-free arena,
+preserves NodeIds under a new revision, and relocates footnote physical indexes.
+Opaque payload ownership is rejected rather than guessed. The binary digest
+rejects unknown payloads and covers owned, sorted typed parameter names/types/values.
+Parser plan 6 invalidates the prior configuration identity; wire layout stays 3.
+The public regressions include transformed footnotes, detached-source rejection,
+typed-map mutation, unknown encode and unknown decode. Official STS 1.2.0 build
+and 1617/1617 full tests PASS with no skips or errors. Editor/cache optimization
+selection and the final frozen release/performance gates remain pending.
+
+## MD-06 measured cost checkpoint
+
+The production tree at `d90f112` passed 42 append/output scenarios in each of
+eight rounds (warmup plus seven retained), with byte/chunk input and independent
+batch equivalence. Scenarios cover closed Unicode/CRLF paragraphs, an unfinished
+fence, repeated forward links/footnotes and a growing loose list at three sizes
+and chunk widths 1/7/4096. Per-feed raw timings, first-block input offset, finish,
+scan/node-construction/patch work, and Linux VmHWM are retained and SHA-bound.
+See `docs/reports/append-cost.md` and the sanitized raw projection. The oracle
+follows the RSS checkpoint; runtime, replica and latency collection are included.
+Single-byte peak RSS is material and no constant-memory claim is made. Output
+uses an acknowledging counting/checksum sink and never stores the complete HTML.
+This is MD-06 measurement evidence, not a replacement for frozen release ratios,
+RSS gates or hosted CI. MD-07/08 optimization decisions remain open.
+
+## Public editor semantic acceptance
+
+Three new public-API cases cover ten paragraph/heading/block edit fixtures, four
+reference/footnote/heading dependency fixtures, and invalid byte/UTF-16 boundaries.
+Each successful result is compared with full parseSnapshot for source, HTML and
+coarse maps, canonical Markdown, diagnostics, CST token spans/raw text and semantic
+owners, heading decisions, UTF-16 conversions and binary semantic digests. Old
+NodeRefs are rejected by the new CST; original snapshots remain unchanged.
+Variable-length, cross-block and semantic dependency edits report full fallback.
+The minimal pre-change byte-boundary probe already rejected both equal/variable
+interior-byte edits, so no product boundary fix was invented. Official STS 1.2.0
+full suite: 1620/1620 PASS, zero skipped/errors/failures.
+
+Independent constructor-count CST candidates remain experimental and unadopted:
+the single-operation 1728-process matrix and calibrated 288-process follow-up
+passed equivalence, but the conservative maximum-A/A-noise gate failed eight of
+nine end-to-end follow-up groups. No token coalescing entered production. The
+measured feasibility of variable-local and direct artifact restoration and the
+final frozen release/performance qualification still remain open.
+
+The compatibility cleanup checkpoint uses STS 1.2.0 and product tree
+`6c777aa402a9de37ca65bfc86b1fabcc5af9420678dfc78d9e31a40b1e6f1ce1`.
+Full tests: 1621/1621 PASS, zero skipped/errors/failures; normal build, format,
+docs, API and 70 evidence/API Python tests PASS. The unversioned commonMark/gfm
+profile aliases and scanner v1-v3 decoder/scanLines adapters are removed. Current
+v4 tests preserve emphasis, entity coalescing, Unicode and valid-prefix risks;
+old/unknown formats reject before calling the scanner, including empty input.
+The pure Cangjie capacity/input fallback remains a current capability. The shared
+renderer expansion scratch stack is current traversal, not a buffered legacy
+renderer; its name now reflects that role. Standard spec/GFM URI policies and
+accurately named complete-input conveniences are retained. Frozen performance,
+complete feature-cost reports and hosted core qualification remain pending.
+
+The MD-07/08 experiment decision report is `docs/reports/editor-cache-cost.md`,
+with all 3168 process rows, warmups, A/A and A/B samples and original report/log
+hashes in its numeric projection. Every retained log/input digest was verified.
+CST coalescing is not adopted because eight of nine bounded follow-up groups
+fail the preset maximum-A/A rule. The restricted variable-local candidate lowers
+scan work but has no measured median end-to-end benefit; the noisy results do
+not establish a statistically reliable regression. Restricted AST/token restore
+has promising read medians but omits general source-grammar certification and
+uses larger wire formats, so it is not shipped. A complete-check source-digest
+candidate passed instrumented encode gates and 1371 public exact-wire cases,
+but its independent uninstrumented 256KiB A/A gate failed. It was reverted and
+the original library rebuilt byte-identically. No timing threshold was relaxed,
+no historical report rebound, and no new production optimization is claimed.
+The actual feature on/off and rich-preparation costs and final frozen gates
+remain required.
+
+The formatted experimental source was rebuilt from the retained measured source;
+12 bounded functional cases and both public consumer compilations PASS. This
+is a new smoke qualification, not a timing rerun. Docs (55 Markdown pages),
+format and privacy checks PASS. Raw historical executable/source hashes stay
+unchanged in the report.
+
+The MD-08.6 feature-cost checkpoint uses production revision `88db33b`, tree
+`6c777aa402a9de37ca65bfc86b1fabcc5af9420678dfc78d9e31a40b1e6f1ce1`, STS 1.2.0,
+and the unchanged fixed runtime identity. `docs/reports/feature-cost.md` contains
+all scale groups; its numeric projection preserves 1056 feature and 48 actual
+rich/fallback processes, plus excluded warmups and A/A comparisons. All own-mode
+source/binding/snapshot/HTML/SourceMap/token oracles PASS. Timed on/off workloads
+have intentionally different semantics; their ratios measure feature cost.
+Dense P1, 512 repeated footnote references, 256 colliding headings, byte-array
+and warm-filesystem source-reparse decodes are covered. Actual cold four-product
+preparation median is 9.090s on the recorded single-CPU environment; validated
+Ready cache median is 0.222ms. Both are observed costs, not latency guarantees.
+Cangjie VmHWM and sampled process-tree RSS are reported separately; tree samples
+include setup and double-count shared pages. No mock or implicit download ran,
+all job directories were removed. The immutable raw report SHA-256 is
+`7f490f7c042e2e56d914fc51203eaa885475640bb6872086c411474f2c5802da`.
+Fresh complete frozen performance/release/offline and hosted core qualification
+remain required; core is still unpublished.
+
+The frozen 0.10 measurement subject is `b930377c2ea52f4afbd5e4c93a354bda41809c82`.
+C benchmark gates PASS: CommonMark 2.2662144957475965, GFM 1.7966549618996306,
+growth slope0.407953, pathological slope0.789897, extra RSS31236KiB.
+Same-language schema6 PASS: 12/12 shared behavior, 11 corpus semantic digests,
+geomean speedup13.880235098048031, maximum RSS ratio0.525891472868217.
+Network-isolated new-directory source-to-binary replay PASS independently in
+Arch and Ubuntu. Canonical raw reports are copied intact from those measurements;
+release evidence binds their real source/tree/archive/harness/driver identities.
+Offline release readiness remains false until the complete gate and candidate
+bundle are verified. The old hosted benchmark artifact pointer still describes
+PR #11 and is not proof for this core revision.
+
+Clean release preflight at `e31221204753a20b229dd9875cec64afb9aec207` passed all
+26 recorded steps and produced a valid 0.10 candidate. JUnit1621/1621, CM652/652,
+GFM671/671, API1706, native ASan+UBSan fuzz10000, normal consumers, differential
+25/24/1/0, benchmark smoke3/3 and packaging PASS. The readiness validator checked
+the actual clean manifest, test metrics and checksums before the readiness flag
+was written; zero errors. Manifest SHA is
+`4d6fbf6f9edc44a4b6a16bcf9578c784b903614fb0d2f0e169ca55f4ead424d2`.
+The current formal library also passed the full actual Node/browser/clipboard/
+process gate, with the same validated fixture HTML digest as the earlier gate.
+Final execution/bundle identities are kept in the independent full gate manifest;
+hosted core CI, core publication and issue closure are not claimed.
+
+The authorized core push created draft PR #12 from `issue-10-core-model` to main.
+Head `d383eaca35c1c70802105cbf1ab8e942da6c4ea2` passed both push39185741396 and
+PR39185745072, each with both required STS1.2 jobs successful. Actual uploaded
+release evidence proves clean27steps,1621/1621,API1706 and valid checksums.
+Canonical same-language evidence now uses the push run's stable source commit,
+artifact12158042400, ZIP SHA49909b3ffab5fb39165306d9b60ff37c8f6b933a54c3f1b4645a6c40a650daff,
+raw SHA2758225050d8d9fb58fe75ff61f1f4c7e82ed36c43b4e289331f42d89d2e1cf0.
+CI geomean10.330166027944836, max RSS ratio0.5552944527522609,12/12 behavior PASS.
+The downloaded actual CI inputs were independently rebuilt byte-identically in
+network-isolated Arch and Ubuntu. The PR run's ephemeral merge identity and its
+release proof are retained separately; no measurement was rebound. Initial
+wrapper invocation with an archive-only verifier root was correctly rejected;
+using the retained Git bundle provides the required provenance. No product or
+verifier weakening was used. Final metadata-head CI remains a live PR check,
+not an advance claim by this static document. No merge/release is authorized.
+
+PR #12 review follow-up: unavailable `/proc/self/task/<tid>/children` is now
+classified as Unsupported (69) during preflight, before runtime verification or
+worker startup. Missing runtime files still return Missing (66). Four standalone
+CLI regressions cover ENOENT/EACCES/EIO and missing manifest; the old supervisor
+fails three and the fixed supervisor passes all four. The release gate runs these
+checks without requiring Node or Chrome. No library/API/benchmark inputs changed.
+The updated runtime was prepared from retained offline inputs with identity
+`9d7f66290e664254501b6a293fe6eb9218c79b1f86a7779f94acb297669dd5a4`.
+Actual STS 1.2.0 rich consumer, browser/clipboard, seven process fixtures and two
+actual Chrome lifecycle cases all PASS, retaining the same fixture HTML digest.

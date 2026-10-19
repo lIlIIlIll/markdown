@@ -34,6 +34,7 @@ run_step() {
 
 run_step format scripts/check_format.sh
 run_step docs python3 scripts/check_docs.py
+run_step node-supervisor-capability-tests python3 tests/rich_backend/test_supervisor_capabilities.py
 run_step native-build-tests python3 scripts/test_build_native_scanner.py
 run_step api-checker-tests python3 scripts/test_check_public_api.py
 run_step api python3 scripts/check_public_api.py

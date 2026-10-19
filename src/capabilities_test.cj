@@ -8,7 +8,7 @@ private class FallbackScannerAccelerator <: LineScannerAccelerator {
         "test-fallback"
     }
 
-    public func scanLines(_: Array<Byte>, _: Int64): ?Array<UInt64> {
+    public func scanLineRecords(_: Array<Byte>, _: Int64): ?LineScanRecords {
         None
     }
 }
@@ -34,7 +34,7 @@ class CapabilitiesTest {
         @Expect(capabilities.incrementalSupport, true)
         @Expect(capabilities.incrementalMode, "block-local-with-full-fallback")
         @Expect(capabilities.losslessSupport, true)
-        @Expect(capabilities.serializationVersions[0], "parse-artifact-2")
+        @Expect(capabilities.serializationVersions[0], "parse-artifact-3")
         @Expect(capabilities.multiDocumentSupport, true)
         @Expect(capabilities.htmlToMarkdownSupport, true)
         @Expect(capabilities.virtualTreeSupport, true)
@@ -46,9 +46,9 @@ class CapabilitiesTest {
         let executionModels = accelerated.executionModels()
         @Expect(executionModels.nativeScannerImplementation, "test-fallback")
         @Expect(executionModels.streamInput, "buffered-before-parse")
-        @Expect(executionModels.chunkInput, "buffered-until-finish")
-        @Expect(executionModels.partialParse, "failure-result-without-completed-prefix")
-        @Expect(executionModels.asyncHtml, "pre-rendered-buffered-output")
+        @Expect(executionModels.chunkInput, "append-closed-blocks-with-final-binding")
+        @Expect(executionModels.parseOutcome, "success-result-or-failure-without-document")
+        @Expect(executionModels.asyncHtml, "resumable-traversal-with-utf8-prefix-acknowledgement")
         let pureCapabilities = MarkdownEngine.builder().nativeScannerEnabled(false).build().capabilities()
         @Expect(pureCapabilities.nativeScannerAvailable, false)
         @Expect(pureCapabilities.nativeScannerEnabled, false)

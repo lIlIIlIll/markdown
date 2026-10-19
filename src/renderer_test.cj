@@ -66,7 +66,7 @@ class PauseOnceSink <: AsyncTextSink {
     public func write(slice: String): AsyncSinkWriteResult {
         if (!paused) {
             paused = true
-            return AsyncSinkWriteResult.Pause
+            return AsyncSinkWriteResult.Pause(0)
         }
         out.append(slice)
         AsyncSinkWriteResult.Continue
@@ -128,12 +128,13 @@ class RendererBehaviorTest {
             "[link](https://example.com \"t\") ![alt *text*](img.png)  \nnext\n\n<div>x</div>\n"
         let common = MarkdownEngine.builder().build().parse(commonSource)
         let safe = HtmlRenderer()
-        @Expect(safe.render(common.ast), safe.render(common.document))
+        @Expect(safe.render(common.document), safe.render(Markdown.parse(commonSource).document))
 
         let gfmSource = "| a | b |\n| :- | -: |\n| ~~x~~ | y |\n\n- [x] done\n"
         let gfm = MarkdownEngine.builder().profile(MarkdownProfile.gfmModernV1()).build().parse(gfmSource)
         let compatible = HtmlRenderer(options: unsafe { HtmlOptions.gfmCompatible() })
-        @Expect(compatible.render(gfm.ast), compatible.render(gfm.document))
+        @Expect(compatible.render(gfm.document), compatible.render(
+            Markdown.parse(gfmSource, profile: MarkdownProfile.gfmModernV1()).document))
     }
 
     @TestCase
@@ -483,10 +484,9 @@ class RendererBehaviorTest {
     }
 
     @TestCase
-    func explicitlyNamedBufferedAsyncSessionPreservesBackpressure(): Unit {
+    func resumableSessionPreservesBackpressure(): Unit {
         let normal = HtmlRenderer().render(Markdown.parse("buffered output").document)
-        let session = BufferedAsyncHtmlOutputSession(HtmlRenderer(), Markdown.parse("buffered output").document,
-            chunkBytes: 4)
+        let session = HtmlRenderer().newOutputSession(Markdown.parse("buffered output").document, chunkBytes: 4)
         let sink = PauseOnceSink()
         match (session.resume(sink)) {
             case AsyncRenderState.Paused => @Expect(true)

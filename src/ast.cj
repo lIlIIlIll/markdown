@@ -82,58 +82,39 @@ public class ImmutableArray<T> {
     }
 }
 
-/** 在一个 `Document` snapshot 内唯一的节点身份。 */
-public struct NodeId <: Equatable<NodeId> {
-    /** 节点 id 的正数值。 */
+/** 文档 lineage 内不回收的节点身份；与 snapshot revision 分开。 */
+public struct NodeId <: Equatable<NodeId> & Hashable {
+    /** 分配节点的文档 lineage；独立解析具有不同 lineage。 */
+    public let lineage: Int64
+    /** lineage 内不回收的正数编号，不是 arena 下标。 */
     public let value: Int64
 
     /**
-     * 创建节点 id；非正值抛出 `IllegalArgumentException`。
-     * @param value id 的正数值。
+     * 创建节点 id；lineage 或编号非法时抛出 `IllegalArgumentException`。
+     * @param lineage 分配节点的文档 lineage。
+     * @param value lineage 内的正数编号。
      */
-    public init(value: Int64) {
-        if (value <= 0) {
-            throw IllegalArgumentException("NodeId must be positive")
+    public init(lineage: Int64, value: Int64) {
+        if (lineage <= 0 || value <= 0 || value > Int64(UInt32.Max)) {
+            throw IllegalArgumentException("NodeId requires a positive lineage and a 32-bit positive serial")
         }
+        this.lineage = lineage
         this.value = value
     }
 
-    /** 按 id 数值比较两个节点 id。
+    /** 比较 lineage 与节点编号。
      * @param other 参与比较的另一个节点 id。
      * @return 两个 id 数值是否相等。
      */
     public operator func ==(other: NodeId): Bool {
-        value == other.value
-    }
-}
-
-internal class NodeIdAllocator {
-    private var nextValue: Int64 = 1
-    private var maximumNodes: Int64 = Int64.Max
-
-    internal init() {}
-
-    internal init(maximumNodes: Int64) {
-        if (maximumNodes <= 0) {
-            throw IllegalArgumentException("maximum AST nodes must be positive")
-        }
-        this.maximumNodes = maximumNodes
+        lineage == other.lineage && value == other.value
     }
 
-    internal func next(): NodeId {
-        if (nextValue > maximumNodes) {
-            throw LimitExceededException("ast_nodes", maximumNodes, nextValue, "ast_allocation")
-        }
-        let result = NodeId(nextValue)
-        if (nextValue == Int64.Max) {
-            throw MarkdownException(
-                MarkdownErrorCode.LimitExceeded,
-                "NodeId space exhausted",
-                phase: "ast"
-            )
-        }
-        nextValue++
-        result
+    /** 返回包含 lineage 的哈希值。
+     * @return 节点身份的哈希值。
+     */
+    public func hashCode(): Int64 {
+        nodeIdentityHash(lineage, value)
     }
 }
 
@@ -415,10 +396,14 @@ public class AstInvariantValidator {
     /** 验证 document；超出结构限制或破坏 invariant 时抛出异常。
      * @param document 待验证的 Document。
      * @param limits 结构限制；节点数超过上限时失败。
+     * @param budget 验证的累计扫描预算。
+     * @param cancellation 验证期间的协作式取消信号。
      * @throws LimitExceededException 节点数超过上限时。
      * @throws MarkdownException 破坏 AST invariant 时。
      */
-    public func validate(document: Document, limits!: ParseLimits = ParseLimits.safe()): Unit {
+    public func validate(document: Document, limits!: ParseLimits = ParseLimits.safe(),
+        budget!: OperationBudget = OperationBudget.safe(), cancellation!: CancellationToken = CancellationToken.none()): Unit {
+        cancellation.throwIfCancelled(phase: "ast_validation")
         if (document.nodeCount > limits.maximumAstNodes) {
             throw LimitExceededException("ast_nodes", limits.maximumAstNodes, document.nodeCount, "ast_validation")
         }
@@ -427,6 +412,8 @@ public class AstInvariantValidator {
         stack.add((document.root(), None))
         var visited: Int64 = 0
         while (!stack.isEmpty()) {
+            budget.consumeScan()
+            cancellation.throwIfCancelled(phase: "ast_validation")
             let entry = stack.remove(at: stack.size - 1)
             let node = entry[0]
             let parentSpan = entry[1]
@@ -435,10 +422,12 @@ public class AstInvariantValidator {
                 fail("duplicate NodeId ${node.nodeId.value}", node.span)
             }
             validateArenaSpan(node, parentSpan)
-            validateArenaChildren(node)
+            validateArenaChildren(node, budget, cancellation)
             let children = node.children()
             var index = children.size - 1
             while (index >= 0) {
+                budget.consumeScan()
+                cancellation.throwIfCancelled(phase: "ast_validation")
                 stack.add((children[index], node.span))
                 index--
             }
@@ -447,6 +436,8 @@ public class AstInvariantValidator {
         if (visited != nodeCount) {
             var missing: Int64 = 0
             while (missing < nodeCount) {
+                budget.consumeScan()
+                cancellation.throwIfCancelled(phase: "ast_validation")
                 let missingNodeId = document.nodeAt(missing).nodeId.value
                 if (!seen.contains(missingNodeId)) {
                     break
@@ -482,9 +473,11 @@ public class AstInvariantValidator {
         }
     }
 
-    private func validateArenaChildren(node: NodeRef): Unit {
+    private func validateArenaChildren(node: NodeRef, budget: OperationBudget, cancellation: CancellationToken): Unit {
         let children = node.children()
         for (index in 0..children.size) {
+            budget.consumeScan()
+            cancellation.throwIfCancelled(phase: "ast_validation")
             let child = children[index]
             match (arenaChildrenPolicy(node.kind)) {
                 case ChildrenPolicy.None => fail("leaf node has children", node.span)

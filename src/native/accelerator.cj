@@ -30,19 +30,6 @@ public class NativeLineScanner <: LineScannerAccelerator {
         4
     }
 
-    /** 将输入按行扫描为 packed records；不受支持时返回 `None`。
-     * @param input 待扫描的 UTF-8 字节输入。
-     * @param capacity 本次扫描允许的容量上限。
-     * @return packed records；不受支持时为 `None`。
-     * @throws IllegalStateException 返回的 record 数量非法时。
-     */
-    public func scanLines(input: Array<Byte>, capacity: Int64): ?Array<UInt64> {
-        match (scanLineRecords(input, capacity)) {
-            case Some(result) => Some(result.records.slice(0, result.count))
-            case None => None
-        }
-    }
-
     /** 返回 packed-record buffer 和有效前缀长度；不受支持时返回 `None`。
      * @param input 待扫描的 UTF-8 字节输入。
      * @param capacity 本次扫描允许的容量上限。

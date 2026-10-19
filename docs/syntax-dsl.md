@@ -19,6 +19,8 @@ let mark = InlineSyntax
 
 `delimiter(opener, closer)` 定义成对边界；只传一个值时 opener 与 closer 相同。
 `token(value)` 定义单 token 语法，`metadataSuffix` 定义后缀 metadata。
+`lineBreaks(false)` 禁止匹配内容跨行。`headingIdSuffix()` 声明只用于标题末尾的结构化
+`{#id}` 语法；不是普通行内 metadata 的别名。
 
 行内 rule 还可配置 CommonMark 或 literal-backslash escaping、flanking、children、可见内容、
 嵌套、delimiter/lookahead 上限、priority、conflict group、resource cost 和 typed emitter。
@@ -41,8 +43,19 @@ let note = BlockSyntax
 语法，`documentStartOnly()` 只允许在文档开头匹配。默认 local kind 来自 opener 后的第一
 个单词；`kindFromFirstWord(false)` 使用固定 rule ID。
 
-`maximumBlockBytes` 在 batch parser 和 `RawBlockEventSession.feed()` 中使用相同的正文
-字节语义实时执行。paired block 的外层 opener/closer 不计入正文；嵌套 opener、内层
+`footnoteDefinition()` 声明 `[^label]:` 和缩进四列的多段正文，生成结构化脚注 payload。
+这与 `linePrefix` 的单行语法不同。脚注和标题语义需要完整 AST 绑定，目前不能由 RawBlock
+事件路径完成。`definitionList()` 声明 List/Entry/Term/Definition 结构，规则见
+[定义列表](definition-lists.md)。这些专用声明属于代码 DSL；external descriptor schema 1
+没有新增对应字段。
+
+专用语法按固定归属校验配置。footnoteDefinition 不接受额外参数或关闭嵌套；
+headingIdSuffix 不接受开启嵌套、自定义 escaping 或 flanking。标题后缀同时受 rule 与
+全局 lookahead 的较小值限制，并执行全局 capture 上限。脚注、标题后缀和定义列表
+成功匹配时也会计入声明的 resourceCost；不支持的选项在编译时明确失败。
+
+对 paired container，`maximumBlockBytes` 在 batch parser 和 RawBlockEventSession.feed 中
+使用相同的正文字节语义实时执行。外层 opener/closer 不计入正文；嵌套 opener、内层
 closer、普通正文和 CRLF 按原始字节计入。超过上限的 feed 立即抛出带 extension identity
 与准确原始 span 的结构化限制错误，不会等到 `finish()` 才拒绝。
 

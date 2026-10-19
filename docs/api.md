@@ -1,7 +1,7 @@
 # API reference
 
 先看[API 速查](api/quick-reference.md)。需要完整语义、错误和扩展示例时，再进入对应
-子包页面。精确声明以 [`api/public-api-v0.9.txt`](../api/public-api-v0.9.txt) 为准。
+子包页面。精确声明以 [`api/public-api-v0.10.txt`](../api/public-api-v0.10.txt) 为准。
 
 [文档首页](README.md) · [API 速查](api/quick-reference.md) · **API reference** · [Cookbook](cookbook.md)
 
@@ -30,7 +30,8 @@ import markdown.core.{MarkdownEngine, MarkdownProfile}
 import markdown.render.{HtmlOptions, HtmlRenderer}
 ```
 
-根包 `markdown.*` 继续提供兼容门面，但容易让代码无意依赖 editor、artifact 或 testkit。
+根包 `markdown.*` 包含共享实现和完整公开集合；按用途导入可以避免无意依赖 editor、
+artifact 或 testkit。可选真实富内容准备使用 `markdown.node`，见[安装指南](node-rich-backend.md)。
 
 ### 最小依赖原则
 
@@ -62,7 +63,7 @@ import markdown.render.{HtmlOptions, HtmlRenderer}
 解析和渲染的结构化失败继承 `MarkdownException`。程序应根据 `code`、`phase` 和可选
 `span` 分支，不要解析英文消息。`tryParse` 返回空文档和结构化错误，不返回部分 AST。
 
-当前 reference 对应 `0.9.0` breaking pre-GA preview。详见
+当前 reference 对应 `0.10.0` breaking pre-GA preview。详见
 [版本与兼容性](versioning-and-compatibility.md)。
 
 ---

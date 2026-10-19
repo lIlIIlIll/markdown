@@ -6,6 +6,22 @@ import std.unittest.testmacro.*
 @Test
 class ParserBehaviorTest {
     @TestCase
+    func multilineSetextInlineSpansKeepCrLfAndContainerOffsets(): Unit {
+        let source = "> **a**\r\n> b\r\n> ---\r\n"
+        let result = Markdown.parse(source)
+        let headings = AstQuery.headings(result.document)
+        @Expect(headings.size, 1)
+        @Expect(headings[0].level, 2)
+        let text = AstQuery.byKind(result.document, NodeKind.Text)
+        @Expect(text.size, 2)
+        @Expect(result.source.text(text[0]), "a")
+        @Expect(result.source.text(text[1]), "b")
+        @Expect(text[1].asText().getOrThrow().raw, "b")
+        @Expect(text[1].span, Some(SourceSpan(11, 12)))
+        AstInvariantValidator().validate(result.document)
+    }
+
+    @TestCase
     func coalescesTextLoweringsButKeepsSemanticInlineBoundaries(): Unit {
         let entityResult = Markdown.parse("a&amp;b")
         let entityChildren = entityResult.document.children()[0].children()
@@ -301,7 +317,7 @@ class ParserBehaviorTest {
         @Expect(result.document.children().size, 1)
         @Expect(result.document.nodeCount, 2)
         let node = result.document.children()[0]
-        @Expect(node.nodeId, NodeId(1))
+        @Expect(node.nodeId, NodeId(result.document.lineage, 1))
         @Expect(node.span, Some(SourceSpan(0, 20)))
         let code = node.asCodeBlock().getOrThrow()
         @Expect(code.literal, "alpha\nbeta\n")
@@ -326,6 +342,16 @@ class ParserBehaviorTest {
         @Expect(crlf.document.children().size, 1)
         @Expect(crlf.document.children()[0].asCodeBlock().getOrThrow().literal, "x\n")
         @Expect(crlf.document.children()[0].span, Some(SourceSpan(0, 11)))
+        for (source in ["```", "```\n", "```\nx", "`````\n\n```\naaa\n"]) {
+            let unclosed = Markdown.parse(source)
+            @Expect(unclosed.document.children()[0].span, Some(SourceSpan(0, source.size)))
+            let mapped = HtmlRenderer().renderWithSourceMap(unclosed.document)
+            for (entry in mapped.sourceMap.toArray()) {
+                if (!entry.generated) {
+                    @Expect(entry.sourceSpan, Some(SourceSpan(0, source.size)))
+                }
+            }
+        }
     }
 
     @TestCase
@@ -333,17 +359,17 @@ class ParserBehaviorTest {
         let result = Markdown.parse("| a |\n| b |\n")
         @Expect(result.document.nodeCount, 5)
         let paragraph = result.document.children()[0]
-        @Expect(paragraph.nodeId, NodeId(4))
+        @Expect(paragraph.nodeId, NodeId(result.document.lineage, 4))
         @Expect(paragraph.span, Some(SourceSpan(0, 11)))
         @Expect(paragraph.children().size, 3)
-        @Expect(paragraph.children()[0].nodeId, NodeId(1))
+        @Expect(paragraph.children()[0].nodeId, NodeId(result.document.lineage, 1))
         @Expect(paragraph.children()[0].span, Some(SourceSpan(0, 5)))
         @Expect(paragraph.children()[0].asText().getOrThrow().value, "| a |")
         match (paragraph.children()[1].kind) {
             case NodeKind.SoftBreak => @Expect(paragraph.children()[1].span, Some(SourceSpan(5, 6)))
             case _ => @Expect(false)
         }
-        @Expect(paragraph.children()[2].nodeId, NodeId(3))
+        @Expect(paragraph.children()[2].nodeId, NodeId(result.document.lineage, 3))
         @Expect(paragraph.children()[2].span, Some(SourceSpan(6, 11)))
         @Expect(paragraph.children()[2].asText().getOrThrow().value, "| b |")
         AstInvariantValidator().validate(result.document)
@@ -491,29 +517,30 @@ class ParserBehaviorTest {
     }
 
     @TestCase
-    func partialResultsRequireExplicitEntryAndCannotBecomeArtifacts(): Unit {
+    func fatalParseFailureHasNoSuccessDocument(): Unit {
         let limits = ParseLimits(1, 4, 8, 16, 4, 4, 4, 4, 8, 4, 4)
         let engine = MarkdownEngine.builder().limits(limits).build()
-        try {
-            engine.parse("xx");
-            @Expect(false)
-        } catch (_: LimitExceededException) {
-            @Expect(true)
+        @ExpectThrows[LimitExceededException](engine.parse("xx"))
+        match (engine.tryParse("xx")) {
+            case ParseOutcome.Failure(error) =>
+                @Expect(error.phase, "input")
+                @Expect(if (let MarkdownErrorCode.LimitExceeded <- error.code) { true } else { false })
+            case ParseOutcome.Success(_) => @Expect(false)
         }
-
-        let partial = engine.parsePartial("xx")
-        @Expect(partial.isComplete, false)
-        @Expect(partial.unfinishedPhase, "input")
-        @Expect(partial.errors.size, 1)
-        @Expect(partial.document.children().size, 0)
-        try {
-            engine.createArtifact(partial);
-            @Expect(false)
-        } catch (error: MarkdownException) {
-            match (error.code) {
-                case MarkdownErrorCode.InvalidArtifact => @Expect(true)
-                case _ => @Expect(false)
-            }
+        match (engine.tryParse("")) {
+            case ParseOutcome.Success(result) =>
+                @Expect(result.document.children().size, 0)
+                @Expect(result.document.span, Some(SourceSpan(0, 0)))
+                @Expect(engine.createArtifact(result).document.nodeId, result.document.nodeId)
+            case ParseOutcome.Failure(_) => @Expect(false)
+        }
+        let cancellation = CancellationSource()
+        cancellation.cancel()
+        match (engine.tryParse("x", cancellation: cancellation.token)) {
+            case ParseOutcome.Failure(error) =>
+                @Expect(error.phase, "input")
+                @Expect(if (let MarkdownErrorCode.Cancelled <- error.code) { true } else { false })
+            case ParseOutcome.Success(_) => @Expect(false)
         }
     }
 

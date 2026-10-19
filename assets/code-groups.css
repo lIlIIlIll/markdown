@@ -1,0 +1,21 @@
+.code-group {
+  color-scheme: light dark;
+  color: CanvasText;
+  background: Canvas;
+  border: 1px solid GrayText;
+  border-radius: .4rem;
+  margin-block: 1rem;
+  padding: .75rem;
+}
+.code-group-item { margin: 0; }
+.code-group-item + .code-group-item { margin-block-start: 1rem; }
+.code-group-item[hidden] { display: none; }
+.code-group-item figcaption { font-weight: 600; overflow-wrap: anywhere; }
+.code-group-item pre { overflow-x: auto; padding: .5rem; }
+.code-group-item mark { color: MarkText; background: Mark; }
+.code-group-tabs { display: flex; gap: .5rem; overflow-x: auto; margin-block-end: .75rem; }
+.code-group button { font: inherit; color: inherit; cursor: pointer; padding: .4rem .7rem; }
+.code-group button:disabled { cursor: default; opacity: .65; }
+.code-group [role="tab"][aria-selected="true"] { font-weight: 700; border-block-end: .2rem solid currentColor; }
+.code-group button:focus-visible, .code-group [role="tabpanel"]:focus-visible { outline: .15rem solid Highlight; outline-offset: .15rem; }
+.code-group-status { display: block; min-height: 1.5em; margin-block-start: .5rem; }

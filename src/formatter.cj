@@ -94,6 +94,14 @@ public class MarkdownFormatOptions {
 internal enum FormatAction {
     | TextValue(String)
     | NodeValue(NodeRef)
+    | FootnoteBodyStart
+    | FootnoteBodyEnd(String)
+    | DefinitionBodyStart
+    | DefinitionBodyEnd
+    | QuoteBodyStart
+    | QuoteBodyEnd
+    | ListItemBodyStart
+    | ListItemBodyEnd(String, Int64)
 }
 
 /** 将 AST 输出为确定性的 canonical Markdown。 */
@@ -118,17 +126,9 @@ public class CanonicalMarkdownRenderer {
      * @return canonical Markdown 文本。
      */
     public func render(document: Document): String {
-        let out = StringBuilder()
         let stack = ArrayList<FormatAction>()
         stack.add(FormatAction.NodeValue(document.root()))
-        while (!stack.isEmpty()) {
-            let action = stack.remove(at: stack.size - 1)
-            match (action) {
-                case FormatAction.TextValue(value) => out.append(value)
-                case FormatAction.NodeValue(node) => formatNode(node, stack, out)
-            }
-        }
-        var value = trimFormatEnd(out.toString())
+        var value = trimFormatEnd(formatActions(stack))
         if (options.finalNewline) {
             value += "\n"
         }
@@ -136,6 +136,78 @@ public class CanonicalMarkdownRenderer {
             value = replaceLfWithCrlf(value)
         }
         value
+    }
+
+    private func formatActions(stack: ArrayList<FormatAction>): String {
+        var out = StringBuilder()
+        let outputStack = ArrayList<StringBuilder>()
+        while (!stack.isEmpty()) {
+            let action = stack.remove(at: stack.size - 1)
+            match (action) {
+                case FormatAction.TextValue(value) => out.append(value)
+                case FormatAction.NodeValue(node) => formatNode(node, stack, out)
+                case FormatAction.QuoteBodyStart | FormatAction.ListItemBodyStart =>
+                    outputStack.add(out)
+                    out = StringBuilder()
+                case FormatAction.QuoteBodyEnd =>
+                    let body = trimFormatEnd(out.toString())
+                    out = outputStack.remove(at: outputStack.size - 1)
+                    out.append(if (body.isEmpty()) {
+                        ">"
+                    } else {
+                        "> "
+                    })
+                    appendPrefixedLines(body, "> ", out)
+                case FormatAction.ListItemBodyEnd(prefix, indentation) =>
+                    let body = trimFormatEnd(out.toString())
+                    out = outputStack.remove(at: outputStack.size - 1)
+                    out.append(prefix)
+                    appendPrefixedLines(body, repeatString(" ", indentation), out)
+                case FormatAction.DefinitionBodyStart =>
+                    outputStack.add(out)
+                    out = StringBuilder()
+                case FormatAction.DefinitionBodyEnd =>
+                    let body = trimFormatEnd(out.toString())
+                    out = outputStack.remove(at: outputStack.size - 1)
+                    out.append(":")
+                    if (!body.isEmpty()) {
+                        out.append(" ")
+                        var start: Int64 = 0
+                        var index: Int64 = 0
+                        while (index < body.size) {
+                            if (body[index] == b'\n') {
+                                out.append(body[start..index + 1])
+                                out.append("  ")
+                                start = index + 1
+                            }
+                            index++
+                        }
+                        out.append(body[start..])
+                    }
+                case FormatAction.FootnoteBodyStart =>
+                    outputStack.add(out)
+                    out = StringBuilder()
+                case FormatAction.FootnoteBodyEnd(label) =>
+                    let body = trimFormatEnd(out.toString())
+                    out = outputStack.remove(at: outputStack.size - 1)
+                    out.append("[^${label}]:")
+                    if (!body.isEmpty()) {
+                        out.append(" ")
+                        var start: Int64 = 0
+                        var index: Int64 = 0
+                        while (index < body.size) {
+                            if (body[index] == b'\n') {
+                                out.append(body[start..index + 1])
+                                out.append("    ")
+                                start = index + 1
+                            }
+                            index++
+                        }
+                        out.append(body[start..])
+                    }
+            }
+        }
+        out.toString()
     }
 
     private func formatNode(node: NodeRef, stack: ArrayList<FormatAction>, out: StringBuilder): Unit {
@@ -147,9 +219,9 @@ public class CanonicalMarkdownRenderer {
                 stack.add(
                     FormatAction.TextValue(repeatString(options.headingMarker, node.asHeading().getOrThrow().level) + " "))
             case NodeKind.BlockQuote =>
-                stack.add(FormatAction.TextValue("\n"))
-                pushNodes(node.children(), stack)
-                stack.add(FormatAction.TextValue("> "))
+                stack.add(FormatAction.QuoteBodyEnd)
+                pushSeparated(node.children(), "\n\n", stack)
+                stack.add(FormatAction.QuoteBodyStart)
             case NodeKind.List => pushList(node, stack)
             case NodeKind.ListItem => pushNodes(node.children(), stack)
             case NodeKind.ThematicBreak => out.append("---")
@@ -199,10 +271,63 @@ public class CanonicalMarkdownRenderer {
             case NodeKind.HtmlInline => out.append(node.asHtmlInline().getOrThrow().literal)
             case NodeKind.CustomBlock =>
                 let custom = node.asCustomBlock().getOrThrow()
+                requireSemanticRendererContract(custom, extensionRules, phase: "format")
+                if (let value: CodeGroupPayload <- custom.payload) {
+                    if (let CodeGroupRole.Group <- value.role) {
+                        stack.add(FormatAction.TextValue("\n:::"))
+                        pushSeparated(node.children(), "\n\n", stack)
+                        stack.add(FormatAction.TextValue(":::code-group\n"))
+                    } else {
+                        let code = node.children()[0].asCodeBlock().getOrThrow()
+                        formatCodeBlock(code, out, info: Some(codeGroupInfo(code, value)))
+                    }
+                    return
+                }
+                if (let value: MathPayload <- custom.payload) {
+                    out.append("$$\n${value.expression}\n$$")
+                    return
+                }
+                if (let value: DefinitionListPayload <- custom.payload) {
+                    requireDefinitionListBinding(node)
+                    match (value.role) {
+                        case DefinitionListRole.List => pushSeparated(node.children(), "\n\n", stack)
+                        case DefinitionListRole.Entry => pushSeparated(node.children(), "\n", stack)
+                        case DefinitionListRole.Term => pushNodes(node.children(), stack)
+                        case DefinitionListRole.Definition =>
+                            stack.add(FormatAction.DefinitionBodyEnd)
+                            pushSeparated(node.children(), "\n\n", stack)
+                            stack.add(FormatAction.DefinitionBodyStart)
+                    }
+                    return
+                }
+                if (let note: FootnoteDefinitionPayload <- custom.payload) {
+                    stack.add(FormatAction.FootnoteBodyEnd(escapeMarkdownText(note.labelNormalized)))
+                    pushSeparated(node.children(), "\n\n", stack)
+                    stack.add(FormatAction.FootnoteBodyStart)
+                    return
+                }
                 formatCustom(custom.extensionId, custom.localKindId, custom.payload, node.children(), node.span, true,
                     stack)
             case NodeKind.CustomInline =>
                 let custom = node.asCustomInline().getOrThrow()
+                requireSemanticRendererContract(custom, extensionRules, phase: "format")
+                if (let value: MathPayload <- custom.payload) {
+                    out.append("$${value.expression}$")
+                    return
+                }
+                if (let metadata: HeadingIdPayload <- custom.payload) {
+                    out.append(" {#${metadata.rawId}}")
+                    return
+                }
+                if (let note: FootnoteReferencePayload <- custom.payload) {
+                    let label = if (node.documentBindings.footnoteReference(node.nodeId).isSome()) {
+                        escapeMarkdownText(note.labelNormalized)
+                    } else {
+                        note.labelRaw
+                    }
+                    out.append("[^${label}]")
+                    return
+                }
                 formatCustom(custom.extensionId, custom.localKindId, custom.payload, node.children(), node.span, false,
                     stack)
         }
@@ -339,7 +464,6 @@ public class CanonicalMarkdownRenderer {
             match (children[index].kind) {
                 case NodeKind.ListItem =>
                     let item = children[index].asListItem().getOrThrow()
-                    pushNodes(children[index].children(), stack)
                     let marker = match (list.listKind) {
                         case ListKind.Bullet => options.bulletMarker
                         case ListKind.Ordered => "${list.start + index}${options.orderedDelimiter}"
@@ -349,9 +473,19 @@ public class CanonicalMarkdownRenderer {
                         case TaskState.Unchecked => " [ ]"
                         case TaskState.NotTask => ""
                     }
-                    stack.add(FormatAction.TextValue(marker + task + " "))
+                    stack.add(FormatAction.ListItemBodyEnd(marker + task + " ", marker.size + 1))
+                    pushSeparated(children[index].children(), if (list.tight) {
+                        "\n"
+                    } else {
+                        "\n\n"
+                    }, stack)
+                    stack.add(FormatAction.ListItemBodyStart)
                     if (index > 0) {
-                        stack.add(FormatAction.TextValue("\n"))
+                        stack.add(FormatAction.TextValue(if (list.tight) {
+                            "\n"
+                        } else {
+                            "\n\n"
+                        }))
                     }
                 case _ => throw MarkdownException(MarkdownErrorCode.InternalInvariantViolation,
                     "List has non-ListItem child", phase: "format", span: children[index].span)
@@ -360,12 +494,69 @@ public class CanonicalMarkdownRenderer {
         }
     }
 
-    private func formatCodeBlock(code: CodeBlockNodeView, out: StringBuilder): Unit {
-        let fence = chooseFence(code.literal)
-        out.append(fence)
-        if (!code.language.isEmpty()) {
-            out.append(code.language)
+    private func appendPrefixedLines(value: String, prefix: String, out: StringBuilder): Unit {
+        var start: Int64 = 0
+        var index: Int64 = 0
+        while (index < value.size) {
+            if (value[index] == b'\n') {
+                out.append(value[start..index + 1])
+                if (index + 1 < value.size) {
+                    out.append(prefix)
+                }
+                start = index + 1
+            }
+            index++
         }
+        out.append(value[start..])
+    }
+
+    private func codeGroupInfo(code: CodeBlockNodeView, value: CodeGroupPayload): String {
+        if (code.language.isEmpty()) {
+            return ""
+        }
+        let out = StringBuilder()
+        out.append(code.language)
+        out.append(" title=\"")
+        var start: Int64 = 0
+        for (index in 0..value.title.size) {
+            if (value.title[index] == b'\\' || value.title[index] == b'"') {
+                out.append(value.title[start..index])
+                out.append("\\")
+                out.append(value.title[index..index + 1])
+                start = index + 1
+            }
+        }
+        out.append(value.title[start..])
+        out.append("\"")
+        if (!value.highlightedLines.isEmpty()) {
+            out.append(" {")
+            for (index in 0..value.highlightedLines.size) {
+                if (index > 0) {
+                    out.append(",")
+                }
+                let range = value.highlightedLines[index]
+                out.append("${range.firstLine}")
+                if (range.lastLine != range.firstLine) {
+                    out.append("-${range.lastLine}")
+                }
+            }
+            out.append("}")
+        }
+        out.toString()
+    }
+
+    private func formatCodeBlock(code: CodeBlockNodeView, out: StringBuilder, info!: ?String = None): Unit {
+        let header = match (info) {
+            case Some(value) => value;
+            case None => code.language
+        }
+        let fence = if (options.fenceMarker == "`" && header.contains("`")) {
+            chooseFenceWith(code.literal, "~")
+        } else {
+            chooseFence(code.literal)
+        }
+        out.append(fence)
+        out.append(header)
         out.append("\n")
         out.append(code.literal)
         if (!code.literal.isEmpty() && !code.literal.endsWith("\n")) {
@@ -375,7 +566,10 @@ public class CanonicalMarkdownRenderer {
     }
 
     private func chooseFence(literal: String): String {
-        let marker = options.fenceMarker
+        chooseFenceWith(literal, options.fenceMarker)
+    }
+
+    private func chooseFenceWith(literal: String, marker: String): String {
         var longest: Int64 = 0
         var current: Int64 = 0
         var index: Int64 = 0
@@ -448,7 +642,9 @@ public class CanonicalMarkdownRenderer {
             case NodeKind.TableRow =>
                 out.append("|")
                 for (cell in node.children().toArray()) {
-                    let text = escapeTableCell(plainTextOfFormatter(cell))
+                    let actions = ArrayList<FormatAction>()
+                    pushNodes(cell.children(), actions)
+                    let text = escapeTableCell(formatActions(actions))
                     if (options.tablePadding) {
                         out.append(" ${text} |")
                     } else {
@@ -470,6 +666,17 @@ private func plainTextOfFormatter(node: NodeRef): String {
         match (current.kind) {
             case NodeKind.Text => out.append(current.asText().getOrThrow().value)
             case NodeKind.CodeSpan => out.append(current.asCodeSpan().getOrThrow().literal)
+            case NodeKind.CustomInline =>
+                if (let Some(value) <- mathPayload(current)) {
+                    out.append(value.expression)
+                } else {
+                    let children = current.children()
+                    var index = children.size - 1
+                    while (index >= 0) {
+                        stack.add(children[index])
+                        index--
+                    }
+                }
             case NodeKind.SoftBreak => out.append(" ")
             case NodeKind.HardBreak => out.append(" ")
             case _ =>
@@ -515,11 +722,21 @@ private func isMarkdownAsciiPunctuation(byte: Byte): Bool {
 private func escapeTableCell(value: String): String {
     let out = StringBuilder()
     var index: Int64 = 0
+    var backslashes: Int64 = 0
     while (index < value.size) {
         if (value[index] == b'|') {
-            out.append("\\|");
+            if (backslashes % 2 == 0) {
+                out.append("\\")
+            }
+            out.append("|");
+            backslashes = 0
             index++
         } else {
+            backslashes = if (value[index] == b'\\') {
+                backslashes + 1
+            } else {
+                0
+            }
             let next = formatterNextRune(value, index);
             out.append(value[index..next]);
             index = next

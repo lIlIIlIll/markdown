@@ -162,11 +162,13 @@ public class SyntaxTree {
     /** CST 根节点。 */
     public let root: SyntaxNode
     private let tokenArena: Array<SyntaxToken>
+    private let semanticDocument: ?Document
 
-    private init(source: SourceBuffer, root: SyntaxNode, tokenArena: Array<SyntaxToken>) {
+    private init(source: SourceBuffer, root: SyntaxNode, tokenArena: Array<SyntaxToken>, document: ?Document) {
         this.source = source
         this.root = root
         this.tokenArena = tokenArena
+        this.semanticDocument = document
     }
 
     /**
@@ -261,8 +263,8 @@ public class SyntaxTree {
         let flatRoot = SyntaxNode(SyntaxKind.DocumentNode, SourceSpan(0, source.byteLength()), tokenValues, 0,
             tokenValues.size)
         match (document) {
-            case Some(value) => SyntaxTree(source, syntaxRootForDocument(value, tokenValues), tokenValues)
-            case None => SyntaxTree(source, flatRoot, tokenValues)
+            case Some(value) => SyntaxTree(source, syntaxRootForDocument(value, tokenValues), tokenValues, document)
+            case None => SyntaxTree(source, flatRoot, tokenValues, document)
         }
     }
 
@@ -283,6 +285,9 @@ public class SyntaxTree {
      * @return 节点对应的原始 token 数组；无 span 时为空数组。
      */
     public func originatingTokens(node: NodeRef): Array<SyntaxToken> {
+        if (let Some(document) <- semanticDocument) {
+            document.requireOwned(node)
+        }
         match (node.span) {
             case Some(span) =>
                 let range = syntaxTokenRangeInSpan(tokenArena, span)
@@ -323,7 +328,7 @@ public class SyntaxTree {
         var index = range.first
         let end = range.first + range.count
         while (index < end) {
-            if (tokenArena[index].span == token.span) {
+            if (refEq(tokenArena[index], token)) {
                 return Some(index)
             }
             index++
@@ -333,6 +338,14 @@ public class SyntaxTree {
 
     internal func tokenArenaSize(): Int64 {
         tokenArena.size
+    }
+
+    internal func requireDocument(document: Document): Unit {
+        if (let Some(bound) <- semanticDocument) {
+            if (bound.revision != document.revision) {
+                throw IllegalArgumentException("syntax tree belongs to a different Document snapshot")
+            }
+        }
     }
 }
 
@@ -351,6 +364,7 @@ public class SyntaxToAstMap {
      * @param document 关联的 semantic Document。
      */
     public init(syntaxTree: SyntaxTree, document: Document) {
+        syntaxTree.requireDocument(document)
         this.syntaxTree = syntaxTree
         this.document = document
         syntaxNodesById = HashMap<Int64, SyntaxNode>()
@@ -391,6 +405,7 @@ public class SyntaxToAstMap {
      * @return 节点对应的原始 token 数组。
      */
     public func originatingTokens(node: NodeRef): Array<SyntaxToken> {
+        document.requireOwned(node)
         syntaxTree.originatingTokens(node)
     }
     /** 返回 semantic node 对应的最小 syntax node。
@@ -398,6 +413,7 @@ public class SyntaxToAstMap {
      * @return 对应的最小 syntax node；无绑定时为 `None`。
      */
     public func originatingSyntaxNode(node: NodeRef): ?SyntaxNode {
+        document.requireOwned(node)
         syntaxNodesById.get(node.nodeId.value)
     }
     /** 将带 semantic id 的 syntax node 映射回 NodeRef。
@@ -406,7 +422,20 @@ public class SyntaxToAstMap {
      */
     public func semanticNode(node: SyntaxNode): ?NodeRef {
         match (node.semanticNodeId) {
-            case Some(id) => semanticNodesById.get(id.value)
+            case Some(id) =>
+                if (id.lineage != document.lineage) {
+                    return None
+                }
+                match (semanticNodesById.get(id.value)) {
+                    case Some(value) =>
+                        if (let Some(expected) <- syntaxNodesById.get(id.value)) {
+                            if (refEq(expected, node)) {
+                                return Some(value)
+                            }
+                        }
+                        None
+                    case None => None
+                }
             case None => None
         }
     }
@@ -555,26 +584,6 @@ public class ChangedNodeSet {
     }
 }
 
-/** 可跨 snapshot 关联节点的内容和路径身份；不替代 snapshot 内的 NodeId。 */
-public struct StableNodeId <: Equatable<StableNodeId> {
-    /** 稳定身份字符串。 */
-    public let value: String
-    /**
-     * 创建稳定 id。
-     * @param value 稳定身份字符串。
-     */
-    public init(value: String) {
-        this.value = value
-    }
-    /** 按字符串值比较两个稳定 id。
-     * @param other 参与比较的另一个稳定 id。
-     * @return 两个稳定 id 是否相等。
-     */
-    public operator func ==(other: StableNodeId): Bool {
-        value == other.value
-    }
-}
-
 /** 编辑后的 snapshot、changed range、节点集合和增量路径标记。 */
 public class ReparseResult {
     /** 编辑后的 snapshot。 */
@@ -625,7 +634,6 @@ public class DocumentSnapshot {
     public let syntaxMap: SyntaxToAstMap
     /** 当前文本的 SHA-256 digest。 */
     public let sourceDigest: String
-    private let stableIds: HashMap<Int64, StableNodeId>
 
     internal init(engine: MarkdownEngine, version: Int64, result: ParseResult) {
         this.engine = engine
@@ -634,7 +642,6 @@ public class DocumentSnapshot {
         syntaxTree = SyntaxTree.parse(result.source, document: Some(result.document))
         syntaxMap = SyntaxToAstMap(syntaxTree, result.document)
         sourceDigest = Sha256.digestBytes(result.source.text().toArray())
-        stableIds = buildStableNodeIds(result)
     }
 
     /**
@@ -687,14 +694,6 @@ public class DocumentSnapshot {
             false)
     }
 
-    /** 返回当前 snapshot 中 NodeId 对应的 stable identity。
-     * @param nodeId 目标 NodeId。
-     * @return 对应的 stable identity；不存在时为 `None`。
-     */
-    public func stableNodeId(nodeId: NodeId): ?StableNodeId {
-        stableIds.get(nodeId.value)
-    }
-
     private func tryIncrementalEdit(edit: SourceEdit): ?ReparseResult {
         if (edit.range.endByte > result.source.byteLength() || edit.range.length() != edit.replacement.size ||
             !result.source.hasIdentityMapping() || !incrementalPlainText(edit.replacement)) {
@@ -705,8 +704,9 @@ public class DocumentSnapshot {
             return None
         }
         let dialect = engine.dialect
-        if (!dialect.blockRules.isEmpty() || !dialect.inlineRules.isEmpty() || !dialect.parserSpis.isEmpty() ||
-            !dialect.documentProcessors.isEmpty()) {
+        if (!dialect.blockRules.isEmpty() || !dialect.inlineRules.isEmpty() || !dialect.parserSpis.isEmpty() || dialect
+            .parserHotPlan
+            .hasDocumentStages) {
             return None
         }
         var target: ?NodeRef = None
@@ -748,10 +748,13 @@ public class DocumentSnapshot {
             } else {
                 RewriteAction.Keep
             }
-        })
+        }, limits: engine.limits)
         let sourceText = result.source.text()
         let nextText = sourceText[0..edit.range.startByte] + edit.replacement + sourceText[edit.range.endByte..]
-        let nextResult = ParseResult(nextDocument, SourceBuffer(nextText), result.diagnostics.toArray())
+        let nextSource = SourceBuffer(nextText)
+        let nextResult = ParseResult(nextDocument.withSourceBuffer(nextSource), nextSource, result
+            .diagnostics
+            .toArray())
         let nextSnapshot = DocumentSnapshot(engine, version + 1, nextResult)
         let changed = ArrayList<NodeId>()
         changed.add(textNode.nodeId)
@@ -904,51 +907,6 @@ private func incrementalPlainText(value: String): Bool {
         }
     }
     true
-}
-
-private func buildStableNodeIds(result: ParseResult): HashMap<Int64, StableNodeId> {
-    let values = HashMap<Int64, StableNodeId>()
-    var ordinal: Int64 = 0
-    for (event in result.document.walk()) {
-        if (let NodeRefWalkEvent.Enter(node) <- event) {
-            let source = match (node.span) {
-                case Some(span) => result.source.slice(span)
-                case None => ""
-            }
-            values.add(node.nodeId.value, StableNodeId(Sha256.digest("${stableNodeKind(node)}|${ordinal}|${source}")))
-            ordinal++
-        }
-    }
-    values
-}
-
-private func stableNodeKind(node: NodeRef): String {
-    match (node.kind) {
-        case NodeKind.DocumentNode => "document"
-        case NodeKind.BlockQuote => "block-quote"
-        case NodeKind.List => "list"
-        case NodeKind.ListItem => "list-item"
-        case NodeKind.Paragraph => "paragraph"
-        case NodeKind.Heading => "heading"
-        case NodeKind.ThematicBreak => "thematic-break"
-        case NodeKind.CodeBlock => "code-block"
-        case NodeKind.HtmlBlock => "html-block"
-        case NodeKind.Table => "table"
-        case NodeKind.TableRow => "table-row"
-        case NodeKind.TableCell => "table-cell"
-        case NodeKind.CustomBlock => "custom-block"
-        case NodeKind.Text => "text"
-        case NodeKind.SoftBreak => "soft-break"
-        case NodeKind.HardBreak => "hard-break"
-        case NodeKind.CodeSpan => "code-span"
-        case NodeKind.Emphasis => "emphasis"
-        case NodeKind.Strong => "strong"
-        case NodeKind.Strikethrough => "strikethrough"
-        case NodeKind.Link => "link"
-        case NodeKind.Image => "image"
-        case NodeKind.HtmlInline => "html-inline"
-        case NodeKind.CustomInline => "custom-inline"
-    }
 }
 
 private func preservingFormatText(value: String): String {

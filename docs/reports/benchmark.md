@@ -2,19 +2,19 @@
 
 Status: **PASS**
 
-Evidence status: `current`. Canonical local Linux run at 2026-10-18T01:40:46.839212+00:00 with the official STS 1.2.0 SDK, a pinned CPU, root -O2, benchmark consumer -O2 --lto thin, a 2 GiB heap, cjGCInterval=500ms and seven alternating paired samples. All frozen ratio, growth and memory gates passed. Environment, raw samples, corpus identities and executable digests are retained in the raw report; this is local execution evidence, not hosted CI or publication proof.
+Evidence status: `current`. Frozen 0.10 product measurement with unchanged thresholds. Source-to-binary replay passed offline in Arch and Ubuntu; hosted core CI and release publication remain unverified.
 
-- CommonMark parse-only geometric mean ratio vs cmark: `2.36x` (limit `2.5x`).
-- GFM parse+HTML geometric mean ratio vs cmark-gfm: `1.79x` (limit `2.5x`).
+- CommonMark parse-only geometric mean ratio vs cmark: `2.27x` (limit `2.5x`).
+- GFM parse+HTML geometric mean ratio vs cmark-gfm: `1.80x` (limit `2.5x`).
 - Raw report: `docs/reports/benchmark-raw.json`.
-- Raw SHA-256: `49e72c7b6049cddee2cb85dbb3d783a11b1c8a5652287dc9acf72ce1764bdef3`.
-- Tested source commit: `6e5a207d07903a60f8270c41badac1bb4cb104b5`.
-- Tested source Git tree: `0979d233f8c3e30436f71e5d60d7564572004382`.
+- Raw SHA-256: `0f4f838cafefebdefea784c54b487b88241a1d3f1afb79fdef352f46b82bfe2c`.
+- Tested source commit: `b930377c2ea52f4afbd5e4c93a354bda41809c82`.
+- Tested source Git tree: `6e5719ad9ed84ffb3a02cdffd1720f9cd307a0eb`.
 - Benchmark Cangjie SDK: `Cangjie Compiler: 1.2.0 (cjnative)`.
-- Product source archive SHA-256: `6ac0f505e809a70d5d4d7a7ebe23e174f83a8357d2acacfc9aea65970eaf831b`.
-- Product source tree SHA-256: `23055eea1568b2155794f0ed442b641ce3a33a9c3d5611e81e0a3eac85de1564`.
+- Product source archive SHA-256: `4e927fc560c880cb5f5f85da9cddbd629d92a773d957dbef2116cf7b6010688d`.
+- Product source tree SHA-256: `6c777aa402a9de37ca65bfc86b1fabcc5af9420678dfc78d9e31a40b1e6f1ce1`.
 - Benchmark harness SHA-256: `ba095c3ed6464805959a2af907d18c16023f605ab172253c47e0b78872de5a4a`.
-- markdown driver SHA-256: `21967044f6439a8ca5fded8eab99e1b030494ed82052507e32547bfe632ef07a`.
+- markdown driver SHA-256: `a4911c0419924247b8cee26d5ab5c49378edf135fb78ed5ec38a85ba52de2a7c`.
 - cmark driver SHA-256: `ade49af75b9eac2371dc65f2712262d6b0834997b39d2d60488a45de068cf88e`.
 - cmark-gfm driver SHA-256: `c2160a6ccb910e5357ad3d56090dc19c9847136836c6e32da44b34aacd55570b`.
 - cmark: `0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8`.

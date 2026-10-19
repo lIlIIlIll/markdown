@@ -28,7 +28,7 @@ public class AstArenaTests {
         let snapshot = builder.freeze()
 
         @Expect(snapshot.nodeCount, AST_NODE_CHUNK_SIZE + 2)
-        @Expect(snapshot.root().nodeId, NodeId(rootIndex + 1))
+        @Expect(snapshot.root().nodeId, NodeId(snapshot.lineage, rootIndex + 1))
         @Expect(snapshot.root().children().size, AST_NODE_CHUNK_SIZE + 1)
         @Expect(snapshot.root().children()[AST_NODE_CHUNK_SIZE].span,
             Some(SourceSpan(AST_NODE_CHUNK_SIZE, AST_NODE_CHUNK_SIZE + 1)))
@@ -47,6 +47,25 @@ public class AstArenaTests {
 
         @ExpectThrows[IllegalArgumentException](second.children(first.root()))
         @Expect(first.root() == second.root(), false)
+    }
+
+    @TestCase
+    public func rollbackDoesNotReuseAnExposedIdentityOrSnapshotRevision(): Unit {
+        let builder = AstArenaBuilder()
+        let checkpoint = builder.checkpoint()
+        let _ = builder.append(NodeKind.DocumentNode, NodeCategory.Block, Some(SourceSpan(0, 0)), NodeOriginKind.Parsed,
+            [])
+        let before = builder.snapshotView()
+        let stale = before.root()
+        builder.rollback(checkpoint)
+        let _ = builder.append(NodeKind.DocumentNode, NodeCategory.Block, Some(SourceSpan(0, 0)), NodeOriginKind.Parsed,
+            [])
+        let after = builder.freeze()
+        @Expect(after.lineage, before.lineage)
+        @Expect(after.nodeId == stale.nodeId, false)
+        @Expect(after.revision != before.revision, true)
+        @ExpectThrows[IllegalArgumentException](after.children(stale))
+        @Expect(before.root().nodeId, stale.nodeId)
     }
 
     @TestCase
@@ -88,7 +107,9 @@ public class AstArenaTests {
         let transformedBuilder = AstArenaBuilder(original)
         transformedBuilder.replaceRecord(0, NodeKind.CodeSpan, NodeCategory.Inline, Some(SourceSpan(0, 1)),
             NodeOriginKind.Transformed, payload: Some(ArenaNodePayload.CodeSpanValue("x", "`")),
-            origin: Some(NodeOrigin(NodeOriginKind.Transformed, sourceNodeIds: [NodeId(1)], transformId: Some("t"))))
+            origin: Some(
+                NodeOrigin(NodeOriginKind.Transformed, sourceNodeIds: [original.nodeAt(0).nodeId],
+                    transformId: Some("t"))))
         let transformed = transformedBuilder.freeze()
 
         @Expect(if (let NodeKind.Text <- original.nodeAt(0).kind) { true } else { false })
@@ -143,7 +164,7 @@ public class AstArenaTests {
 
         @Expect(snapshot.nodeCount, 3)
         @Expect(snapshot.nodeAt(0).asText().getOrThrow().value, "x")
-        @Expect(snapshot.root().children()[0].nodeId, NodeId(2))
+        @Expect(snapshot.root().children()[0].nodeId.value > AST_NODE_CHUNK_SIZE + 3, true)
     }
 
     @TestCase

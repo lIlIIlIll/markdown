@@ -91,13 +91,13 @@ main(args: Array<String>): Int64 {
             benchmarkEngineBuilder().profile(MarkdownProfile.commonMark0312()).limits(ParseLimits.trusted()).build())
         let input = unsafe { ReusableUtf8Input.take(sourceBytes) }
         for (_ in 0..iterations) {
-            observed += engine.parse(input).ast.root().children().size
+            observed += engine.parse(input).document.root().children().size
         }
     } else if (args[0] == "commonmark-parse-owned") {
         let engine = accelerate(
             benchmarkEngineBuilder().profile(MarkdownProfile.commonMark0312()).limits(ParseLimits.trusted()).build())
         for (_ in 0..iterations) {
-            observed += parseOwned(engine, sourceBytes).ast.root().children().size
+            observed += parseOwned(engine, sourceBytes).document.root().children().size
         }
     } else if (args[0] == "commonmark-parse-string") {
         let engine = benchmarkEngineBuilder()
@@ -106,19 +106,19 @@ main(args: Array<String>): Int64 {
             .build()
         let sourceText = String.fromUtf8(sourceBytes)
         for (_ in 0..iterations) {
-            observed += engine.parse(sourceText).ast.root().children().size
+            observed += engine.parse(sourceText).document.root().children().size
         }
     } else if (args[0] == "commonmark-parse-bytes") {
         let engine = accelerate(
             benchmarkEngineBuilder().profile(MarkdownProfile.commonMark0312()).limits(ParseLimits.trusted()).build())
         for (_ in 0..iterations) {
-            observed += engine.parse(sourceBytes).ast.root().children().size
+            observed += engine.parse(sourceBytes).document.root().children().size
         }
     } else if (args[0] == "commonmark-parse-stream") {
         let engine = accelerate(
             benchmarkEngineBuilder().profile(MarkdownProfile.commonMark0312()).limits(ParseLimits.trusted()).build())
         for (_ in 0..iterations) {
-            observed += parseStream(engine, sourceBytes).ast.root().children().size
+            observed += parseStream(engine, sourceBytes).document.root().children().size
         }
     } else if (args[0] == "commonmark-cst") {
         let engine = benchmarkEngineBuilder()
@@ -134,7 +134,7 @@ main(args: Array<String>): Int64 {
             benchmarkEngineBuilder().profile(MarkdownProfile.commonMark0312()).limits(ParseLimits.trusted()).build())
         let renderer = unsafe { HtmlRenderer(options: HtmlOptions.specCompatible()) }
         let input = unsafe { ReusableUtf8Input.take(sourceBytes) }
-        print(renderer.render(engine.parse(input).ast))
+        print(renderer.render(engine.parse(input).document))
         return 0
     } else if (args[0] == "commonmark-html" || args[0] == "commonmark-source-map") {
         let engine = accelerate(
@@ -143,7 +143,7 @@ main(args: Array<String>): Int64 {
         let input = unsafe { ReusableUtf8Input.take(sourceBytes) }
         for (_ in 0..iterations) {
             if (args[0] == "commonmark-html") {
-                observed += renderer.render(engine.parse(input).ast).size
+                observed += renderer.render(engine.parse(input).document).size
             } else if (args[0] == "commonmark-source-map") {
                 observed += renderer.renderWithSourceMap(engine.parse(input).document).sourceMap.size
             }
@@ -154,12 +154,12 @@ main(args: Array<String>): Int64 {
         let input = unsafe { ReusableUtf8Input.take(sourceBytes) }
         if (args[0] == "gfm-parse") {
             for (_ in 0..iterations) {
-                observed += engine.parse(input).ast.root().children().size
+                observed += engine.parse(input).document.root().children().size
             }
         } else {
             let renderer = unsafe { HtmlRenderer(options: HtmlOptions.gfmCompatible()) }
             for (_ in 0..iterations) {
-                observed += renderer.render(engine.parse(input).ast).size
+                observed += renderer.render(engine.parse(input).document).size
             }
         }
     } else if (args[0] == "extension-html") {

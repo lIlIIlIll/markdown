@@ -25,6 +25,8 @@ let html = renderer.render(
 | `extensionFallbacks` | `Array<ExtensionRendererFallback>` | `[]` |
 | `rawHtmlHandler` | `?RawHtmlHandlerPort` | `None` |
 | `maximumOutputBytes` | `?Int64` | `None` |
+| `codeGroups` | `CodeGroupHtmlOptions` | `CodeGroupHtmlOptions.defaults()` |
+| `prepared` | `?RichContentPreparation` | `None` |
 
 使用扩展方言时，优先通过 engine 创建 renderer：
 
@@ -33,6 +35,9 @@ let renderer = engine.htmlRenderer(options: HtmlOptions.safe())
 ```
 
 这会自动安装 compiled dialect 的 manifest 和 renderer rules。
+
+`prepared` 接收[显式富内容准备](../rich-content.md)的结果，并验证文档 revision。
+准备结果与原文、语义 AST 和持久化缓存分离；安全默认值不会启动外部后端。
 
 ## HTML policy
 
@@ -218,23 +223,20 @@ let nodeId = output.nodeIdAt(5)
 renderer 在写出内容时同步记录 source map。generated tag 和来自节点的文本不会通过
 输出字符串搜索反推。
 
-## Buffered async output
+## 可恢复 HTML 输出
 
 ```cangjie
-let session = BufferedAsyncHtmlOutputSession(
-    renderer,
-    document,
-    chunkBytes: 4096
-)
+let session = renderer.newOutputSession(document, chunkBytes: 4096)
 let state = session.resume(sink)
 ```
 
-`resume` 返回 `Complete`、`Paused` 或 `Failed`。`bytesWritten()` 返回已经确认
-写入的 byte 数。
+构造时不渲染。resume 从保存的遍历和转义状态写出，返回 Complete、Paused 或
+`Failed(MarkdownException)`。sink 用 Continue 确认整个片段，或用 `Pause(n)` 确认 UTF-8
+前缀后暂停。重试未确认片段不会再次渲染或计费。chunkBytes 至少为 4。
 
-这个 API 会在构造 session 时生成完整 HTML。它只让 sink delivery 支持 backpressure，
-不会降低 renderer 的峰值输出内存。旧的 `AsyncHtmlRenderSession` 名称已在 0.9 删除，
-避免把 buffered adapter 误解为增量 renderer。
+`bytesWritten()`、`bytesProduced()` 和 `bufferedBytes()` 分别记录确认、生成和待写出
+字节。Complete/Failed 后不能再次 resume。旧 BufferedAsyncHtmlOutputSession 已移除。
+完整契约见[暂停与恢复 HTML 输出](../html-output.md)。
 
 ## `PlainTextRenderer`
 
@@ -303,3 +305,10 @@ let trusted = unsafe { TrustedHtml.fromString(value) }
 - [安全 HTML 与 URI](../security.md)
 - [Renderer DSL](../renderer-dsl.md)
 - [Formatting](../formatting.md)
+
+## 代码组渐进增强
+
+`HtmlRenderer(codeGroups: CodeGroupHtmlOptions(...))` 或
+`engine.htmlRenderer(codeGroups: ...)` 显式输出 tabs/copy 数据，默认关闭且不加载 JS。
+本地化标签、复制上限和完整静态回退见[代码组](../code-groups.md)。选项进入 renderer
+fingerprint；未启用时不活跃的标签不改变 fingerprint，也不改变 parser 或 source 身份。

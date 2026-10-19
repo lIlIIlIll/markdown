@@ -19,7 +19,7 @@ class CountingVisitor <: MarkdownVisitor {
 class TraversalQueryTest {
     @TestCase
     func arenaWalkerAndQueriesUseNodeRefsDirectly(): Unit {
-        let document = MarkdownEngine.builder().build().parse("# H\n\nA [link](url)").ast
+        let document = MarkdownEngine.builder().build().parse("# H\n\nA [link](url)").document
         var enters: Int64 = 0
         var exits: Int64 = 0
         for (event in document.walk()) {
