@@ -1,7 +1,7 @@
 # Issue #10 验收矩阵
 
 范围为 MD-00..08 和原始验收 ID，不删除或缩小需求。PASS 仅描述下面实际运行的维度；
-当前核心分支未推送，issue 未关闭。发布边界为 breaking pre-GA `0.10.0`，STS `1.2.0`。
+核心分支已交付 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12)，issue 未关闭。发布边界为 breaking pre-GA `0.10.0`，STS `1.2.0`。
 
 ## 证据标记
 
@@ -17,7 +17,7 @@
   进程，扩展密集、重复脚注、碰撞标题、热 byte-array/应用冷启动 warm-FS、真实后端/缓存，PASS。
 - **N1**：Node 后端修订 `db67810` 的真实 STS/Chrome/clipboard/离线 runtime gate PASS；
   固定 runtime `66482adc432167538bbcccac7a431bcbf9d6d93653981333609ef0ede5d0ba39`。
-  当前正式库的全套实际 browser/clipboard/timeout/cancel、七种 fixture 和实际 Chrome 清理
+  当前正式库的全套本地实际 browser/clipboard/timeout/cancel、七种 fixture 和实际 Chrome 清理
   gate 也 PASS，HTML SHA-256 为 `cb42c140c0fb6877dea3b3c7345a6212c92e7dbc86e711875f007697f72e70ad`。
   C1 校验实际成本；基础包不依赖 Node，不宣称 OS sandbox。
 - **P1**：修订 `b930377c2ea52f4afbd5e4c93a354bda41809c82` 的全新 attested 构建：C 比值
@@ -30,7 +30,13 @@
   `4d6fbf6f9edc44a4b6a16bcf9578c784b903614fb0d2f0e169ca55f4ead424d2`，treeState=clean。
   在写入 readiness 前，就绪校验器已用该 manifest 验证拟议状态、JUnit/API/校验和，
   返回零错误。最终原始 release gate 的执行 commit、步骤和候选 hash 以独立 evidence
-  中的 `target/release-evidence/manifest.json` 为准。Hosted core CI 尚未运行。
+  中的 `target/release-evidence/manifest.json` 为准。Hosted core CI 记录见 H1。
+
+- **H1**：[hosted 证据记录](issue-10-hosted-evidence.md)：核心 head `d383eac` 的 push
+  `39185741396` 与 PR `39185745072` 全部成功，实际 27 步 manifest/JUnit/校验和已复验。
+  canonical 采用稳定分支提交的 push artifact `12158042400`，同语言 12/12、geomean
+  `10.330166028`、最大 RSS 比 `0.555294453`，Arch/Ubuntu 断网字节重建均 PASS。
+  最终 head 的实时检查见 PR #12；静态证据不预先宣称新 metadata 提交已通过 CI。
 
 
 所有功能行的 PASS 指 F1 的实际公开行为回归；成本行明确引用各自测量修订，不将其冒充
@@ -161,16 +167,16 @@ P1 或 G1。完整原始日志、执行文件和失败诊断在独立 evidence �
 | STM-T03 | MD-06.7、11907 resume/policy/width 对照 | F1 PASS | 无 |
 | EDT-T01 | MD-07、公开编辑回归和真实候选实验 | F1/E1 PASS，不采用复杂候选 | 无 |
 | ART-T01 | MD-08.3/.4、binary/artifact/opaque/cache tests | F1/E1/C1 PASS | 无 |
-| PERF-T01 | MD-06.8、MD-07/08、固定完整工作量与 source-to-binary | S1/E1/C1/P1 PASS | G1 本地已验证；hosted core CI 未运行 |
+| PERF-T01 | MD-06.8、MD-07/08、固定完整工作量与 source-to-binary | S1/E1/C1/P1 PASS | G1/H1 已验证；实时最终检查见 PR #12 |
 
 ## DONE 关闭条件
 
 | ID | 状态 | 实现/证据/剩余原因 |
 | --- | --- | --- |
 | DONE-01 | PASS | 已核对当前 issue、AGENTS、真实源码；零向后兼容已由 issue 明确要求；标准兼容与实用单一路径仍保留 |
-| DONE-02 | PASS | 本页保留全部 ID、实现/测试/修订/环境/实际结果；hosted 未运行明确标出 |
+| DONE-02 | PASS | 本页保留全部 ID、实现/测试/修订/环境/实际结果；本地与 hosted 维度明确区分 |
 | DONE-03 | 本地 PASS | F1/P1/G1：完整构建/测试/标准语料/consumer/fuzz/benchmark/bundle；readiness 由真实 manifest 校验，最终执行记录独立保留 |
 | DONE-04 | PASS | 未修改 SDK、原始标准语料、安全/资源/冻结性能门槛；旧接口的有效风险已迁移，无静默 skip |
-| DONE-05 | 本地/离线 PASS；hosted 未运行 | 不将 PR #11 或旧 artifact 认证核心；`.github/benchmark-evidence.json` 仍指向原 PR #11，发布前需新的 hosted evidence |
-| DONE-06 | 本地完成；未关闭 issue | 核心与测量矩阵本地/离线通过；hosted core CI 和核心推送/PR 尚待授权，无删除需求或延期冒充关闭 |
-| DONE-07 | PASS | 0.10 breaking pre-GA；无旧 facade/reader/双写主轨；核心没有 push/PR/merge/release。先前保护检查迁移为明确单独授权，不自动修改规则 |
+| DONE-05 | 本地/离线/记录修订 hosted PASS | H1 保留真实 run、artifact、测试与独立重建；当前 canonical 指针已切到核心实际 CI，最终 head 状态见 PR #12 |
+| DONE-06 | 已交付 PR #12；未合并 | 核心与测量矩阵、本地/离线/记录修订 hosted 均通过；测量型候选有证据不采用。issue 由 PR 关联，最终检查与合并由维护者审阅 |
+| DONE-07 | PASS | 0.10 breaking pre-GA；无旧 facade/reader/双写主轨；核心 push/PR #12 已获单独授权；未 merge/release。先前保护检查迁移亦为明确单独授权，不自动修改规则 |

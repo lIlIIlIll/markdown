@@ -20,10 +20,10 @@ for automatic merge or publication.
 | MD-06.8 | Public append scaling tests for long loose lists, deferred-reference paragraphs, unclosed fences and many closed blocks; real scan/node-construction/patch counters | S1 costs and P1 frozen performance PASS |
 | MD-04 / EXT-T05..06 | Versioned official capability matrix, exact enable/disable/profile output, literal Front Matter boundaries and bounded deterministic smart punctuation | F1/C1/P1/G1 local qualification PASS |
 | MD-00.6 | Actual AST transform → binding → read-only analysis, shared batch/append pipeline, early whole-document execution gates and meaningful capability validation | Implemented; 1585-case run, consumers and API/evidence gates PASS |
-| MD-05 / RND-T01..02 | Math 2.0, Code Groups 1.0, typed preparation and pinned actual KaTeX/Shiki/Mermaid Linux adapter with explicit offline runtime, licenses, bounded proxy/subreaper, validated outputs and full source fallback | Current formal-library actual browser/process gate and P1/G1 PASS; hosted core CI unrun |
+| MD-05 / RND-T01..02 | Math 2.0, Code Groups 1.0, typed preparation and pinned actual KaTeX/Shiki/Mermaid Linux adapter with explicit offline runtime, licenses, bounded proxy/subreaper, validated outputs and full source fallback | Current formal-library actual browser/process gate and P1/G1 PASS; recorded-head hosted CI PASS; live final checks in PR #12 |
 | MD-05.7 / code-group portion of RND-T02 | Group/Item with ordinary fenced children, titles, line ranges and exact copy text; optional localized tabs/copy and static fallback | 1600-case Cangjie run, all normal consumers and actual Chrome clipboard/keyboard/AX checks PASS |
 | MD-07 / MD-08.1..5/.7 | Public editor semantics and phase costs; restricted variable-local and AST/token experiments; independent public encoder proof; complete measured adoption decisions | F1/S1/E1/C1/P1/G1 local PASS; no experimental candidate adopted |
-| DONE-02..06 | Per-ID matrix, fresh frozen/offline performance, all local release steps and readiness validation | Local/offline PASS; core hosted evidence unrun |
+| DONE-02..06 | Per-ID matrix, fresh frozen/offline performance, all local release steps and readiness validation | Local/offline PASS; H1 actual hosted evidence PASS; live final checks in PR #12 |
 
 The prior 0.9 raw reports remain historical measurements of their recorded
 commits. They do not qualify the changed 0.10 product. No measurements are rebound
@@ -471,3 +471,19 @@ The current formal library also passed the full actual Node/browser/clipboard/
 process gate, with the same validated fixture HTML digest as the earlier gate.
 Final execution/bundle identities are kept in the independent full gate manifest;
 hosted core CI, core publication and issue closure are not claimed.
+
+The authorized core push created draft PR #12 from `issue-10-core-model` to main.
+Head `d383eaca35c1c70802105cbf1ab8e942da6c4ea2` passed both push39185741396 and
+PR39185745072, each with both required STS1.2 jobs successful. Actual uploaded
+release evidence proves clean27steps,1621/1621,API1706 and valid checksums.
+Canonical same-language evidence now uses the push run's stable source commit,
+artifact12158042400, ZIP SHA49909b3ffab5fb39165306d9b60ff37c8f6b933a54c3f1b4645a6c40a650daff,
+raw SHA2758225050d8d9fb58fe75ff61f1f4c7e82ed36c43b4e289331f42d89d2e1cf0.
+CI geomean10.330166027944836, max RSS ratio0.5552944527522609,12/12 behavior PASS.
+The downloaded actual CI inputs were independently rebuilt byte-identically in
+network-isolated Arch and Ubuntu. The PR run's ephemeral merge identity and its
+release proof are retained separately; no measurement was rebound. Initial
+wrapper invocation with an archive-only verifier root was correctly rejected;
+using the retained Git bundle provides the required provenance. No product or
+verifier weakening was used. Final metadata-head CI remains a live PR check,
+not an advance claim by this static document. No merge/release is authorized.

@@ -1,12 +1,12 @@
 {
   "schemaVersion": 6,
   "status": "PASS",
-  "generatedAtUtc": "2026-10-18T15:55:53.611594+00:00",
+  "generatedAtUtc": "2026-10-19T01:37:23.841802+00:00",
   "identity": {
     "gitObjectFormat": "sha1",
-    "repositoryRef": "b930377c2ea52f4afbd5e4c93a354bda41809c82",
-    "repositoryCommit": "b930377c2ea52f4afbd5e4c93a354bda41809c82",
-    "gitTree": "6e5719ad9ed84ffb3a02cdffd1720f9cd307a0eb",
+    "repositoryRef": "d383eaca35c1c70802105cbf1ab8e942da6c4ea2",
+    "repositoryCommit": "d383eaca35c1c70802105cbf1ab8e942da6c4ea2",
+    "gitTree": "1e8cc684e5c576e70f69b1e7d8870c49bed52f7f",
     "productTreeSha256": "6c777aa402a9de37ca65bfc86b1fabcc5af9420678dfc78d9e31a40b1e6f1ce1",
     "harnessFiles": {
       ".github/workflows/candidate-validation.yml": "67984401c1e03c404275df0c6d438eacfda480a9ea28b9c49d436e3a69982d5f",
@@ -90,8 +90,8 @@
       "archiveSha256": "8c5fd944cd9cc51ee63d4a240e3ecc4f540345dae1468e8b47c927ecf2ba998f",
       "archiveBytes": 201602997,
       "target": "x86_64-unknown-linux-gnu",
-      "extraction": "/workspace/core-final-sdk",
-      "root": "/workspace/core-final-sdk/cangjie",
+      "extraction": "/workspace/cangjie-sdk-verified",
+      "root": "/workspace/cangjie-sdk-verified/cangjie",
       "envsetupSha256": "179d4e52c8a8d29a23d28691351f2b0897391243e5d5cb873f8a8e4502f2a288",
       "environment": {
         "schemaVersion": 1,
@@ -131,68 +131,68 @@
           "cjHeapSize"
         ],
         "variables": {
-          "CANGJIE_HOME": "/workspace/core-final-sdk/cangjie",
-          "CANGJIE_SDK_ROOT": "/workspace/core-final-sdk/cangjie",
-          "HOME": "/workspace/core-final-sdk/cangjie/.benchmark-home",
+          "CANGJIE_HOME": "/workspace/cangjie-sdk-verified/cangjie",
+          "CANGJIE_SDK_ROOT": "/workspace/cangjie-sdk-verified/cangjie",
+          "HOME": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-home",
           "LANG": "C.UTF-8",
           "LC_ALL": "C.UTF-8",
-          "LD_LIBRARY_PATH": "/workspace/core-final-sdk/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/core-final-sdk/cangjie/tools/lib:/workspace/core-final-sdk/cpp-runtime",
+          "LD_LIBRARY_PATH": "/workspace/cangjie-sdk-verified/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/cangjie-sdk-verified/cangjie/tools/lib:/workspace/cangjie-sdk-verified/cpp-runtime",
           "MARKDOWN_NATIVE_SCANNER": "0",
-          "PATH": "/workspace/core-final-sdk/cangjie/bin:/workspace/core-final-sdk/cangjie/tools/bin:/usr/bin:/bin",
-          "TMPDIR": "/workspace/core-final-sdk/cangjie/.benchmark-tmp",
+          "PATH": "/workspace/cangjie-sdk-verified/cangjie/bin:/workspace/cangjie-sdk-verified/cangjie/tools/bin:/usr/bin:/bin",
+          "TMPDIR": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-tmp",
           "TZ": "UTC"
         },
-        "sha256": "0327f19d271a797be5e4c710c9ec465da534c09e1af20b0f83f65f29eaff0dbc"
+        "sha256": "9522f017053a3e302efc754bac1a1b7c61f8140c28374327eeb80d2a9a933f35"
       }
     },
     "tools": {
       "cjc": {
         "command": [
-          "/workspace/core-final-sdk/cangjie/bin/cjc",
+          "/workspace/cangjie-sdk-verified/cangjie/bin/cjc",
           "-v"
         ],
-        "cwd": "/workspace/core-final-product",
+        "cwd": "/workspace/product",
         "exitCode": 0,
         "stdout": "Cangjie Compiler: 1.2.0 (cjnative)\nTarget: x86_64-unknown-linux-gnu\n",
         "stderr": "",
         "environment": {
-          "CANGJIE_HOME": "/workspace/core-final-sdk/cangjie",
-          "CANGJIE_SDK_ROOT": "/workspace/core-final-sdk/cangjie",
-          "HOME": "/workspace/core-final-sdk/cangjie/.benchmark-home",
+          "CANGJIE_HOME": "/workspace/cangjie-sdk-verified/cangjie",
+          "CANGJIE_SDK_ROOT": "/workspace/cangjie-sdk-verified/cangjie",
+          "HOME": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-home",
           "LANG": "C.UTF-8",
           "LC_ALL": "C.UTF-8",
-          "LD_LIBRARY_PATH": "/workspace/core-final-sdk/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/core-final-sdk/cangjie/tools/lib:/workspace/core-final-sdk/cpp-runtime",
+          "LD_LIBRARY_PATH": "/workspace/cangjie-sdk-verified/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/cangjie-sdk-verified/cangjie/tools/lib:/workspace/cangjie-sdk-verified/cpp-runtime",
           "MARKDOWN_NATIVE_SCANNER": "0",
-          "PATH": "/workspace/core-final-sdk/cangjie/bin:/workspace/core-final-sdk/cangjie/tools/bin:/usr/bin:/bin",
-          "TMPDIR": "/workspace/core-final-sdk/cangjie/.benchmark-tmp",
+          "PATH": "/workspace/cangjie-sdk-verified/cangjie/bin:/workspace/cangjie-sdk-verified/cangjie/tools/bin:/usr/bin:/bin",
+          "TMPDIR": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-tmp",
           "TZ": "UTC"
         },
-        "path": "/workspace/core-final-sdk/cangjie/bin/cjc",
+        "path": "/workspace/cangjie-sdk-verified/cangjie/bin/cjc",
         "bytes": 72906096,
         "sha256": "023be1bb2ded1078906fc91919b3c1175ad14436ad88d23d505f7b8dcd0d7118"
       },
       "cjpm": {
         "command": [
-          "/workspace/core-final-sdk/cangjie/tools/bin/cjpm",
+          "/workspace/cangjie-sdk-verified/cangjie/tools/bin/cjpm",
           "--version"
         ],
-        "cwd": "/workspace/core-final-product",
+        "cwd": "/workspace/product",
         "exitCode": 0,
         "stdout": "Cangjie Project Manager: 1.2.0\n",
         "stderr": "",
         "environment": {
-          "CANGJIE_HOME": "/workspace/core-final-sdk/cangjie",
-          "CANGJIE_SDK_ROOT": "/workspace/core-final-sdk/cangjie",
-          "HOME": "/workspace/core-final-sdk/cangjie/.benchmark-home",
+          "CANGJIE_HOME": "/workspace/cangjie-sdk-verified/cangjie",
+          "CANGJIE_SDK_ROOT": "/workspace/cangjie-sdk-verified/cangjie",
+          "HOME": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-home",
           "LANG": "C.UTF-8",
           "LC_ALL": "C.UTF-8",
-          "LD_LIBRARY_PATH": "/workspace/core-final-sdk/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/core-final-sdk/cangjie/tools/lib:/workspace/core-final-sdk/cpp-runtime",
+          "LD_LIBRARY_PATH": "/workspace/cangjie-sdk-verified/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/cangjie-sdk-verified/cangjie/tools/lib:/workspace/cangjie-sdk-verified/cpp-runtime",
           "MARKDOWN_NATIVE_SCANNER": "0",
-          "PATH": "/workspace/core-final-sdk/cangjie/bin:/workspace/core-final-sdk/cangjie/tools/bin:/usr/bin:/bin",
-          "TMPDIR": "/workspace/core-final-sdk/cangjie/.benchmark-tmp",
+          "PATH": "/workspace/cangjie-sdk-verified/cangjie/bin:/workspace/cangjie-sdk-verified/cangjie/tools/bin:/usr/bin:/bin",
+          "TMPDIR": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-tmp",
           "TZ": "UTC"
         },
-        "path": "/workspace/core-final-sdk/cangjie/tools/bin/cjpm",
+        "path": "/workspace/cangjie-sdk-verified/cangjie/tools/bin/cjpm",
         "bytes": 15266336,
         "sha256": "a565d86540656c62340aacf6ac89c175b50c1f4d9ba4f69cee6a0fdacdee412d"
       }
@@ -329,28 +329,28 @@
     "nativeScanner": {
       "cacheManifest": {
         "archive": {
-          "bytes": 5206,
-          "path": "/workspace/core-final-product/target/native/libmarkdown_scanner.a",
-          "sha256": "11c9b2fc6140b0e9f00ed02f804e8faf638d3434758aefa3124a1719def47389"
+          "bytes": 5318,
+          "path": "/workspace/product/target/native/libmarkdown_scanner.a",
+          "sha256": "1ed09dffabc1e9f45f78f68fe421b48796a42a4f5c9e438d22ead421feb504d0"
         },
         "archiveCommand": [
-          "/usr/bin/ar",
+          "/usr/bin/x86_64-linux-gnu-ar",
           "rcs",
-          "/workspace/core-final-product/target/native/libmarkdown_scanner.a",
-          "/workspace/core-final-product/target/native/markdown_scanner.o"
+          "/workspace/product/target/native/libmarkdown_scanner.a",
+          "/workspace/product/target/native/markdown_scanner.o"
         ],
         "archiver": {
-          "bytes": 51664,
-          "path": "/usr/bin/ar",
-          "sha256": "41861189eb10fb9fe73ffcb8c82bdbbe5f6084de78e03f15acddd1d33071c3a4",
+          "bytes": 55792,
+          "path": "/usr/bin/x86_64-linux-gnu-ar",
+          "sha256": "6452af2eea333b8c65e1adb92964fc8f97863ab003fa13f9d12bff5345cd7dbe",
           "version": {
             "command": [
-              "/usr/bin/ar",
+              "/usr/bin/x86_64-linux-gnu-ar",
               "--version"
             ],
             "exitCode": 0,
             "stderr": "",
-            "stdout": "GNU ar (GNU Binutils) 2.47\nCopyright (C) 2026 Free Software Foundation, Inc.\nThis program is free software; you may redistribute it under the terms of\nthe GNU General Public License version 3 or (at your option) any later version.\nThis program has absolutely no warranty.\n"
+            "stdout": "GNU ar (GNU Binutils for Ubuntu) 2.42\nCopyright (C) 2024 Free Software Foundation, Inc.\nThis program is free software; you may redistribute it under the terms of\nthe GNU General Public License version 3 or (at your option) any later version.\nThis program has absolutely no warranty.\n"
           }
         },
         "buildEnvironment": {
@@ -382,19 +382,19 @@
             "WindowsSdkDir"
           ],
           "schemaVersion": 1,
-          "sha256": "463515198b06d05d84b32ded6cc1825ff6a48923cf2cf16a90e83e8df6d32642",
+          "sha256": "6636cd43b8f38166b17e8122e3a3165deef591e3033f4d0b0deb053d1abc450c",
           "variables": {
-            "HOME": "/workspace/core-final-product/target/native/.native-build-home",
+            "HOME": "/workspace/product/target/native/.native-build-home",
             "LANG": "C",
             "LC_ALL": "C",
-            "PATH": "/usr/bin:/bin",
+            "PATH": "/usr/lib/llvm-18/bin:/usr/bin:/bin",
             "SOURCE_DATE_EPOCH": "0",
-            "TMPDIR": "/workspace/core-final-product/target/native/.native-build-tmp",
+            "TMPDIR": "/workspace/product/target/native/.native-build-tmp",
             "TZ": "UTC"
           }
         },
         "compileCommand": [
-          "/usr/bin/clang-23",
+          "/usr/lib/llvm-18/bin/clang",
           "-target",
           "x86_64-unknown-linux-gnu",
           "-std=c11",
@@ -404,64 +404,64 @@
           "-Werror",
           "-fPIC",
           "-I",
-          "/workspace/core-final-product/native",
+          "/workspace/product/native",
           "-c",
-          "/workspace/core-final-product/native/markdown_scanner.c",
+          "/workspace/product/native/markdown_scanner.c",
           "-o",
-          "/workspace/core-final-product/target/native/markdown_scanner.o"
+          "/workspace/product/target/native/markdown_scanner.o"
         ],
         "compiler": {
-          "bytes": 174288,
-          "path": "/usr/bin/clang-23",
-          "sha256": "939a882527432ec23b094c289e7f170bf2d6ec282e74dde75e31b08602fa3eae",
+          "bytes": 140592,
+          "path": "/usr/lib/llvm-18/bin/clang",
+          "sha256": "8ef402d453d1ba4902e4ee0f0f847f6cfa01400c95aa43c24e97818b9c0e3f45",
           "version": {
             "command": [
-              "/usr/bin/clang-23",
+              "/usr/lib/llvm-18/bin/clang",
               "--version"
             ],
             "exitCode": 0,
             "stderr": "",
-            "stdout": "clang version 23.1.1\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n"
+            "stdout": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/lib/llvm-18/bin\n"
           }
         },
         "headerSha256": "945c6cf4e99f640ada03863e0988b7622fd07e13839493b71f3e04973317e176",
         "object": {
-          "bytes": 4968,
-          "path": "/workspace/core-final-product/target/native/markdown_scanner.o",
-          "sha256": "e8879ebf45b6210b094f730908c32eb41b58ffc5a808211f122c2693b3511766"
+          "bytes": 5080,
+          "path": "/workspace/product/target/native/markdown_scanner.o",
+          "sha256": "7be9ce8525bdaa217b06b7e928f8a1926ac23505f3e9beae32f515c844be0a7d"
         },
         "platformBranch": "gnu-like",
         "schemaVersion": 3,
         "sourceSha256": "7cf11410f4c0b4f578090c16738d9caf58798f458e58ed20561c6d12e76c88df",
         "target": "x86_64-unknown-linux-gnu"
       },
-      "cacheManifestSha256": "5f0b6dc50313ef6dac78f19fca61227617c5e1b2b1967e902b654fef5563187d",
+      "cacheManifestSha256": "d2bb9d6a05d5ae40e6f6c8aa7f8cd59063328f4b927147e68084344991a8ad38",
       "compiler": {
-        "bytes": 174288,
-        "path": "/usr/bin/clang-23",
-        "sha256": "939a882527432ec23b094c289e7f170bf2d6ec282e74dde75e31b08602fa3eae",
+        "bytes": 140592,
+        "path": "/usr/lib/llvm-18/bin/clang",
+        "sha256": "8ef402d453d1ba4902e4ee0f0f847f6cfa01400c95aa43c24e97818b9c0e3f45",
         "version": {
           "command": [
-            "/usr/bin/clang-23",
+            "/usr/lib/llvm-18/bin/clang",
             "--version"
           ],
           "exitCode": 0,
           "stderr": "",
-          "stdout": "clang version 23.1.1\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n"
+          "stdout": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/lib/llvm-18/bin\n"
         }
       },
       "archiver": {
-        "bytes": 51664,
-        "path": "/usr/bin/ar",
-        "sha256": "41861189eb10fb9fe73ffcb8c82bdbbe5f6084de78e03f15acddd1d33071c3a4",
+        "bytes": 55792,
+        "path": "/usr/bin/x86_64-linux-gnu-ar",
+        "sha256": "6452af2eea333b8c65e1adb92964fc8f97863ab003fa13f9d12bff5345cd7dbe",
         "version": {
           "command": [
-            "/usr/bin/ar",
+            "/usr/bin/x86_64-linux-gnu-ar",
             "--version"
           ],
           "exitCode": 0,
           "stderr": "",
-          "stdout": "GNU ar (GNU Binutils) 2.47\nCopyright (C) 2026 Free Software Foundation, Inc.\nThis program is free software; you may redistribute it under the terms of\nthe GNU General Public License version 3 or (at your option) any later version.\nThis program has absolutely no warranty.\n"
+          "stdout": "GNU ar (GNU Binutils for Ubuntu) 2.42\nCopyright (C) 2024 Free Software Foundation, Inc.\nThis program is free software; you may redistribute it under the terms of\nthe GNU General Public License version 3 or (at your option) any later version.\nThis program has absolutely no warranty.\n"
         }
       },
       "buildEnvironment": {
@@ -493,127 +493,129 @@
           "WindowsSdkDir"
         ],
         "schemaVersion": 1,
-        "sha256": "463515198b06d05d84b32ded6cc1825ff6a48923cf2cf16a90e83e8df6d32642",
+        "sha256": "6636cd43b8f38166b17e8122e3a3165deef591e3033f4d0b0deb053d1abc450c",
         "variables": {
-          "HOME": "/workspace/core-final-product/target/native/.native-build-home",
+          "HOME": "/workspace/product/target/native/.native-build-home",
           "LANG": "C",
           "LC_ALL": "C",
-          "PATH": "/usr/bin:/bin",
+          "PATH": "/usr/lib/llvm-18/bin:/usr/bin:/bin",
           "SOURCE_DATE_EPOCH": "0",
-          "TMPDIR": "/workspace/core-final-product/target/native/.native-build-tmp",
+          "TMPDIR": "/workspace/product/target/native/.native-build-tmp",
           "TZ": "UTC"
         }
       },
       "object": {
-        "path": "/workspace/core-final-product/target/native/markdown_scanner.o",
-        "bytes": 4968,
-        "sha256": "e8879ebf45b6210b094f730908c32eb41b58ffc5a808211f122c2693b3511766"
+        "path": "/workspace/product/target/native/markdown_scanner.o",
+        "bytes": 5080,
+        "sha256": "7be9ce8525bdaa217b06b7e928f8a1926ac23505f3e9beae32f515c844be0a7d"
       },
       "archive": {
-        "path": "/workspace/core-final-product/target/native/libmarkdown_scanner.a",
-        "bytes": 5206,
-        "sha256": "11c9b2fc6140b0e9f00ed02f804e8faf638d3434758aefa3124a1719def47389"
+        "path": "/workspace/product/target/native/libmarkdown_scanner.a",
+        "bytes": 5318,
+        "sha256": "1ed09dffabc1e9f45f78f68fe421b48796a42a4f5c9e438d22ead421feb504d0"
       }
     },
     "linkInputs": {
-      "root": "/workspace/captured-link-cpp-v1",
-      "launcher": "/workspace/core-final-sdk-linker",
+      "root": "/workspace/cangjie-sdk-verified-link-inputs",
+      "launcher": "/workspace/cangjie-sdk-verified-linker",
       "identity": {
         "schemaVersion": 1,
         "target": "x86_64-unknown-linux-gnu",
         "files": {
-          "lib64/Scrt1.o": {
-            "sha256": "98d76691c6d97233c9e1a062f32ea2d7a89f047632156d1bf7b811727fb19921",
-            "bytes": 2048,
+          "lib/gcc/x86_64-linux-gnu/14/crtbeginS.o": {
+            "sha256": "c6df2dc23605d640c4f144247cee010a1f9f333d9d86bcd2682dc94247ae107b",
+            "bytes": 2752,
             "mode": 420
           },
-          "lib64/crti.o": {
-            "sha256": "caf7f0c99019735e97e9bfabf52c376e86e1ef92d1b53a63c36a5bc2688e8fcc",
-            "bytes": 1240,
-            "mode": 420
-          },
-          "lib64/crtn.o": {
-            "sha256": "71236f0a232a3686adf2319f3ae172831e8fd8166b9f0764ed184bc4df11be3c",
-            "bytes": 808,
-            "mode": 420
-          },
-          "lib64/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o": {
-            "sha256": "557581ba917a932911a5269f36d1c2f7f6924c88052a4cdd911c862b980678df",
-            "bytes": 2768,
-            "mode": 420
-          },
-          "lib64/gcc/x86_64-pc-linux-gnu/16/crtendS.o": {
-            "sha256": "bcbcd1dcbc7b235c96ab3ff1f06e5b7f44677fed502fa22c2a0b2f8360db71fd",
+          "lib/gcc/x86_64-linux-gnu/14/crtendS.o": {
+            "sha256": "055b5475bdbd115d14cff2f232414e8f36f2be88db5c5a37b3f0e1ca258a4793",
             "bytes": 1168,
             "mode": 420
           },
-          "usr/lib/ld-linux-x86-64.so.2": {
-            "sha256": "f5e11cc62f8f2c24dff532982559f4303dba3b17e7450551372a88c8e7ea8757",
-            "bytes": 263152,
+          "lib/x86_64-linux-gnu/Scrt1.o": {
+            "sha256": "9438d15c4bac893a0e3aad2c2c86ccbceb59d5872bd07101949f237ee1c92a8b",
+            "bytes": 1656,
             "mode": 420
           },
-          "usr/lib/libc.so": {
-            "sha256": "362665345c2d0149815700776a1e3e1a7fff45ab16f32352dbe224c55d12c964",
-            "bytes": 255,
+          "lib/x86_64-linux-gnu/crti.o": {
+            "sha256": "077ccb6c68db1794da3ee262c4a16a3c6f8e902845dd0829110ad4b7065e5aa3",
+            "bytes": 1192,
             "mode": 420
           },
-          "usr/lib/libc.so.6": {
-            "sha256": "02c8c3d06180beee9c7d0392aa85736c7d19f274a81e7f8f0b3d9e28e0641524",
-            "bytes": 2215072,
+          "lib/x86_64-linux-gnu/crtn.o": {
+            "sha256": "a2266079f95b84ccc2162ebbf279bcd78858a748aa1882e0bdb912316c76a58f",
+            "bytes": 760,
             "mode": 420
           },
-          "usr/lib/libc_nonshared.a": {
-            "sha256": "de2e822b005fc8ab5a2e6c99ad5067ff9e548f495f9e54c6a027506125507430",
-            "bytes": 7266,
+          "lib/x86_64-linux-gnu/libc.so": {
+            "sha256": "fe2a4ce2930fc6b3966aa987fae808375446c8d3823b8c21792e991aad9c75df",
+            "bytes": 283,
             "mode": 420
           },
-          "usr/lib/libm.so": {
-            "sha256": "258e8802b225f70a439bbe23d6ecd468a33ce8875a02a52846a7bb5d21ff34c3",
-            "bytes": 114,
+          "lib/x86_64-linux-gnu/libc.so.6": {
+            "sha256": "3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf",
+            "bytes": 2129424,
             "mode": 420
           },
-          "usr/lib/libm.so.6": {
-            "sha256": "965106704753eefe8c31ae7da6daba3ead3d18c52b19b5fcc41178bcc4aa999d",
-            "bytes": 1268336,
+          "lib/x86_64-linux-gnu/libm.so": {
+            "sha256": "55de4a3e12e17c3e2b18eb95ee21b3f46a8893ea6cab68c0a1c3a5caaf32e6cf",
+            "bytes": 140,
             "mode": 420
           },
-          "usr/lib/libmvec.so.1": {
-            "sha256": "c807927adfba7c54714a232b348c9afef8b0ad91799eae3a353f1911734b6834",
-            "bytes": 1046896,
+          "lib/x86_64-linux-gnu/libm.so.6": {
+            "sha256": "fce00b6f25f459cf4ae0b7fae4257909a1a8a86f9149e7c029a5d617baf1ccd0",
+            "bytes": 952616,
+            "mode": 420
+          },
+          "lib/x86_64-linux-gnu/libmvec.so.1": {
+            "sha256": "57329ee0018b8fd8f8e51af5f87c723b6ecdf04679f4493134beab0f45d58ec5",
+            "bytes": 1018144,
+            "mode": 420
+          },
+          "lib64/ld-linux-x86-64.so.2": {
+            "sha256": "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da",
+            "bytes": 236616,
             "mode": 420
           },
           "usr/lib/markdown-sdk-runtime/libgcc_s.so.1": {
-            "sha256": "e618cb9c90c2eb3a1dad1cfea5b6c1eebcf2e799ad805976f4ae47bdd61c716a",
-            "bytes": 182512,
+            "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb",
+            "bytes": 183024,
             "mode": 420
           },
           "usr/lib/markdown-sdk-runtime/libstdc++.so.6": {
-            "sha256": "f5fc7380f2ae46fa4053a64be04e7b98109f1066a4bbfff3c37042488aa0be0e",
-            "bytes": 2939928,
+            "sha256": "1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11",
+            "bytes": 2592224,
+            "mode": 420
+          },
+          "usr/lib/x86_64-linux-gnu/libc_nonshared.a": {
+            "sha256": "3341391290ddd596521a61152b4e2612f4625cc85f737d875b918f6cfb2b2786",
+            "bytes": 5594,
             "mode": 420
           }
         },
         "libraryDirectories": [
+          "lib/gcc/x86_64-linux-gnu/14",
+          "lib/x86_64-linux-gnu",
           "lib64",
-          "lib64/gcc/x86_64-pc-linux-gnu/16",
-          "usr/lib",
-          "usr/lib/markdown-sdk-runtime"
+          "usr/lib/markdown-sdk-runtime",
+          "usr/lib/x86_64-linux-gnu"
         ],
-        "treeSha256": "e72aea4c7f8b5d8779db92a165e19102017b01662bf6b6250b23cc559791d535"
+        "treeSha256": "4e25eea74ce2616ab37793cdb1888733572cd4f206e53a17596b7b1472be903e"
       },
       "compilerOptions": [
         "-j1",
         "--sysroot",
-        "/workspace/captured-link-cpp-v1/sysroot",
+        "/workspace/cangjie-sdk-verified-link-inputs/sysroot",
         "--toolchain",
-        "/workspace/core-final-sdk-linker",
-        "--link-option=--sysroot=/workspace/captured-link-cpp-v1/sysroot",
+        "/workspace/cangjie-sdk-verified-linker",
+        "--link-option=--sysroot=/workspace/cangjie-sdk-verified-link-inputs/sysroot",
         "--link-option=--threads=1",
         "--link-option=--thinlto-jobs=1",
-        "--link-option=-L/workspace/captured-link-cpp-v1/sysroot/lib64",
-        "--link-option=-L/workspace/captured-link-cpp-v1/sysroot/lib64/gcc/x86_64-pc-linux-gnu/16",
-        "--link-option=-L/workspace/captured-link-cpp-v1/sysroot/usr/lib",
-        "--link-option=-L/workspace/captured-link-cpp-v1/sysroot/usr/lib/markdown-sdk-runtime"
+        "--link-option=-L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib/gcc/x86_64-linux-gnu/14",
+        "--link-option=-L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib/x86_64-linux-gnu",
+        "--link-option=-L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib64",
+        "--link-option=-L/workspace/cangjie-sdk-verified-link-inputs/sysroot/usr/lib/markdown-sdk-runtime",
+        "--link-option=-L/workspace/cangjie-sdk-verified-link-inputs/sysroot/usr/lib/x86_64-linux-gnu"
       ]
     },
     "builds": {
@@ -621,90 +623,90 @@
         "mode": "canonical",
         "build": {
           "command": [
-            "/workspace/core-final-sdk/cangjie/tools/bin/cjpm",
+            "/workspace/cangjie-sdk-verified/cangjie/tools/bin/cjpm",
             "build",
             "-j",
             "1"
           ],
-          "cwd": "/workspace/namespace-tmp/markdown-pinned-sdk-build-2_ljks7i/markdown/benchmarks/driver",
+          "cwd": "/workspace/tmp/markdown-pinned-sdk-build-0zxjy2k0/markdown/benchmarks/driver",
           "exitCode": 0,
           "stdout": "cjpm build success\n",
-          "stderr": "\u001b[33mwarning\u001b[0m: property 'current' is deprecated. CurrentProcess has been marked as deprecated, use related global functions in the std.env instead.\n  \u001b[36m==>\u001b[0m /workspace/namespace-tmp/markdown-pinned-sdk-build-2_ljks7i/markdown/benchmarks/driver/src/main.cj:36:25:\n   \u001b[36m| \u001b[0m\n\u001b[36m36\u001b[0m \u001b[36m| \u001b[0m    let input = Process.current.stdIn\u001b[0m\n   \u001b[36m| \u001b[0m                        \u001b[33m^^^^^^^ deprecated\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff deprecated`\n\n1 warning generated, 1 warning printed.\n",
+          "stderr": "\u001b[33mwarning\u001b[0m: property 'current' is deprecated. CurrentProcess has been marked as deprecated, use related global functions in the std.env instead.\n  \u001b[36m==>\u001b[0m /workspace/tmp/markdown-pinned-sdk-build-0zxjy2k0/markdown/benchmarks/driver/src/main.cj:36:25:\n   \u001b[36m| \u001b[0m\n\u001b[36m36\u001b[0m \u001b[36m| \u001b[0m    let input = Process.current.stdIn\u001b[0m\n   \u001b[36m| \u001b[0m                        \u001b[33m^^^^^^^ deprecated\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff deprecated`\n\n1 warning generated, 1 warning printed.\n",
           "environment": {
-            "CANGJIE_HOME": "/workspace/core-final-sdk/cangjie",
-            "CANGJIE_SDK_ROOT": "/workspace/core-final-sdk/cangjie",
-            "HOME": "/workspace/core-final-sdk/cangjie/.benchmark-home",
+            "CANGJIE_HOME": "/workspace/cangjie-sdk-verified/cangjie",
+            "CANGJIE_SDK_ROOT": "/workspace/cangjie-sdk-verified/cangjie",
+            "HOME": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-home",
             "LANG": "C.UTF-8",
             "LC_ALL": "C.UTF-8",
-            "LD_LIBRARY_PATH": "/workspace/core-final-sdk/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/core-final-sdk/cangjie/tools/lib:/workspace/core-final-sdk/cpp-runtime",
+            "LD_LIBRARY_PATH": "/workspace/cangjie-sdk-verified/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/cangjie-sdk-verified/cangjie/tools/lib:/workspace/cangjie-sdk-verified/cpp-runtime",
             "MARKDOWN_NATIVE_SCANNER": "0",
-            "PATH": "/workspace/core-final-sdk/cangjie/bin:/workspace/core-final-sdk/cangjie/tools/bin:/usr/bin:/bin",
-            "TMPDIR": "/workspace/core-final-sdk/cangjie/.benchmark-tmp",
+            "PATH": "/workspace/cangjie-sdk-verified/cangjie/bin:/workspace/cangjie-sdk-verified/cangjie/tools/bin:/usr/bin:/bin",
+            "TMPDIR": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-tmp",
             "TZ": "UTC"
           }
         },
         "sourceProductTreeSha256": "6c777aa402a9de37ca65bfc86b1fabcc5af9420678dfc78d9e31a40b1e6f1ce1",
-        "trimPath": "/workspace/namespace-tmp/markdown-pinned-sdk-build-2_ljks7i/markdown",
-        "compileOption": "-O2 --lto thin --obf-seed 0 --trimpath /workspace/namespace-tmp/markdown-pinned-sdk-build-2_ljks7i/markdown -j1 --sysroot /workspace/captured-link-cpp-v1/sysroot --toolchain /workspace/core-final-sdk-linker --link-option=--sysroot=/workspace/captured-link-cpp-v1/sysroot --link-option=--threads=1 --link-option=--thinlto-jobs=1 --link-option=-L/workspace/captured-link-cpp-v1/sysroot/lib64 --link-option=-L/workspace/captured-link-cpp-v1/sysroot/lib64/gcc/x86_64-pc-linux-gnu/16 --link-option=-L/workspace/captured-link-cpp-v1/sysroot/usr/lib --link-option=-L/workspace/captured-link-cpp-v1/sysroot/usr/lib/markdown-sdk-runtime",
+        "trimPath": "/workspace/tmp/markdown-pinned-sdk-build-0zxjy2k0/markdown",
+        "compileOption": "-O2 --lto thin --obf-seed 0 --trimpath /workspace/tmp/markdown-pinned-sdk-build-0zxjy2k0/markdown -j1 --sysroot /workspace/cangjie-sdk-verified-link-inputs/sysroot --toolchain /workspace/cangjie-sdk-verified-linker --link-option=--sysroot=/workspace/cangjie-sdk-verified-link-inputs/sysroot --link-option=--threads=1 --link-option=--thinlto-jobs=1 --link-option=-L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib/gcc/x86_64-linux-gnu/14 --link-option=-L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib/x86_64-linux-gnu --link-option=-L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib64 --link-option=-L/workspace/cangjie-sdk-verified-link-inputs/sysroot/usr/lib/markdown-sdk-runtime --link-option=-L/workspace/cangjie-sdk-verified-link-inputs/sysroot/usr/lib/x86_64-linux-gnu",
         "linkOption": "-L ../../target/native -lmarkdown_scanner",
         "canonicalManifestSha256": "196f6bf9f20cb4a07f507d6fa9d5f7f5a58669e0fcb1d87ae858c854d700a95e",
-        "effectiveManifestSha256": "03bb085b9ec1842e3159a0db4700274cb2bb2a073a60e8e916ed0b277478b648",
+        "effectiveManifestSha256": "56a01e51e8278b9d2e4584b8381651a62633eab3f01d4d808fe8444f3ebe14ae",
         "canonicalRootManifestSha256": "4e41c70a8a23e7876ca7925915b16ce62943fe8e206dd8dc650c50080f2167cc",
-        "effectiveRootManifestSha256": "9a77848c2e994ef8a0d780ce4f37ea1f497554077b2281f74374c94988cec925",
+        "effectiveRootManifestSha256": "615362caf565a4a499502b600ab8340ea70be2e00f52d4ad67d808a3b3a635b8",
         "binary": {
-          "path": "/workspace/core-final-product/benchmarks/driver/target/release/bin/main",
-          "bytes": 6713712,
-          "sha256": "a4911c0419924247b8cee26d5ab5c49378edf135fb78ed5ec38a85ba52de2a7c"
+          "path": "/workspace/product/benchmarks/driver/target/release/bin/main",
+          "bytes": 6713744,
+          "sha256": "f52c911c430f08361a30aee90ee6d006aef7b646677778a259820e19f1f3913d"
         }
       },
       "markdownCli": {
         "mode": "canonical",
         "build": {
           "command": [
-            "/workspace/core-final-sdk/cangjie/tools/bin/cjpm",
+            "/workspace/cangjie-sdk-verified/cangjie/tools/bin/cjpm",
             "build",
             "-j",
             "1"
           ],
-          "cwd": "/workspace/namespace-tmp/markdown-pinned-sdk-build-2_ljks7i/markdown/tools/markdown",
+          "cwd": "/workspace/tmp/markdown-pinned-sdk-build-0zxjy2k0/markdown/tools/markdown",
           "exitCode": 0,
           "stdout": "cjpm build success\n",
           "stderr": "",
           "environment": {
-            "CANGJIE_HOME": "/workspace/core-final-sdk/cangjie",
-            "CANGJIE_SDK_ROOT": "/workspace/core-final-sdk/cangjie",
-            "HOME": "/workspace/core-final-sdk/cangjie/.benchmark-home",
+            "CANGJIE_HOME": "/workspace/cangjie-sdk-verified/cangjie",
+            "CANGJIE_SDK_ROOT": "/workspace/cangjie-sdk-verified/cangjie",
+            "HOME": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-home",
             "LANG": "C.UTF-8",
             "LC_ALL": "C.UTF-8",
-            "LD_LIBRARY_PATH": "/workspace/core-final-sdk/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/core-final-sdk/cangjie/tools/lib:/workspace/core-final-sdk/cpp-runtime",
+            "LD_LIBRARY_PATH": "/workspace/cangjie-sdk-verified/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/cangjie-sdk-verified/cangjie/tools/lib:/workspace/cangjie-sdk-verified/cpp-runtime",
             "MARKDOWN_NATIVE_SCANNER": "0",
-            "PATH": "/workspace/core-final-sdk/cangjie/bin:/workspace/core-final-sdk/cangjie/tools/bin:/usr/bin:/bin",
-            "TMPDIR": "/workspace/core-final-sdk/cangjie/.benchmark-tmp",
+            "PATH": "/workspace/cangjie-sdk-verified/cangjie/bin:/workspace/cangjie-sdk-verified/cangjie/tools/bin:/usr/bin:/bin",
+            "TMPDIR": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-tmp",
             "TZ": "UTC"
           }
         },
         "sourceProductTreeSha256": "6c777aa402a9de37ca65bfc86b1fabcc5af9420678dfc78d9e31a40b1e6f1ce1",
-        "trimPath": "/workspace/namespace-tmp/markdown-pinned-sdk-build-2_ljks7i/markdown",
-        "compileOption": "-O2 --obf-seed 0 --trimpath /workspace/namespace-tmp/markdown-pinned-sdk-build-2_ljks7i/markdown -j1 --sysroot /workspace/captured-link-cpp-v1/sysroot --toolchain /workspace/core-final-sdk-linker --link-option=--sysroot=/workspace/captured-link-cpp-v1/sysroot --link-option=--threads=1 --link-option=--thinlto-jobs=1 --link-option=-L/workspace/captured-link-cpp-v1/sysroot/lib64 --link-option=-L/workspace/captured-link-cpp-v1/sysroot/lib64/gcc/x86_64-pc-linux-gnu/16 --link-option=-L/workspace/captured-link-cpp-v1/sysroot/usr/lib --link-option=-L/workspace/captured-link-cpp-v1/sysroot/usr/lib/markdown-sdk-runtime",
+        "trimPath": "/workspace/tmp/markdown-pinned-sdk-build-0zxjy2k0/markdown",
+        "compileOption": "-O2 --obf-seed 0 --trimpath /workspace/tmp/markdown-pinned-sdk-build-0zxjy2k0/markdown -j1 --sysroot /workspace/cangjie-sdk-verified-link-inputs/sysroot --toolchain /workspace/cangjie-sdk-verified-linker --link-option=--sysroot=/workspace/cangjie-sdk-verified-link-inputs/sysroot --link-option=--threads=1 --link-option=--thinlto-jobs=1 --link-option=-L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib/gcc/x86_64-linux-gnu/14 --link-option=-L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib/x86_64-linux-gnu --link-option=-L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib64 --link-option=-L/workspace/cangjie-sdk-verified-link-inputs/sysroot/usr/lib/markdown-sdk-runtime --link-option=-L/workspace/cangjie-sdk-verified-link-inputs/sysroot/usr/lib/x86_64-linux-gnu",
         "linkOption": "",
         "canonicalManifestSha256": "538dd06753800d0570a57722cab8f70fd5907f73dc3316317b4dbd30c6ec9518",
-        "effectiveManifestSha256": "6ae14ac1323f7dc86b7c73229eb0c71377957cce8d9a90956a31e0db7da41043",
+        "effectiveManifestSha256": "f5326d4636b514466e867233f811c9a3127a3d8261729b500f77bc014ddbcd03",
         "canonicalRootManifestSha256": "4e41c70a8a23e7876ca7925915b16ce62943fe8e206dd8dc650c50080f2167cc",
-        "effectiveRootManifestSha256": "9a77848c2e994ef8a0d780ce4f37ea1f497554077b2281f74374c94988cec925",
+        "effectiveRootManifestSha256": "615362caf565a4a499502b600ab8340ea70be2e00f52d4ad67d808a3b3a635b8",
         "binary": {
-          "path": "/workspace/core-final-product/tools/markdown/target/release/bin/main",
-          "bytes": 8756160,
-          "sha256": "35f797f7c259355c893cf6ee347cea74dda1f3ae30f7a72b6a9e60c4406f2a52"
+          "path": "/workspace/product/tools/markdown/target/release/bin/main",
+          "bytes": 8756192,
+          "sha256": "4a786aea88daea81817a56352649cce84b561148da453ee98610b0a9d56af812"
         }
       }
     }
   },
   "sourceInputs": {
-    "markdown4cj": "/workspace/comparator-sources/markdown4cj",
-    "commonmark4cj": "/workspace/comparator-sources/commonmark4cj"
+    "markdown4cj": "/workspace/markdown-same-language-tools/markdown4cj",
+    "commonmark4cj": "/workspace/markdown-same-language-tools/commonmark4cj"
   },
   "binaryInputs": {
-    "root": "/workspace/core-final-same-language/binaries"
+    "root": "/workspace/product/target/same-language-benchmark/binaries"
   },
   "sourceRepositories": {
     "markdown4cj": {
@@ -913,56 +915,56 @@
     "maximumPeakRssRatio": 1.2
   },
   "environment": {
-    "platform": "Linux-7.2.9-arch1-1-x86_64-with-glibc2.44",
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
     "cpu": 0,
     "tools": {
       "cjc": {
         "command": [
-          "/workspace/core-final-sdk/cangjie/bin/cjc",
+          "/workspace/cangjie-sdk-verified/cangjie/bin/cjc",
           "-v"
         ],
-        "cwd": "/workspace/core-final-product",
+        "cwd": "/workspace/product",
         "exitCode": 0,
         "stdout": "Cangjie Compiler: 1.2.0 (cjnative)\nTarget: x86_64-unknown-linux-gnu\n",
         "stderr": "",
         "environment": {
-          "CANGJIE_HOME": "/workspace/core-final-sdk/cangjie",
-          "CANGJIE_SDK_ROOT": "/workspace/core-final-sdk/cangjie",
-          "HOME": "/workspace/core-final-sdk/cangjie/.benchmark-home",
+          "CANGJIE_HOME": "/workspace/cangjie-sdk-verified/cangjie",
+          "CANGJIE_SDK_ROOT": "/workspace/cangjie-sdk-verified/cangjie",
+          "HOME": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-home",
           "LANG": "C.UTF-8",
           "LC_ALL": "C.UTF-8",
-          "LD_LIBRARY_PATH": "/workspace/core-final-sdk/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/core-final-sdk/cangjie/tools/lib:/workspace/core-final-sdk/cpp-runtime",
+          "LD_LIBRARY_PATH": "/workspace/cangjie-sdk-verified/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/cangjie-sdk-verified/cangjie/tools/lib:/workspace/cangjie-sdk-verified/cpp-runtime",
           "MARKDOWN_NATIVE_SCANNER": "0",
-          "PATH": "/workspace/core-final-sdk/cangjie/bin:/workspace/core-final-sdk/cangjie/tools/bin:/usr/bin:/bin",
-          "TMPDIR": "/workspace/core-final-sdk/cangjie/.benchmark-tmp",
+          "PATH": "/workspace/cangjie-sdk-verified/cangjie/bin:/workspace/cangjie-sdk-verified/cangjie/tools/bin:/usr/bin:/bin",
+          "TMPDIR": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-tmp",
           "TZ": "UTC"
         },
-        "path": "/workspace/core-final-sdk/cangjie/bin/cjc",
+        "path": "/workspace/cangjie-sdk-verified/cangjie/bin/cjc",
         "bytes": 72906096,
         "sha256": "023be1bb2ded1078906fc91919b3c1175ad14436ad88d23d505f7b8dcd0d7118"
       },
       "cjpm": {
         "command": [
-          "/workspace/core-final-sdk/cangjie/tools/bin/cjpm",
+          "/workspace/cangjie-sdk-verified/cangjie/tools/bin/cjpm",
           "--version"
         ],
-        "cwd": "/workspace/core-final-product",
+        "cwd": "/workspace/product",
         "exitCode": 0,
         "stdout": "Cangjie Project Manager: 1.2.0\n",
         "stderr": "",
         "environment": {
-          "CANGJIE_HOME": "/workspace/core-final-sdk/cangjie",
-          "CANGJIE_SDK_ROOT": "/workspace/core-final-sdk/cangjie",
-          "HOME": "/workspace/core-final-sdk/cangjie/.benchmark-home",
+          "CANGJIE_HOME": "/workspace/cangjie-sdk-verified/cangjie",
+          "CANGJIE_SDK_ROOT": "/workspace/cangjie-sdk-verified/cangjie",
+          "HOME": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-home",
           "LANG": "C.UTF-8",
           "LC_ALL": "C.UTF-8",
-          "LD_LIBRARY_PATH": "/workspace/core-final-sdk/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/core-final-sdk/cangjie/tools/lib:/workspace/core-final-sdk/cpp-runtime",
+          "LD_LIBRARY_PATH": "/workspace/cangjie-sdk-verified/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/cangjie-sdk-verified/cangjie/tools/lib:/workspace/cangjie-sdk-verified/cpp-runtime",
           "MARKDOWN_NATIVE_SCANNER": "0",
-          "PATH": "/workspace/core-final-sdk/cangjie/bin:/workspace/core-final-sdk/cangjie/tools/bin:/usr/bin:/bin",
-          "TMPDIR": "/workspace/core-final-sdk/cangjie/.benchmark-tmp",
+          "PATH": "/workspace/cangjie-sdk-verified/cangjie/bin:/workspace/cangjie-sdk-verified/cangjie/tools/bin:/usr/bin:/bin",
+          "TMPDIR": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-tmp",
           "TZ": "UTC"
         },
-        "path": "/workspace/core-final-sdk/cangjie/tools/bin/cjpm",
+        "path": "/workspace/cangjie-sdk-verified/cangjie/tools/bin/cjpm",
         "bytes": 15266336,
         "sha256": "a565d86540656c62340aacf6ac89c175b50c1f4d9ba4f69cee6a0fdacdee412d"
       }
@@ -1008,37 +1010,37 @@
       ],
       "markdown": {
         "variables": {
-          "CANGJIE_HOME": "/workspace/core-final-sdk/cangjie",
-          "CANGJIE_SDK_ROOT": "/workspace/core-final-sdk/cangjie",
-          "HOME": "/workspace/core-final-sdk/cangjie/.benchmark-home",
+          "CANGJIE_HOME": "/workspace/cangjie-sdk-verified/cangjie",
+          "CANGJIE_SDK_ROOT": "/workspace/cangjie-sdk-verified/cangjie",
+          "HOME": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-home",
           "LANG": "C.UTF-8",
           "LC_ALL": "C.UTF-8",
-          "LD_LIBRARY_PATH": "/workspace/core-final-sdk/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/core-final-sdk/cangjie/tools/lib:/workspace/core-final-sdk/cpp-runtime",
+          "LD_LIBRARY_PATH": "/workspace/cangjie-sdk-verified/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/cangjie-sdk-verified/cangjie/tools/lib:/workspace/cangjie-sdk-verified/cpp-runtime",
           "MARKDOWN_NATIVE_SCANNER": "0",
-          "PATH": "/workspace/core-final-sdk/cangjie/bin:/workspace/core-final-sdk/cangjie/tools/bin:/usr/bin:/bin",
-          "TMPDIR": "/workspace/core-final-sdk/cangjie/.benchmark-tmp",
+          "PATH": "/workspace/cangjie-sdk-verified/cangjie/bin:/workspace/cangjie-sdk-verified/cangjie/tools/bin:/usr/bin:/bin",
+          "TMPDIR": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-tmp",
           "TZ": "UTC",
           "cjGCInterval": "500ms",
           "cjHeapSize": "2GB"
         },
-        "sha256": "44279fab52ba2146f6a4ea45a319d051d8c21b92a1e79049934d1249ffb8eea9"
+        "sha256": "0d11db4b2fccd28ee59d6e204fa5f52f0336538ed96de9335c8e04b1e4900888"
       },
       "markdown4cj": {
         "variables": {
-          "CANGJIE_HOME": "/workspace/core-final-sdk/cangjie",
-          "CANGJIE_SDK_ROOT": "/workspace/core-final-sdk/cangjie",
-          "HOME": "/workspace/core-final-sdk/cangjie/.benchmark-home",
+          "CANGJIE_HOME": "/workspace/cangjie-sdk-verified/cangjie",
+          "CANGJIE_SDK_ROOT": "/workspace/cangjie-sdk-verified/cangjie",
+          "HOME": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-home",
           "LANG": "C.UTF-8",
           "LC_ALL": "C.UTF-8",
-          "LD_LIBRARY_PATH": "/workspace/core-final-sdk/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/core-final-sdk/cangjie/tools/lib:/workspace/core-final-sdk/cpp-runtime",
+          "LD_LIBRARY_PATH": "/workspace/cangjie-sdk-verified/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/cangjie-sdk-verified/cangjie/tools/lib:/workspace/cangjie-sdk-verified/cpp-runtime",
           "MARKDOWN_NATIVE_SCANNER": "0",
-          "PATH": "/workspace/core-final-sdk/cangjie/bin:/workspace/core-final-sdk/cangjie/tools/bin:/usr/bin:/bin",
-          "TMPDIR": "/workspace/core-final-sdk/cangjie/.benchmark-tmp",
+          "PATH": "/workspace/cangjie-sdk-verified/cangjie/bin:/workspace/cangjie-sdk-verified/cangjie/tools/bin:/usr/bin:/bin",
+          "TMPDIR": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-tmp",
           "TZ": "UTC",
           "cjGCInterval": "500ms",
           "cjHeapSize": "2GB"
         },
-        "sha256": "44279fab52ba2146f6a4ea45a319d051d8c21b92a1e79049934d1249ffb8eea9"
+        "sha256": "0d11db4b2fccd28ee59d6e204fa5f52f0336538ed96de9335c8e04b1e4900888"
       },
       "differences": {}
     }
@@ -1054,26 +1056,26 @@
   },
   "adapterBuild": {
     "command": [
-      "/workspace/core-final-sdk/cangjie/tools/bin/cjpm",
+      "/workspace/cangjie-sdk-verified/cangjie/tools/bin/cjpm",
       "build",
       "-j",
       "1",
       "-V"
     ],
-    "cwd": "/workspace/core-final-adapter",
+    "cwd": "/workspace/markdown4cj-adapter",
     "exitCode": 0,
-    "stdout": "Compiling package `commonmark4cj.commonmark`: cjc -p /workspace/core-final-adapter/deps/commonmark4cj/src/commonmark --import-path=/workspace/core-final-adapter/target/release --no-sub-pkg --output-dir=/workspace/core-final-adapter/target/release/commonmark4cj/ --obf-seed 0 --trimpath /workspace/core-final-adapter -j1 --sysroot /workspace/captured-link-cpp-v1/sysroot --toolchain /workspace/core-final-sdk-linker --link-option --sysroot=/workspace/captured-link-cpp-v1/sysroot --link-option --threads=1 --link-option --thinlto-jobs=1 --link-option -L/workspace/captured-link-cpp-v1/sysroot/lib64 --link-option -L/workspace/captured-link-cpp-v1/sysroot/lib64/gcc/x86_64-pc-linux-gnu/16 --link-option -L/workspace/captured-link-cpp-v1/sysroot/usr/lib --link-option -L/workspace/captured-link-cpp-v1/sysroot/usr/lib/markdown-sdk-runtime --output-type=staticlib -o=libcommonmark4cj.commonmark.a\nCompiling package `commonmark4cj`: cjc -p /workspace/core-final-adapter/deps/commonmark4cj/src --import-path=/workspace/core-final-adapter/target/release --output-dir=/workspace/core-final-adapter/target/release/commonmark4cj/ --obf-seed 0 --trimpath /workspace/core-final-adapter -j1 --sysroot /workspace/captured-link-cpp-v1/sysroot --toolchain /workspace/core-final-sdk-linker --link-option --sysroot=/workspace/captured-link-cpp-v1/sysroot --link-option --threads=1 --link-option --thinlto-jobs=1 --link-option -L/workspace/captured-link-cpp-v1/sysroot/lib64 --link-option -L/workspace/captured-link-cpp-v1/sysroot/lib64/gcc/x86_64-pc-linux-gnu/16 --link-option -L/workspace/captured-link-cpp-v1/sysroot/usr/lib --link-option -L/workspace/captured-link-cpp-v1/sysroot/usr/lib/markdown-sdk-runtime --output-type=staticlib -o=libcommonmark4cj.a\nCompiling package `commonmark4cj.table`: cjc -p /workspace/core-final-adapter/deps/commonmark4cj/src/table --import-path=/workspace/core-final-adapter/target/release --no-sub-pkg --output-dir=/workspace/core-final-adapter/target/release/commonmark4cj/ --obf-seed 0 --trimpath /workspace/core-final-adapter -j1 --sysroot /workspace/captured-link-cpp-v1/sysroot --toolchain /workspace/core-final-sdk-linker --link-option --sysroot=/workspace/captured-link-cpp-v1/sysroot --link-option --threads=1 --link-option --thinlto-jobs=1 --link-option -L/workspace/captured-link-cpp-v1/sysroot/lib64 --link-option -L/workspace/captured-link-cpp-v1/sysroot/lib64/gcc/x86_64-pc-linux-gnu/16 --link-option -L/workspace/captured-link-cpp-v1/sysroot/usr/lib --link-option -L/workspace/captured-link-cpp-v1/sysroot/usr/lib/markdown-sdk-runtime --output-type=staticlib -o=libcommonmark4cj.table.a\nCompiling package `markdown.core`: cjc -p /workspace/core-final-adapter/src/core --import-path=/workspace/core-final-adapter/target/release --no-sub-pkg --output-dir=/workspace/core-final-adapter/target/release/markdown/ --obf-seed 0 --trimpath /workspace/core-final-adapter -j1 --sysroot /workspace/captured-link-cpp-v1/sysroot --toolchain /workspace/core-final-sdk-linker --link-option --sysroot=/workspace/captured-link-cpp-v1/sysroot --link-option --threads=1 --link-option --thinlto-jobs=1 --link-option -L/workspace/captured-link-cpp-v1/sysroot/lib64 --link-option -L/workspace/captured-link-cpp-v1/sysroot/lib64/gcc/x86_64-pc-linux-gnu/16 --link-option -L/workspace/captured-link-cpp-v1/sysroot/usr/lib --link-option -L/workspace/captured-link-cpp-v1/sysroot/usr/lib/markdown-sdk-runtime --output-type=staticlib -o=libmarkdown.core.a\nCompiling package `markdown`: cjc -p /workspace/core-final-adapter/src --import-path=/workspace/core-final-adapter/target/release --output-dir=/workspace/core-final-adapter/target/release/bin/ -L /workspace/core-final-adapter/target/release/markdown/ -lmarkdown.core -L /workspace/core-final-adapter/target/release/commonmark4cj/ -lcommonmark4cj.commonmark --obf-seed 0 --trimpath /workspace/core-final-adapter -j1 --sysroot /workspace/captured-link-cpp-v1/sysroot --toolchain /workspace/core-final-sdk-linker --link-option --sysroot=/workspace/captured-link-cpp-v1/sysroot --link-option --threads=1 --link-option --thinlto-jobs=1 --link-option -L/workspace/captured-link-cpp-v1/sysroot/lib64 --link-option -L/workspace/captured-link-cpp-v1/sysroot/lib64/gcc/x86_64-pc-linux-gnu/16 --link-option -L/workspace/captured-link-cpp-v1/sysroot/usr/lib --link-option -L/workspace/captured-link-cpp-v1/sysroot/usr/lib/markdown-sdk-runtime --output-type=exe -o=main\nCompiling package `commonmark4cj.strikethrough`: cjc -p /workspace/core-final-adapter/deps/commonmark4cj/src/strikethrough --import-path=/workspace/core-final-adapter/target/release --no-sub-pkg --output-dir=/workspace/core-final-adapter/target/release/commonmark4cj/ --obf-seed 0 --trimpath /workspace/core-final-adapter -j1 --sysroot /workspace/captured-link-cpp-v1/sysroot --toolchain /workspace/core-final-sdk-linker --link-option --sysroot=/workspace/captured-link-cpp-v1/sysroot --link-option --threads=1 --link-option --thinlto-jobs=1 --link-option -L/workspace/captured-link-cpp-v1/sysroot/lib64 --link-option -L/workspace/captured-link-cpp-v1/sysroot/lib64/gcc/x86_64-pc-linux-gnu/16 --link-option -L/workspace/captured-link-cpp-v1/sysroot/usr/lib --link-option -L/workspace/captured-link-cpp-v1/sysroot/usr/lib/markdown-sdk-runtime --output-type=staticlib -o=libcommonmark4cj.strikethrough.a\n   Finished `build` profile compilation\n   Executable files at `/workspace/core-final-adapter/target/release/bin`\ncjpm build success\n",
-    "stderr": "\u001b[33mwarning\u001b[0m: unused function:'getStackTrace'\n  \u001b[36m==>\u001b[0m /workspace/core-final-adapter/deps/commonmark4cj/src/commonmark/package.cj:29:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m29\u001b[0m \u001b[36m| \u001b[0m  func getStackTrace(thrown: ?Exception): String {\u001b[0m\n   \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m^\u001b[0m\n\u001b[36m30\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     var res: String = \"\"\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m41\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m }\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m^ unused function\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'char'\n   \u001b[36m==>\u001b[0m /workspace/core-final-adapter/deps/commonmark4cj/src/commonmark/link_scanner.cj:133:25:\n    \u001b[36m| \u001b[0m\n\u001b[36m133\u001b[0m \u001b[36m| \u001b[0m                    let char = scanner.peek()\u001b[0m\n    \u001b[36m| \u001b[0m                        \u001b[33m^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n2 warnings generated, 2 warnings printed.\n\u001b[33mwarning\u001b[0m: unused import 'std.regex.Matcher'\n  \u001b[36m==>\u001b[0m /workspace/core-final-adapter/src/core/package.cj:16:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m16\u001b[0m \u001b[36m| \u001b[0minternal import std.regex.Matcher\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unused import\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused import 'std.regex.Regex'\n  \u001b[36m==>\u001b[0m /workspace/core-final-adapter/src/core/package.cj:17:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m17\u001b[0m \u001b[36m| \u001b[0minternal import std.regex.Regex\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unused import\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'NULL_CHAR'\n  \u001b[36m==>\u001b[0m /workspace/core-final-adapter/src/core/package.cj:47:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m47\u001b[0m \u001b[36m| \u001b[0mlet NULL_CHAR: Rune = '\\u{0}'\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'EMPTY_STRING'\n  \u001b[36m==>\u001b[0m /workspace/core-final-adapter/src/core/package.cj:48:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m48\u001b[0m \u001b[36m| \u001b[0mlet EMPTY_STRING: String = \"\"\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'EMPTY_MAP'\n  \u001b[36m==>\u001b[0m /workspace/core-final-adapter/src/core/package.cj:49:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m49\u001b[0m \u001b[36m| \u001b[0mlet EMPTY_MAP: Map<String, String> = HashMap()\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'appends'\n  \u001b[36m==>\u001b[0m /workspace/core-final-adapter/src/core/package.cj:54:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m54\u001b[0m \u001b[36m| \u001b[0m      func appends(str: ToString): StringBuilder {\u001b[0m\n   \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m55\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         this.append(str)\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m57\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n  \u001b[36m==>\u001b[0m /workspace/core-final-adapter/src/core/core_plugin.cj:79:17:\n   \u001b[36m| \u001b[0m\n\u001b[36m79\u001b[0m \u001b[36m| \u001b[0m                visitor, text => buildView(text, true)\u001b[0m\n   \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /workspace/core-final-adapter/src/core/core_plugin.cj:121:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m121\u001b[0m \u001b[36m| \u001b[0m                visitor, code => buildView(code, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'isListNode'\n   \u001b[36m==>\u001b[0m /workspace/core-final-adapter/src/core/node_view.cj:153:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m153\u001b[0m \u001b[36m| \u001b[0m      private func isListNode(n: Node): Bool {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m154\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         n is BlockQuote || n is OrderedList || n is BulletList\u001b[0m\n\u001b[36m155\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'listLevel'\n   \u001b[36m==>\u001b[0m /workspace/core-final-adapter/src/core/core_plugin.cj:200:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m200\u001b[0m \u001b[36m| \u001b[0m      private static func listLevel(node: Node): Int {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m201\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         var level: Int = 0\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m210\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /workspace/core-final-adapter/src/core/core_plugin.cj:216:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m216\u001b[0m \u001b[36m| \u001b[0m                visitor, thematicBreak => buildView(thematicBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /workspace/core-final-adapter/src/core/core_plugin.cj:236:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m236\u001b[0m \u001b[36m| \u001b[0m                visitor, softLineBreak => buildView(softLineBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /workspace/core-final-adapter/src/core/core_plugin.cj:245:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m245\u001b[0m \u001b[36m| \u001b[0m                visitor, hardLineBreak => buildView(hardLineBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'isInTightList'\n   \u001b[36m==>\u001b[0m /workspace/core-final-adapter/src/core/core_plugin.cj:261:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m261\u001b[0m \u001b[36m| \u001b[0m      private static func isInTightList(paragraph: Paragraph): Bool {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m262\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         if (let Some(Some(list: ListBlock)) <- paragraph.getParent()?.getParent()) {\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m266\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n14 warnings generated, 14 warnings printed.\n",
+    "stdout": "Compiling package `commonmark4cj.commonmark`: cjc -p /workspace/markdown4cj-adapter/deps/commonmark4cj/src/commonmark --import-path=/workspace/markdown4cj-adapter/target/release --no-sub-pkg --output-dir=/workspace/markdown4cj-adapter/target/release/commonmark4cj/ --obf-seed 0 --trimpath /workspace/markdown4cj-adapter -j1 --sysroot /workspace/cangjie-sdk-verified-link-inputs/sysroot --toolchain /workspace/cangjie-sdk-verified-linker --link-option --sysroot=/workspace/cangjie-sdk-verified-link-inputs/sysroot --link-option --threads=1 --link-option --thinlto-jobs=1 --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib/gcc/x86_64-linux-gnu/14 --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib/x86_64-linux-gnu --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib64 --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/usr/lib/markdown-sdk-runtime --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/usr/lib/x86_64-linux-gnu --output-type=staticlib -o=libcommonmark4cj.commonmark.a\nCompiling package `commonmark4cj`: cjc -p /workspace/markdown4cj-adapter/deps/commonmark4cj/src --import-path=/workspace/markdown4cj-adapter/target/release --output-dir=/workspace/markdown4cj-adapter/target/release/commonmark4cj/ --obf-seed 0 --trimpath /workspace/markdown4cj-adapter -j1 --sysroot /workspace/cangjie-sdk-verified-link-inputs/sysroot --toolchain /workspace/cangjie-sdk-verified-linker --link-option --sysroot=/workspace/cangjie-sdk-verified-link-inputs/sysroot --link-option --threads=1 --link-option --thinlto-jobs=1 --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib/gcc/x86_64-linux-gnu/14 --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib/x86_64-linux-gnu --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib64 --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/usr/lib/markdown-sdk-runtime --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/usr/lib/x86_64-linux-gnu --output-type=staticlib -o=libcommonmark4cj.a\nCompiling package `commonmark4cj.strikethrough`: cjc -p /workspace/markdown4cj-adapter/deps/commonmark4cj/src/strikethrough --import-path=/workspace/markdown4cj-adapter/target/release --no-sub-pkg --output-dir=/workspace/markdown4cj-adapter/target/release/commonmark4cj/ --obf-seed 0 --trimpath /workspace/markdown4cj-adapter -j1 --sysroot /workspace/cangjie-sdk-verified-link-inputs/sysroot --toolchain /workspace/cangjie-sdk-verified-linker --link-option --sysroot=/workspace/cangjie-sdk-verified-link-inputs/sysroot --link-option --threads=1 --link-option --thinlto-jobs=1 --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib/gcc/x86_64-linux-gnu/14 --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib/x86_64-linux-gnu --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib64 --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/usr/lib/markdown-sdk-runtime --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/usr/lib/x86_64-linux-gnu --output-type=staticlib -o=libcommonmark4cj.strikethrough.a\nCompiling package `commonmark4cj.table`: cjc -p /workspace/markdown4cj-adapter/deps/commonmark4cj/src/table --import-path=/workspace/markdown4cj-adapter/target/release --no-sub-pkg --output-dir=/workspace/markdown4cj-adapter/target/release/commonmark4cj/ --obf-seed 0 --trimpath /workspace/markdown4cj-adapter -j1 --sysroot /workspace/cangjie-sdk-verified-link-inputs/sysroot --toolchain /workspace/cangjie-sdk-verified-linker --link-option --sysroot=/workspace/cangjie-sdk-verified-link-inputs/sysroot --link-option --threads=1 --link-option --thinlto-jobs=1 --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib/gcc/x86_64-linux-gnu/14 --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib/x86_64-linux-gnu --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib64 --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/usr/lib/markdown-sdk-runtime --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/usr/lib/x86_64-linux-gnu --output-type=staticlib -o=libcommonmark4cj.table.a\nCompiling package `markdown.core`: cjc -p /workspace/markdown4cj-adapter/src/core --import-path=/workspace/markdown4cj-adapter/target/release --no-sub-pkg --output-dir=/workspace/markdown4cj-adapter/target/release/markdown/ --obf-seed 0 --trimpath /workspace/markdown4cj-adapter -j1 --sysroot /workspace/cangjie-sdk-verified-link-inputs/sysroot --toolchain /workspace/cangjie-sdk-verified-linker --link-option --sysroot=/workspace/cangjie-sdk-verified-link-inputs/sysroot --link-option --threads=1 --link-option --thinlto-jobs=1 --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib/gcc/x86_64-linux-gnu/14 --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib/x86_64-linux-gnu --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib64 --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/usr/lib/markdown-sdk-runtime --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/usr/lib/x86_64-linux-gnu --output-type=staticlib -o=libmarkdown.core.a\nCompiling package `markdown`: cjc -p /workspace/markdown4cj-adapter/src --import-path=/workspace/markdown4cj-adapter/target/release --output-dir=/workspace/markdown4cj-adapter/target/release/bin/ -L /workspace/markdown4cj-adapter/target/release/markdown/ -lmarkdown.core -L /workspace/markdown4cj-adapter/target/release/commonmark4cj/ -lcommonmark4cj.commonmark --obf-seed 0 --trimpath /workspace/markdown4cj-adapter -j1 --sysroot /workspace/cangjie-sdk-verified-link-inputs/sysroot --toolchain /workspace/cangjie-sdk-verified-linker --link-option --sysroot=/workspace/cangjie-sdk-verified-link-inputs/sysroot --link-option --threads=1 --link-option --thinlto-jobs=1 --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib/gcc/x86_64-linux-gnu/14 --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib/x86_64-linux-gnu --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/lib64 --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/usr/lib/markdown-sdk-runtime --link-option -L/workspace/cangjie-sdk-verified-link-inputs/sysroot/usr/lib/x86_64-linux-gnu --output-type=exe -o=main\n   Finished `build` profile compilation\n   Executable files at `/workspace/markdown4cj-adapter/target/release/bin`\ncjpm build success\n",
+    "stderr": "\u001b[33mwarning\u001b[0m: unused function:'getStackTrace'\n  \u001b[36m==>\u001b[0m /workspace/markdown4cj-adapter/deps/commonmark4cj/src/commonmark/package.cj:29:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m29\u001b[0m \u001b[36m| \u001b[0m  func getStackTrace(thrown: ?Exception): String {\u001b[0m\n   \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m^\u001b[0m\n\u001b[36m30\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     var res: String = \"\"\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m41\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m }\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m^ unused function\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'char'\n   \u001b[36m==>\u001b[0m /workspace/markdown4cj-adapter/deps/commonmark4cj/src/commonmark/link_scanner.cj:133:25:\n    \u001b[36m| \u001b[0m\n\u001b[36m133\u001b[0m \u001b[36m| \u001b[0m                    let char = scanner.peek()\u001b[0m\n    \u001b[36m| \u001b[0m                        \u001b[33m^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n2 warnings generated, 2 warnings printed.\n\u001b[33mwarning\u001b[0m: unused import 'std.regex.Matcher'\n  \u001b[36m==>\u001b[0m /workspace/markdown4cj-adapter/src/core/package.cj:16:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m16\u001b[0m \u001b[36m| \u001b[0minternal import std.regex.Matcher\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unused import\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused import 'std.regex.Regex'\n  \u001b[36m==>\u001b[0m /workspace/markdown4cj-adapter/src/core/package.cj:17:1:\n   \u001b[36m| \u001b[0m\n\u001b[36m17\u001b[0m \u001b[36m| \u001b[0minternal import std.regex.Regex\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unused import\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'NULL_CHAR'\n  \u001b[36m==>\u001b[0m /workspace/markdown4cj-adapter/src/core/package.cj:47:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m47\u001b[0m \u001b[36m| \u001b[0mlet NULL_CHAR: Rune = '\\u{0}'\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'EMPTY_STRING'\n  \u001b[36m==>\u001b[0m /workspace/markdown4cj-adapter/src/core/package.cj:48:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m48\u001b[0m \u001b[36m| \u001b[0mlet EMPTY_STRING: String = \"\"\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'EMPTY_MAP'\n  \u001b[36m==>\u001b[0m /workspace/markdown4cj-adapter/src/core/package.cj:49:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m49\u001b[0m \u001b[36m| \u001b[0mlet EMPTY_MAP: Map<String, String> = HashMap()\u001b[0m\n   \u001b[36m| \u001b[0m    \u001b[33m^^^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'appends'\n  \u001b[36m==>\u001b[0m /workspace/markdown4cj-adapter/src/core/package.cj:54:5:\n   \u001b[36m| \u001b[0m\n\u001b[36m54\u001b[0m \u001b[36m| \u001b[0m      func appends(str: ToString): StringBuilder {\u001b[0m\n   \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m55\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         this.append(str)\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m57\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n   \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n  \u001b[36m==>\u001b[0m /workspace/markdown4cj-adapter/src/core/core_plugin.cj:79:17:\n   \u001b[36m| \u001b[0m\n\u001b[36m79\u001b[0m \u001b[36m| \u001b[0m                visitor, text => buildView(text, true)\u001b[0m\n   \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n   \u001b[36m| \u001b[0m\n   \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /workspace/markdown4cj-adapter/src/core/core_plugin.cj:121:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m121\u001b[0m \u001b[36m| \u001b[0m                visitor, code => buildView(code, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'isListNode'\n   \u001b[36m==>\u001b[0m /workspace/markdown4cj-adapter/src/core/node_view.cj:153:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m153\u001b[0m \u001b[36m| \u001b[0m      private func isListNode(n: Node): Bool {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m154\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         n is BlockQuote || n is OrderedList || n is BulletList\u001b[0m\n\u001b[36m155\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'listLevel'\n   \u001b[36m==>\u001b[0m /workspace/markdown4cj-adapter/src/core/core_plugin.cj:200:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m200\u001b[0m \u001b[36m| \u001b[0m      private static func listLevel(node: Node): Int {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m201\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         var level: Int = 0\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m210\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /workspace/markdown4cj-adapter/src/core/core_plugin.cj:216:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m216\u001b[0m \u001b[36m| \u001b[0m                visitor, thematicBreak => buildView(thematicBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /workspace/markdown4cj-adapter/src/core/core_plugin.cj:236:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m236\u001b[0m \u001b[36m| \u001b[0m                visitor, softLineBreak => buildView(softLineBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused variable:'visitor'\n   \u001b[36m==>\u001b[0m /workspace/markdown4cj-adapter/src/core/core_plugin.cj:245:17:\n    \u001b[36m| \u001b[0m\n\u001b[36m245\u001b[0m \u001b[36m| \u001b[0m                visitor, hardLineBreak => buildView(hardLineBreak, true)\u001b[0m\n    \u001b[36m| \u001b[0m                \u001b[33m^^^^^^^ unused variable\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n\u001b[33mwarning\u001b[0m: unused function:'isInTightList'\n   \u001b[36m==>\u001b[0m /workspace/markdown4cj-adapter/src/core/core_plugin.cj:261:5:\n    \u001b[36m| \u001b[0m\n\u001b[36m261\u001b[0m \u001b[36m| \u001b[0m      private static func isInTightList(paragraph: Paragraph): Bool {\u001b[0m\n    \u001b[36m| \u001b[0m \u001b[33m_\u001b[0m\u001b[33m____^\u001b[0m\n\u001b[36m262\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m         if (let Some(Some(list: ListBlock)) <- paragraph.getParent()?.getParent()) {\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m ...\u001b[0m\n\u001b[36m266\u001b[0m \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m     }\u001b[0m\n    \u001b[36m| \u001b[0m\u001b[33m|\u001b[0m\u001b[33m_\u001b[0m\u001b[33m____^ unused function\u001b[0m\n    \u001b[36m| \u001b[0m\n    \u001b[36m#\u001b[0m \u001b[0mnote\u001b[0m: this warning can be suppressed by setting the compiler option `-Woff unused`\n\n14 warnings generated, 14 warnings printed.\n",
     "environment": {
-      "CANGJIE_HOME": "/workspace/core-final-sdk/cangjie",
-      "CANGJIE_SDK_ROOT": "/workspace/core-final-sdk/cangjie",
-      "HOME": "/workspace/core-final-sdk/cangjie/.benchmark-home",
+      "CANGJIE_HOME": "/workspace/cangjie-sdk-verified/cangjie",
+      "CANGJIE_SDK_ROOT": "/workspace/cangjie-sdk-verified/cangjie",
+      "HOME": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-home",
       "LANG": "C.UTF-8",
       "LC_ALL": "C.UTF-8",
-      "LD_LIBRARY_PATH": "/workspace/core-final-sdk/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/core-final-sdk/cangjie/tools/lib:/workspace/core-final-sdk/cpp-runtime",
+      "LD_LIBRARY_PATH": "/workspace/cangjie-sdk-verified/cangjie/runtime/lib/linux_x86_64_cjnative:/workspace/cangjie-sdk-verified/cangjie/tools/lib:/workspace/cangjie-sdk-verified/cpp-runtime",
       "MARKDOWN_NATIVE_SCANNER": "0",
-      "PATH": "/workspace/core-final-sdk/cangjie/bin:/workspace/core-final-sdk/cangjie/tools/bin:/usr/bin:/bin",
-      "TMPDIR": "/workspace/core-final-sdk/cangjie/.benchmark-tmp",
+      "PATH": "/workspace/cangjie-sdk-verified/cangjie/bin:/workspace/cangjie-sdk-verified/cangjie/tools/bin:/usr/bin:/bin",
+      "TMPDIR": "/workspace/cangjie-sdk-verified/cangjie/.benchmark-tmp",
       "TZ": "UTC"
     },
     "coreSourceTreeSha256": "3fb987689b002586e7a9b837c369efa6371fe53fe3bb031d1d2c37d3d36cb185",
@@ -1209,167 +1211,185 @@
       "cj_res/**"
     ],
     "ohosImportCount": 0,
-    "trimPath": "/workspace/core-final-adapter",
-    "manifestSha256": "e85e31b21d852bb21fb0a84e455b88297ed1c060ee5308dd9b3400196cb0d9c2",
-    "dependencyManifestSha256": "aa9ff1b1d5811159fe35363b78bfba26f4b65950080e4fbeb8241e791efb41b2",
+    "trimPath": "/workspace/markdown4cj-adapter",
+    "manifestSha256": "f5dc24c50dfb5c40f14ba44a2b99243ddfb42a3908907ae01ef69a9315cc2f8d",
+    "dependencyManifestSha256": "14adf2f8cbb75339e151650ef56d633b522af8ad5921d1c1704a118c222890dd",
     "binary": {
       "artifactPath": "markdown4cj-driver",
-      "bytes": 6464000,
-      "sha256": "88cba707b6f098d33912550c907a09420612b9439b62d1b9806e7e5d47957083"
+      "bytes": 6464008,
+      "sha256": "3bcc00c92d7f895c0e29c0a636f60fa13738091ce275e349720d02ff79d197b0"
     },
     "buildOutputRuntimeLibraries": {},
     "buildOutputBinary": {
-      "path": "/workspace/core-final-adapter/target/release/bin/main",
-      "bytes": 6464000,
-      "sha256": "88cba707b6f098d33912550c907a09420612b9439b62d1b9806e7e5d47957083"
+      "path": "/workspace/markdown4cj-adapter/target/release/bin/main",
+      "bytes": 6464008,
+      "sha256": "3bcc00c92d7f895c0e29c0a636f60fa13738091ce275e349720d02ff79d197b0"
     },
     "runtimeLibraries": {}
   },
   "drivers": {
     "markdown": {
       "artifactPath": "markdown-driver",
-      "bytes": 6713712,
-      "sha256": "a4911c0419924247b8cee26d5ab5c49378edf135fb78ed5ec38a85ba52de2a7c"
+      "bytes": 6713744,
+      "sha256": "f52c911c430f08361a30aee90ee6d006aef7b646677778a259820e19f1f3913d"
     },
     "markdownCli": {
       "artifactPath": "markdown-cli",
-      "bytes": 8756160,
-      "sha256": "35f797f7c259355c893cf6ee347cea74dda1f3ae30f7a72b6a9e60c4406f2a52"
+      "bytes": 8756192,
+      "sha256": "4a786aea88daea81817a56352649cce84b561148da453ee98610b0a9d56af812"
     },
     "markdown4cj": {
       "artifactPath": "markdown4cj-driver",
-      "bytes": 6464000,
-      "sha256": "88cba707b6f098d33912550c907a09420612b9439b62d1b9806e7e5d47957083"
+      "bytes": 6464008,
+      "sha256": "3bcc00c92d7f895c0e29c0a636f60fa13738091ce275e349720d02ff79d197b0"
     }
   },
   "runtimeLibraries": {},
   "nativeTools": {
     "compiler": {
       "artifactPath": "toolchain/native/compiler",
-      "bytes": 174288,
-      "sha256": "939a882527432ec23b094c289e7f170bf2d6ec282e74dde75e31b08602fa3eae",
+      "bytes": 140592,
+      "sha256": "8ef402d453d1ba4902e4ee0f0f847f6cfa01400c95aa43c24e97818b9c0e3f45",
       "mode": 493
     },
     "archiver": {
       "artifactPath": "toolchain/native/archiver",
-      "bytes": 51664,
-      "sha256": "41861189eb10fb9fe73ffcb8c82bdbbe5f6084de78e03f15acddd1d33071c3a4",
+      "bytes": 55792,
+      "sha256": "6452af2eea333b8c65e1adb92964fc8f97863ab003fa13f9d12bff5345cd7dbe",
       "mode": 493
     }
   },
   "nativeCompilerResource": {
     "artifactPath": "toolchain/native/clang-resource.tar",
-    "bytes": 75202560,
-    "sha256": "a3f72005495d6a8dbe9608b103ec130ffec43d05f2a873011a54a7a2714077bc",
+    "bytes": 57927680,
+    "sha256": "2bdd157e4152f53ba686ff1e103d083c3cfbf86093571cf851d26dd674ea9446",
     "sourceCommand": [
-      "/usr/bin/clang-23",
+      "/usr/lib/llvm-18/bin/clang",
       "-print-resource-dir"
     ],
-    "sourceTreeSha256": "a2c775f5e4e1ee444b3f69896a8440c393fa2699c92777e6846827fa2534255b"
+    "sourceTreeSha256": "8c636d416414ec9e743a9b146e3ecbd2859621eff774089f0ba993a3249cc7f5"
   },
   "nativeToolRuntime": {
     "interpreterPath": "/lib64/ld-linux-x86-64.so.2",
     "loader": {
       "artifactPath": "toolchain/native/runtime/loader",
-      "bytes": 263152,
-      "sha256": "f5e11cc62f8f2c24dff532982559f4303dba3b17e7450551372a88c8e7ea8757",
+      "bytes": 236616,
+      "sha256": "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da",
       "mode": 493
     },
     "libraries": {
-      "libLLVM.so.23.1": {
-        "artifactPath": "toolchain/native/runtime/libraries/libLLVM.so.23.1",
-        "bytes": 172592256,
-        "sha256": "a97595f25e9a6eea1a9cd6017c546116eb0d8cd7525eaaa47c2772a78db76a49",
+      "libLLVM.so.18.1": {
+        "artifactPath": "toolchain/native/runtime/libraries/libLLVM.so.18.1",
+        "bytes": 123215144,
+        "sha256": "5c3a63957e28c15cdf1503892074f032d29b72e36a9824a77dfa87e48a0dafb0",
         "mode": 420
       },
-      "libbfd-2.47.so": {
-        "artifactPath": "toolchain/native/runtime/libraries/libbfd-2.47.so",
-        "bytes": 1364584,
-        "sha256": "730687d04c52164e1386a4e82c587e829747bc375f84fd06de79250655d159fa",
+      "libbfd-2.42-system.so": {
+        "artifactPath": "toolchain/native/runtime/libraries/libbfd-2.42-system.so",
+        "bytes": 1479888,
+        "sha256": "11f084bc6ff5fc64e91c0b6422040fab1245419e7ff29560a95c1176ce1b9ff4",
+        "mode": 420
+      },
+      "libbsd.so.0": {
+        "artifactPath": "toolchain/native/runtime/libraries/libbsd.so.0",
+        "bytes": 80888,
+        "sha256": "e86cd4f0019f42c2ba5e60602e0edc8694d2948377d98c3654d0f6bddb5254bb",
         "mode": 420
       },
       "libc.so.6": {
         "artifactPath": "toolchain/native/runtime/libraries/libc.so.6",
-        "bytes": 2215072,
-        "sha256": "02c8c3d06180beee9c7d0392aa85736c7d19f274a81e7f8f0b3d9e28e0641524",
+        "bytes": 2129424,
+        "sha256": "3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf",
         "mode": 420
       },
-      "libclang-cpp.so.23.1": {
-        "artifactPath": "toolchain/native/runtime/libraries/libclang-cpp.so.23.1",
-        "bytes": 77552688,
-        "sha256": "ee7a19393accfabf756dbb8ccd68012e12a4cee18cff68575b017337998c61a7",
+      "libclang-cpp.so.18.1": {
+        "artifactPath": "toolchain/native/runtime/libraries/libclang-cpp.so.18.1",
+        "bytes": 64796088,
+        "sha256": "b9592746f7f8ff1156680fb1fad5faf5486df7a67aca8327cc959463416c6718",
         "mode": 420
       },
-      "libedit.so.0": {
-        "artifactPath": "toolchain/native/runtime/libraries/libedit.so.0",
-        "bytes": 227440,
-        "sha256": "0bb14cee691695fd88a63c3cea14030ba4973c725239e15c1cd637c39d6a2007",
+      "libedit.so.2": {
+        "artifactPath": "toolchain/native/runtime/libraries/libedit.so.2",
+        "bytes": 220472,
+        "sha256": "195c607216f8581dbf516346ed38f4c73500cac4b84e18eb0a4fd49931e4cd56",
         "mode": 420
       },
       "libffi.so.8": {
         "artifactPath": "toolchain/native/runtime/libraries/libffi.so.8",
-        "bytes": 51432,
-        "sha256": "b38bb3a55ba04dfbb5be68e881a72385d6c30010afffb1cf1dfc373b72c2278c",
+        "bytes": 47672,
+        "sha256": "00f593fe192f2851b8ce23b25cec2488d769beb5a8f63e8c9e563071e1075153",
         "mode": 420
       },
       "libgcc_s.so.1": {
         "artifactPath": "toolchain/native/runtime/libraries/libgcc_s.so.1",
-        "bytes": 182512,
-        "sha256": "e618cb9c90c2eb3a1dad1cfea5b6c1eebcf2e799ad805976f4ae47bdd61c716a",
+        "bytes": 183024,
+        "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb",
         "mode": 420
       },
-      "libicudata.so.78": {
-        "artifactPath": "toolchain/native/runtime/libraries/libicudata.so.78",
-        "bytes": 33112920,
-        "sha256": "d72003b08760852bee4c80cff32c1e6248ae6b1fda5bd313482733a4d5e70dc9",
+      "libicudata.so.74": {
+        "artifactPath": "toolchain/native/runtime/libraries/libicudata.so.74",
+        "bytes": 30795392,
+        "sha256": "ddbb3718b8bd9cbd780e5ab08b4503c30a6c4fa0706ebe5d074ed6b596c1714e",
         "mode": 420
       },
-      "libicuuc.so.78": {
-        "artifactPath": "toolchain/native/runtime/libraries/libicuuc.so.78",
-        "bytes": 2144304,
-        "sha256": "c99f0dd0c797c07f9ab64413d36c595393cdded6fa04cc4edd6f6a521fd155ca",
+      "libicuuc.so.74": {
+        "artifactPath": "toolchain/native/runtime/libraries/libicuuc.so.74",
+        "bytes": 2140336,
+        "sha256": "7560aadde38e5f4237a47a1ddd5891f9b36768a77a60faae30beee003ac01901",
+        "mode": 420
+      },
+      "liblzma.so.5": {
+        "artifactPath": "toolchain/native/runtime/libraries/liblzma.so.5",
+        "bytes": 202904,
+        "sha256": "696e868dd0700a19a6d65fc01608ec2d70d3cb91f65710e89180cd2e688f30cb",
         "mode": 420
       },
       "libm.so.6": {
         "artifactPath": "toolchain/native/runtime/libraries/libm.so.6",
-        "bytes": 1268336,
-        "sha256": "965106704753eefe8c31ae7da6daba3ead3d18c52b19b5fcc41178bcc4aa999d",
+        "bytes": 952616,
+        "sha256": "fce00b6f25f459cf4ae0b7fae4257909a1a8a86f9149e7c029a5d617baf1ccd0",
         "mode": 420
       },
-      "libncursesw.so.6": {
-        "artifactPath": "toolchain/native/runtime/libraries/libncursesw.so.6",
-        "bytes": 457936,
-        "sha256": "7498a0b0f75deb5417e109d1853679f1a6b201e52e03b247c914fec0a36e3a5b",
+      "libmd.so.0": {
+        "artifactPath": "toolchain/native/runtime/libraries/libmd.so.0",
+        "bytes": 55536,
+        "sha256": "423e18586b6ea740f4465afd64f7a9a4cb7264ed979c8e7256f9085af5345fef",
         "mode": 420
       },
-      "libsframe.so.3": {
-        "artifactPath": "toolchain/native/runtime/libraries/libsframe.so.3",
-        "bytes": 43032,
-        "sha256": "cdac88518dc3eb29fb5766463c4f9c3e6f8c8abb5223df759fc27e5d79b82d33",
+      "libsframe.so.1": {
+        "artifactPath": "toolchain/native/runtime/libraries/libsframe.so.1",
+        "bytes": 35168,
+        "sha256": "1693a2dbd77c909d279ae34aa9b5d8d08d97f116f8d0ed724063df11151b3c69",
         "mode": 420
       },
       "libstdc++.so.6": {
         "artifactPath": "toolchain/native/runtime/libraries/libstdc++.so.6",
-        "bytes": 2939928,
-        "sha256": "f5fc7380f2ae46fa4053a64be04e7b98109f1066a4bbfff3c37042488aa0be0e",
+        "bytes": 2592224,
+        "sha256": "1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11",
         "mode": 420
       },
-      "libxml2.so.16": {
-        "artifactPath": "toolchain/native/runtime/libraries/libxml2.so.16",
-        "bytes": 1326024,
-        "sha256": "5ff12cee1e6992555ba638190cce88a0aab40acad51d5c826f6487888a0160ab",
+      "libtinfo.so.6": {
+        "artifactPath": "toolchain/native/runtime/libraries/libtinfo.so.6",
+        "bytes": 208328,
+        "sha256": "e6089d7bb95eee5b545f3770dd69095b0bca47d26701cad145af429561d16306",
+        "mode": 420
+      },
+      "libxml2.so.2": {
+        "artifactPath": "toolchain/native/runtime/libraries/libxml2.so.2",
+        "bytes": 1967424,
+        "sha256": "209e941be9eb2eb9ab36caaa0b81d1c6b36c8f5d7268c24f19e81039137e6485",
         "mode": 420
       },
       "libz.so.1": {
         "artifactPath": "toolchain/native/runtime/libraries/libz.so.1",
-        "bytes": 108560,
-        "sha256": "6c78c5e58c3bb49a1cd151a95cdf1a17fe07a91a57a59e0279b984c533075ca9",
+        "bytes": 113000,
+        "sha256": "86200da370f20476a2507e9097a789b5ef97269b4ca8d5e164ad82dab9d99892",
         "mode": 420
       },
       "libzstd.so.1": {
         "artifactPath": "toolchain/native/runtime/libraries/libzstd.so.1",
-        "bytes": 939976,
-        "sha256": "f023d49e85fb22057bfdd21857263d2638b73356c06f3b342f678a75212379f8",
+        "bytes": 755864,
+        "sha256": "0a2128bc10841fb29e76d08d945864dfb0b6a66da5df6df5d8299197439e54bb",
         "mode": 420
       }
     }
@@ -1733,50 +1753,50 @@
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.106502937,
-          "peakRssKiB": 25940,
+          "seconds": 0.044259998,
+          "peakRssKiB": 29984,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.083921166,
-          "peakRssKiB": 25940,
+          "seconds": 0.041346181,
+          "peakRssKiB": 29852,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.099751918,
-          "peakRssKiB": 25792,
+          "seconds": 0.04236411,
+          "peakRssKiB": 29948,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.109314794,
-          "peakRssKiB": 25748,
+          "seconds": 0.042195403,
+          "peakRssKiB": 29912,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.068642752,
-          "peakRssKiB": 25932,
+          "seconds": 0.043821421,
+          "peakRssKiB": 29892,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.090785726,
-          "peakRssKiB": 25900,
+          "seconds": 0.053990095,
+          "peakRssKiB": 29900,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.096002799,
-          "peakRssKiB": 25736,
+          "seconds": 0.049177086,
+          "peakRssKiB": 29944,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
@@ -1784,108 +1804,108 @@
       ],
       "markdown4cj": [
         {
-          "seconds": 0.678985797,
-          "peakRssKiB": 55512,
+          "seconds": 0.277111608,
+          "peakRssKiB": 60588,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.688373896,
-          "peakRssKiB": 55684,
+          "seconds": 0.277142322,
+          "peakRssKiB": 59904,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.74520803,
-          "peakRssKiB": 56008,
+          "seconds": 0.278503331,
+          "peakRssKiB": 60632,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.675874255,
-          "peakRssKiB": 55460,
+          "seconds": 0.289872354,
+          "peakRssKiB": 60552,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.714083394,
-          "peakRssKiB": 56260,
+          "seconds": 0.283257282,
+          "peakRssKiB": 60536,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.66957897,
-          "peakRssKiB": 55516,
+          "seconds": 0.286210847,
+          "peakRssKiB": 60124,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         },
         {
-          "seconds": 0.749113949,
-          "peakRssKiB": 55464,
+          "seconds": 0.279334539,
+          "peakRssKiB": 60504,
           "stdout": "5358\n",
           "stdoutBytes": 5,
           "stdoutSha256": "cf9d6514fc4f98e8e562e901d9a4120e552ab4061388e23334168d935c7642f9"
         }
       ],
-      "markdownMedianSeconds": 0.096002799,
-      "markdown4cjMedianSeconds": 0.688373896,
-      "markdownSpeedup": 7.170352356080785,
-      "peakRssRatio": 0.46107358691788125
+      "markdownMedianSeconds": 0.043821421,
+      "markdown4cjMedianSeconds": 0.279334539,
+      "markdownSpeedup": 6.374383409428918,
+      "peakRssRatio": 0.4945243435809474
     },
     "readme-api": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.185563353,
-          "peakRssKiB": 35472,
+          "seconds": 0.094810352,
+          "peakRssKiB": 40432,
           "stdout": "4701\n",
           "stdoutBytes": 5,
           "stdoutSha256": "9ef2e1981c186510ec8b94e86ac993a6ed485d17072509b9761292452fd2a310"
         },
         {
-          "seconds": 0.12543243,
-          "peakRssKiB": 35316,
+          "seconds": 0.098480965,
+          "peakRssKiB": 40372,
           "stdout": "4701\n",
           "stdoutBytes": 5,
           "stdoutSha256": "9ef2e1981c186510ec8b94e86ac993a6ed485d17072509b9761292452fd2a310"
         },
         {
-          "seconds": 0.115906869,
-          "peakRssKiB": 35392,
+          "seconds": 0.077133397,
+          "peakRssKiB": 40536,
           "stdout": "4701\n",
           "stdoutBytes": 5,
           "stdoutSha256": "9ef2e1981c186510ec8b94e86ac993a6ed485d17072509b9761292452fd2a310"
         },
         {
-          "seconds": 0.173903596,
-          "peakRssKiB": 35704,
+          "seconds": 0.075011711,
+          "peakRssKiB": 40612,
           "stdout": "4701\n",
           "stdoutBytes": 5,
           "stdoutSha256": "9ef2e1981c186510ec8b94e86ac993a6ed485d17072509b9761292452fd2a310"
         },
         {
-          "seconds": 0.16343758,
-          "peakRssKiB": 35772,
+          "seconds": 0.075481635,
+          "peakRssKiB": 40536,
           "stdout": "4701\n",
           "stdoutBytes": 5,
           "stdoutSha256": "9ef2e1981c186510ec8b94e86ac993a6ed485d17072509b9761292452fd2a310"
         },
         {
-          "seconds": 0.103187712,
-          "peakRssKiB": 35424,
+          "seconds": 0.073807046,
+          "peakRssKiB": 40544,
           "stdout": "4701\n",
           "stdoutBytes": 5,
           "stdoutSha256": "9ef2e1981c186510ec8b94e86ac993a6ed485d17072509b9761292452fd2a310"
         },
         {
-          "seconds": 0.162264726,
-          "peakRssKiB": 35524,
+          "seconds": 0.079124866,
+          "peakRssKiB": 40512,
           "stdout": "4701\n",
           "stdoutBytes": 5,
           "stdoutSha256": "9ef2e1981c186510ec8b94e86ac993a6ed485d17072509b9761292452fd2a310"
@@ -1893,108 +1913,108 @@
       ],
       "markdown4cj": [
         {
-          "seconds": 1.007805296,
-          "peakRssKiB": 78760,
+          "seconds": 0.332058892,
+          "peakRssKiB": 81636,
           "stdout": "4701\n",
           "stdoutBytes": 5,
           "stdoutSha256": "9ef2e1981c186510ec8b94e86ac993a6ed485d17072509b9761292452fd2a310"
         },
         {
-          "seconds": 0.850949901,
-          "peakRssKiB": 78604,
+          "seconds": 0.334884421,
+          "peakRssKiB": 81564,
           "stdout": "4701\n",
           "stdoutBytes": 5,
           "stdoutSha256": "9ef2e1981c186510ec8b94e86ac993a6ed485d17072509b9761292452fd2a310"
         },
         {
-          "seconds": 0.80933137,
-          "peakRssKiB": 76700,
+          "seconds": 0.321806818,
+          "peakRssKiB": 81536,
           "stdout": "4701\n",
           "stdoutBytes": 5,
           "stdoutSha256": "9ef2e1981c186510ec8b94e86ac993a6ed485d17072509b9761292452fd2a310"
         },
         {
-          "seconds": 0.855203363,
-          "peakRssKiB": 76828,
+          "seconds": 0.333677542,
+          "peakRssKiB": 81540,
           "stdout": "4701\n",
           "stdoutBytes": 5,
           "stdoutSha256": "9ef2e1981c186510ec8b94e86ac993a6ed485d17072509b9761292452fd2a310"
         },
         {
-          "seconds": 0.916148313,
-          "peakRssKiB": 77440,
+          "seconds": 0.321322263,
+          "peakRssKiB": 81560,
           "stdout": "4701\n",
           "stdoutBytes": 5,
           "stdoutSha256": "9ef2e1981c186510ec8b94e86ac993a6ed485d17072509b9761292452fd2a310"
         },
         {
-          "seconds": 0.939774952,
-          "peakRssKiB": 64560,
+          "seconds": 0.335689538,
+          "peakRssKiB": 81596,
           "stdout": "4701\n",
           "stdoutBytes": 5,
           "stdoutSha256": "9ef2e1981c186510ec8b94e86ac993a6ed485d17072509b9761292452fd2a310"
         },
         {
-          "seconds": 0.824260867,
-          "peakRssKiB": 76816,
+          "seconds": 0.321838289,
+          "peakRssKiB": 81628,
           "stdout": "4701\n",
           "stdoutBytes": 5,
           "stdoutSha256": "9ef2e1981c186510ec8b94e86ac993a6ed485d17072509b9761292452fd2a310"
         }
       ],
-      "markdownMedianSeconds": 0.162264726,
-      "markdown4cjMedianSeconds": 0.855203363,
-      "markdownSpeedup": 5.270420651990625,
-      "peakRssRatio": 0.4541899441340782
+      "markdownMedianSeconds": 0.077133397,
+      "markdown4cjMedianSeconds": 0.332058892,
+      "markdownSpeedup": 4.304995046438833,
+      "peakRssRatio": 0.49747660345925815
     },
     "large-code": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.043529984,
-          "peakRssKiB": 13884,
+          "seconds": 0.022628209,
+          "peakRssKiB": 18168,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.037006128,
-          "peakRssKiB": 13912,
+          "seconds": 0.020223725,
+          "peakRssKiB": 17548,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.050996319,
-          "peakRssKiB": 13976,
+          "seconds": 0.021262783,
+          "peakRssKiB": 18116,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.033699928,
-          "peakRssKiB": 13796,
+          "seconds": 0.020611011,
+          "peakRssKiB": 18152,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.031067716,
-          "peakRssKiB": 13844,
+          "seconds": 0.019403549,
+          "peakRssKiB": 17636,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.020865113,
-          "peakRssKiB": 13896,
+          "seconds": 0.021284233,
+          "peakRssKiB": 18140,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.019795609,
-          "peakRssKiB": 13916,
+          "seconds": 0.01881688,
+          "peakRssKiB": 17512,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
@@ -2002,108 +2022,108 @@
       ],
       "markdown4cj": [
         {
-          "seconds": 0.211205439,
-          "peakRssKiB": 28776,
+          "seconds": 0.084054225,
+          "peakRssKiB": 33344,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.117037731,
-          "peakRssKiB": 28776,
+          "seconds": 0.07345148,
+          "peakRssKiB": 33292,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.18641998,
-          "peakRssKiB": 28892,
+          "seconds": 0.092770729,
+          "peakRssKiB": 33348,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.175933123,
-          "peakRssKiB": 28656,
+          "seconds": 0.073362996,
+          "peakRssKiB": 33044,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.161308333,
-          "peakRssKiB": 28948,
+          "seconds": 0.071917116,
+          "peakRssKiB": 33400,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.116120726,
-          "peakRssKiB": 28964,
+          "seconds": 0.062396354,
+          "peakRssKiB": 33320,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.17763231,
-          "peakRssKiB": 28744,
+          "seconds": 0.073212453,
+          "peakRssKiB": 33332,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
-      "markdownMedianSeconds": 0.033699928,
-      "markdown4cjMedianSeconds": 0.175933123,
-      "markdownSpeedup": 5.220578601829654,
-      "peakRssRatio": 0.48253003728766747
+      "markdownMedianSeconds": 0.020611011,
+      "markdown4cjMedianSeconds": 0.073362996,
+      "markdownSpeedup": 3.559407930062237,
+      "peakRssRatio": 0.5439520958083832
     },
     "large-table": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.069165769,
-          "peakRssKiB": 23300,
+          "seconds": 0.031697787,
+          "peakRssKiB": 27440,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.061924019,
-          "peakRssKiB": 23072,
+          "seconds": 0.033115129,
+          "peakRssKiB": 27460,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.057125593,
-          "peakRssKiB": 22996,
+          "seconds": 0.031803788,
+          "peakRssKiB": 27472,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.0530311,
-          "peakRssKiB": 23092,
+          "seconds": 0.042623162,
+          "peakRssKiB": 27440,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.04697141,
-          "peakRssKiB": 23112,
+          "seconds": 0.031043547,
+          "peakRssKiB": 27484,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.093423329,
-          "peakRssKiB": 23236,
+          "seconds": 0.032566579,
+          "peakRssKiB": 27432,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.070594269,
-          "peakRssKiB": 23180,
+          "seconds": 0.032716435,
+          "peakRssKiB": 27420,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
@@ -2111,108 +2131,108 @@
       ],
       "markdown4cj": [
         {
-          "seconds": 5.671808312,
-          "peakRssKiB": 370012,
+          "seconds": 2.396493387,
+          "peakRssKiB": 580780,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 5.881963523,
-          "peakRssKiB": 398668,
+          "seconds": 6.509756235,
+          "peakRssKiB": 263548,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 5.537424656,
-          "peakRssKiB": 462288,
+          "seconds": 2.292709756,
+          "peakRssKiB": 650480,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 5.587016416,
-          "peakRssKiB": 426976,
+          "seconds": 2.120235405,
+          "peakRssKiB": 627236,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 5.526097016,
-          "peakRssKiB": 418228,
+          "seconds": 2.430358666,
+          "peakRssKiB": 554624,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 4.916501536,
-          "peakRssKiB": 458976,
+          "seconds": 2.464266278,
+          "peakRssKiB": 591436,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 5.454968417,
-          "peakRssKiB": 440420,
+          "seconds": 2.242120208,
+          "peakRssKiB": 612412,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
-      "markdownMedianSeconds": 0.061924019,
-      "markdown4cjMedianSeconds": 5.537424656,
-      "markdownSpeedup": 89.42288865327039,
-      "peakRssRatio": 0.05040148132765722
+      "markdownMedianSeconds": 0.032566579,
+      "markdown4cjMedianSeconds": 2.396493387,
+      "markdownSpeedup": 73.58750782512342,
+      "peakRssRatio": 0.0422518755380642
     },
     "many-references": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.071278413,
-          "peakRssKiB": 31452,
+          "seconds": 0.053318334,
+          "peakRssKiB": 36448,
           "stdout": "11568\n",
           "stdoutBytes": 6,
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         },
         {
-          "seconds": 0.057035581,
-          "peakRssKiB": 31424,
+          "seconds": 0.053099763,
+          "peakRssKiB": 36744,
           "stdout": "11568\n",
           "stdoutBytes": 6,
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         },
         {
-          "seconds": 0.066898374,
-          "peakRssKiB": 31572,
+          "seconds": 0.043004985,
+          "peakRssKiB": 35528,
           "stdout": "11568\n",
           "stdoutBytes": 6,
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         },
         {
-          "seconds": 0.116822422,
-          "peakRssKiB": 31580,
+          "seconds": 0.042596828,
+          "peakRssKiB": 35460,
           "stdout": "11568\n",
           "stdoutBytes": 6,
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         },
         {
-          "seconds": 0.089166229,
-          "peakRssKiB": 31408,
+          "seconds": 0.043817817,
+          "peakRssKiB": 35460,
           "stdout": "11568\n",
           "stdoutBytes": 6,
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         },
         {
-          "seconds": 0.083675751,
-          "peakRssKiB": 31368,
+          "seconds": 0.044668518,
+          "peakRssKiB": 36136,
           "stdout": "11568\n",
           "stdoutBytes": 6,
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
         },
         {
-          "seconds": 0.101543166,
-          "peakRssKiB": 31584,
+          "seconds": 0.053683907,
+          "peakRssKiB": 36208,
           "stdout": "11568\n",
           "stdoutBytes": 6,
           "stdoutSha256": "b428d64d3f9a38c276cdfaa2a5e1522d6a3d5d14da054e2b2d8265f94ceace0a"
@@ -2220,108 +2240,108 @@
       ],
       "markdown4cj": [
         {
-          "seconds": 1.757074429,
-          "peakRssKiB": 107808,
+          "seconds": 0.6116601,
+          "peakRssKiB": 191636,
           "stdout": "23133\n",
           "stdoutBytes": 6,
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         },
         {
-          "seconds": 1.693631942,
-          "peakRssKiB": 106672,
+          "seconds": 0.615386856,
+          "peakRssKiB": 191672,
           "stdout": "23133\n",
           "stdoutBytes": 6,
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         },
         {
-          "seconds": 1.780783643,
-          "peakRssKiB": 94056,
+          "seconds": 0.613368355,
+          "peakRssKiB": 191684,
           "stdout": "23133\n",
           "stdoutBytes": 6,
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         },
         {
-          "seconds": 2.084248629,
-          "peakRssKiB": 82128,
+          "seconds": 0.61261859,
+          "peakRssKiB": 191680,
           "stdout": "23133\n",
           "stdoutBytes": 6,
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         },
         {
-          "seconds": 1.526069248,
-          "peakRssKiB": 113568,
+          "seconds": 0.624989964,
+          "peakRssKiB": 191716,
           "stdout": "23133\n",
           "stdoutBytes": 6,
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         },
         {
-          "seconds": 2.405769134,
-          "peakRssKiB": 90028,
+          "seconds": 0.608406067,
+          "peakRssKiB": 191656,
           "stdout": "23133\n",
           "stdoutBytes": 6,
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         },
         {
-          "seconds": 1.522583511,
-          "peakRssKiB": 108980,
+          "seconds": 0.615136719,
+          "peakRssKiB": 191704,
           "stdout": "23133\n",
           "stdoutBytes": 6,
           "stdoutSha256": "ee0b60f7c9ec65011c4b167f2f627f45265f2cc3f6f7d9d1a6553c3a1cd6e5b8"
         }
       ],
-      "markdownMedianSeconds": 0.083675751,
-      "markdown4cjMedianSeconds": 1.757074429,
-      "markdownSpeedup": 20.998609609132757,
-      "peakRssRatio": 0.2781065088757396
+      "markdownMedianSeconds": 0.044668518,
+      "markdown4cjMedianSeconds": 0.613368355,
+      "markdownSpeedup": 13.731558208400825,
+      "peakRssRatio": 0.19165849485697595
     },
     "cjk": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.08625928,
-          "peakRssKiB": 27040,
+          "seconds": 0.041527646,
+          "peakRssKiB": 31236,
           "stdout": "12483\n",
           "stdoutBytes": 6,
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.081874243,
-          "peakRssKiB": 27088,
+          "seconds": 0.040768924,
+          "peakRssKiB": 31252,
           "stdout": "12483\n",
           "stdoutBytes": 6,
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.077884569,
-          "peakRssKiB": 27168,
+          "seconds": 0.042718818,
+          "peakRssKiB": 31488,
           "stdout": "12483\n",
           "stdoutBytes": 6,
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.090662837,
-          "peakRssKiB": 27136,
+          "seconds": 0.058222068,
+          "peakRssKiB": 31192,
           "stdout": "12483\n",
           "stdoutBytes": 6,
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.092077602,
-          "peakRssKiB": 27040,
+          "seconds": 0.053129646,
+          "peakRssKiB": 31240,
           "stdout": "12483\n",
           "stdoutBytes": 6,
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.119669449,
-          "peakRssKiB": 27128,
+          "seconds": 0.046309345,
+          "peakRssKiB": 30980,
           "stdout": "12483\n",
           "stdoutBytes": 6,
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 0.092545264,
-          "peakRssKiB": 27064,
+          "seconds": 0.043575535,
+          "peakRssKiB": 31220,
           "stdout": "12483\n",
           "stdoutBytes": 6,
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
@@ -2329,108 +2349,108 @@
       ],
       "markdown4cj": [
         {
-          "seconds": 0.962898611,
-          "peakRssKiB": 104508,
+          "seconds": 0.45724622,
+          "peakRssKiB": 146452,
           "stdout": "12483\n",
           "stdoutBytes": 6,
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 1.122390455,
-          "peakRssKiB": 109016,
+          "seconds": 0.468787604,
+          "peakRssKiB": 146324,
           "stdout": "12483\n",
           "stdoutBytes": 6,
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 1.248820091,
-          "peakRssKiB": 99984,
+          "seconds": 0.43638459,
+          "peakRssKiB": 145872,
           "stdout": "12483\n",
           "stdoutBytes": 6,
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 1.331913628,
-          "peakRssKiB": 82816,
+          "seconds": 0.437405762,
+          "peakRssKiB": 145688,
           "stdout": "12483\n",
           "stdoutBytes": 6,
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 1.210115171,
-          "peakRssKiB": 111220,
+          "seconds": 0.483645344,
+          "peakRssKiB": 144544,
           "stdout": "12483\n",
           "stdoutBytes": 6,
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 1.508206318,
-          "peakRssKiB": 85040,
+          "seconds": 0.449792003,
+          "peakRssKiB": 146464,
           "stdout": "12483\n",
           "stdoutBytes": 6,
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         },
         {
-          "seconds": 1.209053248,
-          "peakRssKiB": 104500,
+          "seconds": 0.442064131,
+          "peakRssKiB": 146464,
           "stdout": "12483\n",
           "stdoutBytes": 6,
           "stdoutSha256": "e20c1204670eed0093231cefa68a650b14b9a5995950171e151cb008f4420253"
         }
       ],
-      "markdownMedianSeconds": 0.090662837,
-      "markdown4cjMedianSeconds": 1.210115171,
-      "markdownSpeedup": 13.347422285053797,
-      "peakRssRatio": 0.24427261283941737
+      "markdownMedianSeconds": 0.043575535,
+      "markdown4cjMedianSeconds": 0.449792003,
+      "markdownSpeedup": 10.322122333093558,
+      "peakRssRatio": 0.21498798339523706
     },
     "emoji": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.153324674,
-          "peakRssKiB": 45228,
+          "seconds": 0.100591968,
+          "peakRssKiB": 49156,
           "stdout": "17097\n",
           "stdoutBytes": 6,
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 0.161077963,
-          "peakRssKiB": 42812,
+          "seconds": 0.102822456,
+          "peakRssKiB": 48888,
           "stdout": "17097\n",
           "stdoutBytes": 6,
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 0.172550941,
-          "peakRssKiB": 44216,
+          "seconds": 0.097510169,
+          "peakRssKiB": 48752,
           "stdout": "17097\n",
           "stdoutBytes": 6,
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 0.184645407,
-          "peakRssKiB": 45688,
+          "seconds": 0.097070362,
+          "peakRssKiB": 49184,
           "stdout": "17097\n",
           "stdoutBytes": 6,
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 0.169673065,
-          "peakRssKiB": 45628,
+          "seconds": 0.109694772,
+          "peakRssKiB": 48904,
           "stdout": "17097\n",
           "stdoutBytes": 6,
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 0.232225346,
-          "peakRssKiB": 43396,
+          "seconds": 0.107941416,
+          "peakRssKiB": 48720,
           "stdout": "17097\n",
           "stdoutBytes": 6,
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 0.248347714,
-          "peakRssKiB": 45664,
+          "seconds": 0.109754493,
+          "peakRssKiB": 48672,
           "stdout": "17097\n",
           "stdoutBytes": 6,
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
@@ -2438,108 +2458,108 @@
       ],
       "markdown4cj": [
         {
-          "seconds": 2.750205123,
-          "peakRssKiB": 121820,
+          "seconds": 1.048020609,
+          "peakRssKiB": 209428,
           "stdout": "17097\n",
           "stdoutBytes": 6,
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 2.775784596,
-          "peakRssKiB": 122220,
+          "seconds": 1.027775588,
+          "peakRssKiB": 214700,
           "stdout": "17097\n",
           "stdoutBytes": 6,
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 2.707247117,
-          "peakRssKiB": 114144,
+          "seconds": 1.048630893,
+          "peakRssKiB": 213804,
           "stdout": "17097\n",
           "stdoutBytes": 6,
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 2.83013672,
-          "peakRssKiB": 111952,
+          "seconds": 1.049411383,
+          "peakRssKiB": 212604,
           "stdout": "17097\n",
           "stdoutBytes": 6,
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 2.780457051,
-          "peakRssKiB": 117440,
+          "seconds": 1.021670051,
+          "peakRssKiB": 213504,
           "stdout": "17097\n",
           "stdoutBytes": 6,
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 2.661046013,
-          "peakRssKiB": 113628,
+          "seconds": 1.033351262,
+          "peakRssKiB": 209744,
           "stdout": "17097\n",
           "stdoutBytes": 6,
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         },
         {
-          "seconds": 2.803597239,
-          "peakRssKiB": 108928,
+          "seconds": 1.048563789,
+          "peakRssKiB": 210792,
           "stdout": "17097\n",
           "stdoutBytes": 6,
           "stdoutSha256": "3c4b710a98c6a8980f6608bbe7fb61dd046e54eae2c58667249572cfc5a44e88"
         }
       ],
-      "markdownMedianSeconds": 0.172550941,
-      "markdown4cjMedianSeconds": 2.775784596,
-      "markdownSpeedup": 16.086754322597404,
-      "peakRssRatio": 0.37381770577646867
+      "markdownMedianSeconds": 0.102822456,
+      "markdown4cjMedianSeconds": 1.048020609,
+      "markdownSpeedup": 10.192526513858022,
+      "peakRssRatio": 0.22908244061481137
     },
     "deep-list": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.074485095,
-          "peakRssKiB": 26860,
+          "seconds": 0.0319681,
+          "peakRssKiB": 31184,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.067419923,
-          "peakRssKiB": 27052,
+          "seconds": 0.031701611,
+          "peakRssKiB": 31188,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.062215251,
-          "peakRssKiB": 27136,
+          "seconds": 0.033394092,
+          "peakRssKiB": 30800,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.038568111,
-          "peakRssKiB": 27052,
+          "seconds": 0.034197135,
+          "peakRssKiB": 30640,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.049807103,
-          "peakRssKiB": 26960,
+          "seconds": 0.032141126,
+          "peakRssKiB": 29776,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.04256529,
-          "peakRssKiB": 26976,
+          "seconds": 0.032034245,
+          "peakRssKiB": 31192,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.037786166,
-          "peakRssKiB": 25804,
+          "seconds": 0.032091001,
+          "peakRssKiB": 31156,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
@@ -2547,108 +2567,108 @@
       ],
       "markdown4cj": [
         {
-          "seconds": 0.788962665,
-          "peakRssKiB": 51600,
+          "seconds": 0.309554878,
+          "peakRssKiB": 56152,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.849618238,
-          "peakRssKiB": 51352,
+          "seconds": 0.322432786,
+          "peakRssKiB": 56124,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 1.03211049,
-          "peakRssKiB": 46904,
+          "seconds": 0.362340688,
+          "peakRssKiB": 54760,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.787417845,
-          "peakRssKiB": 50936,
+          "seconds": 0.340235088,
+          "peakRssKiB": 56152,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.828040284,
-          "peakRssKiB": 50688,
+          "seconds": 0.31318474,
+          "peakRssKiB": 54844,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 1.084452723,
-          "peakRssKiB": 46624,
+          "seconds": 0.317412849,
+          "peakRssKiB": 56152,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.845669664,
-          "peakRssKiB": 51552,
+          "seconds": 0.302928884,
+          "peakRssKiB": 56172,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
-      "markdownMedianSeconds": 0.049807103,
-      "markdown4cjMedianSeconds": 0.845669664,
-      "markdownSpeedup": 16.97889684529534,
-      "peakRssRatio": 0.525891472868217
+      "markdownMedianSeconds": 0.032091001,
+      "markdown4cjMedianSeconds": 0.317412849,
+      "markdownSpeedup": 9.891023623725541,
+      "peakRssRatio": 0.5552944527522609
     },
     "pathological-delimiters": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.166387302,
-          "peakRssKiB": 52328,
+          "seconds": 0.086443687,
+          "peakRssKiB": 53404,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.156033331,
-          "peakRssKiB": 56872,
+          "seconds": 0.096843301,
+          "peakRssKiB": 54084,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.23869915,
-          "peakRssKiB": 49548,
+          "seconds": 0.087405201,
+          "peakRssKiB": 54716,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.198112305,
-          "peakRssKiB": 55388,
+          "seconds": 0.095456018,
+          "peakRssKiB": 55084,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.202849249,
-          "peakRssKiB": 54604,
+          "seconds": 0.087688115,
+          "peakRssKiB": 55856,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.252180885,
-          "peakRssKiB": 51676,
+          "seconds": 0.087746373,
+          "peakRssKiB": 53284,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.176086695,
-          "peakRssKiB": 56836,
+          "seconds": 0.086361517,
+          "peakRssKiB": 54800,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
@@ -2656,108 +2676,108 @@
       ],
       "markdown4cj": [
         {
-          "seconds": 3.575699696,
-          "peakRssKiB": 129472,
+          "seconds": 1.460590794,
+          "peakRssKiB": 221244,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 3.93365712,
-          "peakRssKiB": 119484,
+          "seconds": 1.299795231,
+          "peakRssKiB": 215532,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 3.654319774,
-          "peakRssKiB": 120532,
+          "seconds": 1.283542855,
+          "peakRssKiB": 214860,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 3.543888845,
-          "peakRssKiB": 123328,
+          "seconds": 1.281851651,
+          "peakRssKiB": 218120,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 3.882252336,
-          "peakRssKiB": 121452,
+          "seconds": 1.305338422,
+          "peakRssKiB": 215488,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 3.726114545,
-          "peakRssKiB": 122268,
+          "seconds": 1.276135131,
+          "peakRssKiB": 214740,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 3.412254469,
-          "peakRssKiB": 121828,
+          "seconds": 1.277703341,
+          "peakRssKiB": 212916,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
-      "markdownMedianSeconds": 0.198112305,
-      "markdown4cjMedianSeconds": 3.654319774,
-      "markdownSpeedup": 18.445698130663818,
-      "peakRssRatio": 0.43926099851705386
+      "markdownMedianSeconds": 0.087688115,
+      "markdown4cjMedianSeconds": 1.283542855,
+      "markdownSpeedup": 14.63759204996025,
+      "peakRssRatio": 0.25246334363869755
     },
     "long-line": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.025028219,
-          "peakRssKiB": 13764,
+          "seconds": 0.019234343,
+          "peakRssKiB": 17592,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.033434689,
-          "peakRssKiB": 13792,
+          "seconds": 0.020754169,
+          "peakRssKiB": 18060,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.032209215,
-          "peakRssKiB": 13676,
+          "seconds": 0.021398535,
+          "peakRssKiB": 17532,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.037329045,
-          "peakRssKiB": 13796,
+          "seconds": 0.019844704,
+          "peakRssKiB": 17544,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.035915522,
-          "peakRssKiB": 13824,
+          "seconds": 0.019749924,
+          "peakRssKiB": 17604,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.034177165,
-          "peakRssKiB": 13792,
+          "seconds": 0.020251439,
+          "peakRssKiB": 17544,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.031075076,
-          "peakRssKiB": 13848,
+          "seconds": 0.019633472,
+          "peakRssKiB": 17548,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
@@ -2765,108 +2785,108 @@
       ],
       "markdown4cj": [
         {
-          "seconds": 0.564329492,
-          "peakRssKiB": 34708,
+          "seconds": 0.198024774,
+          "peakRssKiB": 39412,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.445442789,
-          "peakRssKiB": 34712,
+          "seconds": 0.196873351,
+          "peakRssKiB": 39240,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.404568903,
-          "peakRssKiB": 36816,
+          "seconds": 0.206466203,
+          "peakRssKiB": 39188,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.483152833,
-          "peakRssKiB": 35048,
+          "seconds": 0.196154672,
+          "peakRssKiB": 39300,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.410853245,
-          "peakRssKiB": 34996,
+          "seconds": 0.207527822,
+          "peakRssKiB": 37892,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.491189019,
-          "peakRssKiB": 34972,
+          "seconds": 0.192539551,
+          "peakRssKiB": 39264,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         },
         {
-          "seconds": 0.415068992,
-          "peakRssKiB": 34804,
+          "seconds": 0.229125769,
+          "peakRssKiB": 39296,
           "stdout": "3\n",
           "stdoutBytes": 2,
           "stdoutSha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
         }
       ],
-      "markdownMedianSeconds": 0.033434689,
-      "markdown4cjMedianSeconds": 0.445442789,
-      "markdownSpeedup": 13.322773512264463,
-      "peakRssRatio": 0.37614080834419816
+      "markdownMedianSeconds": 0.019844704,
+      "markdown4cjMedianSeconds": 0.198024774,
+      "markdownSpeedup": 9.978721476520889,
+      "peakRssRatio": 0.4582360702324165
     },
     "ordinary": {
       "bytes": 262144,
       "markdown": [
         {
-          "seconds": 0.031162424,
-          "peakRssKiB": 13768,
+          "seconds": 0.020306089,
+          "peakRssKiB": 17724,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.030416322,
-          "peakRssKiB": 13872,
+          "seconds": 0.02054085,
+          "peakRssKiB": 18228,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.045518871,
-          "peakRssKiB": 13984,
+          "seconds": 0.021010227,
+          "peakRssKiB": 17704,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.041390251,
-          "peakRssKiB": 14104,
+          "seconds": 0.020834298,
+          "peakRssKiB": 17600,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.042655113,
-          "peakRssKiB": 14012,
+          "seconds": 0.023389321,
+          "peakRssKiB": 18264,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.0243047,
-          "peakRssKiB": 13980,
+          "seconds": 0.019486159,
+          "peakRssKiB": 17696,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.042199718,
-          "peakRssKiB": 14040,
+          "seconds": 0.020341435,
+          "peakRssKiB": 18228,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
@@ -2874,62 +2894,62 @@
       ],
       "markdown4cj": [
         {
-          "seconds": 0.423155093,
-          "peakRssKiB": 34464,
+          "seconds": 0.205465349,
+          "peakRssKiB": 39364,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.429586621,
-          "peakRssKiB": 34584,
+          "seconds": 0.174938887,
+          "peakRssKiB": 39264,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.521326129,
-          "peakRssKiB": 34656,
+          "seconds": 0.183344688,
+          "peakRssKiB": 39320,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.468498443,
-          "peakRssKiB": 34976,
+          "seconds": 0.195726477,
+          "peakRssKiB": 39340,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.399243741,
-          "peakRssKiB": 35060,
+          "seconds": 0.207127747,
+          "peakRssKiB": 37960,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.459467091,
-          "peakRssKiB": 34836,
+          "seconds": 0.187683354,
+          "peakRssKiB": 39424,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         },
         {
-          "seconds": 0.512514792,
-          "peakRssKiB": 34992,
+          "seconds": 0.206031216,
+          "peakRssKiB": 39468,
           "stdout": "180\n",
           "stdoutBytes": 4,
           "stdoutSha256": "cbd91cdba3348178fa87e56abd4e1d96506db346eb2288be4284b9014a52fd94"
         }
       ],
-      "markdownMedianSeconds": 0.041390251,
-      "markdown4cjMedianSeconds": 0.459467091,
-      "markdownSpeedup": 11.100852976223797,
-      "peakRssRatio": 0.40228180262407304
+      "markdownMedianSeconds": 0.02054085,
+      "markdown4cjMedianSeconds": 0.195726477,
+      "markdownSpeedup": 9.528645455275708,
+      "peakRssRatio": 0.46275463666768013
     }
   },
-  "geomeanMarkdownSpeedup": 13.880235098048031,
+  "geomeanMarkdownSpeedup": 10.330166027944836,
   "promotionPassed": true,
   "derivationErrors": []
 }

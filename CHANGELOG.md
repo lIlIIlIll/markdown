@@ -5,7 +5,7 @@
 
 ## 0.10.0 - Unreleased
 
-Breaking pre-GA：本地与离线验收就绪，核心 hosted CI 尚未运行；未合并或发布。
+Breaking pre-GA：本地、离线和记录修订的 hosted CI 已验证；实时检查见 PR #12，未合并或发布。
 
 ### Changed
 
