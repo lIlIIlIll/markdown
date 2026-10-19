@@ -238,7 +238,11 @@ def main() -> int:
         return 69
     if os.getppid() != args.parent_pid:
         return 130
-    Path(f"/proc/self/task/{os.getpid()}/children").read_text(encoding="ascii")
+    try:
+        Path(f"/proc/self/task/{os.getpid()}/children").read_text(encoding="ascii")
+    except OSError:
+        # Process tracking must be available before any worker is started.
+        return 69
     deadline = time.monotonic() + args.timeout_ms / 1000
     runtime = args.runtime_root.resolve()
     verify(runtime, args.identity, stopped, deadline)

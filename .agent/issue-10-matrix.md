@@ -19,6 +19,9 @@
   固定 runtime `66482adc432167538bbcccac7a431bcbf9d6d93653981333609ef0ede5d0ba39`。
   当前正式库的全套本地实际 browser/clipboard/timeout/cancel、七种 fixture 和实际 Chrome 清理
   gate 也 PASS，HTML SHA-256 为 `cb42c140c0fb6877dea3b3c7345a6212c92e7dbc86e711875f007697f72e70ad`。
+  PR #12 的 Linux 能力分类修复使用新离线 runtime
+  `9d7f66290e664254501b6a293fe6eb9218c79b1f86a7779f94acb297669dd5a4`：4 项能力回归、
+  7 类生命周期、2 类实际 Chrome 清理及 browser/clipboard 全部 PASS；不重绑 C1 成本样本。
   C1 校验实际成本；基础包不依赖 Node，不宣称 OS sandbox。
 - **P1**：修订 `b930377c2ea52f4afbd5e4c93a354bda41809c82` 的全新 attested 构建：C 比值
   2.2662144957 / 1.7966549619，增长/病理/RSS gate 全 PASS；同语言 12/12、几何平均

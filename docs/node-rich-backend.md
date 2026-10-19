@@ -6,6 +6,8 @@ Mermaid 和 Shiki 产物。基础包不依赖已安装的 Node、Python 或浏�
 
 当前安装器和进程监督器支持 Linux x86_64，要求 Python 3.12+、官方 STS 1.2.0 和
 Chrome 所需的系统动态库。其他平台、浏览器和整个进程树的 RSS 尚未认证。
+监督器还要求 Linux subreaper 和可读的 `/proc/self/task/<tid>/children`
+（`CONFIG_PROC_CHILDREN`）。缺少或无法读取该接口时，在启动 worker 前返回 Unsupported。
 
 ## 固定输入与许可
 

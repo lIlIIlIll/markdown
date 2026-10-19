@@ -487,3 +487,14 @@ wrapper invocation with an archive-only verifier root was correctly rejected;
 using the retained Git bundle provides the required provenance. No product or
 verifier weakening was used. Final metadata-head CI remains a live PR check,
 not an advance claim by this static document. No merge/release is authorized.
+
+PR #12 review follow-up: unavailable `/proc/self/task/<tid>/children` is now
+classified as Unsupported (69) during preflight, before runtime verification or
+worker startup. Missing runtime files still return Missing (66). Four standalone
+CLI regressions cover ENOENT/EACCES/EIO and missing manifest; the old supervisor
+fails three and the fixed supervisor passes all four. The release gate runs these
+checks without requiring Node or Chrome. No library/API/benchmark inputs changed.
+The updated runtime was prepared from retained offline inputs with identity
+`9d7f66290e664254501b6a293fe6eb9218c79b1f86a7779f94acb297669dd5a4`.
+Actual STS 1.2.0 rich consumer, browser/clipboard, seven process fixtures and two
+actual Chrome lifecycle cases all PASS, retaining the same fixture HTML digest.

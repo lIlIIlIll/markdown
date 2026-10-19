@@ -2003,10 +2003,13 @@ class PublicApiCheckerCliTest(unittest.TestCase):
         (gate_root / "examples" / "quickstart").mkdir(parents=True)
         (gate_root / "examples" / "cookbook").mkdir(parents=True)
         (gate_root / "benchmarks" / "driver").mkdir(parents=True)
+        (gate_root / "tests" / "rich_backend").mkdir(parents=True)
         shutil.copy2(RELEASE_GATE, scripts / "release_gate.sh")
 
         self.write_shell_stub(scripts / "check_format.sh", "format")
         self.write_python_stub(scripts / "check_docs.py", "docs")
+        self.write_python_stub(gate_root / "tests" / "rich_backend" / "test_supervisor_capabilities.py",
+            "node-supervisor-capabilities")
         self.write_python_stub(scripts / "test_build_native_scanner.py", "native-build-test")
         self.write_python_stub(scripts / "build_native_scanner.py", "native-build")
         self.write_python_stub(scripts / "fuzz_native_scanner.py", "native-fuzz")
@@ -2043,19 +2046,19 @@ class PublicApiCheckerCliTest(unittest.TestCase):
 
         failed_tests, failed_tests_log = self.run_release_gate(gate_root, checker_test_exit=7, checker_exit=0)
         self.assertEqual(failed_tests.returncode, 7)
-        self.assertEqual(failed_tests_log, ["format", "docs", "native-build-test", "checker-test"])
+        self.assertEqual(failed_tests_log, ["format", "docs", "node-supervisor-capabilities", "native-build-test", "checker-test"])
         self.assertNotIn("checker", failed_tests_log)
         self.assertFalse(any(entry.startswith("cjpm:") for entry in failed_tests_log))
 
         failed_checker, failed_checker_log = self.run_release_gate(gate_root, checker_test_exit=0, checker_exit=9)
         self.assertEqual(failed_checker.returncode, 9)
-        self.assertEqual(failed_checker_log, ["format", "docs", "native-build-test", "checker-test", "checker"])
+        self.assertEqual(failed_checker_log, ["format", "docs", "node-supervisor-capabilities", "native-build-test", "checker-test", "checker"])
         self.assertFalse(any(entry.startswith("cjpm:") for entry in failed_checker_log))
 
         success, success_log = self.run_release_gate(gate_root, checker_test_exit=0, checker_exit=0)
         self.assertEqual(success.returncode, 0, success.stderr)
-        self.assertEqual(success_log[:5], ["format", "docs", "native-build-test", "checker-test", "checker"])
-        self.assertTrue(success_log[5].startswith("cjpm:check"))
+        self.assertEqual(success_log[:6], ["format", "docs", "node-supervisor-capabilities", "native-build-test", "checker-test", "checker"])
+        self.assertTrue(success_log[6].startswith("cjpm:check"))
         self.assertIn("link-input-tests", success_log)
 
     def write_shell_stub(self, path: Path, label: str) -> None:
