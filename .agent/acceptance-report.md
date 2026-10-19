@@ -1,14 +1,28 @@
-# markdown 最终验收报告
+# markdown 验收证据
 
-## Final Status
+## 当前 0.10 离线候选
 
-**INCOMPLETE** — 当前为 120/125 `pass`、5 项 `implemented_unverified`；本地 1508/1508 已通过，但冻结提交的 schema-v5 canonical benchmark 与完整 release-evidence bundle 尚未执行。
+本地与离线验证 PASS；核心 hosted CI 尚未运行，未合并、发布或关闭 issue。
+逐项需求以 [issue #10 验收矩阵](issue-10-matrix.md) 为准。
 
-## 2026-08-31 Current Audit Remediation
+- 生产测量修订：`b930377c2ea52f4afbd5e4c93a354bda41809c82`，官方 STS 1.2.0。
+- 完整原始 release gate 修订：`f3468725a03379bc51355a4a5a07eabfb357202d`，
+  干净 tree `b4e8301593b76280fa82f462d52694460d7a818c`；27 步全部 PASS。
+- 完整测试 `1621/1621`、零 skipped/errors/failures；CommonMark `652/652`、GFM `671/671`，
+  public API `1706`；native ASan+UBSan fuzz `10000`、consumer、差分和 benchmark smoke PASS。
+- 冻结 C 比值 `2.2662144957 / 1.7966549619`；同语言行为 `12/12`、geomean speedup
+  `13.880235098`、最大 RSS 比 `0.525891473`。Arch/Ubuntu 断网源码到产物字节重建 PASS。
+- 实际固定 Node 三种后端、browser/clipboard/SourceMap/cancel/进程清理 gate PASS。
+- 最终 release manifest SHA-256：
+  `eae558b3aa5e0d2653a7964acc3f9eb7b249290be5d4442c5cc350845e9c386b`。
+- 该修订的候选包 `markdown-0.10.0.cjp`：`1450412` bytes，SHA-256
+  `d282206f7d4be6a8499a8bebaf799afdec67b06cb56646f94848f605b69e1aef`。
 
-确认的 runtime、renderer、artifact、resource-limit、RawBlock complexity 和 benchmark identity/semantic-gate 问题均已实现回归修复。二十三轮对抗审查进一步关闭了 range-before-limit、duplicate manifest、HTML/indented/DSL streaming/literal limits、SDK/native/environment/comparator/source/binary/runtime-DSO provenance、pipe drain、binary UTF-8 policy、ProfileKind identity、renderer/RawBlock/fused cancellation、false-ATX/fence incremental complexity、GFM tag boundary、Git-object provenance、buffered String preflight、paired-DSL closer 二次复杂度、native tool executable/environment 身份、CommonMark type-1 HTML 后继边界，以及 API package/member owner、annotation/comment/raw-string/interpolation masking、effective visibility、multiline/type-alias/import/package identity、split/wildcard import、token whitespace/operator/numeric/NFC、Unicode/escaped identifier、单行非空 body、实现体误入 identity、modifier/redef/const/implicit sealed surface、同名 constructor 参数成员与 generic/comparison 分界、direct-scope 同线多声明、token-separated declaration head、indent continuation、同线 package prefix、protected subclass surface 和 source-path false identity 缺口。第 21 轮关闭了 RawBlock unfinished fenced/HTML/indented 累计 literal limit 与 retained product Git object 离线复验；第 22 轮进一步用离线可复现重建绑定源码、工具链、命令和 retained executable/DSO bytes，并拒绝 nested Git source、replace refs、graft/shallow/alternates；第 23 轮修正文档中的旧 schema-v4 命令后，两名全新 reviewer 均返回 ACCEPTED/NO_MATERIAL_FINDINGS。当前本地 format/static/build、docs `44/23/4`、API checker `47/47`、public API snapshot `1436`、same-language schema-v5 verifier `111/111`、driver identity `18/18`、native contracts `10/10`，以及完整 Cangjie suite `1508/1508` 均通过。
-
-旧 same-language raw 仍是 schema v4，且 cmark/cmark-gfm raw 绑定旧 product tree。因此 `MD-SEC-002`、`MD-PERF-001`、`MD-PERF-002`、`MD-REL-001` 和 `MD-QUAL-001` 保持 `implemented_unverified`。下面的 2026-08-30 generated release evidence 是历史记录，不代表当前候选；固定提交的远端 canonical 与 clean release gate 完成后才能覆盖。
+完整 manifest、JUnit、日志、源码归档、SDK/native/link 输入和候选包独立保留。
+编辑/缓存复杂候选均有实测不采用理由，见 [取舍报告](../docs/reports/editor-cache-cost.md)；
+[功能成本](../docs/reports/feature-cost.md) 与 [追加成本](../docs/reports/append-cost.md) 分开记录。
+`.github/benchmark-evidence.json` 仍绑定原 PR #11 的 hosted artifact，不能用于认证当前核心；
+创建核心 PR 后仍需运行新的 hosted CI 并绑定实际 artifact。下面的历史审计不代替当前证据。
 
 <!-- release-evidence:start -->
 ## Generated Release Evidence
@@ -23,6 +37,21 @@
 
 All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->
+
+## 历史审计记录
+
+以下保留旧修订的原始审计过程与状态，含未完成/阻塞结论。它们只描述各自当时的版本，
+不表示当前 0.10 候选仍有那些缺口，也不用于认证当前候选。
+
+## 旧审计状态
+
+**INCOMPLETE** — 当前为 120/125 `pass`、5 项 `implemented_unverified`；本地 1508/1508 已通过，但冻结提交的 schema-v5 canonical benchmark 与完整 release-evidence bundle 尚未执行。
+
+## 2026-08-31 Current Audit Remediation
+
+确认的 runtime、renderer、artifact、resource-limit、RawBlock complexity 和 benchmark identity/semantic-gate 问题均已实现回归修复。二十三轮对抗审查进一步关闭了 range-before-limit、duplicate manifest、HTML/indented/DSL streaming/literal limits、SDK/native/environment/comparator/source/binary/runtime-DSO provenance、pipe drain、binary UTF-8 policy、ProfileKind identity、renderer/RawBlock/fused cancellation、false-ATX/fence incremental complexity、GFM tag boundary、Git-object provenance、buffered String preflight、paired-DSL closer 二次复杂度、native tool executable/environment 身份、CommonMark type-1 HTML 后继边界，以及 API package/member owner、annotation/comment/raw-string/interpolation masking、effective visibility、multiline/type-alias/import/package identity、split/wildcard import、token whitespace/operator/numeric/NFC、Unicode/escaped identifier、单行非空 body、实现体误入 identity、modifier/redef/const/implicit sealed surface、同名 constructor 参数成员与 generic/comparison 分界、direct-scope 同线多声明、token-separated declaration head、indent continuation、同线 package prefix、protected subclass surface 和 source-path false identity 缺口。第 21 轮关闭了 RawBlock unfinished fenced/HTML/indented 累计 literal limit 与 retained product Git object 离线复验；第 22 轮进一步用离线可复现重建绑定源码、工具链、命令和 retained executable/DSO bytes，并拒绝 nested Git source、replace refs、graft/shallow/alternates；第 23 轮修正文档中的旧 schema-v4 命令后，两名全新 reviewer 均返回 ACCEPTED/NO_MATERIAL_FINDINGS。当前本地 format/static/build、docs `44/23/4`、API checker `47/47`、public API snapshot `1436`、same-language schema-v5 verifier `111/111`、driver identity `18/18`、native contracts `10/10`，以及完整 Cangjie suite `1508/1508` 均通过。
+
+旧 same-language raw 仍是 schema v4，且 cmark/cmark-gfm raw 绑定旧 product tree。因此 `MD-SEC-002`、`MD-PERF-001`、`MD-PERF-002`、`MD-REL-001` 和 `MD-QUAL-001` 保持 `implemented_unverified`。下面的 2026-08-30 generated release evidence 是历史记录，不代表当前候选；固定提交的远端 canonical 与 clean release gate 完成后才能覆盖。
 
 ## 2026-08-30 Same-language Merge Gate
 
