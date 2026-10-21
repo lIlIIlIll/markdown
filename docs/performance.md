@@ -11,8 +11,8 @@
 
 | Profile | 对比对象 | 当前 ratio | 门槛 | 状态 |
 | --- | --- | ---: | ---: | --- |
-| CommonMark 完整 AST parse | cmark 0.31.1 | `2.266214x` | `≤2.5x` | pass |
-| GFM 完整 AST + HTML | cmark-gfm 0.29 | `1.796655x` | `≤2.5x` | pass |
+| CommonMark 完整 AST parse | cmark 0.31.1 | `1.886475x` | `≤2.5x` | pass |
+| GFM 完整 AST + HTML | cmark-gfm 0.29 | `1.647081x` | `≤2.5x` | pass |
 
 ratio 大于 1 表示本库更慢。完整语料、样本、RSS、复杂度和 identity 见
 [canonical report](reports/benchmark.md)与其链接的 raw JSON。
@@ -133,3 +133,7 @@ retained binaries/SDK/native tools 完整重建，并验证源码与当前产品
 runner 的产物。归档缺失、过期或摘要不匹配均失败。CI 保留 90 天，应提前保留离线副本；离线使用
 `python3 scripts/verify_committed_benchmark.py --artifact-archive <evidence.zip> --work-dir "$TMPDIR/committed-evidence"`，
 其中工作目录必须尚不存在。
+
+提升 canonical evidence 时，受测提交必须保留在 main 的祖先链中。若 PR 使用 squash
+merge，先合入产品修改，再从实际 main 提交生成并提升报告；原 PR 分支的提交即使产品
+内容相同，也不能替代合入后的源码身份。旧样本与摘要保留为历史证据，不改写其测量提交。

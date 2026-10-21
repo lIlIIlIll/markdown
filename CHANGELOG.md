@@ -47,8 +47,8 @@ Breaking pre-GA：本地、离线和记录修订的 hosted CI 已验证；实时
 - GFM `671/671`；
 - 测试 `1621/1621`，`0` skipped，`0` failed；
 - public API snapshot `1706` declarations；
-- canonical CommonMark ratio `2.266214x`；
-- canonical GFM ratio `1.796655x`。
+- canonical CommonMark ratio `1.886475x`；
+- canonical GFM ratio `1.647081x`。
 
 原始数据和受测 commit identity 见 `docs/reports/benchmark-raw.json`。
 <!-- release-evidence:end -->

@@ -2,19 +2,19 @@
 
 Status: **PASS**
 
-Evidence status: `current`. Frozen 0.10 product measurement with unchanged thresholds. Source-to-binary replay passed offline in Arch and Ubuntu; hosted core CI and release publication remain unverified.
+Evidence status: `current`. Fresh measurement of the retained main commit after the squash merge, using unchanged protocol and thresholds. All seven frozen gates pass; the source archive, official SDK, build identity and reference binaries are retained. Hosted CI and publication remain separate claims.
 
-- CommonMark parse-only geometric mean ratio vs cmark: `2.27x` (limit `2.5x`).
-- GFM parse+HTML geometric mean ratio vs cmark-gfm: `1.80x` (limit `2.5x`).
+- CommonMark parse-only geometric mean ratio vs cmark: `1.89x` (limit `2.5x`).
+- GFM parse+HTML geometric mean ratio vs cmark-gfm: `1.65x` (limit `2.5x`).
 - Raw report: `docs/reports/benchmark-raw.json`.
-- Raw SHA-256: `0f4f838cafefebdefea784c54b487b88241a1d3f1afb79fdef352f46b82bfe2c`.
-- Tested source commit: `b930377c2ea52f4afbd5e4c93a354bda41809c82`.
-- Tested source Git tree: `6e5719ad9ed84ffb3a02cdffd1720f9cd307a0eb`.
+- Raw SHA-256: `b1ae44b1b569550e6474b69067fc197820f21d62855507447baba1d0f38b7952`.
+- Tested source commit: `ce4fae179a1586872c057601be87f8b452a35c33`.
+- Tested source Git tree: `06b0afd2dd7e1264adcc8eedea22b85dcce38abf`.
 - Benchmark Cangjie SDK: `Cangjie Compiler: 1.2.0 (cjnative)`.
-- Product source archive SHA-256: `4e927fc560c880cb5f5f85da9cddbd629d92a773d957dbef2116cf7b6010688d`.
+- Product source archive SHA-256: `1190b692a66a13c967c4d2f1228366e5aa06f2528eb4073977650515e06b2fa4`.
 - Product source tree SHA-256: `6c777aa402a9de37ca65bfc86b1fabcc5af9420678dfc78d9e31a40b1e6f1ce1`.
 - Benchmark harness SHA-256: `ba095c3ed6464805959a2af907d18c16023f605ab172253c47e0b78872de5a4a`.
-- markdown driver SHA-256: `a4911c0419924247b8cee26d5ab5c49378edf135fb78ed5ec38a85ba52de2a7c`.
+- markdown driver SHA-256: `ac4ae19958184e233277264f1f81714141ab43953448bc1486962fb1f877e0ac`.
 - cmark driver SHA-256: `ade49af75b9eac2371dc65f2712262d6b0834997b39d2d60488a45de068cf88e`.
 - cmark-gfm driver SHA-256: `c2160a6ccb910e5357ad3d56090dc19c9847136836c6e32da44b34aacd55570b`.
 - cmark: `0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8`.

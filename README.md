@@ -220,12 +220,12 @@ markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、�
 | CommonMark conformance | `652/652` |
 | GFM conformance | `671/671` |
 | Public API snapshot | `1706` declarations |
-| Artifact commit | `b930377c2ea52f4afbd5e4c93a354bda41809c82` |
-| Evidence subject commit | `b930377c2ea52f4afbd5e4c93a354bda41809c82` |
+| Artifact commit | `ce4fae179a1586872c057601be87f8b452a35c33` |
+| Evidence subject commit | `ce4fae179a1586872c057601be87f8b452a35c33` |
 | Execution identity | `target/release-evidence/manifest.json` records and verifies the clean gate commit/tree |
-| CommonMark / cmark | `2.27x` / limit `2.5x` |
-| GFM HTML / cmark-gfm | `1.80x` / limit `2.5x` |
-| Benchmark identity | `current`; commit `b930377c2ea52f4afbd5e4c93a354bda41809c82`; SDK `Cangjie Compiler: 1.2.0 (cjnative)` |
+| CommonMark / cmark | `1.89x` / limit `2.5x` |
+| GFM HTML / cmark-gfm | `1.65x` / limit `2.5x` |
+| Benchmark identity | `current`; commit `ce4fae179a1586872c057601be87f8b452a35c33`; SDK `Cangjie Compiler: 1.2.0 (cjnative)` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
 `evidenceReady` describes reproducible offline artifacts and gates only. It does not claim that
