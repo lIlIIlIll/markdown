@@ -8,8 +8,12 @@
 
 - 当前 C 参考测量提交：`ecde73409647a6a3d9757834e26a9973ad96ff7e`。
 - CommonMark `2.3036236791x`、GFM `1.8962095802x`，七项原门槛全部 PASS。
-- 0.9.1 的同语言实测、最终 hosted CI 和发布包由发布流程独立验证。
-  下面保留的 PR #12、PR #14 数值只描述各自受测修订。
+- 同语言 canonical 采用成功 push run `39599597109` 的 artifact `12345044569`：
+  共享行为 `12/12`、geomean `10.3031683842x`、最大 RSS 比 `0.5557849769x`。
+  retained Git bundle、官方 SDK 和工具链的源码到产物逐字节复验 PASS。
+- 该 push 的完整 release manifest 为干净提交 `ba71d8d9e131ef6de8fa9b7e9c38f72a8b51eba3`，
+  28 步、1621 项测试全部 PASS；实际候选包与 evidence bundle 校验和通过。
+  最终 head 与发布状态独立核验，详见 [hosted 证据](issue-10-hosted-evidence.md)。
 
 以下保留 PR #12 合入前的验收身份，不用于替代当前性能报告：
 
@@ -33,7 +37,7 @@
 `12158042400`，测量提交 `d383eac`；geomean `10.330166028`、最大 RSS 比 `0.555294453`。
 ZIP 摘要、实际 release manifest/JUnit、Arch/Ubuntu 离线重建均已复验，详见
 [hosted 证据记录](issue-10-hosted-evidence.md)。静态 `ciVerifiedAtHead` 不预先认证后续的
-metadata 提交；当前保持 false，`ciVerifiedCommit` 为 null。下面的历史
+metadata 提交；当前保持 false，`ciVerifiedCommit` 记录实际已测 head。下面的历史
 审计不代替当前证据。
 
 <!-- release-evidence:start -->

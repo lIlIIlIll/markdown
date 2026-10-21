@@ -1,8 +1,33 @@
 # Issue #10 hosted 证据
 
-核心已通过 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12) 合入 main。本页记录 0.9.1 版本改号前的
-main 性能证据与合入前的历史验收；当前 head 的最终检查以
-[PR #14](https://github.com/lIlIIlIll/markdown/pull/14) 为准，不预先认证后续提交。尚未发布。
+核心已通过 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12) 合入 main。本页区分 0.9.1 的当前证据与历史验收。
+最终 head 的检查见 [PR #15](https://github.com/lIlIIlIll/markdown/pull/15)，
+最终发布状态以 GitHub Release 为准；下面的已测提交不预先认证后续修订。
+
+## 0.9.1 的真实 CI 证据
+
+| 项目 | 证据 |
+| --- | --- |
+| 已测提交 | `ba71d8d9e131ef6de8fa9b7e9c38f72a8b51eba3` |
+| Push / PR CI | [39599597109](https://github.com/lIlIIlIll/markdown/actions/runs/39599597109) / [39599601867](https://github.com/lIlIIlIll/markdown/actions/runs/39599601867)，两个 STS 1.2.0 jobs 均成功 |
+| Release manifest | 干净 tree，28 步全部 exit 0；SHA `ee26f4a0b26301a4f486d551b8f3772027aa1e3cffe07b1e3dd19378fcc4b0c1` |
+| JUnit / API | 1621/1621、零 skipped/errors/failures；CM652/652、GFM671/671；API1706 |
+| Release artifact | `12345694580`，ZIP `3322989` bytes，SHA `c02a3484690169cfff75932cab888302a2f70d2b025e92073775c4becb4f4f3d` |
+| 该次候选包 | `markdown-0.9.1.cjp`，SHA `208c4923d1f1aee640c598188a2bd08a78355034a9f906eb5ae395e07358d6d4` |
+| 同语言 artifact | `12345044569`，ZIP `305321708` bytes，SHA `dcdb71190eb572b130dd84ac545a5913fb02b32bafe3ec60f8d78330635aedee` |
+| 同语言 raw | SHA `395d1baa9856ca3972e19fe1c4c0f88fe5a5124197bf41c841cbadd818f40bad` |
+| 同语言统计 | 12/12 共享行为，geomean `10.303168384228803x`、最大 RSS 比 `0.5557849768600925x`；全部原门槛 PASS |
+
+实际 ZIP 均核对大小和 SHA-256。Release bundle 的全部 SHA256SUMS、execution manifest、
+JUnit 与候选包版本已验证；同语言报告采用实际 artifact 的原始字节，并从 retained product
+Git bundle、官方 SDK、native 工具与 runtime 闭包重建，逐字节匹配实际执行文件。
+GitButler 合成 workspace HEAD 不能冒充受测 product HEAD；复验使用原 artifact 保留的
+Git bundle，未修改验证器。最终发布包会从合入提交的 main CI 独立取证。
+
+C 参考测量绑定 `ecde73409647a6a3d9757834e26a9973ad96ff7e`，raw SHA
+`0e8795a44d6e917ba1668ac32dd857c3093942dcde8149d5cdd2304732942926`，
+CommonMark `2.3036236790936466x`、GFM `1.8962095801562973x`，七项原门槛全部 PASS。
+本版本只更新版本身份和发布证据，不将旧样本重绑到新版本。
 
 ## 版本改号前的 main 性能证据
 

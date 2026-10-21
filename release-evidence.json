@@ -6,7 +6,7 @@
     "status": "evidence-ready",
     "evidenceReady": true,
     "ciVerifiedAtHead": false,
-    "ciVerifiedCommit": null,
+    "ciVerifiedCommit": "ba71d8d9e131ef6de8fa9b7e9c38f72a8b51eba3",
     "published": false
   },
   "identity": {
