@@ -8,7 +8,7 @@
 
 ## 修改与验证
 
-- 行为变更同时检查 parser、renderer 与公开文档；新增公开声明时维护 `api/public-api-v0.10.txt`、API 文档及测试。扩展语法需覆盖交互、优先级、回退及 `MarkdownExtensionTestKit.verify`。
+- 行为变更同时检查 parser、renderer 与公开文档；新增公开声明时维护 `api/public-api-v0.9.1.txt`、API 文档及测试。扩展语法需覆盖交互、优先级、回退及 `MarkdownExtensionTestKit.verify`。
 - 按 `CONTRIBUTING.md` 运行适用的 `scripts/check_format.sh`、`python3 scripts/check_docs.py`、`python3 scripts/check_public_api.py`、`cjpm check`、`cjpm build`、`cjpm test --no-color --no-progress`；发布/性能变更遵守独立的 release 和 retained-input gate。
 - 基准测试必须有等语义和可复现的比较输入，性能改进不能以丢失 AST、位置、NodeId 或安全检查为代价。区分本机、CI、conformance、benchmark 证据。
 
