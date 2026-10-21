@@ -213,20 +213,20 @@ markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、�
 <!-- release-evidence:start -->
 | Release evidence | Value |
 | --- | --- |
-| Version / status | `0.9.1` / `draft` |
-| Offline evidence ready | `not ready` |
+| Version / status | `0.9.1` / `evidence-ready` |
+| Offline evidence ready | `ready` |
 | CI verified at evidence repository HEAD | `no` |
 | Published release | `no` |
 | Tests | `1621/1621` passed; `0` skipped; `0` failed |
 | CommonMark conformance | `652/652` |
 | GFM conformance | `671/671` |
 | Public API snapshot | `1706` declarations |
-| Artifact commit | `ce4fae179a1586872c057601be87f8b452a35c33` |
-| Evidence subject commit | `ce4fae179a1586872c057601be87f8b452a35c33` |
+| Artifact commit | `ecde73409647a6a3d9757834e26a9973ad96ff7e` |
+| Evidence subject commit | `ecde73409647a6a3d9757834e26a9973ad96ff7e` |
 | Execution identity | `target/release-evidence/manifest.json` records and verifies the clean gate commit/tree |
-| CommonMark / cmark | `1.89x` / limit `2.5x` |
-| GFM HTML / cmark-gfm | `1.65x` / limit `2.5x` |
-| Benchmark identity | `historical`; commit `ce4fae179a1586872c057601be87f8b452a35c33`; SDK `Cangjie Compiler: 1.2.0 (cjnative)` |
+| CommonMark / cmark | `2.30x` / limit `2.5x` |
+| GFM HTML / cmark-gfm | `1.90x` / limit `2.5x` |
+| Benchmark identity | `current`; commit `ecde73409647a6a3d9757834e26a9973ad96ff7e`; SDK `Cangjie Compiler: 1.2.0 (cjnative)` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
 `evidenceReady` describes reproducible offline artifacts and gates only. It does not claim that

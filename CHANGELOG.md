@@ -42,13 +42,13 @@ Breaking pre-GA：本版本包含原计划 0.10 的模型调整，不承诺兼�
 <!-- release-evidence:start -->
 当前数字只由 [`release-evidence.json`](release-evidence.json)提供：
 
-- benchmark evidence status `historical`；
+- benchmark evidence status `current`；
 - CommonMark `652/652`；
 - GFM `671/671`；
 - 测试 `1621/1621`，`0` skipped，`0` failed；
 - public API snapshot `1706` declarations；
-- last complete CommonMark ratio `1.886475x`；
-- last complete GFM ratio `1.647081x`。
+- canonical CommonMark ratio `2.303624x`；
+- canonical GFM ratio `1.896210x`。
 
 原始数据和受测 commit identity 见 `docs/reports/benchmark-raw.json`。
 <!-- release-evidence:end -->

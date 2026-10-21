@@ -1,10 +1,10 @@
 # Issue #10 hosted 证据
 
-核心已通过 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12) 合入 main。本页区分当前
+核心已通过 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12) 合入 main。本页记录 0.9.1 版本改号前的
 main 性能证据与合入前的历史验收；当前 head 的最终检查以
 [PR #14](https://github.com/lIlIIlIll/markdown/pull/14) 为准，不预先认证后续提交。尚未发布。
 
-## 当前 main 性能证据
+## 版本改号前的 main 性能证据
 
 PR #12 的 squash merge 保留了产品内容，但合入前测量提交不再属于 main 祖先链。
 校验器按原规则拒绝旧身份。当前两份 canonical 报告均采用实际 main 提交

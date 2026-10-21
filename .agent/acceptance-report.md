@@ -2,15 +2,14 @@
 
 ## 当前 0.9.1 发布候选
 
-核心已通过 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12) 合入 main。当前性能证据绑定
-合入提交 `ce4fae179a1586872c057601be87f8b452a35c33`，官方 STS 1.2.0；
-证据修复的最终检查见 [PR #14](https://github.com/lIlIIlIll/markdown/pull/14)。尚未发布。
+核心已通过 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12) 合入。维护者选择将原计划
+0.10 的模型以 breaking pre-GA `0.9.1` 发布，官方 STS 1.2.0。
 逐项需求以 [issue #10 验收矩阵](issue-10-matrix.md) 为准。
 
-- 当前 C 参考测量：CommonMark `1.8864746702x`、GFM `1.6470812254x`，七项原门槛全部 PASS。
-- 当前同语言报告：共享行为 `12/12`、geomean speedup `10.3203658343x`。
-  固定 main artifact 的源码到执行文件逐字节复验已通过；详见
-  [hosted 证据记录](issue-10-hosted-evidence.md)。
+- 当前 C 参考测量提交：`ecde73409647a6a3d9757834e26a9973ad96ff7e`。
+- CommonMark `2.3036236791x`、GFM `1.8962095802x`，七项原门槛全部 PASS。
+- 0.9.1 的同语言实测、最终 hosted CI 和发布包由发布流程独立验证。
+  下面保留的 PR #12、PR #14 数值只描述各自受测修订。
 
 以下保留 PR #12 合入前的验收身份，不用于替代当前性能报告：
 
@@ -40,15 +39,15 @@ metadata 提交；当前保持 false，`ciVerifiedCommit` 为 null。下面的�
 <!-- release-evidence:start -->
 ## Generated Release Evidence
 
-- Version/status: `0.9.1` / `draft`.
-- Artifact commit: `ce4fae179a1586872c057601be87f8b452a35c33`.
-- Evidence subject commit: `ce4fae179a1586872c057601be87f8b452a35c33`; the retained execution manifest binds the clean gate commit and Git tree.
+- Version/status: `0.9.1` / `evidence-ready`.
+- Artifact commit: `ecde73409647a6a3d9757834e26a9973ad96ff7e`.
+- Evidence subject commit: `ecde73409647a6a3d9757834e26a9973ad96ff7e`; the retained execution manifest binds the clean gate commit and Git tree.
 - Hosted CI verified at that HEAD: `False`; published: `False`.
 - Tests: `1621/1621` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `1.89x`, GFM `1.65x`, status `historical`.
-- Raw digest: `b1ae44b1b569550e6474b69067fc197820f21d62855507447baba1d0f38b7952`.
+- Benchmark: CommonMark `2.30x`, GFM `1.90x`, status `current`.
+- Raw digest: `0e8795a44d6e917ba1668ac32dd857c3093942dcde8149d5cdd2304732942926`.
 
-One or more mandatory offline evidence gates remain incomplete. Hosted CI and publication remain separate claims.
+All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->
 
 ## 历史审计记录
