@@ -1,9 +1,42 @@
 # Issue #10 hosted 证据
 
-核心已交付 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12)。本页记录实际成功运行，
-当前 head 的最终检查以 PR 页面为准；不预先认证随后的 metadata 提交，也不代表已合并或发布。
+核心已通过 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12) 合入 main。本页区分当前
+main 性能证据与合入前的历史验收；当前 head 的最终检查以
+[PR #14](https://github.com/lIlIIlIll/markdown/pull/14) 为准，不预先认证后续提交。尚未发布。
 
-## 运行与真实 release evidence
+## 当前 main 性能证据
+
+PR #12 的 squash merge 保留了产品内容，但合入前测量提交不再属于 main 祖先链。
+校验器按原规则拒绝旧身份。当前两份 canonical 报告均采用实际 main 提交
+`ce4fae179a1586872c057601be87f8b452a35c33` 的测量，产品 tree 为
+`6c777aa402a9de37ca65bfc86b1fabcc5af9420678dfc78d9e31a40b1e6f1ce1`。
+
+- C 参考报告由该 main 提交重新构建并实测，官方 STS 1.2.0、协议和阈值不变。
+  CommonMark `1.8864746701753454x`、GFM `1.6470812254036316x`，七项门槛全部 PASS。
+  Raw SHA-256 为 `b1ae44b1b569550e6474b69067fc197820f21d62855507447baba1d0f38b7952`。
+- 同语言报告直接采用 main run
+  [39195978763](https://github.com/lIlIIlIll/markdown/actions/runs/39195978763)
+  的实际 artifact `12162017686`。该 run 整体失败于旧 committed evidence 验证，
+  `Run same-language benchmark gate` 实测步骤成功，不能将整个 run 描述为成功。
+- Artifact ZIP 为 `305268730` bytes，SHA-256
+  `2d8c80666ec30f3242d53f4cc6f3b6cda5ef860088c69ef62be7ae409a3bec32`。
+  Raw SHA-256 为 `b521cdf367b01ffe9c3cb42a915f48513bff531715fc446a8fefa5a4350f5590`。
+  共享行为 `12/12`，geomean speedup `10.3203658343143x`，全部同语言门槛 PASS。
+- 只读取证 run
+  [39574329033](https://github.com/lIlIIlIll/markdown/actions/runs/39574329033)
+  已成功下载并验证固定 artifact，在 Ubuntu 中使用 retained Git inputs、SDK、native tools
+  和 runtime 闭包完整重建，逐字节匹配原测量产物。随后导出的 raw 与 Markdown 报告
+  经分块、长度及 SHA-256 校验后原样写入仓库。
+
+`.github/benchmark-evidence.json` 固定上述实际 artifact。源码、harness、校验器和性能门槛
+均未修改；main 合入后的完整 CI 仍须独立验证。`ciVerifiedAtHead=false`、
+`ciVerifiedCommit=null` 和 `published=false` 保守保留。
+
+## PR #12 合入前的历史证据
+
+以下记录只描述原分支的成功运行、样本与重建，不代表当前 canonical 报告的身份或数值。
+
+### 运行与真实 release evidence
 
 | 项目 | 证据 |
 | --- | --- |
@@ -22,7 +55,7 @@
 选择同一 head 的 push run，使测量提交保持在核心分支历史中。该选择依据来源可追溯性，
 没有修改阈值、样本或失败结果。
 
-## Canonical 同语言证据
+### 当时的 canonical 同语言证据
 
 | 项目 | 值 |
 | --- | --- |
@@ -44,7 +77,7 @@ native 工具及 runtime/link 闭包重建 driver、CLI 和 comparator，逐字�
 最初向包装器传入不含 Git 元数据的源码归档，来源校验明确拒绝。随后使用实际 artifact
 保留的 Git bundle 创建完整来源仓库并通过；没有放宽验证器或跳过 Git provenance。
 
-## 维度边界
+### 当时的维度边界
 
 - 本地 C 参考性能仍绑定 `b930377` 的原始测量，CM2.2662/GFM1.7967，所有原门槛 PASS。
   本页的 CI 同语言数字不重绑本地 C 样本。

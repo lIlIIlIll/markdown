@@ -2,15 +2,24 @@
 
 ## 当前 0.10 离线候选
 
-本地、离线与记录修订的 hosted CI 均 PASS。实时最终检查见 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12)；未合并、发布或关闭 issue。
+核心已通过 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12) 合入 main。当前性能证据绑定
+合入提交 `ce4fae179a1586872c057601be87f8b452a35c33`，官方 STS 1.2.0；
+证据修复的最终检查见 [PR #14](https://github.com/lIlIIlIll/markdown/pull/14)。尚未发布。
 逐项需求以 [issue #10 验收矩阵](issue-10-matrix.md) 为准。
 
-- 生产测量修订：`b930377c2ea52f4afbd5e4c93a354bda41809c82`，官方 STS 1.2.0。
-- 完整原始 release gate 修订：`f3468725a03379bc51355a4a5a07eabfb357202d`，
+- 当前 C 参考测量：CommonMark `1.8864746702x`、GFM `1.6470812254x`，七项原门槛全部 PASS。
+- 当前同语言报告：共享行为 `12/12`、geomean speedup `10.3203658343x`。
+  固定 main artifact 的源码到执行文件逐字节复验已通过；详见
+  [hosted 证据记录](issue-10-hosted-evidence.md)。
+
+以下保留 PR #12 合入前的验收身份，不用于替代当前性能报告：
+
+- 合入前生产测量修订：`b930377c2ea52f4afbd5e4c93a354bda41809c82`，官方 STS 1.2.0。
+- 合入前完整原始 release gate 修订：`f3468725a03379bc51355a4a5a07eabfb357202d`，
   干净 tree `b4e8301593b76280fa82f462d52694460d7a818c`；27 步全部 PASS。
 - 完整测试 `1621/1621`、零 skipped/errors/failures；CommonMark `652/652`、GFM `671/671`，
   public API `1706`；native ASan+UBSan fuzz `10000`、consumer、差分和 benchmark smoke PASS。
-- 本地冻结 C 比值 `2.2662144957 / 1.7966549619`；本地同语言行为 `12/12`、geomean speedup
+- 合入前本地冻结 C 比值 `2.2662144957 / 1.7966549619`；本地同语言行为 `12/12`、geomean speedup
   `13.880235098`、最大 RSS 比 `0.525891473`。Arch/Ubuntu 断网源码到产物字节重建 PASS。
 - 实际固定 Node 三种后端、browser/clipboard/SourceMap/cancel/进程清理 gate PASS。
 - 最终 release manifest SHA-256：
@@ -21,23 +30,23 @@
 完整 manifest、JUnit、日志、源码归档、SDK/native/link 输入和候选包独立保留。
 编辑/缓存复杂候选均有实测不采用理由，见 [取舍报告](../docs/reports/editor-cache-cost.md)；
 [功能成本](../docs/reports/feature-cost.md) 与 [追加成本](../docs/reports/append-cost.md) 分开记录。
-当前 canonical 同语言报告已绑定核心成功 push run `39185741396` 的实际 artifact
+合入前 canonical 同语言报告绑定核心成功 push run `39185741396` 的实际 artifact
 `12158042400`，测量提交 `d383eac`；geomean `10.330166028`、最大 RSS 比 `0.555294453`。
 ZIP 摘要、实际 release manifest/JUnit、Arch/Ubuntu 离线重建均已复验，详见
 [hosted 证据记录](issue-10-hosted-evidence.md)。静态 `ciVerifiedAtHead` 不预先认证后续的
-metadata 提交；它保守地保持 false，`ciVerifiedCommit` 记录实际已测提交。下面的历史
+metadata 提交；当前保持 false，`ciVerifiedCommit` 为 null。下面的历史
 审计不代替当前证据。
 
 <!-- release-evidence:start -->
 ## Generated Release Evidence
 
 - Version/status: `0.10.0` / `evidence-ready`.
-- Artifact commit: `b930377c2ea52f4afbd5e4c93a354bda41809c82`.
-- Evidence subject commit: `b930377c2ea52f4afbd5e4c93a354bda41809c82`; the retained execution manifest binds the clean gate commit and Git tree.
+- Artifact commit: `ce4fae179a1586872c057601be87f8b452a35c33`.
+- Evidence subject commit: `ce4fae179a1586872c057601be87f8b452a35c33`; the retained execution manifest binds the clean gate commit and Git tree.
 - Hosted CI verified at that HEAD: `False`; published: `False`.
 - Tests: `1621/1621` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `2.27x`, GFM `1.80x`, status `current`.
-- Raw digest: `0f4f838cafefebdefea784c54b487b88241a1d3f1afb79fdef352f46b82bfe2c`.
+- Benchmark: CommonMark `1.89x`, GFM `1.65x`, status `current`.
+- Raw digest: `b1ae44b1b569550e6474b69067fc197820f21d62855507447baba1d0f38b7952`.
 
 All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->

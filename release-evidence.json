@@ -6,12 +6,12 @@
     "status": "evidence-ready",
     "evidenceReady": true,
     "ciVerifiedAtHead": false,
-    "ciVerifiedCommit": "d383eaca35c1c70802105cbf1ab8e942da6c4ea2",
+    "ciVerifiedCommit": null,
     "published": false
   },
   "identity": {
-    "artifactCommit": "b930377c2ea52f4afbd5e4c93a354bda41809c82",
-    "evidenceCommit": "b930377c2ea52f4afbd5e4c93a354bda41809c82",
+    "artifactCommit": "ce4fae179a1586872c057601be87f8b452a35c33",
+    "evidenceCommit": "ce4fae179a1586872c057601be87f8b452a35c33",
     "repositoryHeadAtGeneration": null,
     "repositoryGitTreeAtGeneration": null,
     "treeStateAtGeneration": "validated-by-execution-manifest",
@@ -57,21 +57,21 @@
   "benchmark": {
     "status": "current",
     "rawPath": "docs/reports/benchmark-raw.json",
-    "rawSha256": "0f4f838cafefebdefea784c54b487b88241a1d3f1afb79fdef352f46b82bfe2c",
-    "sourceCommit": "b930377c2ea52f4afbd5e4c93a354bda41809c82",
-    "sourceGitTree": "6e5719ad9ed84ffb3a02cdffd1720f9cd307a0eb",
+    "rawSha256": "b1ae44b1b569550e6474b69067fc197820f21d62855507447baba1d0f38b7952",
+    "sourceCommit": "ce4fae179a1586872c057601be87f8b452a35c33",
+    "sourceGitTree": "06b0afd2dd7e1264adcc8eedea22b85dcce38abf",
     "sdkVersion": "Cangjie Compiler: 1.2.0 (cjnative)",
-    "productSourceArchiveSha256": "4e927fc560c880cb5f5f85da9cddbd629d92a773d957dbef2116cf7b6010688d",
+    "productSourceArchiveSha256": "1190b692a66a13c967c4d2f1228366e5aa06f2528eb4073977650515e06b2fa4",
     "productTreeSha256": "6c777aa402a9de37ca65bfc86b1fabcc5af9420678dfc78d9e31a40b1e6f1ce1",
     "benchmarkHarnessSha256": "ba095c3ed6464805959a2af907d18c16023f605ab172253c47e0b78872de5a4a",
-    "markdownDriverSha256": "a4911c0419924247b8cee26d5ab5c49378edf135fb78ed5ec38a85ba52de2a7c",
+    "markdownDriverSha256": "ac4ae19958184e233277264f1f81714141ab43953448bc1486962fb1f877e0ac",
     "cmarkDriverSha256": "ade49af75b9eac2371dc65f2712262d6b0834997b39d2d60488a45de068cf88e",
     "cmarkGfmDriverSha256": "c2160a6ccb910e5357ad3d56090dc19c9847136836c6e32da44b34aacd55570b",
-    "commonmarkRatio": 2.2662144957475965,
-    "gfmRatio": 1.7966549618996306,
+    "commonmarkRatio": 1.8864746701753454,
+    "gfmRatio": 1.6470812254036316,
     "ratioLimit": 2.5,
     "cmark": "0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8",
     "cmarkGfm": "0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b",
-    "note": "Frozen 0.10 product measurement with unchanged thresholds. Source-to-binary replay passed offline in Arch and Ubuntu; hosted core CI and release publication remain unverified."
+    "note": "Fresh measurement of the retained main commit after the squash merge, using unchanged protocol and thresholds. All seven frozen gates pass; the source archive, official SDK, build identity and reference binaries are retained. Hosted CI and publication remain separate claims."
   }
 }
