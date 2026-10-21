@@ -1,6 +1,6 @@
 # 脚注、标题和文档绑定
 
-本页描述 0.10 开发版中已实现的 batch 与追加最终绑定语义。标准 CommonMark/GFM profile
+本页描述 0.9.1 开发版中已实现的 batch 与追加最终绑定语义。标准 CommonMark/GFM profile
 不默认启用这些扩展。定义列表见[独立规则](definition-lists.md)；可选富内容后端及完整发布
 门禁仍按 issue #10 分别验收。
 

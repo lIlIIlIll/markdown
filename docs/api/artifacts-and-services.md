@@ -40,7 +40,7 @@ parser 保留的 `SourceBuffer`、UTF-8 policy、原始与解码 digest，以及
 或 mapping 不匹配都返回 `CacheMiss(reason)`。加载时会再次检查 artifact 中 AST 的来源，
 避免已篡改的 AST 与正确 digest 组合命中 cache。
 
-0.10 的 parser plan、节点身份及 SPI 改变了 fingerprint。旧 artifact 返回 cache miss，
+0.9.1 的 parser plan、节点身份及 SPI 改变了 fingerprint。旧 artifact 返回 cache miss，
 不进行猜测性迁移。
 
 ## Binary snapshot

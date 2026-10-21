@@ -1,8 +1,8 @@
 # Release benchmark report
 
-Status: **PASS**
+Status: **FAIL**
 
-Evidence status: `current`. Fresh measurement of the retained main commit after the squash merge, using unchanged protocol and thresholds. All seven frozen gates pass; the source archive, official SDK, build identity and reference binaries are retained. Hosted CI and publication remain separate claims.
+Evidence status: `historical`. Historical 0.10 development measurement before the 0.9.1 version metadata change; a fresh source-bound measurement is required before publication.
 
 - CommonMark parse-only geometric mean ratio vs cmark: `1.89x` (limit `2.5x`).
 - GFM parse+HTML geometric mean ratio vs cmark-gfm: `1.65x` (limit `2.5x`).

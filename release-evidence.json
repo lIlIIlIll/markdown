@@ -1,10 +1,10 @@
 {
   "schemaVersion": 4,
   "release": {
-    "version": "0.10.0",
+    "version": "0.9.1",
     "channel": "preview",
-    "status": "evidence-ready",
-    "evidenceReady": true,
+    "status": "draft",
+    "evidenceReady": false,
     "ciVerifiedAtHead": false,
     "ciVerifiedCommit": null,
     "published": false
@@ -43,9 +43,9 @@
     }
   },
   "api": {
-    "snapshotPath": "api/public-api-v0.10.txt",
+    "snapshotPath": "api/public-api-v0.9.1.txt",
     "declarations": 1706,
-    "sha256": "e736a95e63ca67956554fd2f68226c6ebd322deca73327f2f0151b6fb5fd33fb"
+    "sha256": "3f4c535a582f22b67bf639ecfd60259f0e7de6faf12f88b98b324eae82090ff1"
   },
   "tests": {
     "total": 1621,
@@ -55,7 +55,7 @@
     "failed": 0
   },
   "benchmark": {
-    "status": "current",
+    "status": "historical",
     "rawPath": "docs/reports/benchmark-raw.json",
     "rawSha256": "b1ae44b1b569550e6474b69067fc197820f21d62855507447baba1d0f38b7952",
     "sourceCommit": "ce4fae179a1586872c057601be87f8b452a35c33",
@@ -72,6 +72,6 @@
     "ratioLimit": 2.5,
     "cmark": "0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8",
     "cmarkGfm": "0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b",
-    "note": "Fresh measurement of the retained main commit after the squash merge, using unchanged protocol and thresholds. All seven frozen gates pass; the source archive, official SDK, build identity and reference binaries are retained. Hosted CI and publication remain separate claims."
+    "note": "Historical 0.10 development measurement before the 0.9.1 version metadata change; a fresh source-bound measurement is required before publication."
   }
 }

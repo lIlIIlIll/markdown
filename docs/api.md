@@ -1,7 +1,7 @@
 # API reference
 
 先看[API 速查](api/quick-reference.md)。需要完整语义、错误和扩展示例时，再进入对应
-子包页面。精确声明以 [`api/public-api-v0.10.txt`](../api/public-api-v0.10.txt) 为准。
+子包页面。精确声明以 [`api/public-api-v0.9.1.txt`](../api/public-api-v0.9.1.txt) 为准。
 
 [文档首页](README.md) · [API 速查](api/quick-reference.md) · **API reference** · [Cookbook](cookbook.md)
 
@@ -61,9 +61,10 @@ artifact 或 testkit。可选真实富内容准备使用 `markdown.node`，见[�
 采用严格 UTF-8，HTML 使用安全策略。完整表见[API 速查](api/quick-reference.md#错误默认值)。
 
 解析和渲染的结构化失败继承 `MarkdownException`。程序应根据 `code`、`phase` 和可选
-`span` 分支，不要解析英文消息。`tryParse` 返回空文档和结构化错误，不返回部分 AST。
+`span` 分支，不要解析英文消息。`tryParse` 返回 `ParseOutcome.Success` 或 `Failure`；
+失败结果不携带 Document。
 
-当前 reference 对应 `0.10.0` breaking pre-GA preview。详见
+当前 reference 对应 `0.9.1` breaking pre-GA preview。详见
 [版本与兼容性](versioning-and-compatibility.md)。
 
 ---

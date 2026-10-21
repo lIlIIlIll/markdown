@@ -1,4 +1,4 @@
-# markdown public API snapshot v0.10
+# markdown public API snapshot v0.9.1
 append.cj:package=markdown:owner=class/AppendBlockView:public let finalSemantics: Bool
 append.cj:package=markdown:owner=class/AppendBlockView:public let node: NodeRef
 append.cj:package=markdown:owner=class/AppendBlockView:public let source: SourceBuffer

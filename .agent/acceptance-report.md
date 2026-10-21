@@ -1,6 +1,6 @@
 # markdown 验收证据
 
-## 当前 0.10 离线候选
+## 当前 0.9.1 发布候选
 
 核心已通过 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12) 合入 main。当前性能证据绑定
 合入提交 `ce4fae179a1586872c057601be87f8b452a35c33`，官方 STS 1.2.0；
@@ -40,21 +40,21 @@ metadata 提交；当前保持 false，`ciVerifiedCommit` 为 null。下面的�
 <!-- release-evidence:start -->
 ## Generated Release Evidence
 
-- Version/status: `0.10.0` / `evidence-ready`.
+- Version/status: `0.9.1` / `draft`.
 - Artifact commit: `ce4fae179a1586872c057601be87f8b452a35c33`.
 - Evidence subject commit: `ce4fae179a1586872c057601be87f8b452a35c33`; the retained execution manifest binds the clean gate commit and Git tree.
 - Hosted CI verified at that HEAD: `False`; published: `False`.
 - Tests: `1621/1621` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `1.89x`, GFM `1.65x`, status `current`.
+- Benchmark: CommonMark `1.89x`, GFM `1.65x`, status `historical`.
 - Raw digest: `b1ae44b1b569550e6474b69067fc197820f21d62855507447baba1d0f38b7952`.
 
-All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
+One or more mandatory offline evidence gates remain incomplete. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->
 
 ## 历史审计记录
 
 以下保留旧修订的原始审计过程与状态，含未完成/阻塞结论。它们只描述各自当时的版本，
-不表示当前 0.10 候选仍有那些缺口，也不用于认证当前候选。
+不表示当前候选仍有那些缺口，也不用于认证当前候选。
 
 ## 旧审计状态
 
