@@ -1,7 +1,7 @@
 # Issue #10 验收矩阵
 
 范围为 MD-00..08 和原始验收 ID，不删除或缩小需求。PASS 仅描述下面实际运行的维度；
-核心分支已交付 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12)，issue 未关闭。发布边界为 breaking pre-GA `0.10.0`，STS `1.2.0`。
+核心已通过 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12) 合入。原计划 0.10 的模型按维护者选择以 breaking pre-GA `0.9.1` 发布，STS `1.2.0`。
 
 ## 证据标记
 
@@ -53,7 +53,7 @@ P1 或 G1。完整原始日志、执行文件和失败诊断在独立 evidence �
 | MD-00.2 | [共享绑定器](../src/binding.cj)、[标题目标](../src/headings.cj)、[解析管线](../src/parse_pipeline.cj) | F1：DocumentBindingTests、HeadingBindingTests、ExtensionLifecycleTests PASS | 无 |
 | MD-00.3 | [lineage/serial](../src/node_identity.cj)、不可变 revision、归属检查 | F1：[NodeIdentityTests](../src/node_identity_test.cj)、EditorSemanticAcceptanceTest PASS；P1 成本 gate PASS | 无 |
 | MD-00.4 | [ParseOutcome](../src/parser.cj)、成功专用 ParseResult、临时 AppendDraft | F1：core/input/append failure tests PASS | 无 |
-| MD-00.5 | 删除 ast/parsePartial/StableNodeId/processor/buffered-output/profile aliases/旧 scanner adapters；保留单条准确命名的完整输入便利路径 | F1：NodeIdentityTests、InputBehaviorTest PASS；[迁移清单](../docs/migration-0.10.md) | 无 |
+| MD-00.5 | 删除 ast/parsePartial/StableNodeId/processor/buffered-output/profile aliases/旧 scanner adapters；保留单条准确命名的完整输入便利路径 | F1：NodeIdentityTests、InputBehaviorTest PASS；[迁移清单](../docs/migration-0.9.1.md) | 无 |
 | MD-00.6 | transform → bind → analysis → prepare → render，整文能力早期拒绝或明确延后 | F1：[ExtensionLifecycleTests](../src/extension_stages_test.cj) PASS | 无 |
 | MD-00.7 | SPI 3、plan 6、artifact/wire 3、renderer fingerprint 5；旧格式拒绝，无自动迁移 | F1：artifact/binary/identity tests、1706 声明检查 PASS | 无 |
 | MD-00.8 | 真实后置脚注/标题样例贯穿 batch/append/绑定/多输出/source/snapshot | F1：binding、append、组合语义 tests PASS | 无 |
@@ -181,5 +181,5 @@ P1 或 G1。完整原始日志、执行文件和失败诊断在独立 evidence �
 | DONE-03 | 本地 PASS | F1/P1/G1：完整构建/测试/标准语料/consumer/fuzz/benchmark/bundle；readiness 由真实 manifest 校验，最终执行记录独立保留 |
 | DONE-04 | PASS | 未修改 SDK、原始标准语料、安全/资源/冻结性能门槛；旧接口的有效风险已迁移，无静默 skip |
 | DONE-05 | 本地/离线/记录修订 hosted PASS | H1 保留真实 run、artifact、测试与独立重建；当前 canonical 指针已切到核心实际 CI，最终 head 状态见 PR #12 |
-| DONE-06 | 已交付 PR #12；未合并 | 核心与测量矩阵、本地/离线/记录修订 hosted 均通过；测量型候选有证据不采用。issue 由 PR 关联，最终检查与合并由维护者审阅 |
-| DONE-07 | PASS | 0.10 breaking pre-GA；无旧 facade/reader/双写主轨；核心 push/PR #12 已获单独授权；未 merge/release。先前保护检查迁移亦为明确单独授权，不自动修改规则 |
+| DONE-06 | PR #12 已合并 | 核心与测量矩阵、本地/离线/记录修订 hosted 均通过；测量型候选有证据不采用。issue 由 PR 关联，最终检查与合并由维护者审阅 |
+| DONE-07 | PASS | 0.9.1 breaking pre-GA；无旧 facade/reader/双写主轨；核心 push/PR #12 已获单独授权；核心已 merge，发布状态以 GitHub Release 为准。先前保护检查迁移亦为明确单独授权，不自动修改规则 |

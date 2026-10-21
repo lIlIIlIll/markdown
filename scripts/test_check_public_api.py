@@ -18,7 +18,7 @@ from urllib.parse import quote
 HERE = Path(__file__).resolve().parent
 CHECKER = HERE / "check_public_api.py"
 RELEASE_GATE = HERE / "release_gate.sh"
-HEADER = "# markdown public API snapshot v0.10"
+HEADER = "# markdown public API snapshot v0.9.1"
 
 
 class PublicApiCheckerCliTest(unittest.TestCase):
@@ -48,10 +48,10 @@ class PublicApiCheckerCliTest(unittest.TestCase):
     def update_snapshot(self) -> str:
         result = self.run_checker("--update")
         self.assertEqual(result.returncode, 0, result.stderr)
-        return (self.root / "api" / "public-api-v0.10.txt").read_text(encoding="utf-8")
+        return (self.root / "api" / "public-api-v0.9.1.txt").read_text(encoding="utf-8")
 
     def write_snapshot(self, content: str) -> None:
-        (self.root / "api" / "public-api-v0.10.txt").write_bytes(content.encode("utf-8"))
+        (self.root / "api" / "public-api-v0.9.1.txt").write_bytes(content.encode("utf-8"))
 
     def assert_snapshot_fails(self, content: str, message: str | None = None) -> subprocess.CompletedProcess[str]:
         self.write_snapshot(content)
@@ -90,7 +90,7 @@ class PublicApiCheckerCliTest(unittest.TestCase):
 
                 updated = self.run_checker("--update")
                 self.assertEqual(updated.returncode, 0, updated.stderr)
-                self.assertEqual((self.root / "api" / "public-api-v0.10.txt").read_text(encoding="utf-8"), raw)
+                self.assertEqual((self.root / "api" / "public-api-v0.9.1.txt").read_text(encoding="utf-8"), raw)
 
     def test_real_constructor_signature_differences_fail_with_raw_diff(self) -> None:
         declaration = 'public init<T>(value: Int64, name!: String = "x") where T <: Any {'
@@ -493,7 +493,7 @@ class PublicApiCheckerCliTest(unittest.TestCase):
         self.write_source(source.replace("package sample", "package beta"), "b.cj")
         distinct_packages = self.run_checker("--update")
         self.assertEqual(distinct_packages.returncode, 0, distinct_packages.stderr)
-        distinct_raw = (self.root / "api" / "public-api-v0.10.txt").read_text(encoding="utf-8")
+        distinct_raw = (self.root / "api" / "public-api-v0.9.1.txt").read_text(encoding="utf-8")
         self.assertIn("a.cj:package=alpha:owner=class/Box:", distinct_raw)
         self.assertIn("b.cj:package=beta:owner=class/Box:", distinct_raw)
 
@@ -1619,7 +1619,7 @@ class PublicApiCheckerCliTest(unittest.TestCase):
         result = self.run_checker("--update")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("canonical collision", result.stderr)
-        self.assertFalse((self.root / "api" / "public-api-v0.10.txt").exists())
+        self.assertFalse((self.root / "api" / "public-api-v0.9.1.txt").exists())
 
     def test_implicit_public_interface_members_are_snapshotted(self) -> None:
         self.write_source(
@@ -1841,7 +1841,7 @@ class PublicApiCheckerCliTest(unittest.TestCase):
         result = self.run_checker("--update")
         self.assertNotEqual(result.returncode, 0, result.stdout)
         self.assertIn("nonempty type body", result.stderr)
-        self.assertFalse((self.root / "api" / "public-api-v0.10.txt").exists())
+        self.assertFalse((self.root / "api" / "public-api-v0.9.1.txt").exists())
 
     def test_private_and_internal_owners_hide_nested_public_declarations(self) -> None:
         self.write_source(

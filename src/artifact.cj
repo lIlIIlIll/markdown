@@ -160,7 +160,7 @@ public class MarkdownParseArtifact {
 
     internal init(engine: MarkdownEngine, result: ParseResult) {
         schemaVersion = "3"
-        libraryVersion = "0.10.0"
+        libraryVersion = "0.9.1"
         parserPlanVersion = MARKDOWN_PARSER_PLAN_VERSION
         profileId = engine.profile.id
         dialectFingerprint = engine.dialect.fingerprint

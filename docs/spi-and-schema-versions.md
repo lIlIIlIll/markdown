@@ -10,7 +10,7 @@
 | Syntax DSL schema | `1` | descriptor 拒绝加载 |
 | Parser plan | `6` | parse artifact cache miss |
 | Binary artifact | schema `3` | 拒绝或 cache miss，不猜测恢复 |
-| Public API snapshot | `v0.10` | `check_public_api.py` 报告差异 |
+| Public API snapshot | `v0.9.1` | `check_public_api.py` 报告差异 |
 | Rich content product / preparation | `1` | 类型、来源版本或产物验证失败；原文 fallback 或显式严格失败 |
 | HTML renderer fingerprint | `5` | 旧渲染缓存失效 |
 
@@ -43,8 +43,8 @@ canonical descriptor 使用长度前缀编码，不使用未转义的 `@`、`|` 
 - 不支持的 SPI、未知字段、callback descriptor 和无界规则都 fail closed。
 - artifact identity 不匹配只能视为 cache miss；不得在来源不一致时复用 AST。
 
-当前版本是 breaking pre-GA 0.10，公开 API 以
-[`api/public-api-v0.10.txt`](../api/public-api-v0.10.txt)为准。
+当前版本是 breaking pre-GA 0.9.1，公开 API 以
+[`api/public-api-v0.9.1.txt`](../api/public-api-v0.9.1.txt)为准。
 
 plan 6 的 binary AST digest 覆盖 typed 参数的名称、类型和值；未知 custom payload
 不能只按 type ID 认证，编码时拒绝，缓存加载时返回 CacheMiss。

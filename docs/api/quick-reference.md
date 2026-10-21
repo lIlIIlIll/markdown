@@ -1,7 +1,7 @@
 # API 速查
 
-本页只列常用公开入口。签名对应 `0.10.0`；完整声明以
-[`api/public-api-v0.10.txt`](../../api/public-api-v0.10.txt) 为准。
+本页只列常用公开入口。签名对应 `0.9.1`；完整声明以
+[`api/public-api-v0.9.1.txt`](../../api/public-api-v0.9.1.txt) 为准。
 
 [文档首页](../README.md) · **API 速查** · [完整 API](../api.md) · [Cookbook](../cookbook.md)
 

@@ -9,7 +9,7 @@
 [![Cangjie 1.2.0](https://img.shields.io/badge/Cangjie-1.2.0-7B61FF?style=for-the-badge)](cjpm.toml)
 [![CommonMark 0.31.2](https://img.shields.io/badge/CommonMark-0.31.2-2F6F9F?style=for-the-badge)](docs/profiles.md)
 [![GFM 0.29](https://img.shields.io/badge/GFM-0.29-24292F?style=for-the-badge)](docs/profiles.md)
-[![Status pre-GA](https://img.shields.io/badge/Status-0.9_preview-F59E0B?style=for-the-badge)](docs/versioning-and-compatibility.md)
+[![Status pre-GA](https://img.shields.io/badge/Status-0.9.1_preview-F59E0B?style=for-the-badge)](docs/versioning-and-compatibility.md)
 [![Developed with Codex](https://img.shields.io/badge/Developed_with-Codex-111111?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com/codex/)
 [![License MIT](https://img.shields.io/badge/License-MIT-16A34A?style=for-the-badge)](LICENSE)
 
@@ -17,8 +17,9 @@
 
 </div>
 
-当前开发版本是 `0.10.0` breaking pre-GA preview，正在实施新的语义、身份和流式模型。
-本次开发尚未完成全部发布门槛；破坏性修改和状态见[0.10 迁移](docs/migration-0.10.md)。
+当前版本是 `0.9.1` breaking pre-GA preview，包含新的语义、身份和流式模型。
+本版本采用原计划 `0.10` 的模型调整，不承诺兼容 `0.9.0`；升级前请阅读
+[0.9.1 迁移](docs/migration-0.9.1.md)。
 
 > [!NOTE]
 > 基础包是纯仓颉实现，不需要 C 编译器。原生 line scanner 是可选加速器，不是运行依赖。
@@ -212,7 +213,7 @@ markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、�
 <!-- release-evidence:start -->
 | Release evidence | Value |
 | --- | --- |
-| Version / status | `0.10.0` / `evidence-ready` |
+| Version / status | `0.9.1` / `evidence-ready` |
 | Offline evidence ready | `ready` |
 | CI verified at evidence repository HEAD | `no` |
 | Published release | `no` |
@@ -220,12 +221,12 @@ markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、�
 | CommonMark conformance | `652/652` |
 | GFM conformance | `671/671` |
 | Public API snapshot | `1706` declarations |
-| Artifact commit | `b930377c2ea52f4afbd5e4c93a354bda41809c82` |
-| Evidence subject commit | `b930377c2ea52f4afbd5e4c93a354bda41809c82` |
+| Artifact commit | `ecde73409647a6a3d9757834e26a9973ad96ff7e` |
+| Evidence subject commit | `ecde73409647a6a3d9757834e26a9973ad96ff7e` |
 | Execution identity | `target/release-evidence/manifest.json` records and verifies the clean gate commit/tree |
-| CommonMark / cmark | `2.27x` / limit `2.5x` |
-| GFM HTML / cmark-gfm | `1.80x` / limit `2.5x` |
-| Benchmark identity | `current`; commit `b930377c2ea52f4afbd5e4c93a354bda41809c82`; SDK `Cangjie Compiler: 1.2.0 (cjnative)` |
+| CommonMark / cmark | `2.30x` / limit `2.5x` |
+| GFM HTML / cmark-gfm | `1.90x` / limit `2.5x` |
+| Benchmark identity | `current`; commit `ecde73409647a6a3d9757834e26a9973ad96ff7e`; SDK `Cangjie Compiler: 1.2.0 (cjnative)` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
 `evidenceReady` describes reproducible offline artifacts and gates only. It does not claim that
