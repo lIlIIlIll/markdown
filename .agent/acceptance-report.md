@@ -1,16 +1,19 @@
 # markdown 验收证据
 
-## 当前 0.10 离线候选
+## 当前 0.9.1 发布候选
 
-核心已通过 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12) 合入 main。当前性能证据绑定
-合入提交 `ce4fae179a1586872c057601be87f8b452a35c33`，官方 STS 1.2.0；
-证据修复的最终检查见 [PR #14](https://github.com/lIlIIlIll/markdown/pull/14)。尚未发布。
+核心已通过 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12) 合入。维护者选择将原计划
+0.10 的模型以 breaking pre-GA `0.9.1` 发布，官方 STS 1.2.0。
 逐项需求以 [issue #10 验收矩阵](issue-10-matrix.md) 为准。
 
-- 当前 C 参考测量：CommonMark `1.8864746702x`、GFM `1.6470812254x`，七项原门槛全部 PASS。
-- 当前同语言报告：共享行为 `12/12`、geomean speedup `10.3203658343x`。
-  固定 main artifact 的源码到执行文件逐字节复验已通过；详见
-  [hosted 证据记录](issue-10-hosted-evidence.md)。
+- 当前 C 参考测量提交：`ecde73409647a6a3d9757834e26a9973ad96ff7e`。
+- CommonMark `2.3036236791x`、GFM `1.8962095802x`，七项原门槛全部 PASS。
+- 同语言 canonical 采用成功 push run `39599597109` 的 artifact `12345044569`：
+  共享行为 `12/12`、geomean `10.3031683842x`、最大 RSS 比 `0.5557849769x`。
+  retained Git bundle、官方 SDK 和工具链的源码到产物逐字节复验 PASS。
+- 该 push 的完整 release manifest 为干净提交 `ba71d8d9e131ef6de8fa9b7e9c38f72a8b51eba3`，
+  28 步、1621 项测试全部 PASS；实际候选包与 evidence bundle 校验和通过。
+  最终 head 与发布状态独立核验，详见 [hosted 证据](issue-10-hosted-evidence.md)。
 
 以下保留 PR #12 合入前的验收身份，不用于替代当前性能报告：
 
@@ -34,19 +37,19 @@
 `12158042400`，测量提交 `d383eac`；geomean `10.330166028`、最大 RSS 比 `0.555294453`。
 ZIP 摘要、实际 release manifest/JUnit、Arch/Ubuntu 离线重建均已复验，详见
 [hosted 证据记录](issue-10-hosted-evidence.md)。静态 `ciVerifiedAtHead` 不预先认证后续的
-metadata 提交；当前保持 false，`ciVerifiedCommit` 为 null。下面的历史
+metadata 提交；当前保持 false，`ciVerifiedCommit` 记录实际已测 head。下面的历史
 审计不代替当前证据。
 
 <!-- release-evidence:start -->
 ## Generated Release Evidence
 
-- Version/status: `0.10.0` / `evidence-ready`.
-- Artifact commit: `ce4fae179a1586872c057601be87f8b452a35c33`.
-- Evidence subject commit: `ce4fae179a1586872c057601be87f8b452a35c33`; the retained execution manifest binds the clean gate commit and Git tree.
+- Version/status: `0.9.1` / `evidence-ready`.
+- Artifact commit: `ecde73409647a6a3d9757834e26a9973ad96ff7e`.
+- Evidence subject commit: `ecde73409647a6a3d9757834e26a9973ad96ff7e`; the retained execution manifest binds the clean gate commit and Git tree.
 - Hosted CI verified at that HEAD: `False`; published: `False`.
 - Tests: `1621/1621` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `1.89x`, GFM `1.65x`, status `current`.
-- Raw digest: `b1ae44b1b569550e6474b69067fc197820f21d62855507447baba1d0f38b7952`.
+- Benchmark: CommonMark `2.30x`, GFM `1.90x`, status `current`.
+- Raw digest: `0e8795a44d6e917ba1668ac32dd857c3093942dcde8149d5cdd2304732942926`.
 
 All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->
@@ -54,7 +57,7 @@ All mandatory offline evidence and performance gates pass. Hosted CI and publica
 ## 历史审计记录
 
 以下保留旧修订的原始审计过程与状态，含未完成/阻塞结论。它们只描述各自当时的版本，
-不表示当前 0.10 候选仍有那些缺口，也不用于认证当前候选。
+不表示当前候选仍有那些缺口，也不用于认证当前候选。
 
 ## 旧审计状态
 

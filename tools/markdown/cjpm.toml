@@ -3,7 +3,7 @@
   name = "markdown_cli"
   organization = ""
   description = "markdown command-line interface"
-  version = "0.10.0"
+  version = "0.9.1"
   target-dir = ""
   script-dir = ""
   output-type = "executable"

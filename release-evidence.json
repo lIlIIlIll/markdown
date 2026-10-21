@@ -1,17 +1,17 @@
 {
   "schemaVersion": 4,
   "release": {
-    "version": "0.10.0",
+    "version": "0.9.1",
     "channel": "preview",
     "status": "evidence-ready",
     "evidenceReady": true,
     "ciVerifiedAtHead": false,
-    "ciVerifiedCommit": null,
+    "ciVerifiedCommit": "ba71d8d9e131ef6de8fa9b7e9c38f72a8b51eba3",
     "published": false
   },
   "identity": {
-    "artifactCommit": "ce4fae179a1586872c057601be87f8b452a35c33",
-    "evidenceCommit": "ce4fae179a1586872c057601be87f8b452a35c33",
+    "artifactCommit": "ecde73409647a6a3d9757834e26a9973ad96ff7e",
+    "evidenceCommit": "ecde73409647a6a3d9757834e26a9973ad96ff7e",
     "repositoryHeadAtGeneration": null,
     "repositoryGitTreeAtGeneration": null,
     "treeStateAtGeneration": "validated-by-execution-manifest",
@@ -43,9 +43,9 @@
     }
   },
   "api": {
-    "snapshotPath": "api/public-api-v0.10.txt",
+    "snapshotPath": "api/public-api-v0.9.1.txt",
     "declarations": 1706,
-    "sha256": "e736a95e63ca67956554fd2f68226c6ebd322deca73327f2f0151b6fb5fd33fb"
+    "sha256": "3f4c535a582f22b67bf639ecfd60259f0e7de6faf12f88b98b324eae82090ff1"
   },
   "tests": {
     "total": 1621,
@@ -57,21 +57,21 @@
   "benchmark": {
     "status": "current",
     "rawPath": "docs/reports/benchmark-raw.json",
-    "rawSha256": "b1ae44b1b569550e6474b69067fc197820f21d62855507447baba1d0f38b7952",
-    "sourceCommit": "ce4fae179a1586872c057601be87f8b452a35c33",
-    "sourceGitTree": "06b0afd2dd7e1264adcc8eedea22b85dcce38abf",
+    "rawSha256": "0e8795a44d6e917ba1668ac32dd857c3093942dcde8149d5cdd2304732942926",
+    "sourceCommit": "ecde73409647a6a3d9757834e26a9973ad96ff7e",
+    "sourceGitTree": "32c8c906e9a552709e97b4eac16c14f755ec9e0c",
     "sdkVersion": "Cangjie Compiler: 1.2.0 (cjnative)",
-    "productSourceArchiveSha256": "1190b692a66a13c967c4d2f1228366e5aa06f2528eb4073977650515e06b2fa4",
-    "productTreeSha256": "6c777aa402a9de37ca65bfc86b1fabcc5af9420678dfc78d9e31a40b1e6f1ce1",
+    "productSourceArchiveSha256": "ba67499e3ae467af659af48060974a023409e0673c524fd01b9cd4878641becb",
+    "productTreeSha256": "e6f2131ae3a73ce0f728d0823fdc49fc413ac8185cd6aee73adb8f41666f795a",
     "benchmarkHarnessSha256": "ba095c3ed6464805959a2af907d18c16023f605ab172253c47e0b78872de5a4a",
-    "markdownDriverSha256": "ac4ae19958184e233277264f1f81714141ab43953448bc1486962fb1f877e0ac",
+    "markdownDriverSha256": "7e641fcbe711296f3824ca700bae75550c47e9537d2981541453b6100329e531",
     "cmarkDriverSha256": "ade49af75b9eac2371dc65f2712262d6b0834997b39d2d60488a45de068cf88e",
     "cmarkGfmDriverSha256": "c2160a6ccb910e5357ad3d56090dc19c9847136836c6e32da44b34aacd55570b",
-    "commonmarkRatio": 1.8864746701753454,
-    "gfmRatio": 1.6470812254036316,
+    "commonmarkRatio": 2.3036236790936466,
+    "gfmRatio": 1.8962095801562973,
     "ratioLimit": 2.5,
     "cmark": "0.31.1 bb3678d7a73cb02d35c8876ecd097072636200a8",
     "cmarkGfm": "0.29.0.gfm.13 587a12bb54d95ac37241377e6ddc93ea0e45439b",
-    "note": "Fresh measurement of the retained main commit after the squash merge, using unchanged protocol and thresholds. All seven frozen gates pass; the source archive, official SDK, build identity and reference binaries are retained. Hosted CI and publication remain separate claims."
+    "note": "Fresh measurement of the 0.9.1 release source with official STS 1.2.0, unchanged protocol, reference binaries and thresholds. All seven frozen gates pass. Retained source, SDK, native/link inputs and measured executables bind this result. Hosted CI and publication remain separate claims."
   }
 }
