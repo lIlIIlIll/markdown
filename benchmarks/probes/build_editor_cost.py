@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -30,14 +31,9 @@ def sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--baseline", type=Path, help="Clean source checkout using the current domain package layout")
-    args = parser.parse_args()
-    output = args.output.resolve()
+def prepare_output(output: Path, baseline: Path) -> dict:
+    """Generate the isolated current-layout source and fail on changed boundaries."""
     output.mkdir(parents=True, exist_ok=False)
-    baseline = args.baseline.resolve() if args.baseline else ROOT
     product_tree = benchmark_product_tree_sha256(baseline)
     instrumenter_hash = sha(Path(__file__))
     source = output / "src"
@@ -65,7 +61,6 @@ def main() -> None:
     # Instrumentation state is a module-private leaf package, independent of the AST.
     controller = source / "editor_cost_probe.cj"
     controller_text = controller.read_text()
-    import re
     counters = re.findall(r"^var probe\w+[^\n]*", controller_text, flags=re.M)
     controller_text = re.sub(r"^var probe\w+[^\n]*\n", "", controller_text, flags=re.M)
     helpers = []
@@ -165,7 +160,10 @@ def main() -> None:
                     }
                 }
                 lineStart = false""")
-    text = replace(text, "            tokens.add(\n                SyntaxToken(kind, value[start..index],", "            probeCstBytes += index - start\n            tokens.add(\n                SyntaxToken(kind, value[start..index],")
+    text, changed = re.subn(r"(?m)^([ \t]*)tokens\.add\(\s*SyntaxToken\(kind, value\[start\.\.index\],",
+        lambda match: match.group(1) + "probeCstBytes += index - start\n" + match.group(), text)
+    if changed != 1:
+        raise ValueError("token construction instrumentation boundary changed")
     text = replace(text, "                    while (tokenIndex < end) {\n                        if (length < ownerLengths[tokenIndex])", "                    while (tokenIndex < end) {\n                        probeMapVisits++\n                        if (length < ownerLengths[tokenIndex])")
     text = replace(text, "    private init(source: SourceBuffer, root: SyntaxNode, tokenArena: Array<SyntaxToken>, document: ?Document)",
         "    protected init(source: SourceBuffer, root: SyntaxNode, tokenArena: Array<SyntaxToken>, document: ?Document)")
@@ -186,6 +184,23 @@ def main() -> None:
         sourceDigest = Sha256.digestBytes(result.source.text().toArray())
     }""")
     path.write_text(text)
+    return {"schema": "markdown.editor-cost-build/1", "productionTreeSha256": product_tree,
+        "probeSourceSha256": probe_hash, "instrumenterSha256": instrumenter_hash, "originalFiles": originals,
+        "variableEditProbeSha256": variable_probe_hash,
+        "cacheRestoreProbeSha256": cache_probe_hash,
+        "instrumentedFiles": {str(path.relative_to(output)): sha(path) for path in sorted(source.rglob("*.cj"))},
+        "manifestSha256": sha(output / "cjpm.toml"),
+        "scope": "private constructor/charged-work counters and runtime CST candidate; no SDK or production edits"}
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--baseline", type=Path, help="Clean source checkout using the current domain package layout")
+    args = parser.parse_args()
+    output = args.output.resolve()
+    baseline = args.baseline.resolve() if args.baseline else ROOT
+    metadata = prepare_output(output, baseline)
     tool = shutil.which("cjpm")
     if tool is None:
         parser.error("activate the official STS 1.2.0 SDK first")
@@ -198,16 +213,14 @@ def main() -> None:
         result = subprocess.run([tool, "build"], cwd=output, env=environment, stdout=log, stderr=subprocess.STDOUT)
     if result.returncode:
         raise ValueError("instrumented build failed; inspect build.log")
-    if benchmark_product_tree_sha256(baseline) != product_tree or sha(Path(__file__)) != instrumenter_hash or sha(probe) != probe_hash or sha(variable_probe) != variable_probe_hash or sha(cache_probe) != cache_probe_hash:
+    if (benchmark_product_tree_sha256(baseline) != metadata["productionTreeSha256"]
+            or sha(Path(__file__)) != metadata["instrumenterSha256"]
+            or sha(ROOT / "benchmarks/probes/editor_cost.cj") != metadata["probeSourceSha256"]
+            or sha(ROOT / "benchmarks/probes/variable_edit.cj") != metadata["variableEditProbeSha256"]
+            or sha(ROOT / "benchmarks/probes/cache_restore.cj") != metadata["cacheRestoreProbeSha256"]):
         raise ValueError("production source or instrumentation changed during the build")
-    metadata = {"schema": "markdown.editor-cost-build/1", "productionTreeSha256": product_tree,
-        "probeSourceSha256": probe_hash, "instrumenterSha256": instrumenter_hash, "originalFiles": originals,
-        "variableEditProbeSha256": variable_probe_hash,
-        "cacheRestoreProbeSha256": cache_probe_hash,
-        "sdk": version.strip(), "cjcSha256": sha(Path(compiler).resolve()), "cjpmSha256": sha(Path(tool).resolve()),
-        "instrumentedFiles": {str(path.relative_to(output)): sha(path) for path in sorted(source.rglob("*.cj"))},
-        "manifestSha256": sha(output / "cjpm.toml"), "executableSha256": sha(output / "target/release/bin/main"),
-        "scope": "private constructor/charged-work counters and runtime CST candidate; no SDK or production edits"}
+    metadata.update(sdk=version.strip(), cjcSha256=sha(Path(compiler).resolve()),
+        cjpmSha256=sha(Path(tool).resolve()), executableSha256=sha(output / "target/release/bin/main"))
     (output / "build.json").write_text(json.dumps(metadata, indent=2) + "\n")
     print("PASS isolated editor cost build", flush=True)
 

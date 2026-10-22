@@ -2,6 +2,7 @@
 """Compile external consumers against the built domain packages and their boundaries."""
 
 from pathlib import Path
+import importlib.util
 import shutil
 import subprocess
 import sys
@@ -72,6 +73,23 @@ class DomainPackageConsumerTest(unittest.TestCase):
                 *library_link_arguments(MODULES), "-o", str(self.directory / "rich-consumer")],
             capture_output=True, text=True, check=False)
         self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_editor_probe_generation_accepts_the_current_production_sources(self) -> None:
+        specification = importlib.util.spec_from_file_location(
+            "editor_probe_builder", ROOT / "benchmarks/probes/build_editor_cost.py")
+        builder = importlib.util.module_from_spec(specification)
+        specification.loader.exec_module(builder)
+        before = builder.benchmark_product_tree_sha256(ROOT)
+        output = self.directory / "editor-probe"
+        metadata = builder.prepare_output(output, ROOT)
+        self.assertEqual(builder.benchmark_product_tree_sha256(ROOT), before)
+        self.assertEqual(metadata["productionTreeSha256"], before)
+        production = {path.relative_to(ROOT).as_posix() for path in (ROOT / "src").rglob("*.cj")
+            if not path.name.endswith("_test.cj")}
+        self.assertEqual(set(metadata["originalFiles"]), production)
+        self.assertIn('output-type = "executable"', (output / "cjpm.toml").read_text())
+        self.assertNotEqual(metadata["instrumentedFiles"]["src/editor/editor.cj"],
+            metadata["originalFiles"]["src/editor/editor.cj"])
 
     def test_root_facade_and_internal_arena_are_not_exported(self) -> None:
         for package, name in (("markdown", "Markdown"), ("markdown", "Document"),
