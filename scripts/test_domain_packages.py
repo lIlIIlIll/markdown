@@ -4,12 +4,15 @@
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
 MODULES = ROOT / "target" / "release" / "markdown"
+sys.path.insert(0, str(ROOT / "benchmarks"))
+from library_inputs import library_link_arguments
 
 CONSUMER = """package outside_consumer
 import markdown.core.{DisplayWidthPolicy, SourcePositionMap}
@@ -61,6 +64,13 @@ class DomainPackageConsumerTest(unittest.TestCase):
 
     def test_domain_operations_and_same_package_extensions_are_exported(self) -> None:
         result = self.compile(CONSUMER)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_standalone_rich_backend_consumer_compiles_and_links(self) -> None:
+        result = subprocess.run(
+            [self.compiler, str(ROOT / "tests/rich_backend/main.cj"), "-O2", "--import-path", str(MODULES),
+                *library_link_arguments(MODULES), "-o", str(self.directory / "rich-consumer")],
+            capture_output=True, text=True, check=False)
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_root_facade_and_internal_arena_are_not_exported(self) -> None:
