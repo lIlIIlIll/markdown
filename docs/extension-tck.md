@@ -8,6 +8,11 @@ import markdown.engine.*
 import markdown.testkit.*
 
 let report = MarkdownExtensionTestKit.verify(engine, sample)
+if (!report.isSuccess()) {
+    for (failure in report.failedChecks.toArray()) {
+        println(failure)
+    }
+}
 ```
 
 `verify` 检查：

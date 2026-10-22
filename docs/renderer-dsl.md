@@ -23,7 +23,7 @@ lowering。
 
 脚注、标题 ID 和定义列表的 typed payload 使用共享语义绑定及固定输出。为这些 local
 kind 注册通用 RendererRule 会在编译时失败；opaque emitter 运行后才产生 typed payload
-时，各输出也会明确拒绝匹配的通用 override。相关边界见[完整文档阶段](api/extensions.md#完整文档阶段)。
+时，各输出也会明确拒绝匹配的通用 override。相关边界见[完整文档阶段](extensions.md#完整文档阶段)。
 
 ## HTML 安全
 
@@ -71,5 +71,4 @@ renderer 写入前检查 output budget，并保留 sink 错误。SourceMap 在 w
 `Failed` 消费结果恢复；不会预先渲染整份 HTML。确认、预算和终态契约见
 [暂停与恢复 HTML 输出](html-output.md)。
 
-完整构造参数和 renderer API 见 [Extensions API](api/extensions.md)与
-[Rendering API](api/rendering.md)。
+完整构造参数和 renderer API 见 [API reference](api.md)。

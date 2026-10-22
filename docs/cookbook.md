@@ -4,7 +4,7 @@
 [`examples/cookbook`](../examples/cookbook/)；完整源码位于
 [`examples/cookbook/src/main.cj`](../examples/cookbook/src/main.cj)。
 
-[文档首页](README.md) · [开始使用](getting-started.md) · **Cookbook** · [API 速查](api/quick-reference.md)
+[文档首页](README.md) · [开始使用](getting-started.md) · **Cookbook** · [API reference](api.md)
 
 ## 场景导航
 
@@ -15,7 +15,7 @@
 | 获取标题、链接和 LSP 位置 | [读取标题、链接和位置](#读取标题链接和位置) |
 | 限制资源或取消请求 | [限制资源并取消操作](#限制资源并取消操作) |
 | 注册 `:::` 容器 | [自定义容器语法](#自定义容器语法) |
-| 读取最终标题绑定并产生诊断 | [完整文档阶段](api/extensions.md#完整文档阶段) |
+| 读取最终标题绑定并产生诊断 | [完整文档阶段](extensions.md#完整文档阶段) |
 | lint 或格式化 | [Lint 和格式化](#lint-和格式化) |
 
 ```sh
@@ -68,7 +68,7 @@ println(engine.renderHtml(source).html)
 import markdown.engine.MarkdownEngine
 import markdown.core.AstQuery
 
-let result = MarkdownEngine.builder().build().parse("# Install\n\nSee [API](api).")
+let result = MarkdownEngine.builder().build().parse("# Install\n\nSee [API](api.md).")
 for (heading in AstQuery.headings(result.document)) {
     let span = heading.node.span.getOrThrow()
     let lsp = result.source.utf16Position(span.startByte)
@@ -86,7 +86,7 @@ for (link in AstQuery.links(result.document)) {
 
 默认 `ParseLimits.safe()` 已限制输入、行、AST 节点、literal、引用、URL、表格列和
 输出。需要更严格限制时，复制 `ParseLimits` 的全部字段并只调整目标值。构造器参数和
-默认值见 [Core API](api/core.md#资源限制)。
+默认值见[格式化指南](formatting.md)。
 
 取消由调用方持有 `CancellationSource`：
 
@@ -152,18 +152,66 @@ println(CanonicalMarkdownRenderer().render(document))
 ```
 
 `CanonicalMarkdownRenderer` 生成 canonical Markdown。需要尽量保留原始排版或只编辑范围时，使用
-`DocumentSnapshot` 和 `PreservingFormatter`，见 [Editor API](api/editor.md)。
+`DocumentSnapshot` 和 `PreservingFormatter`，见[格式化指南](formatting.md)。
+
+## 输出到 sink 并关联源码
+
+通过 engine 创建 renderer 可自动使用 dialect 的 manifest、renderer rules 和固定输出上限。
+以下示例使用内建收集 sink，再取得 HTML 字节与节点、源码范围的映射：
+
+```cangjie
+import markdown.engine.MarkdownEngine
+import markdown.render.{HtmlOptions, StringTextSink}
+
+let engine = MarkdownEngine.builder().build()
+let document = engine.parse("# source").document
+let renderer = engine.htmlRenderer(options: HtmlOptions.safe())
+let sink = StringTextSink()
+renderer.renderTo(document, sink)
+println(sink.content())
+
+let output = renderer.renderWithSourceMap(document)
+let sourceSpan = output.sourceSpanAt(5)
+let nodeId = output.nodeIdAt(5)
+println(output.content)
+```
+
+StringTextSink 收集完整输出。需要避免保留完整 String 时，由宿主实现写入实际目标的
+`TextSink`；`write` 返回 Success 或 Failure，返回 Failure 时转换为 SinkFailureException。
+sink 直接抛出的异常原样传播。
+固定 `maximumOutputBytes` 与操作预算在每次写入前执行。Source map 由写出路径同步记录，
+按 output byte range 查询，不从 HTML 中反向搜索原文。需背压时使用
+[可恢复输出会话](html-output.md)。
+
+## 从 AST 生成纯文本
+
+纯文本和 canonical Markdown 共用同一个完整 AST。下面保留链接显示文本，使用换行表示
+soft break：
+
+```cangjie
+import markdown.engine.MarkdownEngine
+import markdown.render.{PlainTextOptions, PlainTextRenderer}
+
+let document = MarkdownEngine.builder().build().parse("[API](api.md)\ntext").document
+let text = PlainTextRenderer(
+    options: PlainTextOptions(includeLinkDestinations: false, softBreak: "\n")
+).render(document)
+println(text)
+```
+
+需要保留链接 destination 时修改 `includeLinkDestinations`；生成 Markdown 的选项见
+[格式化指南](formatting.md)。
 
 ## 下一步
 
-- 查签名和默认值：[API 速查](api/quick-reference.md)
+- 查签名和默认值：[API reference](api.md)
 - 排查常见错误：[故障排查](troubleshooting.md)
 - 选择输入形式和预算：[输入、限制和取消](input-and-resources.md)
 - 编写、测试扩展：[扩展开发](extensions.md)
 
 ---
 
-[← 开始使用](getting-started.md) · [文档首页](README.md) · [API 速查 →](api/quick-reference.md)
+[← 开始使用](getting-started.md) · [文档首页](README.md) · [API reference →](api.md)
 
 ## 公式来源与代码组
 

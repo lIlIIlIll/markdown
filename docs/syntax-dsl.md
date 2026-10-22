@@ -82,4 +82,4 @@ DSL 无法表达的有限行内语法可使用 `InlineParserSpi`。SPI 必须声
 `triggerBytes`、maximum lookahead、priority 和 deterministic。runtime 校验 consumed
 offset、identity 和 span，并把 callback 错误包装成 `ExtensionFailureException`。
 
-完整字段见 [Extensions API](api/extensions.md)。
+完整字段见 [API reference](api.md)。

@@ -1,0 +1,17 @@
+# Source comments own the API reference. Cross-API guides remain in docs/.
+[lint]
+severity = "warning"
+empty-description = "off"
+missing-example = "off"
+# cjdoc 0.7.3 applies this rule to fields as well as call results.
+# scripts/check_api_docs.py checks non-Unit functions and readable properties.
+missing-return = "off"
+# Source mode preserves unresolved types as text; explicit @see links are
+# checked independently. Do not claim CHIR/canonical type resolution.
+unresolved-type-link = "off"
+broken-link = "error"
+ambiguous-link = "error"
+duplicate-param = "error"
+duplicate-return = "error"
+duplicate-throws = "error"
+example-not-compiling = "error"

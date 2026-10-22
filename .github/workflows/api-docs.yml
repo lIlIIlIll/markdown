@@ -1,0 +1,117 @@
+name: API documentation
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Generate and verify API documentation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      # actions/checkout v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Install official STS 1.2.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="${RUNNER_TEMP}/cangjie-sdk-linux-x64-1.2.0.tar.gz"
+          curl --fail --location --retry 3 \
+            'https://cangjie-lang.cn/v1/files/auth/downLoad?nsId=142267&fileName=cangjie-sdk-linux-x64-1.2.0.tar.gz&objectKey=6ab1e26eece1f87ff5befa73' \
+            --output "${archive}"
+          printf '%s  %s\n' '8c5fd944cd9cc51ee63d4a240e3ecc4f540345dae1468e8b47c927ecf2ba998f' "${archive}" | sha256sum --check --strict
+          sdk_dir="${RUNNER_TEMP}/cangjie-sdk"
+          mkdir -p "${sdk_dir}"
+          tar -xf "${archive}" -C "${sdk_dir}"
+          env_file="$(find "${sdk_dir}" -name envsetup.sh -type f -print -quit)"
+          test -n "${env_file}"
+          echo "CANGJIE_ENV_FILE=${env_file}" >> "${GITHUB_ENV}"
+          {
+            printf 'TMPDIR=%s\n' "${RUNNER_TEMP}"
+            printf 'TMP=%s\n' "${RUNNER_TEMP}"
+            printf 'TEMP=%s\n' "${RUNNER_TEMP}"
+          } >> "${GITHUB_ENV}"
+
+      - name: Install pinned cjdoc release
+        shell: bash
+        run: |
+          set -euo pipefail
+          binary="${RUNNER_TEMP}/cjdoc-0.7.3"
+          curl --fail --location --retry 3 \
+            'https://github.com/lIlIIlIll/cjdoc/releases/download/v0.7.3/cjdoc-0.7.3-linux-x64' \
+            --output "${binary}"
+          printf '%s  %s\n' '6e5f0393dfdbea75bc84d51cd1bf1765ac2b819a19c270c93c5a3092c526f775' "${binary}" | sha256sum --check --strict
+          chmod 0700 "${binary}"
+          printf 'CJDOC_TEST_BINARY=%s\n' "${binary}" >> "${GITHUB_ENV}"
+
+      - name: Test documentation publication gate
+        shell: bash
+        run: |
+          set -eo pipefail
+          source "${CANGJIE_ENV_FILE}"
+          set -u
+          python3 -m unittest discover -s scripts -p test_api_docs.py
+
+      - name: Generate, check examples and verify site
+        shell: bash
+        run: |
+          set -eo pipefail
+          source "${CANGJIE_ENV_FILE}"
+          set -u
+          python3 scripts/generate_api_docs.py --cjdoc "${CJDOC_TEST_BINARY}"
+          python3 scripts/check_api_docs.py --require-examples
+          python3 scripts/check_docs.py
+          python3 scripts/check_public_api.py
+
+      - name: Upload PR documentation preview
+        if: github.event_name == 'pull_request'
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: api-documentation-preview
+          path: target/api-docs
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Configure Pages
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        # actions/configure-pages v6.0.0
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d
+        with:
+          enablement: false
+
+      - name: Upload Pages site
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        # actions/upload-pages-artifact v5.0.0
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
+        with:
+          path: target/api-docs/html
+
+  deploy:
+    name: Deploy API documentation
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    steps:
+      - name: Deploy Pages
+        id: deployment
+        # actions/deploy-pages v5.0.1
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346

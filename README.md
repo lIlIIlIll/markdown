@@ -13,7 +13,7 @@
 [![Developed with Codex](https://img.shields.io/badge/Developed_with-Codex-111111?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com/codex/)
 [![License MIT](https://img.shields.io/badge/License-MIT-16A34A?style=for-the-badge)](LICENSE)
 
-[快速开始](#两分钟运行) · [开发者文档](docs/README.md) · [API 速查](docs/api/quick-reference.md) · [性能报告](docs/performance.md) · [参与贡献](CONTRIBUTING.md)
+[快速开始](#两分钟运行) · [开发者文档](docs/README.md) · [API 站点](https://liliilill.github.io/markdown/) · [性能报告](docs/performance.md) · [参与贡献](CONTRIBUTING.md)
 
 </div>
 
@@ -84,16 +84,16 @@ cjpm run --skip-build
 
 | 目标 | 首选入口 | 深入阅读 |
 | --- | --- | --- |
-| Markdown 转安全 HTML | `engine.renderHtml(source).html` | [安全渲染](docs/api/rendering.md) |
+| Markdown 转安全 HTML | `engine.renderHtml(source).html` | [安全渲染](docs/security.md) |
 | 启用表格、任务列表和删除线 | `MarkdownProfile.gfm029()` | [Profile 指南](docs/profiles.md) |
-| 读取标题、链接或源码位置 | `engine.parse` + `AstQuery` | [AST 与 Source](docs/api/ast-and-source.md) |
+| 读取标题、链接或源码位置 | `engine.parse` + `AstQuery` | [AST 与位置](docs/ast.md) |
 | 控制输入、节点和输出上限 | `MarkdownEngine.builder().limits(...)` | [输入与资源](docs/input-and-resources.md) |
 | 自定义 `:::` 容器或行内语法 | `MarkdownDialect` + Syntax DSL | [扩展开发](docs/extensions.md) |
-| lint、rewrite 或保留格式编辑 | `DocumentSnapshot` + `markdown.editor` | [Editor API](docs/api/editor.md) |
-| 缓存解析结果 | `markdown.artifact` | [Artifact API](docs/api/artifacts-and-services.md) |
+| lint、rewrite 或保留格式编辑 | `DocumentSnapshot` + `markdown.editor` | [文档系统](docs/document-systems.md) |
+| 缓存解析结果 | `markdown.artifact` | [缓存与文档系统](docs/document-systems.md) |
 
-[开发者 Cookbook](docs/cookbook.md)提供可复制的完整场景。常用签名见
-[API 速查](docs/api/quick-reference.md)。
+[开发者 Cookbook](docs/cookbook.md)提供可复制的完整场景。按符号查询时打开
+[API 站点](https://liliilill.github.io/markdown/)。
 
 ## 常用示例
 
@@ -125,7 +125,7 @@ for (heading in AstQuery.headings(result.document)) {
 ```
 
 `SourceSpan` 使用半开 UTF-8 byte range。LSP 位置通过 `SourceBuffer.utf16Position`
-转换。查看 [AST 与 Source API](docs/api/ast-and-source.md)。
+转换。查看[位置编码](docs/source-position.md)。
 
 ### 定义块扩展
 
@@ -202,7 +202,7 @@ markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、�
 | 路线 | 适合你在…… | 入口 |
 | --- | --- | --- |
 | 学习 | 第一次集成或需要可运行示例 | [开始使用](docs/getting-started.md) → [Cookbook](docs/cookbook.md) |
-| 查询 | 已经知道类型或错误，想快速定位 | [API 速查](docs/api/quick-reference.md) → [完整 API](docs/api.md) |
+| 查询 | 已经知道类型或错误，想快速定位 | [API 站点](https://liliilill.github.io/markdown/) → [本地生成](docs/api.md#本地生成与预览) |
 | 扩展 | 正在设计 syntax、renderer 或 SPI | [扩展开发](docs/extensions.md) → [Extension TCK](docs/extension-tck.md) |
 | 运维 | 遇到构建、profile、位置或限制问题 | [故障排查](docs/troubleshooting.md) → [安全指南](docs/security.md) |
 | 升级 | 从 0.9.1 更新到领域分包 | [0.9.2 迁移](docs/migration-0.9.2.md) |

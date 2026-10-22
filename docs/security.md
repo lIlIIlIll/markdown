@@ -44,6 +44,43 @@ sanitizer 必须提供稳定且非空的 `identity`。
 `RawHtmlPolicyKind.CustomHandler`。handler 返回 `TrustedHtml`，因此宿主负责验证输出。
 缺少 handler 时 renderer 失败，不会退回 pass-through。
 
+### 用固定安全标记替换 raw HTML
+
+以下 handler 丢弃 raw literal，仅返回宿主写死的可信标记。使用 `CustomHandler` 时需要把
+实例交给 renderer，库不会替宿主判断任意动态 HTML 是否安全：
+
+```cangjie
+import markdown.engine.MarkdownEngine
+import markdown.render.*
+
+public class MyRawHtmlHandler <: RawHtmlHandlerPort {
+    public prop identity: String {
+        get() { "my-raw-html-handler-v1" }
+    }
+
+    public func renderRawHtml(_: String, block: Bool): TrustedHtml {
+        let replacement = if (block) {
+            "<div>raw HTML removed</div>"
+        } else {
+            "<span>raw HTML removed</span>"
+        }
+        unsafe { TrustedHtml.fromString(replacement) }
+    }
+}
+
+let engine = MarkdownEngine.builder().build()
+let document = engine.parse("<script>untrusted</script>").document
+let options = HtmlOptions(
+    HtmlPolicy.safe(), RawHtmlPolicyKind.CustomHandler, LinkUriPolicy.safe(), ImageUriPolicy.safe()
+)
+let renderer = engine.htmlRenderer(options: options, rawHtmlHandler: Some(MyRawHtmlHandler()))
+let html = renderer.render(document)
+```
+
+只有宿主已经验证的内容才能进入 `TrustedHtml.fromString`。TrustedHtml 仍受 output budget、
+取消与 sink 错误约束。sanitizer、raw HTML handler 和 external-link rewriter 的 identity
+必须稳定且非空，并参与 renderer fingerprint；实现语义改变时同步更新 identity。
+
 ## Link 和 image policy
 
 `LinkUriPolicy` 和 `ImageUriPolicy` 分开配置。不要因为允许远程链接而自动允许远程
@@ -58,6 +95,58 @@ Safe policy 下设置 `target="_blank"` 时，renderer 保证 `rel` 至少包含
 `ExternalLinkRewriterPort` 只重写 HTTP 和 HTTPS destination。renderer 会对重写结果
 重新执行 URI policy 和 escaping。rewriter 返回 `javascript:` 等危险 scheme 时，输出
 不会包含 `href`。
+
+### 显式允许 data image
+
+默认安全策略拒绝 remote/data image。应用需要 PNG/JPEG data image 时，单独启用它，
+保留 remote image 关闭：
+
+```cangjie
+import markdown.render.*
+
+let options = HtmlOptions(
+    HtmlPolicy.safe(),
+    RawHtmlPolicyKind.Escape,
+    LinkUriPolicy.safe(),
+    ImageUriPolicy(
+        true, false, true,
+        allowedDataMimeTypes: ["image/png", "image/jpeg"]
+    ),
+    externalLinkRel: "noopener noreferrer",
+    externalLinkTarget: "_blank"
+)
+```
+
+### 重写外部链接
+
+端口只接收已经解析的 HTTP(S) destination。下面将一个固定旧地址替换为新地址，其余地址
+保留原义。relative URL 与 mailto 不经过此端口：
+
+```cangjie
+import markdown.render.*
+
+public class Redirector <: ExternalLinkRewriterPort {
+    public prop identity: String {
+        get() { "docs-redirector-v1" }
+    }
+
+    public func rewriteExternalLink(uri: String): String {
+        if (uri == "https://example.test/old") {
+            "https://example.test/new"
+        } else {
+            uri
+        }
+    }
+}
+
+let options = HtmlOptions(
+    HtmlPolicy.safe(), RawHtmlPolicyKind.Escape, LinkUriPolicy.safe(), ImageUriPolicy.safe(),
+    rewriteExternalLinks: Some(Redirector())
+)
+```
+
+重写后的 URI 仍执行 policy 与 attribute escaping。需要把原 URI 放入另一个 URL 的 query
+参数时，由宿主按 URL 规则编码参数，不直接拼接未编码的用户内容。
 
 ## 扩展安全
 

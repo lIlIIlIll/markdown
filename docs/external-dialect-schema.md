@@ -37,4 +37,4 @@ data-only descriptor 不执行配置内容，但生成的 HTML 仍必须经过 e
 output budget 和 Safe policy。需要执行宿主逻辑时，请实现显式 SPI，并按
 [扩展模型](extensions.md)审计权限。
 
-完整 typed builder API 见 [Extensions API](api/extensions.md)。
+完整 typed builder API 见 [API reference](api.md)。

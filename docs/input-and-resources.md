@@ -28,6 +28,33 @@ let replaced = engine.parse(bytes, utf8Policy: Utf8Policy.ReplaceInvalid)
 `Strict` 遇到非法序列时失败。`ReplaceInvalid` 插入 U+FFFD，记录 diagnostic，并保留
 原始 byte offset mapping。
 
+## 选择输入所有权
+
+bytes 需要重复解析时，使用 `ReusableUtf8Input` 验证和复制一次。每次 parse 仍生成独立的
+完整 AST：
+
+```cangjie
+import markdown.core.ReusableUtf8Input
+import markdown.engine.MarkdownEngine
+
+let engine = MarkdownEngine.builder().build()
+let input = ReusableUtf8Input("# reusable".toArray())
+let first = engine.parse(input)
+let second = engine.parse(input)
+```
+
+只有能保证有效 UTF-8、唯一所有权且不再保留或修改 alias 时，才使用 unsafe transfer。
+转移后的 `OwnedUtf8Input` 只能消费一次：
+
+```cangjie
+import markdown.core.OwnedUtf8Input
+import markdown.engine.MarkdownEngine
+
+let engine = MarkdownEngine.builder().build()
+let input = unsafe { OwnedUtf8Input.take("# owned".toArray()) }
+let result = engine.parse(input)
+```
+
 ## 追加输入
 
 `newAppendSession()` 在 feed 中交付结构闭合块，并以带会话/版本/目标身份的更新完成最终
@@ -55,7 +82,25 @@ finish 会失败。session 不是线程安全对象。
 - `newRawBlockEventSession`：对已闭合 block 提前发出非最终事件
 
 Resolved mode 会先建立 reference index。RawBlock mode 不提供后置 reference resolution。
-详细契约见 [Core API](api/core.md#source-events)。
+两种 mode 的事件都不持有 `Document` 或 `NodeRef`。下面先解析后置 reference，再读取最终文本：
+
+```cangjie
+import markdown.engine.{MarkdownEngine, MarkdownEventMode, MarkdownSourceEventKind}
+
+let engine = MarkdownEngine.builder().build()
+let events = engine.parseEvents(
+    "[name][id]\n\n[id]: /target\n",
+    mode: MarkdownEventMode.ResolvedEventMode
+)
+for (event in events.events.toArray()) {
+    if (let MarkdownSourceEventKind.Text <- event.kind) {
+        println(event.semanticValue.getOrThrow())
+    }
+}
+```
+
+需要 AST transform、只读整文 analysis、脚注、标题 ID 或定义列表绑定的 dialect 必须使用
+完整 AST，事件 preflight 会拒绝这些配置。
 
 `RawBlockEventSession.feed()` 只扫描新增 bytes，并在收到 chunk 时立即检查
 `maximumInputBytes` 和 `maximumLineBytes`。session 通过共享 pending buffer 和游标保留
@@ -91,6 +136,27 @@ indented code 和 HTML literal 在追加每个片段前检查累计值。
 Fused HTML execution 不创建 AST，因此 `maximumAstNodes` 不模拟“等价节点数”。它仍执行
 input、line、literal 和 output limits。需要 AST node limit 参与执行结果时，选择
 `HtmlExecutionMode.FullAst`。
+
+## 选择 HTML 执行模型
+
+默认 `FullAst` 总是先 parse 完整 AST。`PreferFused` 仅在 preflight 能证明语义等价时采用
+fused path，否则回退完整 AST；`RequireFused` 在不能证明时以 `RenderFailure` 失败。
+这些模式不会静默关闭扩展、整文阶段或安全策略。
+
+```cangjie
+import markdown.engine.{HtmlExecutionMode, MarkdownEngine}
+import markdown.render.HtmlOptions
+
+let engine = MarkdownEngine.builder().build()
+let output = engine.renderHtml(
+    "# title",
+    mode: HtmlExecutionMode.FullAst,
+    options: HtmlOptions.safe()
+)
+```
+
+两种路径都执行 input、line、literal、output、cancellation 和操作预算。需要
+`maximumAstNodes` 参与操作结果时保留 `FullAst`。
 
 ## Operation budget
 
@@ -178,6 +244,5 @@ text/code/html literal 转成 owned text。
 
 ## 下一步
 
-- [Core API](api/core.md)
-- [AST 与 Source API](api/ast-and-source.md)
+- [API reference](api.md)
 - [并发与可观测性](concurrency-and-observability.md)

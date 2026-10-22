@@ -3,7 +3,7 @@
 本教程从空工程得到第一个安全 HTML 输出。基础包使用纯仓颉实现，不需要 C 编译器或
 原生链接参数。
 
-[文档首页](README.md) · **开始使用** · [Cookbook](cookbook.md) · [API 速查](api/quick-reference.md)
+[文档首页](README.md) · **开始使用** · [Cookbook](cookbook.md) · [API reference](api.md)
 
 **完成时间：约 5 分钟**
 
@@ -96,9 +96,9 @@ cjpm run --skip-build
 | 下一项任务 | 前往 |
 | --- | --- |
 | 复制 GFM、AST、lint 或扩展示例 | [开发者 Cookbook](cookbook.md) |
-| 查常用签名、默认值和失败语义 | [API 速查](api/quick-reference.md) |
+| 查常用签名、默认值和失败语义 | [API reference](api.md) |
 | 选择 CommonMark 或 GFM | [Profile 指南](profiles.md) |
-| 遍历 AST 和转换源码位置 | [AST 与 Source API](api/ast-and-source.md) |
+| 遍历 AST 和转换源码位置 | [API reference](api.md) |
 
 ---
 

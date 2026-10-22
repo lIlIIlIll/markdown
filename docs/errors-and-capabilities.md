@@ -65,5 +65,5 @@ let decision = engine.explain(source, byteOffset)
 `explainDialect` 返回 rule order、renderer coverage、limits 和 fingerprint。
 `explain` 返回 offset 上的候选规则、选中规则、priority、tie-break 和 extension。
 
-完整入口见 [Core API](api/core.md) 和 [Editor API](api/editor.md)。
+完整声明与失败条件见 [API reference](api.md)。
 

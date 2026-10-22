@@ -1,74 +1,64 @@
 # API reference
 
-先看[API 速查](api/quick-reference.md)。需要完整语义、错误和扩展示例时，再进入对应
-子包页面。精确声明以 [`api/public-api.txt`](../api/public-api.txt) 为准。
+[打开中文 API 站点](https://liliilill.github.io/markdown/)，按包浏览声明，或使用搜索定位类型、
+方法与重载。站点由源码注释使用 [cjdoc v0.7.3](https://github.com/lIlIIlIll/cjdoc/releases/tag/v0.7.3)
+生成，覆盖 external audience 可见的公开声明和成员。
 
-[文档首页](README.md) · [API 速查](api/quick-reference.md) · **API reference** · [Cookbook](cookbook.md)
+在线站点跟随 `main`，当前开发版本为 `0.9.2` breaking pre-GA preview，工具链为官方
+STS 1.2.0。查阅已发布版本时，以相应 tag 的源码和本地生成结果为准。
+[`api/public-api.txt`](../api/public-api.txt) 记录当前公开声明，供接口变更检查使用。
 
-> [!TIP]
-> 按任务学习时从 Cookbook 开始；按符号查询时从本页开始；生成器级精确签名以 public API snapshot 为准。
+## 选择导入包
 
-## 按符号定位
-
-| 你在找的符号 | 页面 |
-| --- | --- |
-| `MarkdownEngine`、`MarkdownEngineBuilder`、`ParseResult` | [Core 与 Engine API](api/core.md) |
-| `MarkdownProfile`、`ParseLimits`、`CancellationToken` | [Core API](api/core.md) |
-| `Document`、`NodeRef`、typed node view | [AST 与 Source API](api/ast-and-source.md) |
-| `SourceSpan`、`SourceBuffer`、`Utf16Position` | [AST 与 Source API](api/ast-and-source.md) |
-| `HtmlRenderer`、`HtmlOptions`、sink、source map | [Rendering API](api/rendering.md) |
-| `MarkdownDialect`、syntax、renderer rule、SPI | [Extensions API](api/extensions.md) |
-| `AstQuery`、rewrite、CST、snapshot、lint | [Editor API](api/editor.md) |
-| artifact、document graph、testkit | [Artifact 与 Document API](api/artifacts-and-services.md) |
-
-## 导入方式
-
-新代码导入用途明确的最小子包：
+根包 `markdown` 不公开声明或转导。导入所用类型实际所属的领域包：
 
 ```cangjie
-import markdown.core.{MarkdownProfile}
-import markdown.engine.{MarkdownEngine}
-import markdown.render.{HtmlOptions, HtmlRenderer}
+import markdown.core.MarkdownProfile
+import markdown.engine.MarkdownEngine
+import markdown.render.HtmlOptions
+
+let engine = MarkdownEngine.builder().profile(MarkdownProfile.gfm029()).build()
+let html = engine.renderHtml("# Hello", options: HtmlOptions.safe()).html
 ```
 
-根包 `markdown` 不公开声明或转导。类型和实现位于各自领域包；按用途导入对应包。可选真实富内容准备使用 `markdown.node`，见[安装指南](node-rich-backend.md)。
-
-### 最小依赖原则
-
-| 只需要…… | 导入 |
+| 子包 | 用途 |
 | --- | --- |
-| 解析或安全 HTML | `markdown.engine` |
-| 自定义 HTML 输出 | `markdown.core` + `markdown.render` |
-| AST 查询或 rewrite | `markdown.core` |
-| snapshot、编辑和 lint | `markdown.engine` + `markdown.editor` |
-| 自定义语法 | `markdown.core` + `markdown.extensions` + `markdown.engine` |
-
-## 公开子包
-
-| 子包 | 职责 |
-| --- | --- |
-| `markdown.core` | AST、source、diagnostic、limits、profile、query、rewrite、annotation |
+| `markdown.core` | AST、源码与位置、诊断、限制、profile、query 和 rewrite |
 | `markdown.engine` | parser、builder、events、追加会话、融合执行、能力与统计 |
-| `markdown.render` | HTML、纯文本、Markdown、sink、source map、sanitizer |
-| `markdown.extensions` | manifest、dialect、Syntax DSL、renderer DSL、SPI |
-| `markdown.editor` | CST、snapshot、lint、编辑、范围 format |
-| `markdown.artifact` | parse artifact 和 binary snapshot |
-| `markdown.document` | document graph 和跨文档引用 |
+| `markdown.render` | HTML、纯文本、Markdown、sink、source map 和富内容准备 |
+| `markdown.extensions` | manifest、dialect、Syntax DSL、renderer DSL 和 SPI |
+| `markdown.editor` | CST、snapshot、lint、编辑和范围格式化 |
+| `markdown.artifact` | parse artifact 与 binary snapshot |
+| `markdown.document` | document graph 与跨文档引用 |
 | `markdown.testkit` | 第三方扩展 TCK |
-| `markdown.native` | 可选原生 line scanner |
+| `markdown.native` | 显式链接的可选原生 line scanner |
+| `markdown.node` | 显式安装的可选 KaTeX、Shiki 和 Mermaid 后端 |
 
-## 默认值和错误
+解析与安全 HTML 通常从 `MarkdownEngine.builder().build()` 开始。配置、默认值、返回值和
+失败条件随声明显示在站点中。按任务组合 API 时，阅读 [Cookbook](cookbook.md)、
+[输入与资源](input-and-resources.md)或[文档系统](document-systems.md)。
 
-默认 parser 是 CommonMark 0.31.2，limits 和 operation budget 使用 safe 配置，bytes
-采用严格 UTF-8，HTML 使用安全策略。完整表见[API 速查](api/quick-reference.md#错误默认值)。
+## 本地生成与预览
 
-解析和渲染的结构化失败继承 `MarkdownException`。程序应根据 `code`、`phase` 和可选
-`span` 分支，不要解析英文消息。`tryParse` 返回 `ParseOutcome.Success` 或 `Failure`；
-失败结果不携带 Document。
+先按[贡献指南](../CONTRIBUTING.md#准备环境)启用官方 STS 1.2.0，再从仓库根目录运行：
 
-当前 reference 对应 `0.9.2` breaking pre-GA preview。详见
-[版本与兼容性](versioning-and-compatibility.md)。
+```sh
+python3 scripts/generate_api_docs.py
+```
 
----
+命令固定使用 cjdoc v0.7.3 发布二进制并校验官方 SHA-256，完成注释、示例和站点检查后，
+将 HTML 写入 `target/api-docs/html/`。生成文件属于构建产物，不提交到仓库。
 
-[← 文档首页](README.md) · [API 速查](api/quick-reference.md) · [故障排查](troubleshooting.md)
+通过本地 HTTP 服务预览：
+
+```sh
+python3 -m http.server 8000 --directory target/api-docs/html
+```
+
+打开 `http://localhost:8000/`，确认首页、搜索和类型页面可以访问。已提交的干净源码生成结果将源码链接绑定实际提交 SHA；本地未提交预览省略源码链接。PR 检查生成结果，`main` 的文档工作流通过后将站点部署到 GitHub Pages。
+
+## 继续阅读
+
+- [开始使用](getting-started.md)：构建消费工程并输出安全 HTML。
+- [Cookbook](cookbook.md)：解析、查询、扩展、lint 与格式化的组合用法。
+- [错误与能力](errors-and-capabilities.md)：处理结构化失败并确认执行模型。

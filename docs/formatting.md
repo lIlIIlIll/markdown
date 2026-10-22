@@ -67,5 +67,5 @@ block-local fast path。其他 edit 回退完整 parse。
 `SyntaxTree` 保留 whitespace、newline、marker、delimiter、link part、HTML、entity、
 extension 和 invalid input。`losslessText()` 重建原始 source。
 
-完整接口见 [Editor API](api/editor.md) 和 [Rendering API](api/rendering.md)。
+完整接口见 [API reference](api.md)。
 

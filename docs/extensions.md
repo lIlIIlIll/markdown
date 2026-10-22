@@ -25,6 +25,8 @@ ExtensionManifest + Syntax + Transform + Analysis + RendererRule
 analysis。lint provider 通过 `MarkdownLinter(engine, providers: [...])` 显式注册，
 不属于 dialect 解析配置。
 
+## 完整文档阶段
+
 用 ExtensionAstTransform 修改语义树，返回值会验证 source、profile、dialect、节点上限
 及图结构。然后绑定器统一确定引用、脚注编号和标题目标。ExtensionDocumentAnalysis
 读取这些最终决策并返回诊断，不能通过返回值替换文档。诊断的主范围、关联范围和 fix
@@ -39,7 +41,22 @@ Document，不重新执行 transform 或 analysis。
 batch 与 append 共用这条完整管线。append 在 finish 时执行整文阶段；source events
 和独立 RawBlockEventSession 在调用 callback 前拒绝需要完整文档的配置。RequireFused
 失败，PreferFused 回退完整 AST。含整文阶段的编辑在无法证明局部结果有效时完整回退。
-可运行示例见 [cookbook](../examples/cookbook/src/main.cj) 的 bound-analysis 段。
+transform 返回的新 Document 必须保持实际 source、profile 和 dialect。analysis 的省略
+extensionId 和 ruleId 分别补为当前扩展与 analysis ID，不允许冒用另一个扩展的身份。
+诊断代码、消息和修复文本消耗累计预算，并受 literal 上限约束。callback 自身的临时分配
+仍由宿主限制。Cancelled、BudgetExceeded 和 LimitExceeded 保持原错误类别，其余 callback
+错误包装为 ExtensionFailureException，保留扩展版本、stage ID 与阶段。
+
+启用官方 STS 1.2.0 后，从仓库根目录运行[完整 cookbook](../examples/cookbook/src/main.cj)：
+
+```sh
+cd examples/cookbook
+cjpm build
+cjpm run --skip-build
+```
+
+输出的 `== bound-analysis ==` 段包含 `heading=analyzed`，展示读取最终标题绑定并产生诊断。
+editor 的 ExtensionLintProvider 用于显式 snapshot lint，不代替整文 analysis。
 
 ## 官方扩展能力矩阵
 
@@ -181,7 +198,7 @@ TCK 覆盖 parse/render、SourceSpan、确定性、chunk invariance 和 AST 不�
 
 ## 相关文档
 
-- [Extensions API](api/extensions.md)
+- [API reference](api.md)
 - [Dialect DSL](dialect-dsl.md)
 - [Syntax DSL](syntax-dsl.md)
 - [Renderer DSL](renderer-dsl.md)
