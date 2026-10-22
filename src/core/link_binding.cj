@@ -15,6 +15,12 @@ public class LinkBinding {
     /** 已解析的本地目标；外部链接、页面顶部或未知 fragment 为 None。 */
     public let target: ?NodeId
 
+    /** 保存链接语义、输出目标和本地 fragment 解析结果。
+     * @param link 链接节点的 NodeId。
+     * @param destination 作者链接经 Markdown 解码后的语义目标。
+     * @param renderedDestination 输出时采用的目标，可包含绑定 scope。
+     * @param target 已解析的当前文档节点；未知或外部目标为 None。
+     */
     protected init(link: NodeId, destination: String, renderedDestination: String, target: ?NodeId) {
         this.link = link
         this.destination = destination
@@ -24,6 +30,11 @@ public class LinkBinding {
     }
 }
 
+/** 对 fragment 执行百分号解码并验证 UTF-8；不执行 URI 访问或网络请求。
+ * @param value 不含起始 # 的 fragment 文本。
+ * @param consume 计入扫描字节并检查取消的回调；长输入也以 0 调用作为检查点。
+ * @return 解码后的 fragment；百分号编码或 UTF-8 非法时为 None。
+ */
 protected func decodeFragment(value: String, consume: (Int64) -> Unit): ?String {
     consume(value.size)
     let bytes = ArrayList<Byte>()

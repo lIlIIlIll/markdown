@@ -21,7 +21,7 @@ public enum SyntaxKind {
     | HeadingMarker
     /** 列表 marker。 */
     | ListMarker
-    /** block quote marker。 */
+    /** 原文中的 `>` 标记字节，由 CST 词法分类保留。 */
     | BlockQuoteMarker
     /** 代码围栏行。 */
     | Fence
@@ -29,9 +29,9 @@ public enum SyntaxKind {
     | InfoString
     /** emphasis/delimiter run。 */
     | Delimiter
-    /** link label。 */
+    /** 原文中的 `[` 或 `]` 字节，用于保留链接 label 的边界拼写。 */
     | LinkLabel
-    /** link destination。 */
+    /** 原文中的 `(` 或 `)` 字节，用于保留 inline destination 的边界拼写。 */
     | LinkDestination
     /** raw HTML 片段。 */
     | Html
@@ -110,7 +110,9 @@ public class SyntaxNode {
     public let trailingTrivia: ImmutableArray<Trivia>
     /** 关联的 semantic NodeId。 */
     public let semanticNodeId: ?NodeId
+    /** 节点在共享 token arena 中的起始下标，从 0 开始。 */
     protected let firstTokenIndex: Int64
+    /** 从起始下标起连续归属本节点的 token 数。 */
     protected let tokenCount: Int64
     /**
      * 创建拥有独立 token 列表的语法节点。
@@ -135,6 +137,16 @@ public class SyntaxNode {
         tokenCount = tokens.size
     }
 
+    /**
+     * 在共享 token arena 的连续区间上创建语法节点，并从区间两端计算 trivia。
+     * @param kind 语法节点类别。
+     * @param span 原始输入中的半开字节范围。
+     * @param sharedTokens 节点共享的完整 token arena。
+     * @param firstTokenIndex 本节点第一个 token 在 arena 中的下标。
+     * @param tokenCount 本节点连续包含的 token 数。
+     * @param children 子语法节点，默认空数组。
+     * @param semanticNodeId 绑定的语义节点身份，默认不绑定。
+     */
     protected init(kind: SyntaxKind, span: SourceSpan, sharedTokens: Array<SyntaxToken>, firstTokenIndex: Int64,
         tokenCount: Int64, children!: Array<SyntaxNode> = [], semanticNodeId!: ?NodeId = None) {
         this.kind = kind
@@ -152,14 +164,19 @@ public class SyntaxNode {
 /**
  * 从 `SourceBuffer` 构造的 lossless concrete syntax tree。
  *
- * `losslessText()` 应与输入文本相同；传入 Document 时会建立带 semantic NodeId 的树。
+ * token 按顺序保存解码后的输入文本，包含空白、换行和无法分类的内容。
+ * `losslessText()` 等于 `SourceBuffer.text()`，不承诺恢复被 UTF-8 解码替换的原始无效字节。
+ * 传入 Document 时，树按语义节点的 source span 建立层级并绑定 NodeId。
  *
- * ## Example
- *
- * ```cj
- * let syntax = SyntaxTree.parse(result.source, document: Some(result.document))
- * let original = syntax.losslessText()
+ * @example 保留 CRLF 和空白 {run}
+ * ```cangjie
+ * let source = SourceBuffer("#  title\r\n\nbody  ")
+ * let syntax = SyntaxTree.parse(source)
+ * if (syntax.losslessText() != source.text()) {
+ *     throw IllegalStateException("CST text changed")
+ * }
  * ```
+ * @see markdown.editor.SyntaxToAstMap
  */
 public class SyntaxTree {
     /** 构造树的 source buffer。 */
@@ -177,9 +194,12 @@ public class SyntaxTree {
     }
 
     /**
-     * 词法化 source；可选绑定一个 semantic Document。
+     * 词法化 source；可选按 semantic Document 构建节点层级。
+     *
+     * 此入口不执行 Markdown 语义解析，也不验证传入 Document 是否由该 source 产生。
+     * 建立映射时应使用同一 ParseResult 的 source 和 document。
      * @param source 要词法化的 source buffer。
-     * @param document 可选的 semantic Document。
+     * @param document 与 source 对应的语义文档，默认仅建立扁平 token 树。
      * @return lossless `SyntaxTree`。
      */
     public static func parse(source: SourceBuffer, document!: ?Document = None): SyntaxTree {
@@ -299,9 +319,9 @@ public class SyntaxTree {
         }
     }
 
-    /** 查询包含原始 byte offset 的 token；空白区或越界返回 None。
-     * @param byteOffset 原始输入中的字节偏移。
-     * @return 覆盖该偏移的 token；空白区或越界为 `None`。
+    /** 查询覆盖原始 byte offset 的 token，包含空白和换行 token。
+     * @param byteOffset 原始输入中的字节偏移，从 0 开始。
+     * @return 覆盖该偏移的 token；越界或没有覆盖 token 时为 `None`。
      */
     public func tokenAt(byteOffset: Int64): ?SyntaxToken {
         if (byteOffset < 0 || byteOffset >= source.byteLength()) {
@@ -326,6 +346,11 @@ public class SyntaxTree {
         }
     }
 
+    /**
+     * 按对象身份查找当前树中的 token 下标。
+     * @param token 当前树产生的 token；内容相同的另一个对象不会匹配。
+     * @return token 在共享 arena 中的下标；不属于当前树时为 `None`。
+     */
     protected func tokenIndex(token: SyntaxToken): ?Int64 {
         let range = syntaxTokenRangeInSpan(tokenArena, token.span)
         var index = range.first
@@ -362,9 +387,13 @@ public class SyntaxToAstMap {
     private let semanticNodesById: HashMap<Int64, NodeRef>
     private let semanticNodeIdsByToken: Array<Int64>
     /**
-     * 构建双向映射。
-     * @param syntaxTree 关联的 lossless CST。
-     * @param document 关联的 semantic Document。
+     * 构建 CST 节点、token 与语义节点之间的双向映射。
+     *
+     * 多个语义节点覆盖同一 token 时，选择 source span 最短的节点。
+     * 后续接收 NodeRef 的查询要求该引用属于此 Document 的 revision。
+     * @param syntaxTree 与 document 来自同一 ParseResult 的 CST。
+     * @param document 关联的语义文档。
+     * @throws IllegalArgumentException syntaxTree 已绑定另一个 Document revision 时。
      */
     public init(syntaxTree: SyntaxTree, document: Document) {
         syntaxTree.requireDocument(document)
@@ -469,6 +498,12 @@ private struct SyntaxTokenRange {
     }
 }
 
+/**
+ * 按 Document 的 AST 层级为已有 token arena 建立带 NodeId 的 CST 根节点。
+ * @param document 提供节点层级、source span 和身份的语义文档。
+ * @param tokens 与 document 源码对应的共享 token arena。
+ * @return 复用 token arena 的 CST 根节点；缺少 AST 根节点时返回空范围根节点。
+ */
 protected func syntaxRootForDocument(document: Document, tokens: Array<SyntaxToken>): SyntaxNode {
     let built = HashMap<Int64, SyntaxNode>()
     for (event in document.walk()) {
@@ -621,14 +656,31 @@ public class ReparseResult {
 /**
  * 将 engine、ParseResult、lossless CST 和双向映射绑定在一起的编辑 snapshot。
  *
- * `applyEdits` 使用原始 UTF-8 byte range；满足纯文本、等 byte 长度、顶层 paragraph
- * 或 heading 等条件时可使用 block-local incremental path，否则回退完整解析。
+ * `version` 在一次编辑链内递增，不是跨独立解析的文档身份。
+ * NodeRef 绑定 Document revision。即使源码和 version 相同，独立 snapshot 的引用也不能互用。
+ *
+ * `applyEdits` 使用原始 UTF-8 字节范围。单个等字节长度的纯文本替换位于顶层 paragraph
+ * 或 heading，且不存在 reference、自定义解析规则或文档阶段依赖时，才可能使用局部路径。
+ * 其他编辑回退完整解析；只有实际共享的节点保留 NodeId，不按相同文本推断身份。
+ *
+ * @example 替换原始字节范围 {run}
+ * ```cangjie
+ * let engine = MarkdownEngine.builder().build()
+ * let snapshot = DocumentSnapshot.parse(engine, "hello")
+ * let changed = snapshot.applyEdits([SourceEdit(SourceSpan(0, 5), "world")])
+ * if (changed.snapshot.result.source.text() != "world" || changed.snapshot.version != 2) {
+ *     throw IllegalStateException("edit did not produce the expected snapshot")
+ * }
+ * ```
+ * @see markdown.editor.MarkdownLinter.applyFix
  */
 public class DocumentSnapshot {
     /**
      * 解析 source 并创建同时包含 AST、CST 和映射的初始 snapshot。
+     * @param engine 解析配置及后续编辑使用的不可变 engine。
      * @param source 要解析的 Markdown 文本。
-     * @return version 为 1 的 `DocumentSnapshot`。
+     * @return version 为 1、拥有新 Document 身份的 snapshot。
+     * @throws MarkdownException 解析、资源限制或扩展处理失败时。
      */
     public static func parse(engine: MarkdownEngine, source: String): DocumentSnapshot {
         DocumentSnapshot(engine, 1, engine.parse(source))
@@ -647,6 +699,12 @@ public class DocumentSnapshot {
     /** 当前文本的 SHA-256 digest。 */
     public let sourceDigest: String
 
+    /**
+     * 将已有解析结果绑定到 engine 和版本，并构建 CST、双向映射与 source digest。
+     * @param engine 后续编辑使用的 engine，调用方保证其配置与 result 一致。
+     * @param version 当前编辑链内的 snapshot 版本。
+     * @param result 已完整解析且 source 与 document 一致的结果。
+     */
     protected init(engine: MarkdownEngine, version: Int64, result: ParseResult) {
         this.engine = engine
         this.version = version
@@ -657,9 +715,12 @@ public class DocumentSnapshot {
     }
 
     /**
-     * 应用不重叠的 byte-range edits，并返回新的 snapshot。
-     * @param edits 使用原始 UTF-8 byte range 的替换列表。
-     * @return 包含 changed range、NodeIds 和增量标记的 `ReparseResult`。
+     * 按原 snapshot 坐标应用不重叠的 byte-range edits。
+     *
+     * edits 按起点排序后应用。空数组返回当前 snapshot，版本不递增。
+     * 完整解析回退会产生新的 Document 身份，并将新树全部节点列入 changedNodes。
+     * @param edits 使用原始 UTF-8 半开字节范围的替换列表。
+     * @return 新 snapshot、变更范围、受影响 NodeId 和是否使用局部路径的标记。
      * @throws IllegalArgumentException edit 越界或重叠时。
      */
     public func applyEdits(edits: Array<SourceEdit>): ReparseResult {
@@ -777,18 +838,24 @@ public class DocumentSnapshot {
     }
 
     /**
-     * 将 UTF-16 编辑位置转换为 byte range 后应用编辑。
-     * @param start 编辑起点。
-     * @param end 编辑终点。
+     * 将从 0 开始的行号和 UTF-16 code unit 位置转换为 byte range 后应用编辑。
+     * @param start 包含在替换范围内的起点。
+     * @param end 不包含在替换范围内的终点。
      * @param replacement 替换文本。
-     * @return 新的 `ReparseResult`。
+     * @return 新 snapshot 及变更信息。
+     * @throws IllegalArgumentException 位置越界、截断 surrogate pair 或终点早于起点时。
      */
     public func applyUtf16Edit(start: Utf16Position, end: Utf16Position, replacement: String): ReparseResult {
         applyEdits([SourceEdit(SourceSpan(result.source.byteOffset(start), result.source.byteOffset(end)), replacement)])
     }
 }
 
-/** 在指定范围内格式化，同时尽量保留未触及源码的 byte-for-byte 内容。 */
+/**
+ * 通过 source edits 格式化指定范围，保留范围外的原始字节。
+ *
+ * 当前文本规则将 ATX heading marker 后的空白规范为一个空格，不执行完整文档重排。
+ * 范围内存在没有 Markdown lowering 的 custom node 时，按 fallback 保留原文或报错。
+ */
 public class PreservingFormatter {
     /** 应用 formatter 产生的 edits。
      * @param snapshot 目标 snapshot。
@@ -804,7 +871,7 @@ public class PreservingFormatter {
      * 格式化 source range；不支持的 custom syntax 按 fallback 处理。
      * @param snapshot 要编辑的 snapshot。
      * @param range 使用原始 UTF-8 byte range 的目标范围。
-     * @param fallback 无 Markdown lowering 时的策略。
+     * @param fallback 无 Markdown lowering 时的策略，默认保留原文并返回空编辑列表。
      * @return 可应用到 snapshot 的 source edits。
      * @throws IllegalArgumentException range 越界时。
      * @throws MarkdownException fallback 为 `Error` 且范围内有不支持的 custom syntax 时。
@@ -833,7 +900,7 @@ public class PreservingFormatter {
     /** 按 NodeId 定位 span 并格式化该节点。
      * @param snapshot 要编辑的 snapshot。
      * @param nodeId 目标节点 id。
-     * @param fallback 无 Markdown lowering 时的策略。
+     * @param fallback 无 Markdown lowering 时的策略，默认保留原文并返回空编辑列表。
      * @return 可应用到 snapshot 的 source edits。
      * @throws IllegalArgumentException 节点不存在或无 source range 时。
      */
@@ -850,7 +917,7 @@ public class PreservingFormatter {
 
     /** 格式化 reparse result 的 changed range。
      * @param reparse 上一次 reparse 的结果。
-     * @param fallback 无 Markdown lowering 时的策略。
+     * @param fallback 无 Markdown lowering 时的策略，默认保留原文并返回空编辑列表。
      * @return 可应用到 snapshot 的 source edits。
      * @throws MarkdownException fallback 为 `Error` 且 changed range 内有不支持的 custom syntax 时。
      */

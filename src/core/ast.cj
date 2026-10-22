@@ -2,7 +2,7 @@ package markdown.core
 
 import std.collection.*
 
-/** 不可变、可按索引访问的数组视图；构造时复制输入值。 */
+/** 不可变、可按索引访问的数组视图；公开构造器防御性复制数组，不递归复制元素对象。 */
 public class ImmutableArray<T> {
     private let values: Array<T>
     private let startIndex: Int64
@@ -28,6 +28,11 @@ public class ImmutableArray<T> {
     // Parser-owned immutable arenas can expose non-overlapping or nested views
     // without copying the backing references for every semantic node. This is
     // internal so public callers retain the defensive-copy constructor.
+    /** 在已由 parser 保证不变的存储上创建共享数组视图。
+     * @param sharedValues 调用方保证此后不再修改的底层数组。
+     * @param startIndex 视图首元素的零基下标。
+     * @param valueCount 视图元素数；连同起点必须落在底层数组内。
+     */
     protected init(sharedValues: Array<T>, startIndex: Int64, valueCount: Int64) {
         if (startIndex < 0 || valueCount < 0 || startIndex + valueCount > sharedValues.size) {
             throw IllegalArgumentException("immutable array view is outside its backing storage")
@@ -37,7 +42,9 @@ public class ImmutableArray<T> {
         this.valueCount = valueCount
     }
 
-    /** 返回元素数量。 */
+    /** 返回元素数量。
+     * @return 此视图包含的元素数，不含底层数组视图外的元素。
+     */
     public prop size: Int64 {
         get() {
             valueCount
@@ -82,7 +89,23 @@ public class ImmutableArray<T> {
     }
 }
 
-/** 文档 lineage 内不回收的节点身份；与 snapshot revision 分开。 */
+/**
+ * 文档 lineage 内不回收的节点身份；与 snapshot revision 分开。
+ *
+ * 独立解析和完整重新解析分配新 lineage。持久化分叉保留共享节点的 NodeId，并为新节点
+ * 分配新编号；回滚不回收编号。局部编号仅使用 1 到 UInt32.Max，耗尽时失败而不回绕。
+ * NodeId.value 不是 arena 下标。共享节点的身份可以保持不变，但 NodeRef 仍属于具体 revision。
+ *
+ * @example 局部编号相同但 lineage 不同的节点身份 {run}
+ * ```cangjie
+ * let first = NodeId(1, 3)
+ * let other = NodeId(2, 3)
+ * println(first == other)
+ * ```
+ * ```output
+ * false
+ * ```
+ */
 public struct NodeId <: Equatable<NodeId> & Hashable {
     /** 分配节点的文档 lineage；独立解析具有不同 lineage。 */
     public let lineage: Int64

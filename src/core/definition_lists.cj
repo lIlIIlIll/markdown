@@ -21,7 +21,10 @@ public class DefinitionListPayload <: CustomPayload {
     /** 定义正文的原始冒号位置；生成节点可没有标记来源。 */
     public let markerSpan: ?SourceSpan
 
-    /** 创建结构 payload；仅 Definition 角色可以携带 markerSpan。 */
+    /** 创建结构 payload；仅 Definition 角色可以携带 markerSpan。
+     * @param role 列表、条目、术语或定义正文角色。
+     * @param markerSpan 原文冒号的范围，仅 Definition 角色可设置，默认 None。
+     */
     public init(role: DefinitionListRole, markerSpan!: ?SourceSpan = None) {
         if (markerSpan.isSome()) {
             if (let DefinitionListRole.Definition <- role) {
@@ -34,12 +37,18 @@ public class DefinitionListPayload <: CustomPayload {
         this.markerSpan = markerSpan
     }
 
-    /** 返回 payload schema 身份。 */
+    /** 返回 payload schema 身份。
+     * @return 定义列表语义的 schema 身份 markdown.definition-list/1。
+     */
     public func payloadTypeId(): String {
         "markdown.definition-list/1"
     }
 }
 
+/** 将定义列表角色映射为固定 localKindId。
+ * @param role 节点在定义列表中的结构角色。
+ * @return 对应的 definition-list、definition-entry、definition-term 或 definition-body 标记。
+ */
 protected func definitionListKind(role: DefinitionListRole): String {
     match (role) {
         case DefinitionListRole.List => "definition-list"
@@ -58,6 +67,13 @@ internal func definitionListPayload(node: NodeRef): ?DefinitionListPayload {
     None
 }
 
+/** 校验定义列表角色、所有权、子节点顺序及原文冒号标记。
+ * @param document 节点所属完整文档，用于核对 marker 的真实来源。
+ * @param node 当前待校验节点；非定义列表节点直接跳过。
+ * @param parents 从根到直接父节点的祖先栈。
+ * @param budget 结构遍历消耗的共享扫描预算。
+ * @param cancellation 绑定阶段的取消信号。
+ */
 protected func validateDefinitionListNode(document: Document, node: NodeRef, parents: ArrayList<NodeRef>,
     budget: OperationBudget, cancellation: CancellationToken): Unit {
     if (let NodeKind.CustomInline <- node.kind) {
@@ -197,6 +213,9 @@ private func invalidDefinitionList(node: NodeRef, message: String): Nothing {
     throw MarkdownException(MarkdownErrorCode.ExtensionFailure, message, phase: "bind", span: node.span)
 }
 
+/** 要求定义列表的所属文档已经完成 typed payload 校验，否则以 UnsupportedNode 拒绝渲染。
+ * @param node 即将渲染的定义列表节点。
+ */
 protected func requireDefinitionListBinding(node: NodeRef): Unit {
     if (!node.documentBindings.semanticPayloadsValidated) {
         throw MarkdownException(MarkdownErrorCode.UnsupportedNode,

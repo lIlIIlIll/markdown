@@ -80,6 +80,9 @@ public class ObservedParseResult {
     }
 }
 
+/**
+ * 提供带输入、节点、预算消耗和可选计时统计的解析入口。
+ */
 extend MarkdownEngine {
     /** 解析并返回带统计信息的结果；`timing` 默认关闭。
      * @param value 待解析的 Markdown 文本。

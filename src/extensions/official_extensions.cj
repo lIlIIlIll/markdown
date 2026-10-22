@@ -39,7 +39,15 @@ public class OfficialExtensionDescriptor {
     }
 }
 
-/** 提供版本化、可选启用的官方扩展和组合 dialect。 */
+/**
+ * 提供版本化、可选启用的官方扩展和组合 dialect。
+ *
+ * Footnotes 2.0、Heading IDs 2.0 和 Definition Lists 2.0 使用结构化 payload 与最终绑定。
+ * Math 2.0 保留 TeX 和精确来源，默认不调用外部数学引擎；Front Matter 1.0 只保留 literal，
+ * 不执行配置。Smart Punctuation 2.0 只注册绑定前 transform。Code Groups 1.0 必须单独启用，
+ * 保留标题、行高亮与原始 copyText，不执行代码。catalog 还包含 future 条目，不能据目录
+ * 中存在名称推断其语法已可用。
+ */
 public class OfficialExtensions {
     /**
      * 返回官方扩展目录；Footnotes、Front Matter、Math 等默认关闭。
@@ -63,7 +71,8 @@ public class OfficialExtensions {
         ]
     }
 
-    /** 创建包含 P1 官方扩展的组合 dialect。
+    /** 创建组合脚注、front matter、数学、定义列表、标题 ID 和智能标点的 dialect。
+     * 不包含 Code Groups；添加扩展前仍须核对所选基础 profile 的支持声明。
      * @param profile 作为基础语法的 profile。
      * @return 组合后的 `MarkdownDialect`。
      */
@@ -122,7 +131,11 @@ public class OfficialExtensions {
                     markdownCloser: "---", renderPayloadLiteral: true))
     }
 
-    /** 添加结构化 Math 2.0；默认输出可读 TeX，不调用外部后端。 */
+    /**
+     * 添加结构化 Math 2.0；默认输出可读 TeX，不调用外部后端。
+     * @param builder 要添加 Math 2.0 规则的目标 dialect builder。
+     * @return 添加 Math 2.0 规则和安全 lowering 后的同一 builder。
+     */
     public static func math(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
         builder
             .enable(ExtensionManifest("math", "2.0.0", "builtin-2", capabilities: renderCapabilities()))
@@ -174,7 +187,11 @@ public class OfficialExtensions {
             .astTransform(SmartPunctuationTransform())
     }
 
-    /** 显式添加 Code Groups 1.0；不属于 p1Dialect 的默认组合。 */
+    /**
+     * 显式添加 Code Groups 1.0；不属于 p1Dialect 的默认组合。
+     * @param builder 要添加 Code Groups 1.0 规则的目标 dialect builder。
+     * @return 添加 Code Groups 1.0 规则后的同一 builder。
+     */
     public static func codeGroups(builder: MarkdownDialectBuilder): MarkdownDialectBuilder {
         builder
             .enable(ExtensionManifest("code-groups", "1.0.0", "builtin-1", capabilities: renderCapabilities()))

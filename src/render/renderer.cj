@@ -20,7 +20,10 @@ public class SinkError <: Exception {
     public init(message: String) {
         super(message)
     }
-    /** 返回异常类名。 */
+    /**
+     * 返回异常类名。
+     * @return 固定异常类名 SinkError。
+     */
     protected override func getClassName(): String {
         "SinkError"
     }
@@ -36,8 +39,10 @@ public enum SinkWriteResult {
 
 /** 接收 renderer 输出片段的同步 sink。 */
 public interface TextSink {
-    /** 写入一个输出片段。
+    /**
+     * 写入一个输出片段。
      * @param slice 要写入的输出片段。
+     * @return Success 表示本次片段已全部接收；Failure 携带的错误会终止渲染。
      */
     func write(slice: String): SinkWriteResult
 }
@@ -54,8 +59,12 @@ public enum AsyncSinkWriteResult {
 
 /** 接收 bounded chunk、可暂停的异步 sink。 */
 public interface AsyncTextSink {
-    /** 写入一个输出 chunk 并报告 backpressure 状态。
+    /**
+     * 写入一个输出 chunk 并报告 backpressure 状态。
+     *
+     * Pause 的字节数必须是本次 slice 的有效 UTF-8 前缀；未确认后缀会在下一次 resume 原样重试。
      * @param slice 要写入的输出片段。
+     * @return 完整确认并继续、确认前缀后暂停，或使会话进入终态的失败。
      */
     func write(slice: String): AsyncSinkWriteResult
 }
@@ -81,6 +90,10 @@ public class StringTextSink <: TextSink {
         mappedEntries = None
     }
 
+    /**
+     * 创建可选记录 source map 的 String 收集器。
+     * @param sourceMapEnabled 是否同步保存输出范围与源节点的粗粒度映射。
+     */
     protected init(sourceMapEnabled: Bool) {
         mappedEntries = if (sourceMapEnabled) {
             Some(ArrayList<RenderedSourceMapEntry>())
@@ -89,8 +102,10 @@ public class StringTextSink <: TextSink {
         }
     }
 
-    /** 追加一个 generated 输出片段；内建实现始终返回 `Success`。
+    /**
+     * 追加一个 generated 输出片段；内建实现始终返回 `Success`。
      * @param slice 要追加的输出片段。
+     * @return 固定为 Success；片段按调用顺序追加。
      */
     public func write(slice: String): SinkWriteResult {
         let noSpan: ?SourceSpan = None
@@ -112,11 +127,18 @@ public class StringTextSink <: TextSink {
         SinkWriteResult.Success
     }
 
-    /** 返回目前已收集的 HTML 或其他文本。 */
+    /**
+     * 返回目前已收集的 HTML 或其他文本。
+     * @return 按写入顺序收集的完整文本；此 sink 本身不限制增长。
+     */
     public func content(): String {
         builder.toString()
     }
 
+    /**
+     * 读取目前已记录的输出来源映射。
+     * @return 按输出字节顺序排列的映射数组；未启用 source map 时为空。
+     */
     protected func sourceMap(): Array<RenderedSourceMapEntry> {
         match (mappedEntries) {
             case Some(entries) => entries.toArray()
@@ -166,7 +188,10 @@ public class SinkFailureException <: MarkdownException {
         this.cause = cause
     }
 
-    /** 返回异常类名。 */
+    /**
+     * 返回异常类名。
+     * @return 固定异常类名 SinkFailureException。
+     */
     protected override func getClassName(): String {
         "SinkFailureException"
     }
@@ -228,7 +253,11 @@ public class ImageUriPolicy {
     public let allowRemoteImages: Bool
     /** 是否允许 data URI 图片。 */
     public let allowDataImages: Bool
-    /** 允许的 data URI MIME 类型列表。 */
+    /**
+     * 允许的 data URI MIME 类型列表。
+     *
+     * 按 ASCII 大小写不敏感比较完整 media type；image/png 不匹配 image/pngx。空列表即使开启 data image 也不放行任何 MIME。
+     */
     public let allowedDataMimeTypes: ImmutableArray<String>
 
     /**
@@ -259,12 +288,25 @@ public class ImageUriPolicy {
     }
 }
 
-/** 在 URI policy 和 escaping 前重写已解析的 HTTP(S) destination。 */
+/**
+ * 在 URI policy 和 escaping 前重写已解析的 HTTP(S) destination。
+ *
+ * 只接收已解析的 HTTP(S) destination；返回值先重新验证，再作属性转义。relative 和 mailto 不经过此端口，改写结果必须仍为绝对 HTTP(S) URI，即使选择规范兼容策略也是如此。
+ */
 public interface ExternalLinkRewriterPort {
-    /** 稳定语义身份；会进入 renderer fingerprint。 */
+    /**
+     * 稳定语义身份；会进入 renderer fingerprint。
+     *
+     * 实现或改写语义变化时必须更新，避免渲染缓存误复用；HtmlRenderer 拒绝空身份。
+     * @return 稳定、非空的改写语义身份。
+     */
     prop identity: String
-    /** 重写已解析的外部链接 destination。
+    /**
+     * 重写已解析的外部链接 destination。
+     *
+     * 危险 scheme 或改写后的相对 URI 不会生成 href。
      * @param uri 原始 destination 文本。
+     * @return 候选改写地址，仍须通过 renderer 的 URI 校验与属性转义。
      */
     func rewriteExternalLink(uri: String): String
 }
@@ -293,6 +335,8 @@ public class HtmlOptions {
 
     /**
      * 创建选项；raw HTML pass-through 必须使用 unsafe factory。
+     *
+     * PassThrough 必须使用 unsafe factory；仅设置 HtmlPolicy.specCompatible 不会绕过此构造校验。Sanitize 与 CustomHandler 所需端口在实际遇到 raw HTML 时检查。
      * @param policy raw HTML 使用的 HTML policy。
      * @param rawHtmlPolicy raw HTML 的处理方式。
      * @param linkUriPolicy link destination policy。
@@ -300,6 +344,7 @@ public class HtmlOptions {
      * @param rewriteExternalLinks 外链重写端口。
      * @param externalLinkRel 附加到外部链接的 `rel` 属性。
      * @param externalLinkTarget 附加到外部链接的 `target` 属性。
+     * @throws IllegalArgumentException rawHtmlPolicy 为 PassThrough 时。
      */
     public init(
         policy: HtmlPolicy,
@@ -345,7 +390,10 @@ public class HtmlOptions {
         this.externalLinkTarget = externalLinkTarget
     }
 
-    /** 返回转义 raw HTML、关闭 remote/data image 的安全选项。 */
+    /**
+     * 返回转义 raw HTML、关闭 remote/data image 的安全选项。
+     * @return 使用安全 link policy、转义 raw HTML 且关闭 remote/data image 的选项。
+     */
     public static func safe(): HtmlOptions {
         HtmlOptions(HtmlPolicy.safe(), RawHtmlPolicyKind.Escape, LinkUriPolicy.safe(), ImageUriPolicy.safe())
     }
@@ -372,13 +420,23 @@ public class HtmlOptions {
             externalLinkRel, externalLinkTarget, true)
     }
 
-    /** 返回 CommonMark 规范兼容的 unsafe raw HTML 选项。 */
+    /**
+     * 返回 CommonMark 规范兼容的 unsafe raw HTML 选项。
+     *
+     * 允许规范 raw HTML 和未改写链接的规范 URI 行为，不是 sanitizer，不适用于直接插入网页的不可信内容。图片仍按对应 image policy 校验 MIME。
+     * @return 允许 raw HTML pass-through 的 CommonMark 规范对比选项。
+     */
     public static unsafe func specCompatible(): HtmlOptions {
         HtmlOptions.passThrough(HtmlPolicy.specCompatible(), LinkUriPolicy(true, true, true, true),
             ImageUriPolicy(true, true, true))
     }
 
-    /** 返回 GFM 兼容的 unsafe raw HTML 选项和 tagfilter 行为。 */
+    /**
+     * 返回 GFM 兼容的 unsafe raw HTML 选项和 tagfilter 行为。
+     *
+     * tagfilter 不是 sanitizer；只过滤 denylist 标签名后接输入结束、HTML 空白、/ 或 > 的情况，script-x 等自定义名称不匹配。
+     * @return 允许 raw HTML pass-through 并应用 GFM tagfilter 的选项。
+     */
     public static unsafe func gfmCompatible(): HtmlOptions {
         HtmlOptions.passThrough(HtmlPolicy.gfmCompatible(), LinkUriPolicy(true, true, true, true),
             ImageUriPolicy(true, true, true))
@@ -399,8 +457,16 @@ public class TrustedHtml {
         this.value = value
     }
 
-    /** 将宿主确认可信的 HTML 包装为 renderer fallback 的返回值。
+    /**
+     * 将宿主确认可信的 HTML 包装为 renderer fallback 的返回值。
+     *
+     * 宿主必须自行确认值的安全性；此操作不进行 sanitizer 校验，也不绕过输出预算、取消或 sink 失败。
      * @param value 宿主确认可信的 HTML 文本。
+     * @return 带宿主信任承诺的 HTML 包装。
+     * @example
+     * ```cangjie
+     * let replacement = unsafe { TrustedHtml.fromString("<span>removed</span>") }
+     * ```
      */
     public static unsafe func fromString(value: String): TrustedHtml {
         TrustedHtml(value)
@@ -409,23 +475,44 @@ public class TrustedHtml {
 
 /** 为没有 `RendererRule` 的 custom node 提供显式 HTML fallback。 */
 public interface ExtensionRendererFallback {
-    /** fallback 所属的扩展 id。 */
+    /**
+     * fallback 所属的扩展 id。
+     * @return fallback 对应的扩展稳定 id，应与 manifest 的 extensionId 一致。
+     */
     prop extensionId: String
-    /** fallback 的实现版本。 */
+    /**
+     * fallback 的实现版本。
+     *
+     * 更改实现或输出语义时同步更新；该值参与 renderer fingerprint。
+     * @return 宿主 fallback 的稳定实现版本。
+     */
     prop implementationVersion: String
-    /** 为 custom node 渲染宿主信任的 HTML。
+    /**
+     * 为 custom node 渲染宿主信任的 HTML。
+     *
+     * 宿主负责确认返回标记可信；库仍检查输出上限、取消和 sink 结果。
      * @param node 目标 custom 节点。
+     * @return 宿主已验证、可直接写出的 HTML。
      */
     func renderHtml(node: NodeRef): TrustedHtml
 }
 
 /** 显式处理 raw HTML，并返回宿主信任的 HTML。 */
 public interface RawHtmlHandlerPort {
-    /** 稳定语义身份；会进入 renderer fingerprint。 */
+    /**
+     * 稳定语义身份；会进入 renderer fingerprint。
+     *
+     * 实现或输出语义改变时同步更新；HtmlRenderer 拒绝空身份。
+     * @return 稳定、非空的 raw HTML 处理语义身份。
+     */
     prop identity: String
-    /** 显式处理 raw HTML 并返回宿主信任的 HTML。
+    /**
+     * 显式处理 raw HTML 并返回宿主信任的 HTML。
+     *
+     * 返回值不再由库执行 sanitizer，安全性由宿主负责。缺少 handler 且遇到 raw HTML 时渲染以 RenderFailure 失败。
      * @param literal 原始 HTML 文本。
      * @param block 是否为 block 级 HTML。
+     * @return 宿主已确认可信的替换 HTML。
      */
     func renderRawHtml(literal: String, block: Bool): TrustedHtml
 }
@@ -453,6 +540,8 @@ internal struct ArenaRenderFrame {
  * 默认使用 `HtmlOptions.safe()`。`render` 返回 String，`renderTo` 写入受控 sink；
  * 每个节点、escape、URI 和输出片段都受 cancellation、`OperationBudget` 与可选
  * `maximumOutputBytes` 约束。
+ *
+ * 默认安全 HTML 转义 raw HTML 并限制 URI；规范兼容模式必须由宿主显式选择。宿主 sanitizer、handler 与 fallback 可返回完整字符串，库会在写入前限制输出，但不能约束这些宿主实现内部的分配。
  */
 public class HtmlRenderer {
     /** renderer 使用的选项。 */
@@ -468,6 +557,8 @@ public class HtmlRenderer {
 
     /**
      * 创建 HTML renderer。
+     *
+     * extensionManifests 中的 extensionId 不得重复。sanitizer、handler 与 rewriter 的 identity 必须非空；maximumOutputBytes 若配置必须为正数。
      * @param options HTML 输出选项。
      * @param extensionRules 参与渲染的扩展 renderer 规则。
      * @param sanitizer 宿主提供的 HTML sanitizer。
@@ -477,6 +568,16 @@ public class HtmlRenderer {
      * @param maximumOutputBytes 输出字节数上限。
      * @param codeGroups 可选代码组渐进增强数据和复制上限。
      * @param prepared 仅属于目标 Document revision 的已校验富内容注解。
+     * @throws IllegalArgumentException renderer rule 无效、manifest 身份重复、端口身份为空或输出上限非正时。
+     * @example
+     * ```cangjie
+     * let options = HtmlOptions(
+     *     HtmlPolicy.safe(), RawHtmlPolicyKind.Escape,
+     *     LinkUriPolicy.safe(),
+     *     ImageUriPolicy(true, false, true, allowedDataMimeTypes: ["image/png"])
+     * )
+     * let renderer = HtmlRenderer(options: options, maximumOutputBytes: Some(8192))
+     * ```
      */
     public init(options!: HtmlOptions = HtmlOptions.safe(), extensionRules!: Array<RendererRule> = [],
         sanitizer!: ?HtmlSanitizerPort = None, extensionManifests!: Array<ExtensionManifest> = [],
@@ -523,7 +624,12 @@ public class HtmlRenderer {
         this.prepared = prepared
     }
 
-    /** 返回包含策略、扩展和 adapter identity 的稳定 renderer fingerprint。 */
+    /**
+     * 返回包含策略、扩展和 adapter identity 的稳定 renderer fingerprint。
+     *
+     * 包含生效策略、固定输出上限、renderer rule 顺序、manifest 缺失策略和宿主端口身份。manifest 按身份规范化，重复 extensionId 在构造时拒绝。只有生效的代码组选项影响身份；adapter 实现或配置改变时须同步更新其身份。
+     * @return 用于渲染产物和缓存身份判定的 SHA-256 字符串。
+     */
     public func fingerprint(): String {
         let out = CanonicalDescriptor()
         out.append("html-renderer-v5|")
@@ -673,11 +779,14 @@ public class HtmlRenderer {
 
     /**
      * 直接渲染 canonical arena AST，并返回完整 HTML String。
+     *
+     * 输出预算在写入各文本、转义、URI 和 tagfilter 片段前检查。宿主端口抛出的异常不会回退到未经处理的 HTML。
      * @param ast 要渲染的 Document。
      * @param cancellation 可选取消 token。
      * @param budget 可选 operation budget。
      * @return HTML 文本。
      * @throws MarkdownException 取消或超出预算/输出上限时。
+     * @throws IllegalArgumentException prepared 不属于目标 Document revision 时。
      */
     public func render(
         ast: Document,
@@ -693,13 +802,17 @@ public class HtmlRenderer {
     }
 
     /**
-     * 将 HTML 输出写入 sink；sink 失败会转换为 `SinkFailureException`。
+     * 将 HTML 输出写入 sink；sink 返回 `Failure` 时转换为 `SinkFailureException`。
+     *
+     * sink 直接抛出的异常原样传播。写出期间失败可能已留下已接收的输出前缀，调用者负责目标的事务性或清理。
+     * 空文档同样检查取消；已观察到取消后不再写 sink。
      * @param ast 要渲染的 Document。
      * @param sink 接收输出片段的 sink。
      * @param cancellation 可选取消 token。
      * @param budget 可选 operation budget。
      * @throws SinkFailureException sink 返回失败时。
      * @throws MarkdownException 取消或超出预算时。
+     * @throws IllegalArgumentException prepared 不属于目标 Document revision 时。
      */
     public func renderTo(
         ast: Document,
@@ -2310,12 +2423,21 @@ private func rendererIsAsciiWhitespace(byte: Byte): Bool {
 
 /** 宿主提供的 HTML sanitizer 端口。 */
 public interface HtmlSanitizerPort {
-    /** 稳定语义身份；会进入 renderer fingerprint。 */
+    /**
+     * 稳定语义身份；会进入 renderer fingerprint。
+     *
+     * 规则、实现或影响结果的配置变化时同步更新；HtmlRenderer 拒绝空身份。
+     * @return 稳定、非空的清洗语义身份。
+     */
     prop identity: String
     // Implementations may throw; HtmlRenderer propagates the failure and never
     // falls back to the unsanitized literal.
-    /** 清洗宿主传入的 HTML 片段。
+    /**
+     * 清洗宿主传入的 HTML 片段。
+     *
+     * renderer 原样写出清洗结果，宿主负责结果安全性。实现可以抛异常；异常向调用方传播，不会回退到未清洗 literal。缺少 sanitizer 且遇到 raw HTML 时以 RenderFailure 失败。
      * @param html 待清洗的 HTML 文本。
+     * @return 宿主已清洗、可直接写出的 HTML 片段。
      */
     func sanitize(html: String): String
 }

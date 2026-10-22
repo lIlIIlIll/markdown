@@ -4,7 +4,7 @@ package markdown.core
 public enum Utf8Policy {
     /** 遇到无效 UTF-8 序列时解析失败。 */
     | Strict
-    /** 将无效 UTF-8 序列替换为 U+FFFD 后继续。 */
+    /** 将无效 UTF-8 序列替换为 U+FFFD 后继续，并以诊断记录替换，SourceSpan 仍使用原始 byte offset。 */
     | ReplaceInvalid
 }
 
@@ -12,7 +12,8 @@ public enum Utf8Policy {
  * 一次完整解析的结果。
  *
  * `document` 为 arena AST，`source` 携带原始输入与位置映射，`diagnostics`
- * 保留可恢复诊断。
+ * 保留可恢复诊断。成功结果始终包含完整 AST；致命失败由 ParseOutcome.Failure 表示，
+ * 不使用空文档或 AST 前缀代替成功结果。
  */
 public class ParseResult {
     /** 成功解析得到的完整、不可变 arena AST。 */

@@ -160,6 +160,12 @@ public class IsolatedPluginResponseSink {
     private var diagnosticRelatedSpans = ArrayList<SourceSpan>()
     private var diagnosticFixes = ArrayList<DiagnosticFix>()
 
+    /**
+     * 关联隔离策略、取消信号与累计预算，创建有界响应收集器。
+     * @param policy 身份协议、权限声明与响应资源上限。
+     * @param cancellation 本次操作共用的协作式取消信号。
+     * @param budget 本次操作跨阶段累计使用的预算；不与其他操作共享。
+     */
     protected init(policy: PluginIsolationPolicy, cancellation: CancellationToken, budget: OperationBudget) {
         this.policy = policy
         this.cancellation = cancellation
@@ -334,6 +340,11 @@ public class IsolatedPluginResponseSink {
         responseBytes += encodedBytes
     }
 
+    /**
+     * 验证诊断已闭合且响应身份与请求一致，再冻结响应。
+     * @param request 响应必须与之匹配协议版本、扩展 id 和实现版本的原始请求。
+     * @return 身份已匹配请求、包含有界 output 与已闭合诊断的响应。
+     */
     protected func finish(request: IsolatedPluginRequest): IsolatedPluginResponse {
         ensureOpen()
         if (diagnosticOpen) {
@@ -369,7 +380,13 @@ public class IsolatedPluginResponseSink {
     }
 }
 
-/** 宿主实现的进程或 sandbox transport；库只规定 fail-closed IPC 契约。 */
+/** 宿主实现的进程或 sandbox transport；库只规定 fail-closed IPC 契约。
+ *
+ * 实现负责创建真实的 OS 进程边界或 sandbox，并强制执行 policy 的权限约束。
+ * 全部不可信字符串必须增量交给 responseSink，在保留数据前检查各项上限；不能先构造
+ * 完整身份字段、响应或 diagnostic message，再一次性提交。按身份字段、output 和逐条
+ * diagnostic 的顺序解码；每条诊断以 beginDiagnostic 开始，以 finishDiagnostic 结束。
+ */
 public interface PluginIsolationTransport {
     // Implementations must create the OS process/sandbox and enforce the passed policy.
     // Decode every untrusted string incrementally through responseSink; do not build an unbounded response first.

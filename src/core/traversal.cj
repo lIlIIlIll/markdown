@@ -54,6 +54,7 @@ public class NodeRefWalker <: Iterator<NodeRefWalkEvent> {
     }
 }
 
+/** 从指定节点开始创建深度优先的 enter/exit 遍历。 */
 extend NodeRef {
     /**
      * 从当前节点开始深度优先遍历。
@@ -64,6 +65,7 @@ extend NodeRef {
     }
 }
 
+/** 从文档根节点开始创建深度优先的 enter/exit 遍历。 */
 extend Document {
     /**
      * 从 document root 开始深度优先遍历。

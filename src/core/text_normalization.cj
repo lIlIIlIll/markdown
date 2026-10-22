@@ -2,6 +2,10 @@ package markdown.core
 
 import std.unicode.*
 
+/** 解码带分号的 HTML 命名或数值字符引用；未知或不合法拼写保持原样。
+ * @param raw 包括 & 和 ; 的候选字符引用。
+ * @return 解码结果；非法 Unicode 数值依 CommonMark 映射为替代字符，非引用文本原样返回。
+ */
 protected func decodeEntity(raw: String): String {
     if (!raw.startsWith("&") || !raw.endsWith(";") || raw.size < 3) {
         return raw
@@ -33,6 +37,10 @@ protected func decodeEntity(raw: String): String {
     raw
 }
 
+/** 依次处理链接目标或标题中的反斜线转义和带分号字符引用。
+ * @param value 尚未执行 Markdown 转义处理的链接文本。
+ * @return 用于链接语义的文本；不执行 URI 安全判断或百分号解码。
+ */
 protected func decodeLinkValue(value: String): String {
     if (!value.contains("\\") && !value.contains("&")) {
         return value
@@ -67,6 +75,12 @@ private func entityCodePoint(input: Int64): String {
     Rune(UInt32(value)).toString()
 }
 
+/** 从指定字节下标向后查找第一个匹配字节。
+ * @param text 要搜索的 UTF-8 文本。
+ * @param byte 需要匹配的字节值。
+ * @param start 开始搜索的零基字节下标，调用方须保证非负。
+ * @return 首个匹配的零基字节下标；未找到时为 -1。
+ */
 protected func findByte(text: String, byte: Byte, start: Int64): Int64 {
     var index = start
     while (index < text.size) {
@@ -78,6 +92,10 @@ protected func findByte(text: String, byte: Byte, start: Int64): Int64 {
     -1
 }
 
+/** 判断字节是否属于 Markdown 可被反斜线转义的 ASCII 标点范围。
+ * @param byte 要判断的原始字节。
+ * @return 字节落在 ASCII 标点范围时为 true。
+ */
 protected func isAsciiPunctuation(byte: Byte): Bool {
     (byte >= 33 && byte <= 47) || (byte >= 58 && byte <= 64) || (byte >= 91 && byte <= 96) || (byte >= 123 && byte <= 126)
 }
@@ -106,10 +124,18 @@ internal func nextRuneOffset(text: String, offset: Int64): Int64 {
     }
 }
 
+/** 先解码 Markdown 转义，再按引用 label 规则统一脚注身份。
+ * @param label 脚注定义或引用中不含括号的原始 label。
+ * @return 用于脚注定义查找的规范化 label。
+ */
 protected func normalizeFootnoteLabel(label: String): String {
     normalizeReferenceLabel(decodeLinkValue(label))
 }
 
+/** 裁剪首尾空格和 tab、折叠内部 ASCII 空白并统一大小写。
+ * @param label 引用定义或引用使用的 label 文本。
+ * @return 匹配用的 label；非 ASCII 使用小写转换，并将 ß 归一化为 ss。
+ */
 protected func normalizeReferenceLabel(label: String): String {
     let text = trimAscii(label)
     var needsNormalization = false
@@ -192,6 +218,10 @@ private func parseEntityNumber(value: String, start: Int64, end: Int64, radix: I
     result
 }
 
+/** 仅移除文本两端的 ASCII 空格和 tab。
+ * @param text 待裁剪的文本；换行和其他 Unicode 空白保持原样。
+ * @return 移除首尾空格和 tab 后的文本。
+ */
 protected func trimAscii(text: String): String {
     var start: Int64 = 0
     var end = text.size

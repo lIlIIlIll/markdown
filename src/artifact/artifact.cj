@@ -16,8 +16,29 @@ public enum ArtifactLoadResult {
 /**
  * 与 parser、profile、dialect、engine 和原始输入 digest 绑定的文本 parse artifact。
  *
- * `create` 只接受完整且 identity-preserving 的 parse result；`load`
- * 在任一身份、schema、policy 或 digest 不匹配时返回 `CacheMiss`。
+ * `create` 交叉验证 parse result 的 source 与 AST parser provenance。
+ * profile 的 kind、id、标准版本，dialect、engine 配置，原始与解码 digest，UTF-8 policy
+ * 及根节点完整源码范围都必须一致，不能将另一个 Document 与 source 或 engine 拼接后缓存。
+ * 保留 parser provenance 的树变换结果仍可创建 artifact。
+ *
+ * 只有实际替换无效 UTF-8 字节时，`ReplaceInvalid` 才产生非 identity mapping 并被拒绝。
+ * 有效 UTF-8 bytes 使用该 policy 仍可缓存，但加载时必须使用同一 policy。
+ * `load` 对不匹配的身份、当前 schema 或 digest 返回 `CacheMiss`，不猜测迁移旧格式。
+ * fingerprint 与 digest 用于缓存身份；libraryVersion 和英文错误消息不能单独充当 cache key。
+ *
+ * @example 绑定 engine 和源码加载 artifact {run}
+ * ```cangjie
+ * let engine = MarkdownEngine.builder().build()
+ * let source = "# title"
+ * let artifact = MarkdownParseArtifact.create(engine, engine.parse(source))
+ * match (artifact.load(engine, source)) {
+ *     case ArtifactLoadResult.Hit(document) =>
+ *         if (document.nodeCount == 0) {
+ *             throw IllegalStateException("artifact document is empty")
+ *         }
+ *     case ArtifactLoadResult.CacheMiss(reason) => throw IllegalStateException(reason)
+ * }
+ * ```
  */
 public class MarkdownParseArtifact {
 
@@ -26,7 +47,7 @@ public class MarkdownParseArtifact {
      * @param engine 产生 parse result 的 engine。
      * @param result 当前 engine 产生的完整 parse result。
      * @return 可用于 identity 校验和缓存加载的 artifact。
-     * @throws MarkdownException mapping 非 identity 或 provenance 不匹配时。
+     * @throws MarkdownException mapping 非 identity、绑定配置或 parser provenance 不匹配时，代码为 `InvalidArtifact`。
      */
     public static func create(engine: MarkdownEngine, result: ParseResult): MarkdownParseArtifact {
         if (result.document.bindings.footnotesEnabled && result.document.bindings.engineFingerprint !=
@@ -59,7 +80,9 @@ public class MarkdownParseArtifact {
     }
 
     /**
-     * 用 String 输入校验 artifact 身份，命中时返回其中的 Document。
+     * 按 strict UTF-8 policy 校验 String 输入，命中时返回 artifact 持有的同一 Document。
+     *
+     * 还会重新验证 AST provenance 和 engine limits 下的 AST invariants，不执行重新解析。
      * @param engine 校验 artifact 身份使用的 engine。
      * @param source 与 artifact 对应的源文本。
      * @return `Hit` 或带原因的 `CacheMiss`。
@@ -69,10 +92,12 @@ public class MarkdownParseArtifact {
     }
 
     /**
-     * 用 bytes 和 UTF-8 policy 校验 artifact；不匹配时返回带原因的 `CacheMiss`。
+     * 用原始 bytes 和 UTF-8 policy 校验 artifact，不匹配时返回带原因的 `CacheMiss`。
+     *
+     * bytes 必须可直接解码为有效 UTF-8；此入口不会对无效输入执行替换解码。
      * @param engine 校验 artifact 身份使用的 engine。
      * @param source 原始 UTF-8 bytes。
-     * @param utf8Policy bytes 的解码策略。
+     * @param utf8Policy 缓存身份中的 UTF-8 policy，默认为 Strict，必须与创建时相同。
      * @return `Hit` 或带原因的 `CacheMiss`。
      */
     public func load(engine: MarkdownEngine, source: Array<Byte>, utf8Policy!: Utf8Policy = Utf8Policy.Strict): ArtifactLoadResult {
@@ -149,7 +174,7 @@ public class MarkdownParseArtifact {
     public let parserPlanVersion: String
     /** 使用的 profile id。 */
     public let profileId: String
-    /** dialect fingerprint。 */
+    /** 创建 artifact 时 engine 的已编译语法与扩展配置指纹，加载时要求与目标 engine 一致。 */
     public let dialectFingerprint: String
     /** engine 身份 fingerprint。 */
     public let engineFingerprint: String
@@ -169,6 +194,11 @@ public class MarkdownParseArtifact {
     public let diagnostics: ImmutableArray<Diagnostic>
     internal let profileIdentity: String
 
+    /**
+     * 从 engine 与 parse result 保存 artifact 字段，不执行 `create` 的 provenance 校验。
+     * @param engine 提供 profile、dialect、limits 和 binding 配置的 engine。
+     * @param result 调用方已验证为完整且 identity-preserving 的解析结果。
+     */
     protected init(engine: MarkdownEngine, result: ParseResult) {
         schemaVersion = "3"
         libraryVersion = "0.9.2"

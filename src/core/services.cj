@@ -32,9 +32,13 @@ public class AnnotationKey<T> {
 public class AnnotationChannel<T> {
     private let values = HashMap<NodeId, T>()
     private let closed: AtomicBool
-    /** 创建本 channel 的 key。 */
+    /** 本 channel 的稳定身份、版本和 fingerprint 参与标记。 */
     public let key: AnnotationKey<T>
 
+    /** 创建与 store 共享关闭标记的独立 annotation channel。
+     * @param key channel 的稳定身份及语义版本。
+     * @param closed 所属 store 的原子关闭标记；所有读写都检查此标记。
+     */
     protected init(key: AnnotationKey<T>, closed: AtomicBool) {
         this.key = key
         this.closed = closed
@@ -67,7 +71,9 @@ public class AnnotationChannel<T> {
         ensureOpen();
         values.remove(nodeId)
     }
-    /** 当前存储的 annotation 数量。 */
+    /** 当前存储的 annotation 数量。
+     * @return 当前存储的 annotation 数量。
+     */
     public prop size: Int64 {
         get() {
             ensureOpen();
@@ -89,15 +95,17 @@ public class AnnotationStore {
     public init() {}
     // Channels are intentionally owner-thread confined. Share immutable ASTs,
     // not a mutable annotation store, unless the host provides synchronization.
-    /** 恒为 `false`：channel 仅限 owner 线程使用。 */
+    /** 恒为 `false`：channel 仅限 owner 线程使用。
+     * @return 恒为 `false`：channel 仅限 owner 线程使用。
+     */
     public prop threadSafe: Bool {
         get() {
             false
         }
     }
-    /** 为 key 创建一个 channel view。
+    /** 为 key 创建独立的空 channel；相同 key 的多次调用不会共享 annotation 值。
      * @param key channel 的 annotation key。
-     * @return 对应 key 的 channel view。
+     * @return 对应 key 的独立 channel，与 store 共享关闭状态。
      */
     public func channel<T>(key: AnnotationKey<T>): AnnotationChannel<T> {
         AnnotationChannel<T>(key, closed)
@@ -127,17 +135,29 @@ public enum TransformPurity {
 
 /** 可由 `TransformPipeline` 排序和执行的 AST transform pass。 */
 public interface TransformPass {
-    /** pass 的稳定唯一 id。 */
+    /** pass 的稳定唯一 id。
+     * @return pass 的稳定唯一 id。
+     */
     prop id: String
-    /** pass 的语义版本。 */
+    /** pass 的语义版本。
+     * @return pass 的语义版本。
+     */
     prop version: String
-    /** 依赖的 capability 名称列表。 */
+    /** 依赖的 capability 名称列表。
+     * @return 依赖的 capability 名称列表。
+     */
     prop requires: Array<String>
-    /** 产出的 capability 名称列表。 */
+    /** 产出的 capability 名称列表。
+     * @return 产出的 capability 名称列表。
+     */
     prop produces: Array<String>
-    /** 同就绪 pass 之间的执行优先级，数值越大越先执行。 */
+    /** 同就绪 pass 之间的执行优先级，数值越大越先执行。
+     * @return 同就绪 pass 之间的执行优先级，数值越大越先执行。
+     */
     prop priority: Int64
-    /** pass 的纯度声明。 */
+    /** pass 的纯度声明。
+     * @return pass 的纯度声明。
+     */
     prop purity: TransformPurity
     /** 对输入 Document 执行一次 transform 并返回新 Document。
      * @param document 输入 Document。
@@ -150,6 +170,9 @@ public interface TransformPass {
 public class TransformPipeline {
     private let passes: ImmutableArray<TransformPass>
 
+    /** 保存已完成依赖排序的 transform pass 序列。
+     * @param passes 将按此顺序执行的 passes；数组被防御性复制。
+     */
     protected init(passes: Array<TransformPass>) {
         this.passes = ImmutableArray<TransformPass>(passes)
     }
@@ -200,7 +223,7 @@ public class TransformPipeline {
 
     /** 执行已排序 passes，并在每一步验证 AST invariants。
      * @param document 输入 Document。
-     * @param budget 每一步 transform 的操作预算。
+     * @param budget 此次 pipeline 共享的 pass 调用预算，每执行一个 pass 消耗一个 transform step。
      * @param cancellation 协作式取消信号。
      * @return 全部 pass 执行后的 `Document`。
      * @throws MarkdownException 取消、预算耗尽或校验失败时。

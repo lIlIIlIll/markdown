@@ -7,7 +7,10 @@ import std.collection.*
 
 /** 对一个完整成功文档进行显式准备；解析本身不会调用此入口。 */
 public class RichContentPreparer {
-    /** 收集固定语义、查询有界缓存、调用后端并校验每个产物。
+    /**
+     * 收集固定语义、查询有界缓存、调用后端并校验每个产物。
+     *
+     * 输入累计上限超出时直接失败；单个后端产物非法或超限时记录 Unavailable，strict 仅将已启用类别的不可用结果转为 RenderFailure。缓存命中也重新校验，成功缓存不持有源文档。
      * @param result 完整且来源匹配的解析结果。
      * @param options 宿主显式开启的能力和严格失败策略。
      * @param backend 可选可信端口；缺失不会尝试安装、联网或寻找可执行文件。
@@ -15,6 +18,9 @@ public class RichContentPreparer {
      * @param cache 宿主拥有的非并发 Ready 缓存。
      * @param budget 整个操作共用的预算。
      * @param cancellation 整个操作共用的取消 token。
+     * @return 仅属于 result.document revision 的不可变准备结果；没有修改 AST 或持久化 artifact。
+     * @throws IllegalArgumentException result.source 不属于 result.document 时。
+     * @throws MarkdownException 语义绑定不满足要求、累计输入超限、取消、预算耗尽，或严格模式中的已启用类别不可用时。
      */
     public static func prepare(result: ParseResult, options!: RichContentOptions = RichContentOptions(),
         backend!: ?RichContentBackend = None, limits!: RichContentLimits = RichContentLimits(),

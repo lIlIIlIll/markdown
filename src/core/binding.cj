@@ -95,6 +95,13 @@ public class FootnoteReferenceBinding {
     /** 定义的锚点 ID。 */
     public let definitionId: String
 
+    /** 记录一次已解析脚注引用的目标与唯一往返锚点。
+     * @param reference 本次引用的 NodeId。
+     * @param definition 首个有效定义的 NodeId。
+     * @param number 由首次可达引用分配的一基展示编号。
+     * @param referenceId 本次引用独有的最终锚点 ID。
+     * @param definitionId 目标定义的最终锚点 ID。
+     */
     protected init(reference: NodeId, definition: NodeId, number: Int64, referenceId: String, definitionId: String) {
         this.reference = reference
         this.definition = definition
@@ -106,6 +113,7 @@ public class FootnoteReferenceBinding {
 
 /** 已引用脚注的定义、展示顺序和全部回链；未引用定义仍保留于 AST。 */
 public class FootnoteDefinitionBinding {
+    /** 定义记录在所属 arena 中的物理下标；不是 NodeId.value。 */
     protected let definitionIndex: Int64
     /** 定义节点。 */
     public let definition: NodeId
@@ -116,6 +124,13 @@ public class FootnoteDefinitionBinding {
     /** 按遇到顺序排列的全部可达引用。 */
     public let references: ImmutableArray<FootnoteReferenceBinding>
 
+    /** 保存一个已引用定义及其有序回链，复制引用数组。
+     * @param definition 脚注定义的节点身份。
+     * @param definitionIndex 定义记录的 arena 物理下标。
+     * @param number 按首次可达引用分配的展示编号。
+     * @param definitionId 定义的最终锚点 ID。
+     * @param references 按遇到顺序排列的引用绑定。
+     */
     protected init(definition: NodeId, definitionIndex: Int64, number: Int64, definitionId: String,
         references: Array<FootnoteReferenceBinding>) {
         this.definition = definition
@@ -130,11 +145,17 @@ public class FootnoteDefinitionBinding {
 public class DocumentBindings {
     private static let EMPTY = DocumentBindings(BindingOptions(), ParseLimits.safe(), "", [],
         HashMap<NodeId, FootnoteReferenceBinding>(), [], footnotesEnabled: false)
+    /** 本索引是否启用了整文脚注绑定。 */
     protected let footnotesEnabled: Bool
+    /** 本索引是否包含可渲染标题的统一 ID 绑定。 */
     protected let headingsEnabled: Bool
+    /** typed 语义 payload 是否经过完整文档绑定校验。 */
     protected let semanticPayloadsValidated: Bool
+    /** 生成此索引时采用的结构限制。 */
     protected let limits: ParseLimits
+    /** 生成此索引时采用的 parser 配置指纹。 */
     protected let engineFingerprint: String
+    /** 生成锚点和处理未定义脚注时采用的绑定选项。 */
     protected let options: BindingOptions
     /** 按编号排列的可达脚注；不包含未引用定义。 */
     public let footnotes: ImmutableArray<FootnoteDefinitionBinding>
@@ -162,6 +183,19 @@ public class DocumentBindings {
             links: links.toArray(), semanticPayloadsValidated: semanticPayloadsValidated)
     }
 
+    /** 组装不可变语义绑定并建立 NodeId 和 fragment 查找索引。
+     * @param options 绑定阶段的 ID scope 与未定义脚注策略。
+     * @param limits 绑定时使用的结构上限。
+     * @param engineFingerprint 与绑定结果对应的 parser 配置身份。
+     * @param footnotes 按展示编号排列的已引用定义。
+     * @param references 从引用 NodeId 到本次引用绑定的索引。
+     * @param diagnostics 绑定产生的可恢复诊断。
+     * @param footnotesEnabled 是否启用脚注语义，默认为 true。
+     * @param headingsEnabled 是否启用标题语义，默认为 false。
+     * @param headings 按文档顺序排列的可渲染标题，默认空。
+     * @param links 按文档顺序排列的可渲染链接，默认空。
+     * @param semanticPayloadsValidated 是否已完成 typed payload 校验，默认 false。
+     */
     protected init(options: BindingOptions, limits: ParseLimits, engineFingerprint: String,
         footnotes: Array<FootnoteDefinitionBinding>, references: HashMap<NodeId, FootnoteReferenceBinding>,
         diagnostics: Array<Diagnostic>, footnotesEnabled!: Bool = true, headingsEnabled!: Bool = false,
@@ -193,6 +227,9 @@ public class DocumentBindings {
         this.diagnostics = ImmutableArray<Diagnostic>(diagnostics)
     }
 
+    /** 读取未启用整文语义的共享空索引。
+     * @return 不含脚注、标题、链接和诊断的不可变绑定。
+     */
     protected static func empty(): DocumentBindings {
         EMPTY
     }
@@ -352,7 +389,17 @@ private class PendingFootnoteBinding {
 
 // The ordinary batch path does not call this walk unless document-wide
 // extension semantics are enabled. No CST, history, or source copy is created.
+/** 在完整 AST 上校验 typed payload，并统一脚注、标题和本地链接的语义。 */
 protected class DocumentBinder {
+    /** 遍历完整文档生成共享绑定；保留不可变 AST 并返回装有绑定的文档视图。
+     * @param document 已经构造完成、可追溯到原始 SourceBuffer 的文档。
+     * @param options 锚点作用域及未定义脚注策略。
+     * @param limits 引用、literal 等绑定阶段的结构上限。
+     * @param budget 所属操作累计扫描预算。
+     * @param cancellation 遍历和文本处理时检查的取消信号。
+     * @param headingsEnabled 是否为可渲染标题生成最终 ID，默认 false。
+     * @return 带权威绑定索引的文档；payload、预算或严格引用校验失败时抛出 MarkdownException。
+     */
     protected static func bind(document: Document, options: BindingOptions, limits: ParseLimits,
         budget: OperationBudget, cancellation: CancellationToken, headingsEnabled!: Bool = false): Document {
         let work = BindingWork(document, limits, budget, cancellation)

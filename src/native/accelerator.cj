@@ -9,9 +9,16 @@ foreign func MD_Markdown_ScanLines(
     capacity: Int64
 ): Int64
 
-/** Optional C accelerator. Importing this package requires the native archive. */
+/**
+ * 可选 C packed-record 行扫描器；导入并链接此包需要显式构建的 native archive，基础纯仓颉库不依赖它。
+ *
+ * 生成格式版本为 4 的记录。使用 engine 的 lineScanner 配置显式注入，不能单独替代完整解析和安全校验。
+ * @see markdown.core.LineScannerAccelerator
+ */
 public class NativeLineScanner <: LineScannerAccelerator {
-    /** 创建 native accelerator 实例。 */
+    /**
+     * 创建可选 native 行扫描器；构造不扫描输入，链接时必须已提供 scanner archive。
+     */
     public init() {}
 
     /**
@@ -30,7 +37,10 @@ public class NativeLineScanner <: LineScannerAccelerator {
         4
     }
 
-    /** 返回 packed-record buffer 和有效前缀长度；不受支持时返回 `None`。
+    /**
+     * 返回 packed-record buffer 和有效前缀长度；不受支持时返回 `None`。
+     *
+     * capacity 非正或 native scanner 返回不支持标记时为 None；返回缓冲区可能有未使用容量，调用方只能读取有效前缀。
      * @param input 待扫描的 UTF-8 字节输入。
      * @param capacity 本次扫描允许的容量上限。
      * @return packed records 及有效前缀；不受支持时为 `None`。

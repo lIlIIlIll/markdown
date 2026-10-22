@@ -16,13 +16,19 @@ public class AppendReplica {
     /** 创建等待第一个批次的空消费端。重新开始输入时创建新实例。 */
     public init() {}
 
-    /** 当前版本，尚未应用批次时为 0。 */
+    /**
+     * 当前版本，尚未应用批次时为 0。
+     * @return 已成功应用的最新版本；首批之前为 0。
+     */
     public prop version: Int64 {
         get() {
             currentVersion
         }
     }
-    /** 已应用会话身份，首批前为 None。 */
+    /**
+     * 已应用会话身份，首批前为 None。
+     * @return 已绑定的会话身份；首批之前为 None。
+     */
     public prop sessionId: ?Int64 {
         get() {
             if (session == 0) {
@@ -32,24 +38,36 @@ public class AppendReplica {
             }
         }
     }
-    /** 当前待定或终结状态。 */
+    /**
+     * 当前待定或终结状态。
+     * @return 最近成功应用批次的状态；初始为 AwaitingInput。
+     */
     public prop state: AppendState {
         get() {
             stateValue
         }
     }
-    /** 只有完整 Complete 批次成功应用后才提供结果。 */
+    /**
+     * 只有完整 Complete 批次成功应用后才提供结果。
+     * @return Complete 批次成功应用后的完整结果；此前及失败后为 None。
+     */
     public prop result: ?ParseResult {
         get() {
             resultValue
         }
     }
-    /** 返回当前顶层块的不可变副本；不会暴露可变消费端存储。 */
+    /**
+     * 返回当前顶层块的不可变副本；不会暴露可变消费端存储。
+     * @return 当前顶层块的不可变副本。
+     */
     public func blocks(): ImmutableArray<AppendBlockView> {
         ImmutableArray<AppendBlockView>(blocksValue.toArray())
     }
 
-    /** 验证并原子应用一批。错误抛出 IllegalArgumentException；状态保持不变。 */
+    /**
+     * 验证并原子应用一批。错误抛出 IllegalArgumentException；状态保持不变。
+     * @param batch 来自同一会话、紧接当前版本的完整原子更新。
+     */
     public func apply(batch: AppendUpdateBatch): Unit {
         if (batch.protocolVersion != 1 || terminal || (session != 0 && session != batch.sessionId) ||
             batch.fromVersion != currentVersion || batch.toVersion != currentVersion + 1 || batch.sequence !=

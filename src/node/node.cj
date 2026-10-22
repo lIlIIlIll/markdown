@@ -11,7 +11,9 @@ import std.io.*
 import std.process.*
 import std.sync.AtomicBool
 
-/** 显式安装的 Linux Node 适配器；构造只读取固定 identity 文件，不启动或下载程序。 */
+/**
+ * 显式可选的 Linux Node 适配器；基础解析与渲染不会自动使用或下载此后端。构造只读取固定 identity 文件，实际作业由显式 prepare 启动。它是可信宿主执行端口，不因本接口而成为沙箱安全边界。
+ */
 public class NodeRichContentBackend <: RichContentBackend {
     private let runtimeDirectory: String
     private let workDirectory: String
@@ -23,13 +25,17 @@ public class NodeRichContentBackend <: RichContentBackend {
     /** 固定运行时闭包的 SHA-256；缺失时为 missing，不包含本机路径。 */
     public let runtimeIdentity: String
 
-    /** 路径只能由可信宿主提供；工作目录应位于有足够空间的磁盘。
+    /**
+     * 路径只能由可信宿主提供；工作目录应位于有足够空间的磁盘。
+     *
+     * runtimeDirectory、workDirectory 和 pythonExecutable 必须是无 NUL 的绝对路径。主题和 Chromium 沙箱选择来自宿主，不能由 Markdown 覆盖。构造时缓存运行时身份，运行时闭包更新后应创建新实例，避免沿用旧身份。
      * @param runtimeDirectory prepare_rich_runtime.py 生成的运行时目录。
      * @param workDirectory 已存在的私有工作目录。
      * @param pythonExecutable 显式的 Python 3 可执行文件。
      * @param shikiTheme github-light 或 github-dark。
      * @param diagramTheme default、dark、neutral 或 forest。
      * @param allowUnsandboxedChromium 是否显式允许 Chromium 的 no-sandbox 模式；默认不允许。
+     * @throws IllegalArgumentException 路径不是显式绝对路径、含 NUL，或主题不受支持时。
      */
     public init(runtimeDirectory: String, workDirectory: String, pythonExecutable!: String = "/usr/bin/python3",
         shikiTheme!: String = "github-light", diagramTheme!: String = "default", allowUnsandboxedChromium!: Bool = false) {
@@ -70,7 +76,11 @@ public class NodeRichContentBackend <: RichContentBackend {
         }
     }
 
-    /** 仅把真正影响该种产物的主题/浏览器配置加入 key。 */
+    /**
+     * 仅把真正影响该种产物的主题/浏览器配置加入 key。
+     * @param kind 待标识的富内容类别。
+     * @return 包含 node-rich 协议、固定运行时身份及该类别有效配置的稳定身份；更换运行时后应重新构造后端。
+     */
     public func identity(kind: RichContentKind): String {
         let base = "node-rich/1/${runtimeIdentity}/${kind.id()}"
         match (kind) {
@@ -80,7 +90,15 @@ public class NodeRichContentBackend <: RichContentBackend {
         }
     }
 
-    /** 执行一次有界批量作业；不读取 Markdown 指定的命令、文件或配置。 */
+    /**
+     * 执行一次有界批量作业；不读取 Markdown 指定的命令、文件或配置。
+     * @param requests 按顺序处理的请求，语言名与 source 长度受 limits 约束。
+     * @param limits 后端批量作业的资源和整体时间上限；实现还施加固定协议容量上限。
+     * @param budget 与收集及校验阶段共用的累计操作预算。
+     * @param cancellation 本次准备的取消 token。
+     * @return 与 requests 等长且同序的候选产物或不可用原因；运行时未安装返回 Missing，不会下载或自动安装。
+     * @throws MarkdownException 取消或累计操作预算耗尽时。
+     */
     public func prepare(requests: Array<RichContentRequest>, limits: RichContentLimits, budget: OperationBudget,
         cancellation: CancellationToken): Array<RichContentOutcome> {
         cancellation.throwIfCancelled(phase: "prepare")

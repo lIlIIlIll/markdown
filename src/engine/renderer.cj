@@ -3,6 +3,9 @@ package markdown.engine
 import markdown.render.{CodeGroupHtmlOptions, ExtensionRendererFallback, HtmlOptions, HtmlRenderer, HtmlSanitizerPort, 
     RawHtmlHandlerPort, RichContentPreparation}
 
+/**
+ * 从 engine 配置构造安全 HTML renderer。
+ */
 extend MarkdownEngine {
     /**
      * 按 engine 的 dialect rules 创建 renderer，并继承 `maximumOutputBytes`。

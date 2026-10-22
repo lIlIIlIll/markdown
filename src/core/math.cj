@@ -9,7 +9,11 @@ public class MathSourcePart {
     /** 上述行首空白在表达式中保留的空格数。 */
     public let expandedPrefixSpaces: Int64
 
-    /** 创建不可变片段；非空展开只允许有界的空白前缀。 */
+    /** 创建不可变片段；非空展开只允许有界的空白前缀。
+     * @param span 包含此行公式内容及所属换行的原始 UTF-8 半开范围。
+     * @param expandedPrefixBytes 被容器展开的行首空白字节数，默认 0，不能超过 span 长度。
+     * @param expandedPrefixSpaces 上述前缀在表达式中保留的空格数，默认 0，至多为原字节数的四倍。
+     */
     public init(span: SourceSpan, expandedPrefixBytes!: Int64 = 0, expandedPrefixSpaces!: Int64 = 0) {
         if (expandedPrefixBytes < 0 || expandedPrefixBytes > span.length() || expandedPrefixSpaces < 0 ||
             (expandedPrefixSpaces / 4 + (if (expandedPrefixSpaces % 4 == 0) {
@@ -38,7 +42,13 @@ public class MathPayload <: CustomPayload {
     /** 原始 `$` 或 `$$` closer。 */
     public let closerSpan: SourceSpan
 
-    /** 创建公式语义；绑定器验证类型、原文、片段顺序与 delimiter。 */
+    /** 创建公式语义；绑定器验证类型、原文、片段顺序与 delimiter。
+     * @param display true 为块公式，false 为行内公式。
+     * @param expression 移除容器前缀并将换行统一为 LF 的 TeX 原文。
+     * @param expressionSource 按原文顺序排列的表达式片段；数组被防御性复制。
+     * @param openerSpan 原文 $ 或 $$ 起始 delimiter 范围。
+     * @param closerSpan 原文对应结束 delimiter 范围。
+     */
     public init(display: Bool, expression: String, expressionSource: Array<MathSourcePart>, openerSpan: SourceSpan,
         closerSpan: SourceSpan) {
         this.display = display
@@ -48,12 +58,18 @@ public class MathPayload <: CustomPayload {
         this.closerSpan = closerSpan
     }
 
-    /** 返回不依赖第三方后端的 payload schema。 */
+    /** 返回不依赖第三方后端的 payload schema。
+     * @return 公式源语义的 schema 身份 markdown.math/2。
+     */
     public func payloadTypeId(): String {
         "markdown.math/2"
     }
 }
 
+/** 读取自定义块或行内节点携带的公式源语义。
+ * @param node 待检查的节点。
+ * @return MathPayload；非自定义节点或 payload 类型不符时为 None。
+ */
 protected func mathPayload(node: NodeRef): ?MathPayload {
     let payload: CustomPayload = match (node.kind) {
         case NodeKind.CustomBlock => node.asCustomBlock().getOrThrow().payload
@@ -63,6 +79,13 @@ protected func mathPayload(node: NodeRef): ?MathPayload {
     payload as MathPayload
 }
 
+/** 核对公式类型、delimiter 和分片规范化后的表达式是否与原始来源一致。
+ * @param document 节点所属且持有原始 SourceBuffer 的文档。
+ * @param node 当前待检查节点；没有公式 payload 时直接跳过。
+ * @param limits 表达式 literal 字节上限。
+ * @param budget 来源和表达式校验的共享扫描预算。
+ * @param cancellation 绑定阶段的取消信号。
+ */
 protected func validateMathNode(document: Document, node: NodeRef, limits: ParseLimits, budget: OperationBudget,
     cancellation: CancellationToken): Unit {
     if (let Some(value) <- mathPayload(node)) {

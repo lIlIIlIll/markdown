@@ -43,14 +43,21 @@ internal func nodeIdentityHash(lineage: Int64, serial: Int64): Int64 {
 // Persistent forks share only this allocation sequence, never mutable arena
 // records. Builders reserve bounded ranges and allocate locally within them.
 // Rollback deliberately does not rewind either reservation or local serial.
+/** 持久化文档分叉共享的节点编号分配器；不共享可变 arena 记录。 */
 protected class NodeLineage {
+    /** 进程内唯一的正数 lineage 标识；独立解析和完整重解析不会复用。 */
     protected let identity: Int64
     private let serials = AtomicInt64(1)
 
+    /** 分配全新的 lineage；身份空间耗尽时以 LimitExceeded 失败。 */
     protected init() {
         identity = reserveIdentityRange(NEXT_NODE_LINEAGE, 1, Int64.Max - 1)[0]
     }
 
+    /** 原子预留一段局部编号；回滚不会回收，耗尽时失败而不回绕。
+     * @param requested 请求的编号数，默认为一个节点 chunk，必须在 1 到 AST_NODE_CHUNK_SIZE 之间。
+     * @return 预留区间的起点和不包含的终点；末段可能短于请求，编号不超过 UInt32.Max。
+     */
     protected func reserve(requested!: Int64 = AST_NODE_CHUNK_SIZE): (Int64, Int64) {
         if (requested <= 0 || requested > AST_NODE_CHUNK_SIZE) {
             throw IllegalArgumentException("identity reservation must fit one arena chunk")

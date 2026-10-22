@@ -4,39 +4,59 @@ import markdown.core.{CancellationToken, Document, LinkSyntaxKind, NodeId, NodeK
     OperationBudget, ParseLimits, RewriteAction, SourceBuffer, TreeRewriter}
 import std.collection.*
 
+/**
+ * 用确定性 AST 转换替换普通文本中的省略号和长短破折号。
+ */
 protected class SmartPunctuationTransform <: ExtensionAstTransform {
-    /** 返回扩展 id。 */
+    /**
+     * 标识内建智能标点扩展。
+     * @return 固定为 smart-punctuation。
+     */
     public prop extensionId: String {
         get() {
             "smart-punctuation"
         }
     }
-    /** 返回 processor id。 */
+    /**
+     * 标识智能标点转换阶段。
+     * @return 固定为 smart-punctuation。
+     */
     public prop transformId: String {
         get() {
             "smart-punctuation"
         }
     }
-    /** 返回 processor 版本。 */
+    /**
+     * 标识参与 dialect fingerprint 的转换版本。
+     * @return 固定为 2。
+     */
     public prop version: String {
         get() {
             "2"
         }
     }
-    /** 返回处理优先级。 */
+    /**
+     * 以默认整文阶段优先级执行转换。
+     * @return 固定为 100。
+     */
     public prop priority: Int64 {
         get() {
             100
         }
     }
-    /** 返回转换是否确定性。 */
+    /**
+     * 声明转换满足 compiler 的确定性要求。
+     * @return 固定为 true。
+     */
     public prop deterministic: Bool {
         get() {
             true
         }
     }
-    /** 将 Text 节点中的省略号和 em/en dash 替换为对应 Unicode 标点。
+    /**
+     * 将普通 Text 中的省略号和长短破折号替换为 Unicode 标点，保留自动链接文本。
      * @param document 输入 Document。
+     * @param limits 本次操作实际使用的结构上限，传递给 TreeRewriter。
      * @param budget transform 操作预算。
      * @param cancellation 协作式取消信号。
      * @return 处理后的 `Document`。
