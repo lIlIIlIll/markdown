@@ -16,7 +16,10 @@ public class CodeLineRange {
     public let firstLine: Int64
     /** 末行。 */
     public let lastLine: Int64
-    /** 创建非空正数范围；绑定时再验证代码行数。 */
+    /** 创建非空正数范围；绑定时再验证代码行数。
+     * @param firstLine 首行的一基编号，必须至少为 1。
+     * @param lastLine 末行的一基编号，不得小于 firstLine；范围包含两端。
+     */
     public init(firstLine: Int64, lastLine: Int64) {
         if (firstLine < 1 || lastLine < firstLine) {
             throw IllegalArgumentException("invalid code line range")
@@ -37,7 +40,12 @@ public class CodeGroupPayload <: CustomPayload {
     /** 可复制的代码正文，保留原始换行，按输入策略解码并移除容器/fence 缩进。 */
     public let copyText: String
 
-    /** 创建容器或条目；容器不携带条目数据。 */
+    /** 创建容器或条目；容器不携带条目数据。
+     * @param role 代码组容器或条目角色。
+     * @param title 条目标题；容器必须为空，默认空。
+     * @param highlightedLines 有序不重叠的高亮行范围；容器必须为空，默认空。
+     * @param copyText 保留原始换行的复制正文；容器必须为空，默认空。
+     */
     public init(role: CodeGroupRole, title!: String = "", highlightedLines!: Array<CodeLineRange> = [],
         copyText!: String = "") {
         if (let CodeGroupRole.Group <- role) {
@@ -51,12 +59,18 @@ public class CodeGroupPayload <: CustomPayload {
         this.copyText = copyText
     }
 
-    /** 返回 payload schema 身份。 */
+    /** 返回 payload schema 身份。
+     * @return 代码组语义的 schema 身份 markdown.code-group/1。
+     */
     public func payloadTypeId(): String {
         "markdown.code-group/1"
     }
 }
 
+/** 从自定义块读取代码组语义；其他节点不参与代码组处理。
+ * @param node 待检查的节点引用。
+ * @return CodeGroupPayload；节点类型或 payload 不匹配时为 None。
+ */
 protected func codeGroupPayload(node: NodeRef): ?CodeGroupPayload {
     if (let NodeKind.CustomBlock <- node.kind) {
         return node.asCustomBlock().getOrThrow().payload as CodeGroupPayload
@@ -64,6 +78,10 @@ protected func codeGroupPayload(node: NodeRef): ?CodeGroupPayload {
     None
 }
 
+/** 检查代码组语言标记是否只含 ASCII 字母、数字、下划线、连字符或加号。
+ * @param language 代码 fence 中的语言标记，允许为空。
+ * @return 每个字节均符合允许范围时为 true；空字符串也合法。
+ */
 protected func isCodeGroupLanguage(language: String): Bool {
     for (index in 0..language.size) {
         let byte = language[index]
@@ -75,6 +93,10 @@ protected func isCodeGroupLanguage(language: String): Bool {
     true
 }
 
+/** 按 LF 计算代码正文的逻辑行数，末尾换行不额外生成空行。
+ * @param code 已规范化换行的代码正文。
+ * @return 逻辑行数；空正文为 0。
+ */
 protected func codeLineCount(code: String): Int64 {
     if (code.isEmpty()) {
         return 0
@@ -92,6 +114,13 @@ protected func codeLineCount(code: String): Int64 {
     })
 }
 
+/** 校验代码组的父子结构、fence、语言、高亮范围和复制正文一致性。
+ * @param node 当前遍历的节点；非代码组节点直接跳过。
+ * @param parents 从根到直接父节点排列的祖先栈。
+ * @param limits 标题、复制文本和语言标记的 literal 字节限制。
+ * @param budget 遍历和文本校验消耗的共享扫描预算。
+ * @param cancellation 绑定阶段的取消信号。
+ */
 protected func validateCodeGroupNode(node: NodeRef, parents: ArrayList<NodeRef>, limits: ParseLimits,
     budget: OperationBudget, cancellation: CancellationToken): Unit {
     if (let NodeKind.CustomInline <- node.kind) {

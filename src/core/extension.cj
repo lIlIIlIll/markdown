@@ -56,6 +56,9 @@ public class SyntaxPayload <: CustomPayload {
     public func parameter(name: String): ?SyntaxParameterValue {
         typedValues.get(name)
     }
+    /** 按参数名排序写入 typed 参数，保持 artifact 身份编码确定性。
+     * @param out 用于累计参数名称、类型和值的 canonical 描述器。
+     */
     protected func appendArtifactParameters(out: CanonicalDescriptor): Unit {
         let keys = ArrayList<String>()
         for ((key, _) in typedValues) {

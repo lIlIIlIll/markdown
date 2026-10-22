@@ -50,6 +50,13 @@ public class HeadingBinding {
     /** 宿主指定的文档片段作用域。 */
     public let scope: String
 
+    /** 从标题节点及显式元数据保存统一展示文本和最终锚点。
+     * @param node 已经确认是 Heading 的节点引用。
+     * @param text 去除 ID 元数据后的显示文本。
+     * @param id 文档作用域内唯一的最终锚点 ID。
+     * @param metadata 作者显式 ID 元数据；自动生成 ID 时为 None。
+     * @param scope 宿主指定的文档片段 ID scope。
+     */
     protected init(node: NodeRef, text: String, id: String, metadata: ?HeadingIdPayload, scope: String) {
         heading = node.nodeId
         level = node.asHeading().getOrThrow().level
@@ -68,6 +75,10 @@ public class TocEntry {
     public let heading: HeadingBinding
     /** 保持文档顺序的子条目。 */
     public let children: ImmutableArray<TocEntry>
+    /** 创建结构化目录条目并复制直接子条目。
+     * @param heading 本条目对应的权威标题绑定。
+     * @param children 按文档顺序排列的子目录条目。
+     */
     protected init(heading: HeadingBinding, children: Array<TocEntry>) {
         this.heading = heading
         this.children = ImmutableArray<TocEntry>(children)
@@ -122,6 +133,10 @@ internal func buildToc(headings: ImmutableArray<HeadingBinding>, minimumLevel: I
     output.toArray()
 }
 
+/** 检查显式标题 ID 是否非空且满足标题扩展的字符规则。
+ * @param value 不含 {# 和 } 的 ID 文本。
+ * @return 非空且 ASCII 仅含字母、数字、下划线、连字符、点或冒号时为 true；非 ASCII 字节允许保留。
+ */
 protected func validHeadingId(value: String): Bool {
     if (value.isEmpty()) {
         return false
@@ -138,6 +153,10 @@ protected func validHeadingId(value: String): Bool {
     true
 }
 
+/** 在节点的直接子节点中查找显式标题 ID 元数据。
+ * @param node 需要查询元数据的父节点。
+ * @return 遇到的第一个 HeadingIdPayload；没有时为 None。
+ */
 protected func headingMetadata(node: NodeRef): ?HeadingIdPayload {
     let children = node.children()
     for (index in 0..children.size) {

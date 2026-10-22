@@ -3,16 +3,22 @@ package markdown.core
 import std.collection.*
 import std.overflow.*
 
+/** 当前 parser 执行计划的身份版本；参与引擎配置指纹。 */
 protected let MARKDOWN_PARSER_PLAN_VERSION: String = "7"
 
 // A descriptor is a sequence of typed fields, not a delimiter-separated
 // string. Length-prefixing every field makes the preimage unambiguous even
 // when extension-controlled values contain punctuation or empty strings.
+/** 用类型标签和长度前缀拼接身份字段，避免扩展文本中的标点造成歧义。 */
 protected class CanonicalDescriptor {
     private let out = StringBuilder()
 
+    /** 创建尚未写入字段的 canonical 描述器。 */
     protected init() {}
 
+    /** 追加一个保留类型和 UTF-8 编码长度的身份字段。
+     * @param value 要加入身份描述的字段；字符串、整数和布尔值编码相互区分。
+     */
     protected func append(value: String): Unit {
         let bytes = value.toArray()
         out.append("s")
@@ -21,6 +27,9 @@ protected class CanonicalDescriptor {
         out.append(value)
     }
 
+    /** 追加一个保留类型和 UTF-8 编码长度的身份字段。
+     * @param value 要加入身份描述的字段；字符串、整数和布尔值编码相互区分。
+     */
     protected func append(value: Int64): Unit {
         let encoded = value.toString()
         out.append("i")
@@ -29,6 +38,9 @@ protected class CanonicalDescriptor {
         out.append(encoded)
     }
 
+    /** 追加一个保留类型和 UTF-8 编码长度的身份字段。
+     * @param value 要加入身份描述的字段；字符串、整数和布尔值编码相互区分。
+     */
     protected func append(value: Bool): Unit {
         out.append(if (value) {
             "b1:1"
@@ -37,11 +49,15 @@ protected class CanonicalDescriptor {
         })
     }
 
+    /** 读取当前累计的 canonical 字段编码。
+     * @return 按追加顺序连接的字段编码，可直接作为摘要输入。
+     */
     protected func toString(): String {
         out.toString()
     }
 }
 
+/** 计算配置与 artifact 身份使用的 SHA-256；不依赖宿主加密扩展。 */
 protected class Sha256 {
     /**
      * 计算字符串（按 UTF-8 字节）的 SHA-256 摘要，返回小写十六进制字符串。
@@ -221,6 +237,12 @@ private func hexWords(words: Array<UInt32>): String {
     out.toString()
 }
 
+/** 将 parser 计划、dialect、结构限制和绑定选项合成为引擎身份。
+ * @param dialectFingerprint 已经编译的方言身份。
+ * @param limits 参与执行语义的全部结构限制。
+ * @param options ID scope 与未定义脚注策略。
+ * @return canonical 配置编码的 64 位小写十六进制 SHA-256。
+ */
 protected func parserConfigurationFingerprint(dialectFingerprint: String, limits: ParseLimits, options: BindingOptions): String {
     let out = CanonicalDescriptor()
     out.append("engine-0.10-plan-${MARKDOWN_PARSER_PLAN_VERSION}")

@@ -37,7 +37,7 @@ v0.9.1 已发布为 breaking pre-GA，历史交付状态见
   `MarkdownErrorCode.UnsupportedVersion`，不尝试旧格式解码。
 - 移除 ExtensionDocumentProcessor、ExtensionProcessingPhase 和 documentProcessor 注册。
   改用绑定前的 ExtensionAstTransform 或绑定后的只读 ExtensionDocumentAnalysis；
-  callback 接收实际 source/limits/budget/cancellation。见[扩展阶段](api/extensions.md#完整文档阶段)。
+  callback 接收实际 source/limits/budget/cancellation。见[扩展阶段](extensions.md#完整文档阶段)。
 - executionModels 的失败模型字段为 parseOutcome；移除旧 partialParse 名称。
   CLI dialect validate 默认读取引擎当前 SPI；旧 SPI 1/2 明确拒绝。
 

@@ -25,6 +25,8 @@ public enum MissingRendererPolicy {
  *
  * 默认只声明 `parse`；声明其他能力后，dialect compiler 会要求对应实现或明确
  * 的 fallback 策略。
+ * 当前 compiler 拒绝声明 incremental；serialize 仅接受具有内建绑定语义 renderer 的扩展。
+ * 能力声明不授予 sandbox 权限，也不证明 callback 可并发执行。
  */
 public class ExtensionCapabilities {
     /** 是否参与解析。 */
@@ -117,8 +119,11 @@ public class ExtensionDependency {
  *
  * `requiredSpiVersion` 默认是 `"3"`，`ruleBudget` 默认是 `100000`，
  * `trustLevel` 默认是 `"host-code"`，缺失 renderer 默认失败，扩展默认可共享。
+ * 默认支持 CommonMark 0.31.2 与 modern GFM；dependencies、带版本依赖与 conflicts
+ * 默认均为空，capabilities 默认只声明 parse。host-code callback 拥有宿主进程权限。
  *
- * ```cj
+ * @example 声明扩展身份
+ * ```cangjie
  * let manifest = ExtensionManifest(
  *     "docs", "1.0.0", "build-1",
  *     capabilities: ExtensionCapabilities(safeHtml: true, markdown: true)
@@ -144,13 +149,13 @@ public class ExtensionManifest {
     public let conflicts: ImmutableArray<String>
     /** 声明的能力集合。 */
     public let capabilities: ExtensionCapabilities
-    /** 扩展可声明的 rule 数量上限。 */
+    /** 必须为正的扩展预算声明，参与 fingerprint；实际执行工作由 OperationBudget 累计限制。 */
     public let ruleBudget: Int64
     /** 信任级别标识。 */
     public let trustLevel: String
     /** 缺少 renderer rule 时的处理策略。 */
     public let missingRendererPolicy: MissingRendererPolicy
-    /** 是否允许在进程间共享。 */
+    /** 扩展声明的可共享标记；不自动提供进程隔离或 callback 并发安全。 */
     public let shareable: Bool
 
     /**
@@ -164,10 +169,10 @@ public class ExtensionManifest {
      * @param dependencyConstraints 带版本约束的依赖列表。
      * @param conflicts 冲突的扩展 id 列表。
      * @param capabilities 声明的能力集合。
-     * @param ruleBudget 扩展可声明的 rule 数量上限。
+     * @param ruleBudget 必须为正的预算声明，默认 100000；不替代本次操作的累计预算。
      * @param trustLevel 信任级别标识。
      * @param missingRendererPolicy 缺少 renderer rule 时的处理策略。
-     * @param shareable 是否允许在进程间共享。
+     * @param shareable 可共享身份标记；共享 engine 的 callback 仍须自行保证并发安全。
      */
     public init(
         extensionId: String,
@@ -200,9 +205,11 @@ public class ExtensionManifest {
     }
 }
 
-/** Inline parser SPI callback 的受限输入、预算和取消上下文。 */
+/** Inline parser SPI callback 的行内输入、声明的查看边界、预算和取消上下文。
+ * input 保留当前完整行内片段；callback 自行遵守 maximumLookahead，输入不被物理截断。
+ */
 public class InlineParserSpiContext {
-    /** SPI callback 可见的受限输入文本。 */
+    /** 当前完整行内片段；只能从 startOffset 起按声明的查看上限匹配。 */
     public let input: String
     /** 本段输入在 callback 输入中的起始偏移。 */
     public let startOffset: Int64
@@ -215,6 +222,16 @@ public class InlineParserSpiContext {
     /** 协作式取消信号。 */
     public let cancellation: CancellationToken
 
+    /**
+     * 关联有界行内输入与原始来源映射，供 SPI callback 使用。
+     * @param input callback 可见的行内输入文本。
+     * @param startOffset 当前尝试位置在 callback 输入中的 UTF-8 byte 偏移。
+     * @param maximumLookahead 从尝试位置起允许检查的最大 byte 数。
+     * @param baseByteOffset callback 输入起点在解码来源中的 byte 偏移。
+     * @param source 与当前节点或解析输入归属一致的来源缓冲。
+     * @param budget 本次操作跨阶段累计使用的预算；不与其他操作共享。
+     * @param cancellation 本次操作共用的协作式取消信号。
+     */
     protected init(input: String, startOffset: Int64, maximumLookahead: Int64, baseByteOffset: Int64,
         source: SourceBuffer, budget: OperationBudget, cancellation: CancellationToken) {
         this.input = input
@@ -293,31 +310,52 @@ public class InlineParserSpiNode {
     }
 }
 
-/** SPI callback 的匹配结果和 consumed byte 数。 */
+/** SPI callback 的匹配结果和下一次解析位置。 */
 public enum InlineParserSpiResult {
     /** 本次位置无匹配。 */
     | NoMatch
-    /** 匹配成功，携带节点描述和 consumed byte 数。 */
+    /** 匹配成功，携带节点描述和 input 中排他的结束 byte 偏移，不是消费长度。 */
     | Matched(InlineParserSpiNode, Int64)
 }
 
 /**
- * 用于表达有限、无法由 DSL 描述的 inline syntax 的 SPI v1。
+ * 用于表达有限、无法由 DSL 描述的 inline syntax 的 SPI v3。
  *
- * `triggerBytes` 必须非空且无重复；runtime 会校验 consumed range、NodeId 和 span。
+ * triggerBytes 包含所有可能 opener 的首 byte，必须非空且无重复；只在这些位置调用
+ * callback。maximumLookahead 必须为正；返回的结束偏移与 startOffset 之差不能超过该值。
+ * compiler 只接受 deterministic 为 true 的实现；runtime 验证 consumed range、节点身份
+ * 与 SourceSpan。callback 必须使用上下文的累计预算与取消信号，不保留未受限的输入副本。
  */
 public interface InlineParserSpi {
-    /** SPI 所属的扩展 id。 */
+    /**
+     * SPI 所属的扩展 id。
+     * @return SPI 所属的扩展 id。
+     */
     prop extensionId: String
-    /** SPI 的 rule id。 */
+    /**
+     * SPI 的 rule id。
+     * @return SPI 的 rule id。
+     */
     prop ruleId: String
-    /** 触发匹配的字节集合；非空且无重复。 */
+    /**
+     * 触发匹配的字节集合；非空且无重复。
+     * @return 触发匹配的字节集合；非空且无重复。
+     */
     prop triggerBytes: Array<Byte>
-    /** 允许的向前查看上限。 */
+    /**
+     * 允许的向前查看上限。
+     * @return 允许的向前查看上限。
+     */
     prop maximumLookahead: Int64
-    /** SPI 的优先级。 */
+    /**
+     * SPI 的优先级。
+     * @return SPI 的优先级。
+     */
     prop priority: Int64
-    /** 相同输入是否产生相同输出。 */
+    /**
+     * 相同输入是否产生相同输出。
+     * @return 相同输入是否产生相同输出。
+     */
     prop deterministic: Bool
     /** 在指定上下文中尝试匹配 inline 语法。
      * @param context 受限的解析上下文。
@@ -326,20 +364,58 @@ public interface InlineParserSpi {
     func tryParse(context: InlineParserSpiContext): InlineParserSpiResult
 }
 
+/**
+ * 按首字节预分桶的 parser 执行计划及整文能力标记。
+ */
 protected class ParserHotPlan {
+    /**
+     * 是否存在需要进入 DSL 匹配分支的行内规则。
+     */
     protected let hasInlineDsl: Bool
+    /**
+     * 是否存在需要进入 DSL 匹配分支的块规则。
+     */
     protected let hasBlockDsl: Bool
+    /**
+     * 是否存在需要按触发字节调用的行内 SPI。
+     */
     protected let hasInlineSpi: Bool
+    /**
+     * 是否注册绑定前转换或绑定后分析，需要完整文档执行。
+     */
     protected let hasDocumentStages: Bool
+    /**
+     * 是否注册脚注引用 emitter 或脚注定义规则。
+     */
     protected let hasFootnotes: Bool
+    /**
+     * 是否注册行内数学 emitter 或块数学规则。
+     */
     protected let hasMath: Bool
+    /**
+     * 是否注册需要结构化组装的代码组规则。
+     */
     protected let hasCodeGroups: Bool
+    /**
+     * 首个定义列表规则；没有时为 `None`。
+     */
     protected let definitionListRule: ?BlockSyntaxRule
+    /**
+     * 标题显式 ID 后缀规则；没有时为 `None`。
+     */
     protected let headingIdRule: ?InlineSyntaxRule
     private let inlineDslByFirstByte: Array<ImmutableArray<InlineSyntaxRule>>
     private let blockDslByFirstByte: Array<ImmutableArray<BlockSyntaxRule>>
     private let inlineSpiByFirstByte: Array<ImmutableArray<InlineParserSpi>>
 
+    /**
+     * 从有序规则建立首字节桶，并缓存结构化扩展与整文阶段标记。
+     * @param inlineRules 已校验并按执行优先级排序的行内 DSL 规则。
+     * @param blockRules 已校验并按执行优先级排序的块 DSL 规则。
+     * @param parserSpis 已校验并排序的行内 SPI callback。
+     * @param astTransforms 已校验并按阶段顺序排序的绑定前 AST 转换。
+     * @param analyses 已校验并按阶段顺序排序的绑定后只读分析。
+     */
     protected init(inlineRules: Array<InlineSyntaxRule>, blockRules: Array<BlockSyntaxRule>,
         parserSpis: Array<InlineParserSpi>, astTransforms: Array<ExtensionAstTransform>,
         analyses: Array<ExtensionDocumentAnalysis>) {
@@ -405,22 +481,47 @@ protected class ParserHotPlan {
         }
     }
 
+    /**
+     * 按 opener 首字节取出已排序的行内 DSL 候选。
+     * @param firstByte 当前候选位置的首 byte，覆盖 0 至 255。
+     * @return 该 byte 对应的行内规则候选；没有候选时为空。
+     */
     protected func inlineRules(firstByte: Byte): ImmutableArray<InlineSyntaxRule> {
         inlineDslByFirstByte[Int64(firstByte)]
     }
 
+    /**
+     * 按 opener 首字节取出已排序的块 DSL 候选。
+     * @param firstByte 当前候选位置的首 byte，覆盖 0 至 255。
+     * @return 该 byte 对应的块规则候选；没有候选时为空。
+     */
     protected func blockRules(firstByte: Byte): ImmutableArray<BlockSyntaxRule> {
         blockDslByFirstByte[Int64(firstByte)]
     }
 
+    /**
+     * 按触发首字节取出已排序的行内 SPI 候选。
+     * @param firstByte 当前候选位置的首 byte，覆盖 0 至 255。
+     * @return 该 byte 对应的 SPI 候选；没有候选时为空。
+     */
     protected func parserSpis(firstByte: Byte): ImmutableArray<InlineParserSpi> {
         inlineSpiByFirstByte[Int64(firstByte)]
     }
 }
 
+/**
+ * 缓存 renderer 是否需要处理自定义节点规则。
+ */
 protected class RendererHotPlan {
+    /**
+     * 是否存在至少一条声明式自定义 renderer 规则。
+     */
     protected let hasCustomRules: Bool
 
+    /**
+     * 根据声明式 renderer 列表缓存执行路径选择标记。
+     * @param rendererRules 用于自定义节点输出的声明式 renderer 规则。
+     */
     protected init(rendererRules: Array<RendererRule>) {
         hasCustomRules = !rendererRules.isEmpty()
     }
@@ -601,6 +702,11 @@ public class InlineSyntaxRule {
     public let emitter: ?InlinePayloadEmitter
     internal let registrationOrder: Int64
 
+    /**
+     * 冻结行内 builder 的当前配置及注册顺序。
+     * @param builder 要冻结或复制其当前配置的 builder。
+     * @param registrationOrder 规则在 dialect 中从零开始的注册顺序，用于同优先级裁决。
+     */
     protected init(builder: InlineSyntaxBuilder, registrationOrder: Int64) {
         extensionId = builder.extensionId
         ruleId = builder.ruleId
@@ -636,7 +742,8 @@ public class InlineSyntaxRule {
  * 默认 delimiter 上限为 16、lookahead 为 4096、priority 为 100，并允许解析 children
  * 和同规则嵌套。
  *
- * ```cj
+ * @example 定义不允许同规则嵌套的标记语法
+ * ```cangjie
  * let mark = InlineSyntax.define("docs", "mark")
  *     .delimiter("==")
  *     .content(true)
@@ -656,6 +763,9 @@ public class InlineSyntaxBuilder {
     internal var allowLineBreaksValue = true
     internal var maximumDelimiterLengthValue: Int64 = 16
     internal var maximumLookaheadValue: Int64 = 4096
+    /**
+     * 行内规则尚未编译的优先级；默认 100。
+     */
     protected var priorityValue: Int64 = 100
     internal var conflictGroupValue = ""
     internal var syntaxKindValue = InlineSyntaxKind.PairedDelimiter
@@ -664,6 +774,11 @@ public class InlineSyntaxBuilder {
     internal var resourceCostValue = SyntaxResourceCost()
     internal var emitterValue: ?InlinePayloadEmitter = None
 
+    /**
+     * 保存行内规则所属扩展与扩展内身份，等待配置语法边界。
+     * @param extensionId 规则所属且必须在 dialect 中启用的扩展 id。
+     * @param ruleId 扩展内唯一的规则 id。
+     */
     protected init(extensionId: String, ruleId: String) {
         this.extensionId = extensionId
         this.ruleId = ruleId
@@ -773,7 +888,7 @@ public class InlineSyntaxBuilder {
         this
     }
     /** 设置 delimiter 长度上限。
-     * @param value 长度上限。
+     * @param value 必须为正且不小于 opener 与 closer byte 长度的上限，默认 16；编译时校验。
      * @return 同一 builder，支持链式调用。
      */
     public func maximumDelimiterLength(value: Int64): InlineSyntaxBuilder {
@@ -781,15 +896,15 @@ public class InlineSyntaxBuilder {
         this
     }
     /** 设置 rule lookahead byte 上限。
-     * @param value lookahead 上限（字节）。
+     * @param value 必须为正的 lookahead byte 上限，默认 4096；实际 DSL 匹配还受 engine 上限限制。
      * @return 同一 builder，支持链式调用。
      */
     public func maximumLookahead(value: Int64): InlineSyntaxBuilder {
         maximumLookaheadValue = value
         this
     }
-    /** 设置 rule priority；相同 priority 按 registration order 决定顺序。
-     * @param value 优先级数值。
+    /** 设置 rule priority；较大值先执行，相同值按 registration order 决定顺序。
+     * @param value 规则优先级，默认 100。
      * @return 同一 builder，支持链式调用。
      */
     public func priority(value: Int64): InlineSyntaxBuilder {
@@ -826,7 +941,7 @@ public class InlineSyntaxBuilder {
 public class InlineSyntax {
     /** 创建指定扩展和 rule ID 的 inline builder。
      * @param extensionId 扩展 id。
-     * @param ruleId rule id。
+     * @param ruleId 非空的扩展内规则身份，不能与同扩展的块规则或 SPI 重复；也是生成节点供 renderer 匹配的 localKindId。
      * @return 新的 inline builder。
      */
     public static func define(extensionId: String, ruleId: String): InlineSyntaxBuilder {
@@ -997,6 +1112,11 @@ public class BlockSyntaxRule {
     public let documentStartOnly: Bool
     internal let registrationOrder: Int64
 
+    /**
+     * 冻结块 builder 的当前配置及注册顺序。
+     * @param builder 要冻结或复制其当前配置的 builder。
+     * @param registrationOrder 规则在 dialect 中从零开始的注册顺序，用于同优先级裁决。
+     */
     protected init(builder: BlockSyntaxBuilder, registrationOrder: Int64) {
         extensionId = builder.extensionId
         ruleId = builder.ruleId
@@ -1027,7 +1147,13 @@ public class BlockSyntaxRule {
  * 默认 body 按 Markdown 解析、允许嵌套，`maximumBlockBytes` 为 1 MiB，
  * `maximumCaptureLength` 为 4096，priority 为 100。
  *
- * ```cj
+ * 对 paired block，maximumBlockBytes 在 batch parse 与 raw-block feed 中均累计
+ * 原始正文 bytes，包含嵌套边界并遵循相同 CRLF 规则。未知、重复、缺失、未闭合或
+ * 类型错误的参数产生 MD3003_INVALID_EXTENSION_PARAMETER，未闭合块产生
+ * MD3002_UNCLOSED_EXTENSION（可由 parser options 关闭该诊断）。
+ *
+ * @example 定义有界的成对块语法
+ * ```cangjie
  * let note = BlockSyntax.define("docs", "note")
  *     .opener(":::")
  *     .closer(":::")
@@ -1045,6 +1171,9 @@ public class BlockSyntaxBuilder {
     internal var allowNestingValue = true
     internal var maximumBlockBytesValue: Int64 = 1048576
     internal var maximumCaptureLengthValue: Int64 = 4096
+    /**
+     * 块规则尚未编译的优先级；默认 100。
+     */
     protected var priorityValue: Int64 = 100
     internal var conflictGroupValue = ""
     internal let parameterValues = ArrayList<SyntaxParameterSpec>()
@@ -1054,6 +1183,11 @@ public class BlockSyntaxBuilder {
     internal var kindFromFirstWordValue = true
     internal var documentStartOnlyValue = false
 
+    /**
+     * 保存块规则所属扩展与扩展内身份，等待配置语法边界。
+     * @param extensionId 规则所属且必须在 dialect 中启用的扩展 id。
+     * @param ruleId 扩展内唯一的规则 id。
+     */
     protected init(extensionId: String, ruleId: String) {
         this.extensionId = extensionId
         this.ruleId = ruleId
@@ -1103,7 +1237,10 @@ public class BlockSyntaxBuilder {
         allowNestingValue = true
         this
     }
-    /** 定义独占一行的 `$$` display math；正文只保存 TeX 和来源。 */
+    /**
+     * 定义独占一行的 `$$` display math；正文只保存 TeX 和来源。
+     * @return 同一 builder；数学正文按 literal 保留，不解析 Markdown。
+     */
     public func displayMath(): BlockSyntaxBuilder {
         syntaxKindValue = BlockSyntaxKind.DisplayMath
         openerPrefixValue = "$$"
@@ -1113,7 +1250,10 @@ public class BlockSyntaxBuilder {
         allowNestingValue = false
         this
     }
-    /** 定义 Code Groups 1.0；只解析 fenced-code 条目，不执行代码。 */
+    /**
+     * 定义 Code Groups 1.0；只解析 fenced-code 条目，不执行代码。
+     * @return 同一 builder；代码组只允许结构化 fenced-code 条目。
+     */
     public func codeGroup(): BlockSyntaxBuilder {
         syntaxKindValue = BlockSyntaxKind.CodeGroup
         openerPrefixValue = ":::code-group"
@@ -1148,7 +1288,7 @@ public class BlockSyntaxBuilder {
         this
     }
     /** 设置原始 block body 的 byte 上限。
-     * @param value byte 上限。
+     * @param value 必须为正的原始正文 byte 上限，默认 1 MiB；编译时校验。
      * @return 同一 builder，支持链式调用。
      */
     public func maximumBlockBytes(value: Int64): BlockSyntaxBuilder {
@@ -1156,15 +1296,15 @@ public class BlockSyntaxBuilder {
         this
     }
     /** 设置单次 capture 的 byte 上限。
-     * @param value byte 上限。
+     * @param value 必须为正的单次 capture byte 上限，默认 4096；编译时校验。
      * @return 同一 builder，支持链式调用。
      */
     public func maximumCaptureLength(value: Int64): BlockSyntaxBuilder {
         maximumCaptureLengthValue = value
         this
     }
-    /** 设置 rule priority。
-     * @param value 优先级数值。
+    /** 设置 rule priority；较大值先执行，相同值按注册顺序执行。
+     * @param value 块规则优先级，默认 100。
      * @return 同一 builder，支持链式调用。
      */
     public func priority(value: Int64): BlockSyntaxBuilder {
@@ -1227,7 +1367,7 @@ public class BlockSyntaxBuilder {
 public class BlockSyntax {
     /** 创建指定扩展和 rule ID 的 block builder。
      * @param extensionId 扩展 id。
-     * @param ruleId rule id。
+     * @param ruleId 非空的扩展内规则身份，不能与同扩展的行内规则或 SPI 重复；关闭 kindFromFirstWord 或 opener 未提供名称时用作节点 localKindId。
      * @return 新的 block builder。
      */
     public static func define(extensionId: String, ruleId: String): BlockSyntaxBuilder {
@@ -1293,7 +1433,11 @@ public enum MarkdownBlockLowering {
  * `classToken`、opener/closer、text prefix/suffix 默认为空；attribute 默认不定义，
  * `renderPayloadLiteral` 默认关闭，block lowering 默认是 `Container`。
  *
- * ```cj
+ * 文本属性会转义，LinkUri 与 ImageUri 经过内建 link 和 image 相同的 URI policy。
+ * payload literal 按文本转义，不能用此开关注入可信 HTML。
+ *
+ * @example 声明 note 节点的 HTML lowering
+ * ```cangjie
  * let rule = RendererRule("docs", "note", "aside", classToken: "note")
  * ```
  */
@@ -1316,7 +1460,7 @@ public class RendererRule {
     public let textSuffix: String
     /** 声明式 attribute 规格列表。 */
     public let attributes: ImmutableArray<RendererAttributeSpec>
-    /** 是否将 payload literal 原样写入 HTML。 */
+    /** 是否将 payload literal 作为转义后的文本写入 HTML。 */
     public let renderPayloadLiteral: Bool
     /** custom block 的 Markdown lowering 形式。 */
     public let markdownBlockLowering: MarkdownBlockLowering
@@ -1332,7 +1476,7 @@ public class RendererRule {
      * @param textPrefix 纯文本输出的前缀。
      * @param textSuffix 纯文本输出的后缀。
      * @param attributes 声明式 attribute 规格列表。
-     * @param renderPayloadLiteral 是否将 payload literal 原样写入 HTML。
+     * @param renderPayloadLiteral 是否将 payload literal 作为转义后的文本写入 HTML，默认 false。
      * @param markdownBlockLowering custom block 的 Markdown lowering 形式。
      */
     public init(
@@ -1397,14 +1541,33 @@ public class MarkdownDialect {
     public let parserOptions: DialectParserOptions
     /** dialect 默认 limits。 */
     public let limits: ParseLimits
+    /**
+     * 已启用的扩展身份、依赖和能力声明副本。
+     */
     protected let manifests: Array<ExtensionManifest>
     internal let inlineBuilders: Array<InlineSyntaxBuilder>
     internal let blockBuilders: Array<BlockSyntaxBuilder>
+    /**
+     * 供 compiler 验证输出覆盖与安全属性的 renderer 声明。
+     */
     protected let rendererRules: Array<RendererRule>
+    /**
+     * 供 compiler 验证有界触发条件的行内 SPI 声明。
+     */
     protected let parserSpis: Array<InlineParserSpi>
+    /**
+     * 待 compiler 验证和排序的绑定前 AST 转换。
+     */
     protected let astTransforms: Array<ExtensionAstTransform>
+    /**
+     * 待 compiler 验证和排序的绑定后只读分析。
+     */
     protected let documentAnalyses: Array<ExtensionDocumentAnalysis>
 
+    /**
+     * 从 builder 复制当前声明集合；此步骤不执行语义校验。
+     * @param builder 要冻结或复制其当前配置的 builder。
+     */
     protected init(builder: MarkdownDialectBuilder) {
         id = builder.id
         version = builder.version
@@ -1435,13 +1598,18 @@ public class MarkdownDialect {
  *
  * 所有 fluent 方法返回同一个 builder；`build` 只组装声明，语义校验在 compiler 阶段完成。
  *
- * ```cj
- * let dialect = MarkdownDialect.define("docs-v1", "1")
- *     .enable(manifest)
- *     .block(note)
- *     .renderer(rule)
+ * @example 注册块语法和安全 renderer {run}
+ * ```cangjie
+ * let dialect = MarkdownDialect.define("docs-v1", "1.0.0")
+ *     .enable(ExtensionManifest("docs", "1.0.0", "example-1",
+ *         capabilities: ExtensionCapabilities(safeHtml: true)))
+ *     .block(BlockSyntax.define("docs", "container").opener(":::").closer(":::"))
+ *     .renderer(RendererRule("docs", "note", "aside", classToken: "note"))
  *     .build()
- * let engine = MarkdownEngine.builder().dialect(dialect).build()
+ * println(DialectCompiler.compile(dialect).id)
+ * ```
+ * ```output
+ * docs-v1
  * ```
  */
 public class MarkdownDialectBuilder {
@@ -1451,15 +1619,38 @@ public class MarkdownDialectBuilder {
     public let version: String
     internal var baseProfileValue = MarkdownProfile.commonMark0312()
     internal var parserOptionsValue = DialectParserOptions()
+    /**
+     * dialect 默认结构上限；初始值为 `ParseLimits.safe()`。
+     */
     protected var limitsValue = ParseLimits.safe()
+    /**
+     * 按注册顺序累计的扩展 manifest。
+     */
     protected let manifests = ArrayList<ExtensionManifest>()
     internal let inlineBuilders = ArrayList<InlineSyntaxBuilder>()
     internal let blockBuilders = ArrayList<BlockSyntaxBuilder>()
+    /**
+     * 按注册顺序累计的自定义节点输出规则。
+     */
     protected let rendererRules = ArrayList<RendererRule>()
+    /**
+     * 按注册顺序累计的行内 SPI callback。
+     */
     protected let parserSpis = ArrayList<InlineParserSpi>()
+    /**
+     * 按注册顺序累计的绑定前完整 AST 转换。
+     */
     protected let astTransforms = ArrayList<ExtensionAstTransform>()
+    /**
+     * 按注册顺序累计的绑定后只读文档分析。
+     */
     protected let documentAnalyses = ArrayList<ExtensionDocumentAnalysis>()
 
+    /**
+     * 创建采用 CommonMark 0.31.2 与安全上限的 dialect builder。
+     * @param id dialect 的稳定唯一 id。
+     * @param version dialect 的版本标识；完整扩展 SemVer 由 manifest 单独声明。
+     */
     protected init(id: String, version: String) {
         this.id = id
         this.version = version
@@ -1545,7 +1736,8 @@ public class MarkdownDialectBuilder {
         documentAnalyses.add(analysis)
         this
     }
-    /** 在编译前移除指定 extension 的全部声明。
+    /** 在编译前移除指定 extension 的 manifest、语法、renderer、SPI、transform 与 analysis。
+     * 不会改动 editor 中独立注册的 lint provider；移除依赖仍可能令后续编译失败。
      * @param extensionId 要移除的扩展 id。
      * @return 同一 builder，支持链式调用。
      */
@@ -1596,15 +1788,35 @@ public class CompiledMarkdownDialect {
     public let astTransforms: ImmutableArray<ExtensionAstTransform>
     /** 绑定后只读分析的有序执行计划。 */
     public let documentAnalyses: ImmutableArray<ExtensionDocumentAnalysis>
+    /**
+     * 用于 parser 分支和首字节候选选择的预计算计划。
+     */
     protected let parserHotPlan: ParserHotPlan
+    /**
+     * 用于 HTML 执行路径选择的预计算 renderer 标记。
+     */
     protected let rendererHotPlan: RendererHotPlan
 
+    /**
+     * 判断整文 callback 或已启用的结构化扩展是否要求完整 AST。
+     * @return 有整文阶段或启用的脚注、标题 ID、定义列表、数学、代码组时为 true。
+     */
     protected func requiresFullAst(): Bool {
         parserHotPlan.hasDocumentStages || (parserOptions.extensionsEnabled && (parserHotPlan.hasFootnotes ||
             parserHotPlan.headingIdRule.isSome() || parserHotPlan.definitionListRule.isSome() || parserHotPlan.hasMath ||
             parserHotPlan.hasCodeGroups))
     }
 
+    /**
+     * 复制已校验、已排序的声明并建立 parser 与 renderer 执行计划。
+     * @param dialect 待冻结的 dialect 或已经通过 compiler 校验的 dialect。
+     * @param inlineRules 已校验并按执行优先级排序的行内 DSL 规则。
+     * @param blockRules 已校验并按执行优先级排序的块 DSL 规则。
+     * @param parserSpis 已校验并排序的行内 SPI callback。
+     * @param astTransforms 已校验并按阶段顺序排序的绑定前 AST 转换。
+     * @param documentAnalyses 已校验并按阶段顺序排序的绑定后只读分析。
+     * @param fingerprint 绑定 profile、规则、实现版本与配置的稳定摘要。
+     */
     protected init(
         dialect: MarkdownDialect,
         inlineRules: Array<InlineSyntaxRule>,
@@ -1640,7 +1852,25 @@ public class CompiledMarkdownDialect {
     }
 }
 
-/** 验证 dialect 身份、依赖、规则、能力声明并生成 fingerprint。 */
+/**
+ * 验证 dialect 身份、依赖、规则、能力声明并生成 fingerprint。
+ *
+ * 校验包含扩展完整 SemVer、SPI v3、profile 支持、依赖最低版本与循环、冲突、
+ * rule 身份与边界、delimiter、lookahead、capture、block size、renderer 覆盖与安全属性。
+ * 声明 analysis 或 transform 能力时必须注册对应实现，反向注册也必须声明能力。
+ * SPI 与整文阶段必须是确定性的；配置错误以 ExtensionConflict、dialect_compile 阶段失败。
+ *
+ * @example 编译包含绑定前转换的 dialect {run}
+ * ```cangjie
+ * let builder = MarkdownDialect.define("punctuation", "1.0.0")
+ * OfficialExtensions.smartPunctuation(builder)
+ * let compiled = DialectCompiler.compile(builder.build())
+ * println(compiled.astTransforms.size)
+ * ```
+ * ```output
+ * 1
+ * ```
+ */
 public class DialectCompiler {
     /**
      * 编译 dialect；失败时抛出 `MarkdownException` 或 `ExtensionFailureException`。

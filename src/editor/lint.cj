@@ -33,7 +33,14 @@ public enum FixApplicability {
     | ManualReview
 }
 
-/** 绑定不可变 Document revision、源码 digest 和 edits 的 lint fix。 */
+/**
+ * 绑定不可变 Document revision、源码 digest 和 source edits 的 lint fix。
+ *
+ * sourceDigest 与 documentRevision 必须同时匹配目标 snapshot。
+ * 相同文本、相同 snapshot version 的独立解析，或编辑后改回原文的 snapshot，都不能复用旧 fix。
+ * applicability 仅表示修复建议的可信度；`applyFix` 不据此请求人工确认或拒绝应用。
+ * @see markdown.editor.MarkdownLinter.applyFix
+ */
 public class Fix {
     /** fix 的展示标题。 */
     public let title: String
@@ -101,12 +108,46 @@ public class LintDiagnostic {
     }
 }
 
-/** 提供内建结构、安全、可访问性和 reference lint 规则。 */
+/**
+ * 运行内建结构、安全、可访问性和 reference lint，并按注册顺序追加扩展诊断。
+ *
+ * 内建检查包括标题层级、链接与图片、危险 URI、raw HTML、表格列数、不可见 Unicode、
+ * 重复或未使用的 reference，以及一组标记歧义。lint 不修改 snapshot，也不替代安全 renderer。
+ *
+ * @example 对 raw HTML 应用同一文档产生的修复 {run}
+ * ```cangjie
+ * let engine = MarkdownEngine.builder().build()
+ * let snapshot = DocumentSnapshot.parse(engine, "<script>alert(1)</script>")
+ * let diagnostics = MarkdownLinter(engine).lint(snapshot)
+ * var fixed = false
+ * for (diagnostic in diagnostics) {
+ *     if (diagnostic.code == "MDL3003_RAW_HTML") {
+ *         let changed = MarkdownLinter.applyFix(snapshot, diagnostic.fixes[0])
+ *         if (changed.snapshot.result.source.text().contains("<script>")) {
+ *             throw IllegalStateException("raw HTML was not escaped")
+ *         }
+ *         fixed = true
+ *     }
+ * }
+ * if (!fixed) {
+ *     throw IllegalStateException("raw HTML diagnostic was not produced")
+ * }
+ * ```
+ */
 public class MarkdownLinter {
     private let engine: MarkdownEngine
     private let providers: ImmutableArray<ExtensionLintProvider>
 
-    /** 创建绑定 engine 的 lint 服务；providers 按给定顺序执行。 */
+    /**
+     * 创建绑定 engine 的 lint 服务，并验证扩展 provider 的声明和身份唯一性。
+     *
+     * provider 对应的 manifest 必须已注册且声明 lint capability。
+     * ruleId 和 version 不能为空；同一 extensionId 与 ruleId 不能重复。
+     * provider 不进入解析 fingerprint。
+     * @param engine 提供 dialect 身份及扩展 manifest 的 engine。
+     * @param providers 按给定顺序运行的扩展 provider，默认空数组。
+     * @throws MarkdownException provider 无效、重复或未声明 lint capability 时，代码为 `ExtensionConflict`。
+     */
     public init(engine: MarkdownEngine, providers!: Array<ExtensionLintProvider> = []) {
         let identities = HashSet<String>()
         for (provider in providers) {
@@ -126,7 +167,13 @@ public class MarkdownLinter {
         this.providers = ImmutableArray<ExtensionLintProvider>(providers)
     }
 
-    /** 运行内建和扩展 lint，拒绝不同 dialect 创建的 snapshot。 */
+    /**
+     * 运行内建和扩展 lint，要求 snapshot 使用相同 dialect fingerprint。
+     * @param snapshot 待读取的文档 snapshot，不会被修改。
+     * @return 按内建检查顺序及 provider 注册顺序排列的诊断数组。
+     * @throws IllegalArgumentException snapshot 使用不同 dialect 时。
+     * @throws ExtensionFailureException 扩展 provider 抛出异常时，携带扩展与规则身份。
+     */
     public func lint(snapshot: DocumentSnapshot): Array<LintDiagnostic> {
         if (snapshot.engine.dialect.fingerprint != engine.dialect.fingerprint) {
             throw IllegalArgumentException("snapshot was created by a different dialect")
@@ -264,7 +311,7 @@ public class MarkdownLinter {
         out.toArray()
     }
 
-    /** 应用与当前 snapshot digest 和 version 匹配的 fix。
+    /** 应用与当前 source digest 和 Document revision 同时匹配的 fix。
      * @param snapshot fix 的目标 snapshot。
      * @param fix 要应用的 fix；过期时抛出异常。
      * @return 重新解析得到的 `ReparseResult`。

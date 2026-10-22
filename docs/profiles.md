@@ -53,6 +53,6 @@ factory 名称直接表达标准或 profile 版本，不提供 `commonMark()` �
 
 ## 下一步
 
-- [Core API](api/core.md)
+- [API reference](api.md)
 - [安全 HTML](security.md)
 - [版本与兼容性](versioning-and-compatibility.md)

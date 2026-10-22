@@ -26,13 +26,6 @@ REQUIRED_PAGES = [
     "docs/troubleshooting.md",
     "docs/api.md",
     "docs/migration-0.9.2.md",
-    "docs/api/quick-reference.md",
-    "docs/api/core.md",
-    "docs/api/ast-and-source.md",
-    "docs/api/rendering.md",
-    "docs/api/extensions.md",
-    "docs/api/editor.md",
-    "docs/api/artifacts-and-services.md",
 ]
 
 REQUIRED_EXAMPLES = [
@@ -117,11 +110,14 @@ def main() -> int:
             if not resolved.exists():
                 failures.append(f"broken link: {page.relative_to(ROOT)} -> {target}")
 
+    # Public reference prose lives beside declarations. The generated site has
+    # its own full inventory and link gate in check_api_docs.py.
     api_text = "\n".join(
-        page.read_text(encoding="utf-8") for page in sorted((ROOT / "docs" / "api").glob("*.md"))
+        page.read_text(encoding="utf-8") for page in sorted((ROOT / "src").rglob("*.cj"))
+        if not page.name.endswith("_test.cj") and not page.name.startswith("generated_")
     )
     for symbol in REQUIRED_API_SYMBOLS:
-        if f"`{symbol}`" not in api_text:
+        if not re.search(rf"\b(?:class|struct|enum|interface)\s+{re.escape(symbol)}\b", api_text):
             failures.append(f"required public entry point is not documented: {symbol}")
 
     maintained = "\n".join(page.read_text(encoding="utf-8") for page in DOC_ROOTS)
@@ -129,14 +125,6 @@ def main() -> int:
         failures.append("obsolete product name appears in maintained documentation: markdown_cj")
     if "heading.span" in maintained:
         failures.append("invalid HeadingNodeView member appears in maintained documentation: heading.span")
-
-    quick_reference = (ROOT / "docs" / "api" / "quick-reference.md").read_text(encoding="utf-8")
-    for obsolete in ("`node.id`", "`node.children`"):
-        if obsolete in quick_reference:
-            failures.append(f"obsolete NodeRef API appears in quick reference: {obsolete}")
-    for current in ("`node.nodeId`", "`node.children()`", "`NodeChildren`"):
-        if current not in quick_reference:
-            failures.append(f"current NodeRef API is missing from quick reference: {current}")
 
     contributing = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
     required_benchmark_arguments = (

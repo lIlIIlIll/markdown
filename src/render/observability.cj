@@ -45,6 +45,7 @@ public class ObservedRenderedOutput {
     }
 }
 
+/** 为 HTML renderer 提供节点数、输出字节数及可选耗时的观测结果。 */
 extend HtmlRenderer {
     /** 渲染并返回带统计信息的输出；`timing` 默认关闭。
      * @param document 待渲染的 Document。

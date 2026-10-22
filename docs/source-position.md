@@ -20,7 +20,9 @@ import markdown.core.*
 import markdown.engine.MarkdownEngine
 
 let result = MarkdownEngine.builder().build().parse("A😀\nB")
-let map = SourcePositionMap(result.source)
+let map = SourcePositionMap(
+    result.source, tabStop: 4, displayWidthPolicy: DisplayWidthPolicy.UnicodeScalarWithTabStops
+)
 
 let utf16 = map.utf16Position(5)
 let byte = map.byteOffset(utf16)
@@ -51,8 +53,9 @@ let source = map.sourcePosition(byte)
 `MD1001_INVALID_UTF8_REPLACED`，并通过 decoded-to-original mapping 保留原始 byte
 range。
 
-ReplaceInvalid source 不是 identity mapping。0.9 artifact API 会拒绝它，避免把不同原始
-bytes 视为同一缓存输入。
+只有实际发生非法字节替换时，source 才使用非 identity mapping，parse artifact 会拒绝它，
+避免把不同原始 bytes 视为同一缓存输入。有效 UTF-8 即使显式使用 `ReplaceInvalid`，仍可
+创建和加载 artifact。
 
-完整方法见 [AST 与 Source API](api/ast-and-source.md)。
+完整方法见 [API reference](api.md)。
 

@@ -160,10 +160,9 @@ public class EventParseResult {
     }
 }
 
-/** Internal deterministic observation point for bounded RawBlock input work.
- * Production cancellation remains owned by the session's CancellationToken;
- * this observer only lets same-package tests trigger cancellation at an exact
- * byte checkpoint without relying on scheduler timing. */
+/** 有界 raw-block 扫描的确定性观察点，供同包测试定位 byte 检查点。
+ * 实际取消仍由会话的 CancellationToken 控制。
+ */
 protected interface RawBlockScanCheckpointObserver {
     /** 在 raw block 扫描 checkpoint 处回调，用于测试注入取消点。
      * @param phase 当前扫描阶段名称。
@@ -513,6 +512,9 @@ internal class ParserEventEmitter {
     }
 }
 
+/**
+ * 提供收集、推送和增量 raw-block 三种 source event 入口。
+ */
 extend MarkdownEngine {
     /** 收集 source events；需要降低事件数组保留时请使用 `emitEvents()`。
      * @param source 待解析的 Markdown 文本。
@@ -531,6 +533,11 @@ extend MarkdownEngine {
     }
 
     /** 直接向 sink 发出 transient parser block 的事件，不构造完整 AST。
+     *
+     * ResolvedEventMode 先收集全局 reference index，再发送最终语义；RawBlockEventMode
+     * 跳过全局引用解析，并把事件标记为非最终。事件不持有 Document 或 NodeRef。
+     * 整文 transform、analysis 与需要完整 AST 的结构化扩展在 callback 前失败，
+     * 不会静默跳过其语义。sink 抛出的异常直接传播，已交付的事件不会回滚。
      * @param source 待解析的 Markdown 文本。
      * @param sink 事件接收 sink。
      * @param mode 事件语义模式。
@@ -575,6 +582,7 @@ extend MarkdownEngine {
      *
      * 后续输入证明 block 已闭合时，`feed` 可以返回该 block 的事件；`finish` 发出
      * 最后的缓冲 block 和 `DocumentEnd`。
+     * 含整文 callback 或完整 AST 绑定需求的 dialect 在创建会话时失败。
      * @param utf8Policy 输入解码策略。
      * @param cancellation 协作式取消信号。
      * @param budget 会话操作预算。
@@ -589,6 +597,10 @@ extend MarkdownEngine {
 /**
  * 真正增量的 raw-block 事件 session；`feed` 返回已证明闭合 block 的事件，
  * `finish` 发出剩余缓冲 block 和 `DocumentEnd`。
+ *
+ * 事件不保留 Document 或 NodeRef，也不执行全局引用解析，finalSemantics 始终为 false。
+ * feed 只扫描新增 bytes，立即检查累计 input 与 line 上限；逐 byte 输入不会反复
+ * 扫描或复制全部 pending 输入。此会话不支持并发调用。
  */
 public class RawBlockEventSession {
     private let engine: MarkdownEngine
@@ -675,6 +687,16 @@ public class RawBlockEventSession {
     private var started = false
     private var finished = false
 
+    /**
+     * 为固定 engine 创建跨输入块保存解码与扫描状态的事件驱动。
+     * @param engine 固定 profile、dialect 和结构上限的 engine。
+     * @param utf8Policy 跨块 UTF-8 解码策略；默认 Strict，未完成序列在 finish 时处理。
+     * @param cancellation 本次操作共用的协作式取消信号。
+     * @param budget 本次操作跨阶段累计使用的预算；不与其他操作共享。
+     * @param scanCheckpointObserver 可选的确定性扫描观察器，仅供同包测试；取消仍由 token 控制。
+     * @param draftLineage 追加驱动共享的草稿节点身份链；独立事件会话默认新建身份链。
+     * @param constructionBudget 追加驱动共享的节点构造上限；独立事件会话默认不附加该计数器。
+     */
     protected init(engine: MarkdownEngine, utf8Policy: Utf8Policy, cancellation: CancellationToken,
         budget: OperationBudget, scanCheckpointObserver!: ?RawBlockScanCheckpointObserver = None,
         draftLineage!: ?NodeLineage = None, constructionBudget!: ?NodeConstructionBudget = None) {

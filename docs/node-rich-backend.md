@@ -75,7 +75,7 @@ let html = engine.htmlRenderer(prepared: Some(prepared)).render(result.document)
 ```
 
 `result` 已启用所需语法，例如 Math 2.0；`cache` 是宿主顺序使用的 `RichContentCache`。
-图表显示还需显式允许 PNG data image，配置见[Rendering API](api/rendering.md)。否则
+图表显示还需显式允许 PNG data image，配置见[API reference](api.md)。否则
 准备可以成功，HTML 仍显示完整 Mermaid 代码。
 
 后端主题只支持 `shikiTheme: "github-light" / "github-dark"` 和

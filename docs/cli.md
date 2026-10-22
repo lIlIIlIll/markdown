@@ -58,4 +58,4 @@ internal invariant failure。
 - 对不可信输出使用 Safe HTML
 - 根据 exit code 或 `MarkdownErrorCode` 分支，不解析英文 message
 
-库 API 参考见 [Core API](api/core.md) 和 [Rendering API](api/rendering.md)。
+库 API 参考见 [API reference](api.md) 和 [API reference](api.md)。

@@ -68,8 +68,29 @@ public class CrossDocumentReference {
 /**
  * 对调用方提供的多个文档构建 snapshot 和 link edge 图。
  *
- * `build` 不读取文件或访问网络；`documentIds` 保留输入顺序，reference resolution
- * 也按该顺序查找 effective definition。
+ * `build` 不读取文件或访问网络，文档 ID 和文本都由调用方显式提供。
+ * documentIds 保留输入顺序；resolveReference 按该顺序返回首个 effective definition，
+ * 不把查到的定义注入其他文档的 parser，也不自动解析或获取链接目标。
+ * edges 记录非空、不以 `#` 开头且不含 `:` 的 link destination 原文，不做 URI 规范化。
+ *
+ * @example 按输入顺序查找跨文档引用 {run}
+ * ```cangjie
+ * let engine = MarkdownEngine.builder().build()
+ * let graph = DocumentGraph.build(engine, [
+ *     DocumentInput("guide", "[API](api.md)"),
+ *     DocumentInput("api", "[api]: /reference")
+ * ])
+ * if (graph.documentIds.size != 2 || graph.edges.size != 1) {
+ *     throw IllegalStateException("document graph is incomplete")
+ * }
+ * match (graph.resolveReference("API")) {
+ *     case Some(reference) =>
+ *         if (reference.documentId != "api") {
+ *             throw IllegalStateException("reference resolved to the wrong document")
+ *         }
+ *     case None => throw IllegalStateException("reference was not resolved")
+ * }
+ * ```
  */
 public class DocumentGraph {
     private let snapshots: HashMap<String, DocumentSnapshot>
@@ -139,11 +160,16 @@ public class DocumentGraph {
     }
 }
 
-/** HTML 转 Markdown 的输入信任策略。 */
+/**
+ * 受限 HTML 转换器的输入信任策略。
+ *
+ * RejectDangerous 只执行已列出的字符串检查，不是完整 HTML sanitizer。
+ * 对不可信 HTML 仍需由宿主使用适用的验证或清理机制。
+ */
 public enum HtmlInputPolicy {
-    /** 拒绝包含 script、style 或事件处理的输入。 */
+    /** 按大小写不敏感子串拒绝 `<script`、`<style`、`javascript:`、`onerror=` 和 `onload=`。 */
     | RejectDangerous
-    /** 信任输入，仅做结构转换。 */
+    /** 跳过危险子串检查，仅转换结构；输入安全性由宿主保证。 */
     | Trusted
 }
 
@@ -163,8 +189,8 @@ public class HtmlToMarkdownOptions {
     public let fidelityPolicy: HtmlFidelityPolicy
     /**
      * 创建转换选项。
-     * @param inputPolicy 输入信任策略。
-     * @param fidelityPolicy 未知 tag 保真策略。
+     * @param inputPolicy 输入信任策略，默认 RejectDangerous。
+     * @param fidelityPolicy 未知 tag 保真策略，默认 Semantic。
      */
     public init(inputPolicy!: HtmlInputPolicy = HtmlInputPolicy.RejectDangerous,
         fidelityPolicy!: HtmlFidelityPolicy = HtmlFidelityPolicy.Semantic) {
@@ -173,23 +199,38 @@ public class HtmlToMarkdownOptions {
     }
 }
 
-/** 将受限 HTML 结构转换为 Markdown 的 converter。 */
+/**
+ * 将受限 HTML tag 结构转换为 Markdown 文本。
+ *
+ * 支持标题、段落、emphasis、strong、code、删除线、链接、引用、列表、换行和分隔线，
+ * 并解码 `&amp;`、`&lt;`、`&gt;`、`&quot;` 与 `&#39;`。
+ * href 仅识别带单引号或双引号的属性。转换器不实现完整浏览器 HTML 解析与清理规则。
+ * 输出移除首尾换行及尾部空格，并以一个换行结尾。
+ *
+ * @example 转换受信任的受限结构 {run}
+ * ```cangjie
+ * let converter = HtmlToMarkdownConverter()
+ * if (converter.convert("<p><strong>Hello</strong></p>") != "**Hello**\n") {
+ *     throw IllegalStateException("unexpected HTML conversion")
+ * }
+ * ```
+ */
 public class HtmlToMarkdownConverter {
     /** 转换选项。 */
     public let options: HtmlToMarkdownOptions
     /**
      * 创建 converter。
-     * @param options 转换选项。
+     * @param options 转换选项，默认检查危险子串并忽略未知 tag。
      */
     public init(options!: HtmlToMarkdownOptions = HtmlToMarkdownOptions()) {
         this.options = options
     }
 
-    /** 转换 HTML；`RejectDangerous` 遇到 script/style/event handler 等输入会失败。
+    /** 将支持的 HTML 结构转换为 Markdown，并按选项处理危险子串及未知 tag。
      * @param html 受限 HTML 输入。
      * @return 转换得到的 Markdown 文本。
      * @throws MarkdownException 输入被判定为危险 HTML 时。
-     * @throws IllegalArgumentException 出现未闭合的 HTML tag 时。
+     * @throws IllegalArgumentException HTML tag 或带引号的 href 属性未闭合时。
      */
     public func convert(html: String): String {
         if (let HtmlInputPolicy.RejectDangerous <- options.inputPolicy) {
@@ -286,8 +327,11 @@ public class VirtualTreePage {
 /**
  * 将已完整解析 snapshot 按 byte 分页的虚拟 CST 视图。
  *
- * 它不会替代完整 AST/CST；page 访问按 `pageBytes` 扫描并受 cancellation 与 budget
- * 约束。
+ * 它依赖已有完整 AST/CST，不是 partial parser，也不会减少初始解析占用。
+ * 每页对应半开 byte range；跨越边界的 token 和节点在相邻页中均可出现，不截断 token 原文。
+ * 每次 page 查询扫描整个 token arena 并遍历完整 AST，受 cancellation 与 budget 约束。
+ * 空输入的 pageCount 为 0。
+ * @see markdown.document.VirtualTreePage
  */
 public class VirtualSyntaxTree {
     /** 分页来源的 snapshot。 */
@@ -299,7 +343,8 @@ public class VirtualSyntaxTree {
     /**
      * 创建虚拟 CST 视图。
      * @param snapshot 已完整解析的 snapshot。
-     * @param pageBytes 每页 byte 数，必须为正。
+     * @param pageBytes 每页 byte 数，默认 65536，必须为正。
+     * @throws IllegalArgumentException pageBytes 不为正时。
      */
     public init(snapshot: DocumentSnapshot, pageBytes!: Int64 = 65536) {
         if (pageBytes <= 0) {
@@ -311,10 +356,10 @@ public class VirtualSyntaxTree {
     }
 
     /** 返回指定页；index 越界时失败。
-     * @param index 页序号。
-     * @param cancellation 协作式取消信号。
-     * @param budget 单次分页的操作预算。
-     * @return 对应页内容。
+     * @param index 从 0 开始的页序号，必须小于 pageCount。
+     * @param cancellation 查询开始与结束时检查的取消信号，默认 none。
+     * @param budget 此次查询消耗的扫描和节点预算，默认 OperationBudget.safe()。
+     * @return 页范围及所有相交的完整 token 和 NodeId。
      * @throws IllegalArgumentException index 越界时。
      * @throws MarkdownException 取消或预算耗尽时。
      */

@@ -107,6 +107,9 @@ public class CompiledDialectExplanation {
     }
 }
 
+/**
+ * 提供 dialect 配置摘要与有限的规则候选解释。
+ */
 extend MarkdownEngine {
     /**
      * 返回当前 engine 的已编译 dialect 解释。

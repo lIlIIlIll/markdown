@@ -2,6 +2,7 @@ package markdown.core
 
 import std.sync.AtomicBool
 
+/** 在构造 literal 时累计字节上限、扫描预算和协作式取消检查。 */
 protected class BoundedLiteralBuilder {
     private let builder = StringBuilder()
     private let maximumBytes: Int64
@@ -10,6 +11,12 @@ protected class BoundedLiteralBuilder {
     private let phase: String
     private var bytes: Int64 = 0
 
+    /** 创建单个 literal 的受限构造器。
+     * @param maximumBytes 允许生成的最大 UTF-8 字节数。
+     * @param budget 所属操作共享的预算；追加的每个字节计入扫描。
+     * @param cancellation 追加与结束时检查的取消信号。
+     * @param phase 取消及超限错误报告的阶段名。
+     */
     protected init(maximumBytes: Int64, budget: OperationBudget, cancellation: CancellationToken, phase: String) {
         this.maximumBytes = maximumBytes
         this.budget = budget
@@ -17,16 +24,25 @@ protected class BoundedLiteralBuilder {
         this.phase = phase
     }
 
+    /** 在检查 literal 上限和扫描预算后追加一段 UTF-8 文本。
+     * @param value 待追加的文本；按字节数计费。
+     */
     protected func append(value: String): Unit {
         consume(value.size)
         builder.append(value)
     }
 
+    /** 追加一个可独立解码为 UTF-8 的字节并计入 literal 限制。
+     * @param value 要追加的单字节 UTF-8 文本；不能用此方法逐字节追加多字节字符。
+     */
     protected func appendByte(value: Byte): Unit {
         consume(1)
         builder.append(String.fromUtf8([value]))
     }
 
+    /** 检查取消后读取累计 literal。
+     * @return 所有已追加文本按顺序拼接的字符串。
+     */
     protected func finish(): String {
         cancellation.throwIfCancelled(phase: phase)
         builder.toString()
@@ -175,10 +191,10 @@ public class ParseLimits {
 }
 
 /**
- * Mutable, operation-scoped work budget.
+ * 按单次操作累计消耗的可变工作预算。
  *
- * Create one budget per parse, render, or transform operation. Instances are
- * not thread-safe and must not be reused concurrently or across operations.
+ * 每次 parse、render 或 transform 应创建独立实例。该类型不是线程安全对象，
+ * 不能并发使用或在不同操作间复用；同一操作的多个阶段应共享预算以累计真实工作量。
  */
 public class OperationBudget {
     private let maximumScanSteps: Int64
@@ -363,6 +379,9 @@ public class OperationBudget {
 public class CancellationToken {
     private let cancelled: AtomicBool
 
+    /** 用共享原子标记创建取消观察端。
+     * @param cancelled 与 CancellationSource 共享的取消标记；置位后不会由 token 清除。
+     */
     protected init(cancelled: AtomicBool) {
         this.cancelled = cancelled
     }

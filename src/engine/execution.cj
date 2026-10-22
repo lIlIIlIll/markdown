@@ -5,8 +5,7 @@ import markdown.render.HtmlOptions
 
 private let FUSED_SCAN_CANCELLATION_BYTES: Int64 = 1024
 
-/** Internal deterministic observation point for bounded fused execution scans.
- * Production cancellation remains owned by the CancellationToken. */
+/** 有界 fused 扫描的确定性观察点；实际取消仍由 CancellationToken 控制。 */
 protected interface FusedScanCheckpointObserver {
     /** 在 fused scan checkpoint 处回调，用于测试注入观察点。
      * @param phase 当前扫描阶段名称。
@@ -51,6 +50,9 @@ public class HtmlExecutionResult {
     }
 }
 
+/**
+ * 提供完整 AST 与保守融合扫描的 HTML 执行入口。
+ */
 extend MarkdownEngine {
     /**
      * 按显式策略将 source 渲染为 HTML。
@@ -58,6 +60,9 @@ extend MarkdownEngine {
      * `PreferFused` 只有在保守 preflight 证明直接 lowering 与完整 AST 路径等价时才
      * 使用 fused path；否则回退 `FullAst`。`RequireFused` 在无法证明等价时抛出
      * `RenderFailure`，不会静默禁用 syntax 或 document processor。
+     * 两条路径都检查 input、line、literal、output、取消和累计预算。
+     * fused 不构造 AST，因此 maximumAstNodes 不模拟逻辑节点数；需要该上限
+     * 影响结果时使用 FullAst。融合路径只接受已证明与完整路径等价的纯文本段落。
      * @param source 待渲染的 Markdown 文本。
      * @param mode 执行策略，默认完整 AST。
      * @param options HTML 渲染选项，默认安全策略。
@@ -66,6 +71,15 @@ extend MarkdownEngine {
      * @return 包含 HTML 与实际执行路径的结果。
      * @throws LimitExceededException 输入或输出超过上限时。
      * @throws MarkdownException 取消、预算耗尽，或 `RequireFused` 无法证明等价时。
+     * @example 要求纯文本融合执行 {run}
+     * ```cangjie
+     * let engine = MarkdownEngine.builder().build()
+     * let result = engine.renderHtml("text", mode: HtmlExecutionMode.RequireFused)
+     * println(result.html)
+     * ```
+     * ```output
+     * <p>text</p>
+     * ```
      */
     public func renderHtml(source: String, mode!: HtmlExecutionMode = HtmlExecutionMode.FullAst,
         options!: HtmlOptions = HtmlOptions.safe(), cancellation!: CancellationToken = CancellationToken.none(),
@@ -74,6 +88,16 @@ extend MarkdownEngine {
         renderHtmlInternal(source, mode, options, cancellation, budget, noObserver)
     }
 
+    /**
+     * 运行带确定性扫描观察点的 HTML 路径，供同包验证取消边界。
+     * @param source 与当前节点或解析输入归属一致的来源缓冲。
+     * @param mode FullAst、PreferFused 或 RequireFused 路径选择策略。
+     * @param options HTML 与 URI 输出策略。
+     * @param cancellation 本次操作共用的协作式取消信号。
+     * @param budget 本次操作跨阶段累计使用的预算；不与其他操作共享。
+     * @param observer 接收有界扫描检查点的测试观察器。
+     * @return HTML 文本及实际采用的路径，与普通 renderHtml 的执行契约相同。
+     */
     protected func renderHtmlWithFusedScanObserver(source: String, mode: HtmlExecutionMode, options: HtmlOptions,
         cancellation: CancellationToken, budget: OperationBudget, observer: FusedScanCheckpointObserver): HtmlExecutionResult {
         renderHtmlInternal(source, mode, options, cancellation, budget, Some(observer))

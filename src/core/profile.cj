@@ -16,6 +16,10 @@ public enum ProfileKind {
 // tag rather than an enum debug representation. In particular, a custom
 // profile is not an alias for a built-in profile merely because callers choose
 // the same id and version strings.
+/** 将 profile 类别编码为稳定标签，避免依赖枚举调试文本。
+ * @param kind 需要参与身份计算的 profile 类别。
+ * @return 区分内建版本及 Custom 的稳定类别标签。
+ */
 protected func profileKindIdentityTag(kind: ProfileKind): String {
     match (kind) {
         case ProfileKind.CommonMark0312 => "commonmark-0312"
@@ -25,6 +29,10 @@ protected func profileKindIdentityTag(kind: ProfileKind): String {
     }
 }
 
+/** 编码 profile 的类别、ID 和标准版本供身份比较使用。
+ * @param profile 提供语法身份的 profile。
+ * @return 带类型和长度前缀、无字段分隔歧义的 profile 描述。
+ */
 protected func profileIdentityDescriptor(profile: MarkdownProfile): String {
     let descriptor = CanonicalDescriptor()
     descriptor.append("profile-identity-v1")
@@ -70,6 +78,9 @@ public class MarkdownProfile {
         MarkdownProfile(ProfileKind.Gfm029, "gfm-0.29", "0.29-gfm")
     }
 
+    /** 提供 GFM 0.29 的 CommonMark 基础解析身份，供 GFM 组合内部使用。
+     * @return 保留 0.29-gfm 标准版本、类别为 Custom 的基础 profile。
+     */
     protected static func gfm029CommonMarkBase(): MarkdownProfile {
         MarkdownProfile(ProfileKind.Custom, "gfm-0.29-commonmark-base", "0.29-gfm")
     }

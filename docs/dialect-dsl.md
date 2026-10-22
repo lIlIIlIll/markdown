@@ -23,7 +23,8 @@ let engine = MarkdownEngine.builder().dialect(dialect).build()
 ```
 
 可选的 `.parserOptions(options)` 和 `.limits(limits)` 也会影响结果。engine builder 上显式
-设置的 limit 优先于 dialect limit。
+设置的 limits 优先于 dialect limits，无论 `.limits(...)` 在 `.dialect(...)` 之前还是之后调用。
+未显式设置 engine limits 时，才使用 dialect 的 limits。
 
 ## 编译时校验
 
@@ -71,4 +72,4 @@ artifact；声明上无序的注册内容不会因输入顺序不同产生不必
 Lists、Heading IDs 和 Smart Punctuation 组合。它们不会被 CommonMark/GFM convenience
 profile 自动启用。使用 `OfficialExtensions.catalog()` 查询版本与启用矩阵。
 
-完整 builder 方法和默认值见 [Extensions API](api/extensions.md)。
+完整 builder 方法和默认值见 [API reference](api.md)。

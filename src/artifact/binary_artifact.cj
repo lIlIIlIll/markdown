@@ -8,7 +8,12 @@ import markdown.editor.DocumentSnapshot
 import markdown.engine.MarkdownEngine
 import std.collection.*
 
-/** `DocumentSnapshot` 的二进制快照容器；`bytes()` 返回独立副本。 */
+/**
+ * DocumentSnapshot 的二进制快照字节容器；构造和读取均复制数组。
+ *
+ * 容器本身不验证输入格式。schemaVersion 表示当前容器格式标识，不能证明任意传入 bytes 有效。
+ * @see markdown.artifact.BinaryArtifactCodec
+ */
 public class BinarySnapshotArtifact {
     /** 快照二进制格式的 schema 版本标识。 */
     public let schemaVersion: String
@@ -38,9 +43,36 @@ public enum BinaryArtifactLoadResult {
     | CacheMiss(String)
 }
 
-/** 编解码包含 AST、CST 和身份 digest 的 binary snapshot。 */
+/**
+ * 以当前 `MCJ3` 格式编码源码、engine 身份及 AST/CST 语义 digest。
+ *
+ * decode 校验长度前缀字段、magic、profile、dialect、engine、UTF-8 policy、source digest、
+ * offset mapping 与尾随字节，再重新解析源码并比较 AST 和 CST digest。
+ * 命中结果的 snapshot version 为 1，Document 拥有新 lineage 和 revision；不恢复旧 NodeRef。
+ *
+ * 内建 custom payload 的语义字段参与摘要。SyntaxPayload 的 typed 参数按名称排序，
+ * 连同类型和值进入摘要。未知 opaque payload 无法验证：encode 抛出异常，decode 返回 CacheMiss。
+ *
+ * @example 编码后通过缓存入口重新解析 {run}
+ * ```cangjie
+ * let engine = MarkdownEngine.builder().build()
+ * let snapshot = DocumentSnapshot.parse(engine, "hello")
+ * let artifact = BinaryArtifactCodec.encode(snapshot)
+ * match (BinaryArtifactCodec.decode(engine, artifact)) {
+ *     case BinaryArtifactLoadResult.Hit(loaded) =>
+ *         if (loaded.result.source.text() != "hello" || loaded.version != 1 ||
+ *             loaded.result.document.revision == snapshot.result.document.revision) {
+ *             throw IllegalStateException("binary snapshot identity is invalid")
+ *         }
+ *     case BinaryArtifactLoadResult.CacheMiss(reason) => throw IllegalStateException(reason)
+ * }
+ * ```
+ */
 public class BinaryArtifactCodec {
-    /** 读取显式提供的持久化快照；旧版和未知版明确报 UnsupportedVersion。
+    /** 读取显式提供的持久化快照，将缓存 miss 转为明确的读取异常。
+     *
+     * 以 MCJ 开头且版本字节不是 3 的输入报 UnsupportedVersion。
+     * 其他格式、身份或内容校验失败报 InvalidArtifact；不会作为 cache miss 静默处理。
      * @param engine 用于身份及资源校验的目标 engine。
      * @param data 持久化快照字节。
      * @return 经当前格式校验的 snapshot。
@@ -65,7 +97,7 @@ public class BinaryArtifactCodec {
     /** 编码完整且 identity-preserving 的 snapshot；不支持非 identity UTF-8 mapping。
      * @param snapshot 要编码的完整 snapshot。
      * @return 编码后的二进制快照。
-     * @throws MarkdownException snapshot 的 UTF-8 mapping 非 identity 时。
+     * @throws MarkdownException UTF-8 mapping 非 identity 或 custom payload 无可验证语义编码时，代码为 `InvalidArtifact`。
      */
     public static func encode(snapshot: DocumentSnapshot): BinarySnapshotArtifact {
         if (!snapshot.result.source.hasIdentityMapping()) {
@@ -92,7 +124,9 @@ public class BinaryArtifactCodec {
         BinarySnapshotArtifact(out.toArray())
     }
 
-    /** 按 engine 身份、digest 和 schema 校验并解码 snapshot；失败返回 `CacheMiss`。
+    /** 按 engine 身份、digest 和当前 schema 校验并重新解析 snapshot。
+     *
+     * 此入口用于缓存：包括旧版、未知版、损坏内容、解析失败及未知 payload 在内的失败均返回 CacheMiss。
      * @param engine 用于身份校验并提供解析限制的目标 engine。
      * @param artifact 待解码的二进制快照。
      * @return `Hit` 或带原因的 `CacheMiss`。

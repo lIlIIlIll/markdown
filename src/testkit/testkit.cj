@@ -34,12 +34,22 @@ public class ExtensionTckReport {
     }
 }
 
-/** 运行扩展的 AST invariant、chunk invariance、safe HTML、determinism 和取消检查。 */
+/**
+ * 对已配置扩展的 engine 执行 AST、分块输入、渲染、确定性、取消和预算等契约检查。
+ *
+ * sample 应触发 custom node 或文档处理阶段；source-spans 检查同时要求其节点具有 span。
+ * 检查还包括 Markdown formatter 语义回环、固定后缀扰动和 fingerprint 形态。
+ * 扩展包仍需为自己的参数、嵌套与交互语义编写针对性测试。
+ *
+ * provider 与 renderer 是宿主代码，TCK 不能限制其文件、网络或其他宿主权限。
+ * safe-html 检查只检查该样本输出是否包含 `<script` 或 `javascript:`，不是沙箱或完整安全证明。
+ */
 public class MarkdownExtensionTestKit {
     /** 使用 sample 对 engine 执行公开扩展契约测试。
      * @param engine 被测 engine。
-     * @param sample 测试输入的 Markdown 文本。
-     * @return 检查结果报告。
+     * @param sample 能触发被测扩展语义的 Markdown 文本。
+     * @return 已执行检查的总数、通过数和失败名称；不保证 sample 覆盖扩展的全部行为。
+     * @throws MarkdownException 初始解析、分块输入或未被单项检查捕获的处理失败时。
      */
     public static func verify(engine: MarkdownEngine, sample: String): ExtensionTckReport {
         var checks: Int64 = 0

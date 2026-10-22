@@ -142,7 +142,10 @@ internal class RestrictedJsonParser {
 }
 
 /**
- * 外部方言描述符：以受限 JSON/YAML 描述基于基础 profile 的 dialect 扩展。
+ * 外部方言描述符：以受限 JSON 或 YAML 描述基于基础 profile 的数据型扩展。
+ *
+ * 描述符不能携带 callback；未知字段、重复字段、无界规则与不支持的 schema 会失败。
+ * compile 在数据解码后继续执行普通 dialect 身份、规则、能力和 renderer 校验。
  */
 public class ExternalDialectDescriptor {
     /** 描述符 schema 版本，当前固定为 `"1"`。 */

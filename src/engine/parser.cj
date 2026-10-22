@@ -71,7 +71,12 @@ public class MarkdownEngineBuilder {
         this
     }
 
-    /** 设置可选 scanner；None 使用纯 Cangjie 扫描。不会自动链接 native library。 */
+    /**
+     * 设置 byte、owned 与 reusable 输入的可选 scanner；None 使用纯 Cangjie 扫描。
+     * String 入口仍使用纯仓颉路径；设置端口不会自动链接 native library。
+     * @param accelerator 可选行扫描端口；None 使用纯仓颉实现，不自动链接 native library。
+     * @return 同一 builder，支持继续配置解析与绑定策略。
+     */
     public func lineScanner(accelerator: ?LineScannerAccelerator): MarkdownEngineBuilder {
         lineScannerValue = accelerator
         this
@@ -105,6 +110,18 @@ public class MarkdownEngineBuilder {
  *
  * engine 持有 profile、limits 和已编译 dialect，可重复用于多个操作；每个操作的
  * cancellation token 与 `OperationBudget` 默认独立创建。
+ * 所有 parse overload 都返回完整不可变 Document、NodeId、SourceSpan 与可恢复诊断。
+ * 共享 engine 时，扩展 callback 必须允许并发调用；OperationBudget 不跨操作共享。
+ *
+ * @example 解析文本并读取诊断 {run}
+ * ```cangjie
+ * let engine = MarkdownEngine.builder().build()
+ * let result = engine.parse("# title")
+ * println(result.diagnostics.size)
+ * ```
+ * ```output
+ * 0
+ * ```
  */
 public class MarkdownEngine {
     /** engine 使用的 profile。 */
@@ -117,6 +134,14 @@ public class MarkdownEngine {
     public let bindingOptions: BindingOptions
     internal let lineScannerAcceleratorValue: ?LineScannerAccelerator
 
+    /**
+     * 保存已编译的固定解析配置，供各次独立操作复用。
+     * @param profile engine 使用的内建或自定义 profile。
+     * @param limits 解析与输出所使用的结构上限。
+     * @param dialect 待冻结的 dialect 或已经通过 compiler 校验的 dialect。
+     * @param lineScannerAccelerator 可选行扫描端口；None 使用纯仓颉实现。
+     * @param bindingOptions 文档片段身份 scope 与严格引用策略。
+     */
     protected init(profile: MarkdownProfile, limits: ParseLimits, dialect: CompiledMarkdownDialect,
         lineScannerAccelerator: ?LineScannerAccelerator, bindingOptions: BindingOptions) {
         this.profile = profile
@@ -158,10 +183,24 @@ public class MarkdownEngine {
 
     /**
      * 捕获 `MarkdownException`，以独立的 Failure 表达致命失败。
+     *
+     * Success 携带完整结果及可恢复诊断；Failure 只携带错误，不返回 AST 前缀，
+     * 也不创建空 Document 冒充成功。其他异常不会被此入口捕获。
      * @param value 要解析的 Markdown 文本。
      * @param cancellation 可选取消 token。
      * @param budget 可选 operation budget。
      * @return Success 包含完整结果；Failure 只包含错误。
+     * @example 分开处理完整成功与致命失败 {run}
+     * ```cangjie
+     * let engine = MarkdownEngine.builder().build()
+     * match (engine.tryParse("# title")) {
+     *     case ParseOutcome.Success(result) => println(result.diagnostics.size)
+     *     case ParseOutcome.Failure(error) => println(error.phase)
+     * }
+     * ```
+     * ```output
+     * 0
+     * ```
      */
     public func tryParse(
         value: String,
@@ -320,6 +359,18 @@ public class MarkdownEngine {
  * 缓冲全部输入并在 `finish()` 时解析。
  *
  * `feed` 在完成前可接受 String 或 bytes；调用 `finish()` 后 session 不能再次使用。
+ * 输入全部保留到 finish，不是增量解析或常量内存接口；同一 session 不支持并发调用。
+ *
+ * @example 分块接收输入后一次解析 {run}
+ * ```cangjie
+ * let session = MarkdownEngine.builder().build().newBufferedInputSession()
+ * session.feed("# title\n")
+ * session.feed("body")
+ * println(session.finish().diagnostics.size)
+ * ```
+ * ```output
+ * 0
+ * ```
  */
 public class BufferedInputSession {
     private let engine: MarkdownEngine
@@ -329,6 +380,13 @@ public class BufferedInputSession {
     private let bytes = ArrayList<Byte>()
     private var finished = false
 
+    /**
+     * 创建只累计输入、结束时才解析的单次缓冲会话。
+     * @param engine 固定 profile、dialect 和结构上限的 engine。
+     * @param utf8Policy 跨块 UTF-8 解码策略；默认 Strict，未完成序列在 finish 时处理。
+     * @param cancellation 本次操作共用的协作式取消信号。
+     * @param budget 本次操作跨阶段累计使用的预算；不与其他操作共享。
+     */
     protected init(
         engine: MarkdownEngine,
         utf8Policy: Utf8Policy,

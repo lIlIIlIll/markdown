@@ -101,6 +101,7 @@ public class RenderedOutput {
     }
 }
 
+/** 在 HTML 写出期间同步记录输出字节范围与源节点的粗粒度映射。 */
 extend HtmlRenderer {
     /**
      * 渲染 HTML 并同步记录 output-to-source map，不通过输出字符串反推映射。

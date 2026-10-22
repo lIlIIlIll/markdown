@@ -25,6 +25,7 @@ let parsed = engine.parseObserved(
     source,
     options: StatisticsOptions(timing: true)
 )
+println(parsed.statistics.nodeCount)
 
 let rendered = renderer.renderObserved(
     parsed.result.document,
@@ -53,4 +54,4 @@ Render statistics 包含 rendered node、output byte 和 renderer fingerprint。
 库不会自动发送 metrics。宿主决定是否记录 `ObservedParseResult` 和
 `ObservedRenderedOutput`。
 
-完整字段见 [Artifact、Document 与 Service API](api/artifacts-and-services.md)。
+完整字段见 [API reference](api.md)。

@@ -19,7 +19,14 @@ public class AppendLimits {
     /** 更新批次数上限；最后一个名额留给 Complete 或 Failed。 */
     public let maximumUpdateBatches: Int64
 
-    /** 创建会话上限；每个参数必须为正数。 */
+    /**
+     * 创建会话上限；每个参数必须为正数。
+     * @param maximumPendingBytes 尚未结构闭合的原始输入 byte 上限，必须为正。
+     * @param maximumRetainedInputBytes 会话保留的原始输入 byte 上限，必须为正。
+     * @param maximumNodeConstructionSteps 包含推测和回滚的累计节点构造步数上限，必须为正。
+     * @param maximumPatchSteps 累计构造更新操作的步数上限，必须为正。
+     * @param maximumUpdateBatches 累计更新批次数上限，必须为正；最后一个名额留给终态。
+     */
     public init(maximumPendingBytes!: Int64 = 32 * 1024 * 1024, maximumRetainedInputBytes!: Int64 = 32 * 1024 * 1024,
         maximumNodeConstructionSteps!: Int64 = 16000000, maximumPatchSteps!: Int64 = 4000000,
         maximumUpdateBatches!: Int64 = 4000000) {
@@ -47,12 +54,22 @@ public class AppendBlockView {
     public let sourceOffset: Int64
     /** 是否已经完成全部文档处理和绑定。 */
     public let finalSemantics: Bool
-    /** 节点的全局原始 byte 范围；生成节点可以没有范围。 */
+    /**
+     * 节点的全局原始 byte 范围；生成节点可以没有范围。
+     * @return 换算为全文原始 byte 坐标的半开范围；生成节点为 None。
+     */
     public prop sourceSpan: ?SourceSpan {
         get() {
             node.span.map({span => SourceSpan(span.startByte + sourceOffset, span.endByte + sourceOffset)})
         }
     }
+    /**
+     * 关联块节点、局部来源及全局偏移，创建不可变块视图。
+     * @param node 属于局部 fragment 或最终文档的块节点。
+     * @param source 与当前节点或解析输入归属一致的来源缓冲。
+     * @param offset 局部来源起点在全文原始输入中的 byte 偏移。
+     * @param finalSemantics 节点是否已完成全局引用、整文扩展与绑定。
+     */
     protected init(node: NodeRef, source: SourceBuffer, offset: Int64, finalSemantics: Bool) {
         this.node = node
         this.source = source
@@ -97,6 +114,15 @@ public class AppendProgress {
     public let resolvedInlineTasks: Int64
     /** 累计 patch 构造步数。 */
     public let patchSteps: Int64
+    /**
+     * 记录追加驱动已完成工作的累计计数。
+     * @param inputBytes 已经接受的原始输入 byte 总数。
+     * @param pendingBytes 尚未结构闭合的原始输入 byte 数。
+     * @param nodeConstructionSteps 累计节点构造步数，回滚不退还。
+     * @param scanSteps 累计扫描工作步数。
+     * @param resolvedInlineTasks 已最终解析的待定行内单元数量。
+     * @param patchSteps 累计更新操作构造步数。
+     */
     protected init(inputBytes: Int64, pendingBytes: Int64, nodeConstructionSteps: Int64, scanSteps: Int64,
         resolvedInlineTasks: Int64, patchSteps: Int64) {
         this.inputBytes = inputBytes
@@ -126,6 +152,14 @@ public class AppendUpdateBatch {
     public let changes: ImmutableArray<AppendChange>
     /** 本次操作完成后的累计计数。 */
     public let progress: AppendProgress
+    /**
+     * 构造紧接给定版本的原子更新，并复制操作数组。
+     * @param sessionId 进程内唯一的追加会话身份。
+     * @param version 此批更新依赖的旧版本，目标版本和序号均为该值加一。
+     * @param state 此批更新后的待定或终态。
+     * @param changes 必须按顺序作为整体应用的更新操作。
+     * @param progress 此批操作完成后的累计工作计数。
+     */
     protected init(sessionId: Int64, version: Int64, state: AppendState, changes: Array<AppendChange>,
         progress: AppendProgress) {
         this.sessionId = sessionId
@@ -138,9 +172,18 @@ public class AppendUpdateBatch {
     }
 }
 
+/**
+ * 为 engine 提供有版本更新协议的追加输入入口。
+ */
 extend MarkdownEngine {
-    /** 创建实际在 feed 中解析并交付结构闭合块的追加会话。所有上限跨 feed 累计。
+    /**
+     *  创建实际在 feed 中解析并交付结构闭合块的追加会话。所有上限跨 feed 累计。
      * 全局引用、文档处理器和绑定在 finish 时完成；不重新执行全文块解析。
+     * @param utf8Policy 跨块 UTF-8 解码策略；默认 Strict，未完成序列在 finish 时处理。
+     * @param cancellation 本次操作共用的协作式取消信号。
+     * @param budget 本次操作跨阶段累计使用的预算；不与其他操作共享。
+     * @param limits 会话的累计资源上限。
+     * @return 新的顺序追加会话；feed 可返回临时块，完整结果仅由最终 Bind 提供。
      */
     public func newAppendSession(utf8Policy!: Utf8Policy = Utf8Policy.Strict,
         cancellation!: CancellationToken = CancellationToken.none(), budget!: OperationBudget = OperationBudget.safe(),
@@ -149,7 +192,26 @@ extend MarkdownEngine {
     }
 }
 
-/** 顺序使用的追加会话。MarkdownException 通过 Failed 更新返回；终态后的调用抛出 IllegalStateException。 */
+/**
+ * 顺序使用的追加会话；feed 在有界工作下解析结构闭合的顶层块。
+ *
+ * 临时块尚未完成全局引用、整文扩展与绑定，可以在 finish 时被替换或删除。
+ * 完整 ParseResult 只出现在所有阶段成功后的 Complete 批次末尾 Bind 中。
+ * MarkdownException 通过 Failed 更新返回；终态后的调用抛出 IllegalStateException。
+ * 资源上限与预算跨 feed 累计，不承诺常量内存；同一会话不支持并发调用。
+ *
+ * @example 原子消费追加更新 {run}
+ * ```cangjie
+ * let session = MarkdownEngine.builder().build().newAppendSession()
+ * let replica = AppendReplica()
+ * replica.apply(session.feed("# title\n\n"))
+ * replica.apply(session.finish())
+ * println(replica.result.getOrThrow().diagnostics.size)
+ * ```
+ * ```output
+ * 0
+ * ```
+ */
 public class AppendInputSession {
     private let engine: MarkdownEngine
     private let utf8Policy: Utf8Policy
@@ -170,6 +232,14 @@ public class AppendInputSession {
     private var resolvedTasks: Int64 = 0
     private var terminal = false
 
+    /**
+     * 以固定 engine、解码策略和累计预算启动追加驱动。
+     * @param engine 固定 profile、dialect 和结构上限的 engine。
+     * @param utf8Policy 跨块 UTF-8 解码策略；默认 Strict，未完成序列在 finish 时处理。
+     * @param cancellation 本次操作共用的协作式取消信号。
+     * @param budget 本次操作跨阶段累计使用的预算；不与其他操作共享。
+     * @param limits 会话的累计资源上限。
+     */
     protected init(engine: MarkdownEngine, utf8Policy: Utf8Policy, cancellation: CancellationToken,
         budget: OperationBudget, limits: AppendLimits) {
         this.engine = engine
@@ -182,7 +252,11 @@ public class AppendInputSession {
             constructionBudget: Some(construction))
     }
 
-    /** 追加文本。String 和 byte 路径使用同一驱动。 */
+    /**
+     * 追加文本。String 和 byte 路径使用同一驱动。
+     * @param chunk 本次追加的文本或 UTF-8 byte 片段。
+     * @return 本次原子更新；MarkdownException 以 Failed 终态返回，不附带成功结果。
+     */
     public func feed(chunk: String): AppendUpdateBatch {
         ensureOpen()
         try {
@@ -193,7 +267,11 @@ public class AppendInputSession {
         }
     }
 
-    /** 追加任意 UTF-8 字节片段；未完成序列可跨 feed，finish 才要求收尾。 */
+    /**
+     * 追加任意 UTF-8 字节片段；未完成序列可跨 feed，finish 才要求收尾。
+     * @param chunk 本次追加的文本或 UTF-8 byte 片段。
+     * @return 本次原子更新；MarkdownException 以 Failed 终态返回，不附带成功结果。
+     */
     public func feed(chunk: Array<Byte>): AppendUpdateBatch {
         ensureOpen()
         try {
@@ -273,7 +351,10 @@ public class AppendInputSession {
         }
     }
 
-    /** 关闭输入，解析待定行内单元一次，组装 AST，并运行共享的完整文档处理与绑定。 */
+    /**
+     * 关闭输入，解析待定行内单元一次，组装 AST，并运行共享的完整文档处理与绑定。
+     * @return 包含最终修订和唯一 Bind 的 Complete 批次，或不含成功文档的 Failed 批次。
+     */
     public func finish(): AppendUpdateBatch {
         ensureOpen()
         try {

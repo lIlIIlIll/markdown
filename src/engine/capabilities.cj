@@ -152,6 +152,9 @@ public class ExecutionModelCapabilities {
     }
 }
 
+/**
+ * 提供配置能力和实际执行模型的查询入口。
+ */
 extend MarkdownEngine {
     /**
      * 返回当前 engine 的功能能力和 schema 版本报告。
