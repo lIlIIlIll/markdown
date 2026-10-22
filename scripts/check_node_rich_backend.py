@@ -12,6 +12,8 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "benchmarks"))
+from library_inputs import library_digest, library_inputs, library_link_arguments
 
 
 def run(command: list[str], log: Path, environment: dict[str, str], timeout: int) -> str:
@@ -40,8 +42,8 @@ def main() -> int:
     compiler = run(["cjc", "--version"], work / "compiler.log", environment, 10)
     if "1.2.0" not in compiler:
         raise ValueError("official STS 1.2.0 is required")
-    run(["cjc", str(ROOT / "tests/rich_backend/main.cj"), "-O2", "--import-path", str(library), "-L", str(library),
-        "-lmarkdown.core", "-lmarkdown.extensions", "-lmarkdown.render", "-lmarkdown.node", "-lmarkdown",
+    run(["cjc", str(ROOT / "tests/rich_backend/main.cj"), "-O2", "--import-path", str(library),
+        *library_link_arguments(library),
         "-o", str(work / "consumer")], work / "compile.log", environment, 120)
     result = run([str(work / "consumer"), str(runtime), str(work), str(args.allow_unsandboxed_chromium).lower()],
         work / "consumer.log", environment, 45)
@@ -69,10 +71,8 @@ def main() -> int:
         run(command, work / "browser-processes.log", environment, 90)
     digest = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
     report = {"status": "PASS", "cangjie": "1.2.0", "runtimeIdentity": (runtime / "identity").read_text().strip(),
-        "consumerSha256": digest(ROOT / "tests/rich_backend/main.cj"), "librarySha256": digest(library / "libmarkdown.a"),
-        "nodeLibrarySha256": digest(library / "libmarkdown.node.a"), "fixtureSha256": digest(fixture),
-        "linkedLibrarySha256s": {name: digest(library / name) for name in
-            ["libmarkdown.core.a", "libmarkdown.extensions.a", "libmarkdown.render.a", "libmarkdown.node.a", "libmarkdown.a"]},
+        "consumerSha256": digest(ROOT / "tests/rich_backend/main.cj"), "librarySha256": library_digest(library),
+        "fixtureSha256": digest(fixture), "linkedLibrarySha256s": library_inputs(library),
         "browserGate": args.browser, "supervisorFixtureCases": 7 if args.supervisor_tests else 0,
         "actualBrowserProcessCases": 2 if args.supervisor_tests else 0,
         "allowUnsandboxedChromium": args.allow_unsandboxed_chromium, "osSandboxClaim": False}

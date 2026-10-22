@@ -1,4 +1,6 @@
-import markdown.*
+import markdown.engine.{AppendChange, AppendReplica, AppendState, AppendUpdateBatch, MarkdownEngine}
+import markdown.extensions.OfficialExtensions
+import markdown.render.{AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, CanonicalMarkdownRenderer}
 import std.collection.*
 import std.convert.*
 import std.fs.*
@@ -50,11 +52,11 @@ func checksum(value: String, seed: UInt64): UInt64 {
 }
 
 class MeasuringSink <: AsyncTextSink {
-    let begin: MonoTime
+    protected let begin: MonoTime
     var firstNanos: Int64 = -1
-    var calls: Int64 = 0
-    var bytes: Int64 = 0
-    var digest: UInt64 = 14695981039346656037
+    protected var calls: Int64 = 0
+    protected var bytes: Int64 = 0
+    protected var digest: UInt64 = 14695981039346656037
     init(begin: MonoTime) {
         this.begin = begin
     }

@@ -2,8 +2,8 @@
 
 `markdown` 提供两类 formatter：
 
-- `CanonicalMarkdownRenderer` 从 AST 生成确定的 Markdown。
-- `PreservingFormatter` 对 snapshot 的目标范围生成最小 source edits。
+- `markdown.render.CanonicalMarkdownRenderer` 从 AST 生成确定的 Markdown。
+- `markdown.editor.PreservingFormatter` 对 snapshot 的目标范围生成最小 source edits。
 
 ## Canonical formatting
 
@@ -35,7 +35,7 @@ ordered start、task state、table alignment 和 break semantics。
 ## Preserving formatting
 
 ```cangjie
-let snapshot = engine.parseSnapshot(source)
+let snapshot = DocumentSnapshot.parse(engine, source)
 let edits = PreservingFormatter.formatRange(
     snapshot,
     SourceSpan(startByte, endByte),

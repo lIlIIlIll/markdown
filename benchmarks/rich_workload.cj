@@ -1,5 +1,8 @@
-import markdown.*
+import markdown.engine.MarkdownEngine
+import markdown.extensions.{MarkdownDialect, OfficialExtensions}
 import markdown.node.NodeRichContentBackend
+import markdown.render.{HtmlOptions, HtmlPolicy, ImageUriPolicy, LinkUriPolicy, RawHtmlPolicyKind, RichContentCache, 
+    RichContentOptions, RichContentOutcome, RichContentPreparation, RichContentPreparer}
 import std.fs.*
 import std.time.*
 

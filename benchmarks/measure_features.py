@@ -18,6 +18,7 @@ import subprocess
 import threading
 
 from benchmark_identity import benchmark_product_tree_sha256
+from library_inputs import library_inputs, library_link_arguments
 
 ROOT = Path(__file__).resolve().parents[1]
 RICH_SOURCE = ('Formula $\\frac{x^2}{2} + \\sqrt{y}$!\n\n```mermaid\nflowchart LR\n A[输入] --> B[AST]\n```\n\n'
@@ -87,14 +88,14 @@ def main() -> None:
         "cjHeapSize": "2GB", "cjGCInterval": "500ms", "LC_ALL": "C.UTF-8", "TZ": "UTC"}
     sources = {name: ROOT / "benchmarks" / f"{name}_workload.cj" for name in ("feature", "rich")}
     source_hashes = {name: sha(path) for name, path in sources.items()}
-    library_hashes = {name: sha(library / name) for name in ("libmarkdown.a", "libmarkdown.node.a")}
+    library_hashes = library_inputs(library)
+    helper_hash = sha(ROOT / "benchmarks/library_inputs.py")
+    shutil.copy2(ROOT / "benchmarks/library_inputs.py", output / "library_inputs.py")
     harness_hash = sha(Path(__file__))
     product_tree = benchmark_product_tree_sha256(ROOT)
     for name, source in sources.items():
         (output / source.name).write_bytes(source.read_bytes())
-        command = [str(compiler), str(source), *flags, "--import-path", str(library), "-L", str(library), "-lmarkdown"]
-        if name == "rich":
-            command += ["-lmarkdown.node"]
+        command = [str(compiler), str(source), *flags, "--import-path", str(library), *library_link_arguments(library)]
         with (output / f"compile-{name}.log").open("w") as log:
             subprocess.run([*command, "-o", str(output / name)], env=environment, stdout=log,
                            stderr=subprocess.STDOUT, check=True)
@@ -195,12 +196,13 @@ def main() -> None:
         print(f"Rich round {sample} complete: 6 actual/fallback processes", flush=True)
     if source_hashes != {name: sha(path) for name, path in sources.items()} or harness_hash != sha(Path(__file__)):
         raise ValueError("source or harness changed")
-    if library_hashes != {name: sha(library / name) for name in library_hashes} or product_tree != benchmark_product_tree_sha256(ROOT):
+    if (library_hashes != library_inputs(library) or product_tree != benchmark_product_tree_sha256(ROOT)
+            or sha(ROOT / "benchmarks/library_inputs.py") != helper_hash):
         raise ValueError("production changed")
-    report = {"schema": "markdown.feature-cost/1", "productTreeSha256": product_tree, "sdk": sdk,
+    report = {"schema": "markdown.feature-cost/2", "productTreeSha256": product_tree, "sdk": sdk,
         "compilerSha256": sha(compiler.resolve()), "flags": flags, "librarySha256": library_hashes,
         "sourceSha256": source_hashes, "executableSha256": {name: sha(output / name) for name in sources},
-        "harnessSha256": harness_hash, "runtimeIdentity": runtime_identity, "inputs": inputs,
+        "harnessSha256": harness_hash, "libraryInputsHelperSha256": helper_hash, "runtimeIdentity": runtime_identity, "inputs": inputs,
         "richInputSha256": sha(rich_input), "richInputBytes": rich_input.stat().st_size,
         "cpu": args.cpu, "heap": "2GB", "gcInterval": "500ms", "calibration": calibration,
         "rows": rows, "richRows": rich_rows, "retainedSamples": 7,

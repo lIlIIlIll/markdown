@@ -4,11 +4,12 @@
 
 - 以 `README.md`、`CONTRIBUTING.md`、`docs/profiles.md`、`docs/security.md`、当前源码与测试为准；区分内建 CommonMark 0.31.2、GFM 0.29、modern GFM 与自定义 dialect/profile。
 - Parser 的 AST、`NodeId`、`SourceSpan`、资源预算以及 renderer/format/query/rewrite/source map 之间必须保持一致。默认安全 HTML 与危险 URI 限制不得被 convenience API、插件或可选后端绕过。
+- 以官方 STS 1.2.0 为唯一工具链。实现分别归属 core、extensions、render、engine、editor 等领域包，根包无公开声明和转导；不要恢复旧门面、别名或兼容 reader。
 - 原生 scanner 与 Node rich backend 是可选能力；不得把它们变成基础解析的隐式依赖，也不能修改既有安全/资源默认值以隐藏回归。
 
 ## 修改与验证
 
-- 行为变更同时检查 parser、renderer 与公开文档；新增公开声明时维护 `api/public-api-v0.9.1.txt`、API 文档及测试。扩展语法需覆盖交互、优先级、回退及 `MarkdownExtensionTestKit.verify`。
+- 行为变更同时检查 parser、renderer 与公开文档；新增公开声明时维护 `api/public-api.txt`、API 文档及测试。扩展语法需覆盖交互、优先级、回退及 `MarkdownExtensionTestKit.verify`。
 - 按 `CONTRIBUTING.md` 运行适用的 `scripts/check_format.sh`、`python3 scripts/check_docs.py`、`python3 scripts/check_public_api.py`、`cjpm check`、`cjpm build`、`cjpm test --no-color --no-progress`；发布/性能变更遵守独立的 release 和 retained-input gate。
 - 基准测试必须有等语义和可复现的比较输入，性能改进不能以丢失 AST、位置、NodeId 或安全检查为代价。区分本机、CI、conformance、benchmark 证据。
 

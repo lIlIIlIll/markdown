@@ -30,30 +30,33 @@ cjpm run --skip-build
 适合评论、说明文字和其他不信任输入。raw HTML 会被转义，危险 URI 不会进入链接属性。
 
 ```cangjie
-import markdown.core.Markdown
+import markdown.engine.MarkdownEngine
 
-let html = Markdown.toSafeHtml("# Hello\n\n<script>blocked</script>")
+let engine = MarkdownEngine.builder().build()
+let html = engine.renderHtml("# Hello\n\n<script>blocked</script>").html
 println(html)
 ```
 
-需要 CommonMark 规范兼容输出，而不是面向不信任输入的默认策略时，在 unsafe context
-中显式调用 `unsafe { Markdown.toSpecHtml(source) }`。不要对用户输入使用该入口。
+可信输入需要 CommonMark 规范输出时，在 unsafe context 中构造
+`HtmlOptions.specCompatible()` 并传给 `engine.renderHtml(source, options: options)`。
 
 > [!WARNING]
-> `toSpecHtml` 追求规范输出，不是未信任内容的安全边界。面向用户输入时使用 `toSafeHtml`。
+> `specCompatible()` 允许规范 raw HTML。处理用户输入时保留默认安全策略。
 
 ## 启用 GFM
 
 表格、任务列表、删除线和 autolink 需要 GFM profile。
 
 ```cangjie
-import markdown.core.{Markdown, MarkdownProfile}
+import markdown.core.{MarkdownProfile}
+import markdown.engine.{MarkdownEngine}
 
 let source = "- [x] shipped\n\n~~old~~"
-println(Markdown.toSafeHtml(source, profile: MarkdownProfile.gfm029()))
+let engine = MarkdownEngine.builder().profile(MarkdownProfile.gfm029()).build()
+println(engine.renderHtml(source).html)
 ```
 
-`gfm029()` 固定 GFM 0.29 行为。`gfm()` 是仓库固定的 modern profile。不要只为
+`gfm029()` 固定 GFM 0.29 行为。`gfmModernV1()` 是仓库固定的 modern profile。不要只为
 某个输入临时切换二者；先选择应用需要的兼容目标。
 
 ## 读取标题、链接和位置
@@ -62,10 +65,10 @@ println(Markdown.toSafeHtml(source, profile: MarkdownProfile.gfm029()))
 `heading.node.span`，而不是直接从 typed view 读取。
 
 ```cangjie
-import markdown.core.Markdown
-import markdown.editor.AstQuery
+import markdown.engine.MarkdownEngine
+import markdown.core.AstQuery
 
-let result = Markdown.parse("# Install\n\nSee [API](api).")
+let result = MarkdownEngine.builder().build().parse("# Install\n\nSee [API](api).")
 for (heading in AstQuery.headings(result.document)) {
     let span = heading.node.span.getOrThrow()
     let lsp = result.source.utf16Position(span.startByte)
@@ -88,7 +91,8 @@ for (link in AstQuery.links(result.document)) {
 取消由调用方持有 `CancellationSource`：
 
 ```cangjie
-import markdown.core.{CancellationSource, MarkdownEngine, ParseOutcome}
+import markdown.core.{CancellationSource, ParseOutcome}
+import markdown.engine.{MarkdownEngine}
 
 let source = CancellationSource()
 source.cancel()
@@ -109,7 +113,7 @@ match (result) {
 renderer 使用同一个 extension ID。
 
 ```cangjie
-import markdown.core.MarkdownEngine
+import markdown.engine.MarkdownEngine
 import markdown.extensions.{BlockSyntax, ExtensionCapabilities, ExtensionManifest, MarkdownDialect, RendererRule}
 import markdown.render.HtmlOptions
 
@@ -133,18 +137,21 @@ println(engine.htmlRenderer(options: HtmlOptions.safe()).render(document))
 ## Lint 和格式化
 
 ```cangjie
-import markdown.core.{Markdown, MarkdownEngine}
+import markdown.engine.MarkdownEngine
+import markdown.editor.{DocumentSnapshot, MarkdownLinter}
+import markdown.render.CanonicalMarkdownRenderer
 
 let engine = MarkdownEngine.builder().build()
-let snapshot = engine.parseSnapshot("# Title\n\n### Skipped level")
-for (diagnostic in engine.lint(snapshot)) {
+let snapshot = DocumentSnapshot.parse(engine, "# Title\n\n### Skipped level")
+for (diagnostic in MarkdownLinter(engine).lint(snapshot)) {
     println("${diagnostic.code}: ${diagnostic.message}")
 }
 
-println(Markdown.format("#  Title\n\n* item"))
+let document = engine.parse("#  Title\n\n* item").document
+println(CanonicalMarkdownRenderer().render(document))
 ```
 
-`Markdown.format` 生成 canonical Markdown。需要尽量保留原始排版或只编辑范围时，使用
+`CanonicalMarkdownRenderer` 生成 canonical Markdown。需要尽量保留原始排版或只编辑范围时，使用
 `DocumentSnapshot` 和 `PreservingFormatter`，见 [Editor API](api/editor.md)。
 
 ## 下一步

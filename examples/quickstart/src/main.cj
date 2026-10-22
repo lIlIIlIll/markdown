@@ -1,15 +1,15 @@
 package markdown_quickstart
 
-import markdown.core.{CancellationSource, Markdown, MarkdownEngine, MarkdownException}
-import markdown.editor.AstQuery
+import markdown.core.{AstQuery, CancellationSource, MarkdownException}
+import markdown.engine.MarkdownEngine
 import markdown.extensions.{BlockSyntax, ExtensionCapabilities, ExtensionManifest, MarkdownDialect, RendererRule}
 import markdown.render.HtmlRenderer
 
 main(): Int64 {
-    let safe = Markdown.toSafeHtml("# Hello\n\n<script>blocked</script>")
+    let safe = MarkdownEngine.builder().build().renderHtml("# Hello\n\n<script>blocked</script>").html
     println(safe)
 
-    let document = Markdown.parse("# One\n\n## Two").document
+    let document = MarkdownEngine.builder().build().parse("# One\n\n## Two").document
     for (heading in AstQuery.headings(document)) {
         println("heading level=${heading.level}")
     }

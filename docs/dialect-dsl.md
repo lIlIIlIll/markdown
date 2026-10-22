@@ -7,11 +7,12 @@
 
 ```cangjie
 import markdown.core.*
+import markdown.engine.*
 import markdown.extensions.*
 
 let dialect = MarkdownDialect
     .define("acme-docs", "1.0.0")
-    .base(MarkdownProfile.GfmModernV1)
+    .base(MarkdownProfile.gfmModernV1())
     .enable(manifest)
     .inline(inlineRule)
     .block(blockRule)

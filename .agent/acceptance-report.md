@@ -1,6 +1,12 @@
 # markdown 验收证据
 
-## 当前 0.9.1 发布候选
+## 当前 0.9.2 开发候选
+
+本次为移除兼容层、公开 API 收敛和真实领域分包的 breaking pre-GA 调整。
+迁移步骤见 [0.9.2 迁移](../docs/migration-0.9.2.md)；当前规范、测试与性能事实由
+`release-evidence.json` 及下方生成块提供。最终 CI、合入和发布是独立核验事项。
+
+## 0.9.1 历史发布证据
 
 核心已通过 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12) 合入。维护者选择将原计划
 0.10 的模型以 breaking pre-GA `0.9.1` 发布，官方 STS 1.2.0。
@@ -43,13 +49,13 @@ metadata 提交；当前保持 false，`ciVerifiedCommit` 记录实际已测 hea
 <!-- release-evidence:start -->
 ## Generated Release Evidence
 
-- Version/status: `0.9.1` / `evidence-ready`.
-- Artifact commit: `ecde73409647a6a3d9757834e26a9973ad96ff7e`.
-- Evidence subject commit: `ecde73409647a6a3d9757834e26a9973ad96ff7e`; the retained execution manifest binds the clean gate commit and Git tree.
+- Version/status: `0.9.2` / `evidence-ready`.
+- Artifact commit: `fe67ba2c3a8f847a31662191f5a529edee4ed458`.
+- Evidence subject commit: `fe67ba2c3a8f847a31662191f5a529edee4ed458`; the retained execution manifest binds the clean gate commit and Git tree.
 - Hosted CI verified at that HEAD: `False`; published: `False`.
-- Tests: `1621/1621` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `2.30x`, GFM `1.90x`, status `current`.
-- Raw digest: `0e8795a44d6e917ba1668ac32dd857c3093942dcde8149d5cdd2304732942926`.
+- Tests: `1622/1622` passed, `0` skipped, `0` failed.
+- Benchmark: CommonMark `2.47x`, GFM `2.13x`, status `current`.
+- Raw digest: `d34d0dc82bb8b1f14b5e40e3f8337441e36224b02861ab63155bc9b5ef57f2fb`.
 
 All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->

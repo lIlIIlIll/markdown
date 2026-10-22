@@ -25,7 +25,7 @@ def cj_string(value: str) -> str:
 def main() -> int:
     entries = {key[:-1]: value for key, value in html.entities.html5.items() if key.endswith(";")}
     lines = [
-        "package markdown",
+        "package markdown.core",
         "",
         "import std.collection.*",
         "",
@@ -40,7 +40,7 @@ def main() -> int:
         "internal func lookupHtml5Entity(name: String): ?String { HTML5_NAMED_ENTITIES.get(name) }",
         "",
     ])
-    output = Path("src/generated_entities.cj")
+    output = Path("src/core/generated_entities.cj")
     output.write_text("\n".join(lines), encoding="utf-8")
     print(f"generated {len(entries)} entities into {output}")
     return 0

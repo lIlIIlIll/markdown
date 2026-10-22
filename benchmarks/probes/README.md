@@ -11,11 +11,16 @@ measurement, and set `TMPDIR`, `TMP`, and `TEMP` to that task directory. Linux
 measurements require `/proc` and `taskset`; choose a CPU from the process's allowed
 affinity set. Existing output directories are rejected.
 
-Build the copied-source experiment from the retained measured product source:
+The current tools use the 0.9.2 domain package layout. Historical reports remain
+bound to their recorded source; replay them with the tools from that revision.
+The current feature, append and public-encode reports use schema 2 and bind all
+domain archives and compiler metadata, including the shared identity helper.
+
+Build a copied-source experiment from a source checkout with the current layout:
 
 ```sh
 python3 benchmarks/probes/build_editor_cost.py \
-  --baseline <retained-product-source> --output "$TMPDIR/editor-probe"
+  --baseline <source-with-current-domain-layout> --output "$TMPDIR/editor-probe"
 python3 benchmarks/probes/measure_editor_cost.py \
   --build "$TMPDIR/editor-probe" --output "$TMPDIR/editor-matrix" \
   --cpu <allowed-cpu>

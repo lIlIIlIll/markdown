@@ -1,5 +1,5 @@
-import markdown.core.{MarkdownEngine, CancellationSource, OperationBudget, MarkdownException, MarkdownErrorCode, 
-    AppendReplica}
+import markdown.core.{CancellationSource, OperationBudget, MarkdownException, MarkdownErrorCode}
+import markdown.engine.{MarkdownEngine, AppendReplica}
 import markdown.extensions.{MarkdownDialect, OfficialExtensions}
 import markdown.render.{AsyncTextSink, AsyncSinkWriteResult, AsyncRenderState, RichContentOptions, RichContentCache, 
     RichContentPreparer, RichContentOutcome, HtmlOptions, HtmlPolicy, RawHtmlPolicyKind, LinkUriPolicy, ImageUriPolicy, 

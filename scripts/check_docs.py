@@ -25,6 +25,7 @@ REQUIRED_PAGES = [
     "docs/cookbook.md",
     "docs/troubleshooting.md",
     "docs/api.md",
+    "docs/migration-0.9.2.md",
     "docs/api/quick-reference.md",
     "docs/api/core.md",
     "docs/api/ast-and-source.md",
@@ -42,7 +43,6 @@ REQUIRED_EXAMPLES = [
 ]
 
 REQUIRED_API_SYMBOLS = [
-    "Markdown",
     "MarkdownEngine",
     "MarkdownEngineBuilder",
     "ParseResult",
@@ -64,6 +64,8 @@ REQUIRED_API_SYMBOLS = [
     "CanonicalMarkdownRenderer",
     "MarkdownParseArtifact",
     "DocumentSnapshot",
+    "MarkdownLinter",
+    "ExtensionLintProvider",
     "MarkdownExtensionTestKit",
 ]
 

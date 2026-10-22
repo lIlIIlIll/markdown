@@ -9,7 +9,7 @@
 [![Cangjie 1.2.0](https://img.shields.io/badge/Cangjie-1.2.0-7B61FF?style=for-the-badge)](cjpm.toml)
 [![CommonMark 0.31.2](https://img.shields.io/badge/CommonMark-0.31.2-2F6F9F?style=for-the-badge)](docs/profiles.md)
 [![GFM 0.29](https://img.shields.io/badge/GFM-0.29-24292F?style=for-the-badge)](docs/profiles.md)
-[![Status pre-GA](https://img.shields.io/badge/Status-0.9.1_preview-F59E0B?style=for-the-badge)](docs/versioning-and-compatibility.md)
+[![Status pre-GA](https://img.shields.io/badge/Status-0.9.2_preview-F59E0B?style=for-the-badge)](docs/versioning-and-compatibility.md)
 [![Developed with Codex](https://img.shields.io/badge/Developed_with-Codex-111111?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com/codex/)
 [![License MIT](https://img.shields.io/badge/License-MIT-16A34A?style=for-the-badge)](LICENSE)
 
@@ -17,9 +17,9 @@
 
 </div>
 
-当前版本是 `0.9.1` breaking pre-GA preview，包含新的语义、身份和流式模型。
-本版本采用原计划 `0.10` 的模型调整，不承诺兼容 `0.9.0`；升级前请阅读
-[0.9.1 迁移](docs/migration-0.9.1.md)。
+当前开发版本是 `0.9.2` breaking pre-GA preview。公开 API 和实现按领域分包，
+根包不再导出接口，旧门面和兼容构建路径已移除。升级前请阅读
+[0.9.2 迁移](docs/migration-0.9.2.md)；已发布版本以 GitHub Release 为准。
 
 > [!NOTE]
 > 基础包是纯仓颉实现，不需要 C 编译器。原生 line scanner 是可选加速器，不是运行依赖。
@@ -54,10 +54,11 @@
 ```cangjie
 package markdown_demo
 
-import markdown.core.Markdown
+import markdown.engine.MarkdownEngine
 
 main(): Int64 {
-    println(Markdown.toSafeHtml("# Hello\n\n<script>blocked</script>"))
+    let engine = MarkdownEngine.builder().build()
+    println(engine.renderHtml("# Hello\n\n<script>blocked</script>").html)
     0
 }
 ```
@@ -83,9 +84,9 @@ cjpm run --skip-build
 
 | 目标 | 首选入口 | 深入阅读 |
 | --- | --- | --- |
-| Markdown 转安全 HTML | `Markdown.toSafeHtml(source)` | [安全渲染](docs/api/rendering.md) |
+| Markdown 转安全 HTML | `engine.renderHtml(source).html` | [安全渲染](docs/api/rendering.md) |
 | 启用表格、任务列表和删除线 | `MarkdownProfile.gfm029()` | [Profile 指南](docs/profiles.md) |
-| 读取标题、链接或源码位置 | `Markdown.parse` + `AstQuery` | [AST 与 Source](docs/api/ast-and-source.md) |
+| 读取标题、链接或源码位置 | `engine.parse` + `AstQuery` | [AST 与 Source](docs/api/ast-and-source.md) |
 | 控制输入、节点和输出上限 | `MarkdownEngine.builder().limits(...)` | [输入与资源](docs/input-and-resources.md) |
 | 自定义 `:::` 容器或行内语法 | `MarkdownDialect` + Syntax DSL | [扩展开发](docs/extensions.md) |
 | lint、rewrite 或保留格式编辑 | `DocumentSnapshot` + `markdown.editor` | [Editor API](docs/api/editor.md) |
@@ -99,24 +100,23 @@ cjpm run --skip-build
 ### 启用 GFM
 
 ```cangjie
-import markdown.core.{Markdown, MarkdownProfile}
+import markdown.core.{MarkdownProfile}
+import markdown.engine.{MarkdownEngine}
 
-let html = Markdown.toSafeHtml(
-    "- [x] shipped\n\n~~old~~",
-    profile: MarkdownProfile.gfm029()
-)
+let engine = MarkdownEngine.builder().profile(MarkdownProfile.gfm029()).build()
+let html = engine.renderHtml("- [x] shipped\n\n~~old~~").html
 ```
 
-`gfm029()` 用于 GFM 0.29 规范兼容。`gfm()` 是仓库固定的 modern profile。
+`gfm029()` 用于 GFM 0.29 规范兼容。`gfmModernV1()` 是仓库固定的 modern profile。
 [Profile 指南](docs/profiles.md)解释两者差异。
 
 ### 读取标题和源码位置
 
 ```cangjie
-import markdown.core.Markdown
-import markdown.editor.AstQuery
+import markdown.engine.MarkdownEngine
+import markdown.core.AstQuery
 
-let result = Markdown.parse("# Install\n\nSee [API](api).")
+let result = MarkdownEngine.builder().build().parse("# Install\n\nSee [API](api).")
 for (heading in AstQuery.headings(result.document)) {
     let span = heading.node.span.getOrThrow()
     let position = result.source.utf16Position(span.startByte)
@@ -130,7 +130,7 @@ for (heading in AstQuery.headings(result.document)) {
 ### 定义块扩展
 
 ```cangjie
-import markdown.core.MarkdownEngine
+import markdown.engine.MarkdownEngine
 import markdown.extensions.{BlockSyntax, ExtensionCapabilities, ExtensionManifest, MarkdownDialect, RendererRule}
 
 let manifest = ExtensionManifest(
@@ -150,14 +150,15 @@ let engine = MarkdownEngine.builder().dialect(dialect).build()
 
 ## 包结构
 
-新代码应导入用途明确的子包。根包 `markdown.*` 是共享实现包。
+类型和实现位于各自领域包。根包 `markdown` 仅供 cjpm 发现模块，不导出公开声明或转导。
 
 | 子包 | 用途 |
 | --- | --- |
-| `markdown.core` | 解析、AST、源码位置、诊断、资源限制和 Event API |
+| `markdown.core` | AST、源码位置、诊断、资源限制、query 和 rewrite |
+| `markdown.engine` | parser、builder、Event API、追加会话、融合 HTML 与能力报告 |
 | `markdown.render` | HTML、纯文本、Markdown、sink 和 source map |
 | `markdown.extensions` | 方言、Syntax DSL、renderer DSL 和 SPI |
-| `markdown.editor` | 查询、rewrite、lint、CST、snapshot 和编辑 |
+| `markdown.editor` | lint、CST、snapshot、编辑和范围格式化 |
 | `markdown.artifact` | parse artifact 和 binary snapshot |
 | `markdown.document` | document graph 和跨文档引用 |
 | `markdown.testkit` | 第三方扩展 TCK |
@@ -204,7 +205,7 @@ markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、�
 | 查询 | 已经知道类型或错误，想快速定位 | [API 速查](docs/api/quick-reference.md) → [完整 API](docs/api.md) |
 | 扩展 | 正在设计 syntax、renderer 或 SPI | [扩展开发](docs/extensions.md) → [Extension TCK](docs/extension-tck.md) |
 | 运维 | 遇到构建、profile、位置或限制问题 | [故障排查](docs/troubleshooting.md) → [安全指南](docs/security.md) |
-| 升级 | 从 0.8 迁移到 breaking pre-GA 版本 | [迁移指南](docs/migration.md) |
+| 升级 | 从 0.9.1 更新到领域分包 | [0.9.2 迁移](docs/migration-0.9.2.md) |
 
 ## 验证状态
 
@@ -213,20 +214,20 @@ markdown4cj 报告绑定当前产品 tree、固定 comparator commits、SDK、�
 <!-- release-evidence:start -->
 | Release evidence | Value |
 | --- | --- |
-| Version / status | `0.9.1` / `evidence-ready` |
+| Version / status | `0.9.2` / `evidence-ready` |
 | Offline evidence ready | `ready` |
 | CI verified at evidence repository HEAD | `no` |
 | Published release | `no` |
-| Tests | `1621/1621` passed; `0` skipped; `0` failed |
+| Tests | `1622/1622` passed; `0` skipped; `0` failed |
 | CommonMark conformance | `652/652` |
 | GFM conformance | `671/671` |
-| Public API snapshot | `1706` declarations |
-| Artifact commit | `ecde73409647a6a3d9757834e26a9973ad96ff7e` |
-| Evidence subject commit | `ecde73409647a6a3d9757834e26a9973ad96ff7e` |
+| Public API snapshot | `1679` declarations |
+| Artifact commit | `fe67ba2c3a8f847a31662191f5a529edee4ed458` |
+| Evidence subject commit | `fe67ba2c3a8f847a31662191f5a529edee4ed458` |
 | Execution identity | `target/release-evidence/manifest.json` records and verifies the clean gate commit/tree |
-| CommonMark / cmark | `2.30x` / limit `2.5x` |
-| GFM HTML / cmark-gfm | `1.90x` / limit `2.5x` |
-| Benchmark identity | `current`; commit `ecde73409647a6a3d9757834e26a9973ad96ff7e`; SDK `Cangjie Compiler: 1.2.0 (cjnative)` |
+| CommonMark / cmark | `2.47x` / limit `2.5x` |
+| GFM HTML / cmark-gfm | `2.13x` / limit `2.5x` |
+| Benchmark identity | `current`; commit `fe67ba2c3a8f847a31662191f5a529edee4ed458`; SDK `Cangjie Compiler: 1.2.0 (cjnative)` |
 
 The table is generated from [`release-evidence.json`](release-evidence.json).
 `evidenceReady` describes reproducible offline artifacts and gates only. It does not claim that

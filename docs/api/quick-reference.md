@@ -1,7 +1,7 @@
 # API 速查
 
-本页只列常用公开入口。签名对应 `0.9.1`；完整声明以
-[`api/public-api-v0.9.1.txt`](../../api/public-api-v0.9.1.txt) 为准。
+本页只列常用公开入口。签名对应 `0.9.2`；完整声明以
+[`api/public-api.txt`](../../api/public-api.txt) 为准。
 
 [文档首页](../README.md) · **API 速查** · [完整 API](../api.md) · [Cookbook](../cookbook.md)
 
@@ -9,23 +9,29 @@
 
 | 输入 | 目标 | 使用 |
 | --- | --- | --- |
-| 不信任的 `String` | 安全 HTML | `Markdown.toSafeHtml` |
+| 不信任的 `String` | 安全 HTML | `engine.renderHtml(source).html` |
 | `String` / bytes / stream | 完整 AST | `MarkdownEngine.parse` |
 | 完整 AST | 自定义 HTML / source map | `HtmlRenderer` |
-| 文档源码 | query、lint、编辑 | `MarkdownEngine.parseSnapshot` |
+| 文档源码 | query、lint、编辑 | `DocumentSnapshot.parse` |
 | 文档源码 | 不持有 AST 的事件 | `MarkdownEngine.parseEvents` |
 
-## Facade
+## 解析与渲染
 
-导入：`import markdown.core.{Markdown, MarkdownProfile}`
+导入：`import markdown.engine.MarkdownEngine`。复用构建后的 engine：
+
+```cangjie
+let engine = MarkdownEngine.builder().build()
+let result = engine.parse(source)
+let html = engine.renderHtml(source).html
+```
 
 | 入口 | 返回值 | 用途 |
 | --- | --- | --- |
-| `Markdown.parse(source, profile: commonMark0312())` | `ParseResult` | 构造完整 AST、源码映射和诊断 |
-| `Markdown.toSafeHtml(source, profile: commonMark0312())` | `String` | 不信任输入转安全 HTML |
-| `unsafe { Markdown.toSpecHtml(source, profile: commonMark0312()) }` | `String` | 可信输入的规范兼容 HTML |
-| `Markdown.toText(source, profile: commonMark0312())` | `String` | 提取纯文本 |
-| `Markdown.format(source, profile: commonMark0312())` | `String` | 输出 canonical Markdown |
+| `engine.parse(source)` | `ParseResult` | 完整 AST、来源和诊断 |
+| `engine.renderHtml(source).html` | `String` | 默认安全 HTML |
+| `engine.htmlRenderer(options: options)` | `HtmlRenderer` | 使用 dialect rules 与 engine limits |
+| `PlainTextRenderer().render(document)` | `String` | 纯文本 |
+| `CanonicalMarkdownRenderer().render(document)` | `String` | canonical Markdown |
 
 ## Profile
 
@@ -38,7 +44,7 @@
 
 ## Engine
 
-导入：`import markdown.core.*`
+导入：`import markdown.core.*` 和 `import markdown.engine.*`
 
 ```cangjie
 let engine = MarkdownEngine.builder()
@@ -73,7 +79,7 @@ let engine = MarkdownEngine.builder()
 
 ## 查询和位置
 
-导入：`import markdown.editor.AstQuery`
+导入：`import markdown.core.AstQuery`
 
 | 入口 | 返回值 |
 | --- | --- |
@@ -109,10 +115,12 @@ let html = renderer.render(result.document)
 
 ## Editor
 
+导入：`import markdown.editor.{DocumentSnapshot, MarkdownLinter, PreservingFormatter}`
+
 | 入口 | 用途 |
 | --- | --- |
-| `engine.parseSnapshot(source)` | 生成语义 AST、CST 和映射 snapshot |
-| `engine.lint(snapshot)` | 返回结构、安全和样式诊断 |
+| `DocumentSnapshot.parse(engine, source)` | 生成语义 AST、CST 和映射 snapshot |
+| `MarkdownLinter(engine).lint(snapshot)` | 返回结构、安全和样式诊断 |
 | `snapshot.applyEdits(edits)` | 应用 byte-range 编辑并返回 reparse 结果 |
 | `snapshot.applyUtf16Edit(start, end, replacement)` | 应用编辑器 UTF-16 range |
 | `PreservingFormatter.formatRange(...)` | 尽量保留未修改源码布局 |

@@ -3,10 +3,10 @@
 | 文档属性       | 内容                                    |
 | ---------- | ------------------------------------- |
 | 项目名称       | `markdown`                         |
-| 公开根命名空间    | `markdown`                            |
+| 模块名         | `markdown`                            |
 | 产品类型       | 仓颉 Markdown 解析、转换、渲染与工具基础库            |
-| PRD 版本     | 2.1                                   |
-| 目标产品版本     | `markdown 0.9` breaking pre-GA       |
+| PRD 版本     | 2.2                                   |
+| 目标产品版本     | `markdown 0.9.2` breaking pre-GA       |
 | 文档状态       | Draft for Review                      |
 | 目标用户       | 仓颉应用、CLI、TUI、IDE、文档系统、静态站点及 Agent 开发者 |
 | 核心实现约束     | 纯仓颉实现、无网络副作用、无非标准原生运行时依赖              |
@@ -20,7 +20,7 @@
 
 本文使用以下规范词：
 
-* **必须**：`markdown 0.9` 发布阻断要求；满足后才可进入 1.0 GA 冻结。
+* **必须**：`markdown 0.9.2` 发布阻断要求；满足后才可进入 1.0 GA 冻结。
 * **应该**：原则上应实现，只有明确记录理由时可以推迟。
 * **可以**：可选能力。
 * **P0**：1.0 GA 范围。
@@ -149,15 +149,7 @@ MarkdownProfile.gfmModernV1()
 
 不提供无版本号的 profile 别名；新语义使用新的版本入口。
 
-例如：
-
-```text
-markdown 1.x:
-commonMark() == commonmark-0.31.2
-gfm()        == gfm-modern-v1
-```
-
-不得在 `1.4` 中将 `commonMark()` 静默切换到未来的 CommonMark 版本。
+标准 profile 使用带明确版本的 factory。规范修复必须关联规范编号和回归测试。
 
 ## 6.2 安全与规范兼容必须分离
 
@@ -509,7 +501,7 @@ commonmark-0.31.2
 
 * 新标准版本必须获得新的 profile ID。
 * 已发布 profile 的语义不得静默改变。
-* 同一主版本内便利别名不得更换目标。
+* 不提供无版本号的 profile 别名。
 * 规范修复必须关联规范章节或测试编号。
 * 影响 AST 的行为修复必须记录在 changelog。
 
@@ -2512,7 +2504,7 @@ ReparseResult
 接口草案：
 
 ```cangjie
-let snapshot1 = engine.parseSnapshot(source)
+let snapshot1 = DocumentSnapshot.parse(engine, source)
 
 let snapshot2 = snapshot1.applyEdits([
     SourceEdit(range, replacement)
@@ -2739,97 +2731,50 @@ let rewritten = document.rewrite { node =>
 }
 ```
 
-## 39.9 便利 API
+## 39.9 直接解析和渲染
 
-可以提供：
+通过不可变 engine 调用解析和安全 HTML：
 
 ```cangjie
-Markdown.parse(source)
-Markdown.toSafeHtml(source)
-Markdown.toSpecHtml(source)
-Markdown.toText(source)
-Markdown.format(source)
+let engine = MarkdownEngine.builder().build()
+let result = engine.parse(source)
+let html = engine.renderHtml(source).html
+let text = PlainTextRenderer().render(result.document)
+let formatted = CanonicalMarkdownRenderer().render(result.document)
 ```
 
-便利 API 仍必须允许指定 profile。
+不提供 `Markdown` 门面。profile 在 builder 配置；规范 HTML 通过显式 unsafe options 选择。
 
 ---
 
 # 40. 模块与包结构
 
-建议逻辑模块：
+公开声明和实现按真实领域分包：
 
-```text
-markdown_core
-markdown_commonmark
-markdown_gfm
-markdown_dsl
-markdown_transform
-markdown_html
-markdown_format
-markdown_lint
-markdown_cli
-markdown_testkit
-```
+| 包 | 归属 |
+| --- | --- |
+| `markdown.core` | AST、source、语义 payload、诊断、预算、query、rewrite、annotation |
+| `markdown.extensions` | dialect、DSL、规则编译、官方扩展、SPI 与隔离协议 |
+| `markdown.render` | HTML、文本、canonical Markdown、source map、异步输出、富内容 |
+| `markdown.engine` | builder、parser、事件、追加会话、融合执行、能力与解释 |
+| `markdown.editor` | snapshot、CST、编辑、lint、范围格式化 |
+| `markdown.artifact` | parse artifact 与 binary snapshot |
+| `markdown.document` | 多文档 graph、跨文档引用及转换工具 |
+| `markdown.testkit` | 扩展 TCK |
+| `markdown.native` | 可选 scanner 适配器 |
+| `markdown.node` | 可选富内容适配器 |
 
-Umbrella package：
+根包仅保留 cjpm 所需的 package 锚点，不公开声明或转导。内部共享 helper 使用最小
+模块可见性，不能通过扩大公开 API 或保留内部单体加转导来模拟分包。
 
-```text
-markdown
-```
+依赖要求：
 
-建议仓库：
-
-```text
-markdown/
-├── cjpm.toml
-├── src/
-│   ├── markdown_core/
-│   │   ├── source/
-│   │   ├── ast/
-│   │   ├── syntax/
-│   │   ├── position/
-│   │   ├── diagnostic/
-│   │   └── budget/
-│   ├── markdown_commonmark/
-│   │   ├── block/
-│   │   ├── inline/
-│   │   └── reference/
-│   ├── markdown_gfm/
-│   ├── markdown_dsl/
-│   │   ├── dialect/
-│   │   ├── syntax/
-│   │   └── renderer/
-│   ├── markdown_transform/
-│   ├── markdown_html/
-│   ├── markdown_format/
-│   ├── markdown_lint/
-│   └── markdown/
-├── tools/
-│   └── markdown/
-├── tests/
-│   ├── unit/
-│   ├── commonmark/
-│   ├── gfm/
-│   ├── differential/
-│   ├── chunked/
-│   ├── fuzz/
-│   ├── security/
-│   ├── extension-tck/
-│   └── regression/
-├── benchmarks/
-├── docs/
-└── examples/
-```
-
-要求：
-
-* AST 不依赖 HTML；
-* CommonMark 不依赖 GFM；
-* CLI 不进入库依赖图；
-* TestKit 不进入生产依赖；
-* 扩展仅依赖 core 和 SPI；
-* unsafe HTML API 放在独立命名空间。
+* core 不依赖其他产品包；extensions 依赖 core。
+* render 依赖 core 和 extensions；engine 依赖这三包。
+* editor 依赖下层包；artifact 和 document 各自依赖所需下层包，彼此独立。
+* native 依赖 core scanner 端口，node 依赖 render 后端端口。
+* CLI 和 testkit 不进入生产库依赖图。
+* 跨包依赖无循环，AST 不依赖 HTML，解析不隐式依赖可选后端。
 
 ---
 
@@ -3238,7 +3183,7 @@ Cancellation → 中止超大输入
 
 ## 48.1 SemVer
 
-项目使用 SemVer。
+项目使用 SemVer。当前 0.9.2 为 breaking pre-GA，不提供跨版本兼容保证。
 
 ## 48.2 用户可观察变更
 
@@ -3267,35 +3212,29 @@ Cancellation → 中止超大输入
 * 更新 changelog；
 * 评估新 profile revision。
 
-## 48.4 AST 兼容性
+## 48.4 当前接口与格式
 
-0.9 是 GA 前明确的 breaking reset：删除 0.8 object-tree AST、修改 NodeOrigin
-表示、升级 SPI/event/artifact schema 都允许，但必须同步 migration、API snapshot、
-consumer fixture 和 changelog。0.9 不提供旧 AST runtime adapter。
+GA 前允许明确记录的破坏性调整，必须同步迁移说明、当前 API snapshot、消费者、测试和
+changelog。只维护 `api/public-api.txt` 当前声明，历史接口通过已有 tag 查阅。
 
-1.x 中：
-
-* 删除公开节点属于 breaking；
-* 修改字段语义属于 breaking；
-* 增加可选字段可以是 minor；
-* 增加核心 node kind 必须评估 exhaustive match；
-* 第三方语法优先使用 Custom Node。
+不保留旧 AST adapter、公开转导、历史别名、旧 schema reader 或兼容构建模式。
+安全默认值、标准 profile、来源位置、所有权、资源上限和取消仍是产品契约。
+已发布 tag、固定输入和测量报告保持原始身份。
 
 ## 48.5 SPI
 
 扩展 SPI 必须单独版本化。
 
-0.9 的 Inline Parser SPI v2 必须声明非空、无重复的 `triggerBytes`；编译后的
+当前 Inline Parser SPI v3 必须声明非空、无重复的 `triggerBytes`；编译后的
 dialect 只在当前位置首字节命中时调用 SPI。Syntax DSL 也按 opener 首字节调度。
 内部 hot plan 不进入 semantic fingerprint。
 
 不兼容 SPI 必须在 engine build 阶段拒绝。
 
-## 48.6 弃用
+## 48.6 删除接口
 
-公开 API 删除前至少经过一个 minor 版本弃用期。
-
-高危安全接口可以提前移除，但必须发布安全公告和迁移方案。
+当前 pre-GA 阶段可直接删除接口并更新调用方，无需增加弃用包装。每次删除必须记录
+替代入口和失败语义。GA 版本的长期维护政策在正式发布前另行确定。
 
 ---
 
@@ -3537,7 +3476,7 @@ dialect 只在当前位置首字节命中时调用 SPI。Syntax DSL 也按 opene
 * [ ] 所有 bug 修复有 regression。
 * [ ] Fuzz 无未处理 crash。
 * [ ] 跨 Tier 1 平台输出一致。
-* [ ] API compatibility gate 可用。
+* [ ] 当前 API snapshot 一致性检查可用。
 * [ ] Benchmark 达到 GA 门槛。
 * [ ] 核心无非标准原生动态库依赖。
 * [ ] Security guide 已发布。

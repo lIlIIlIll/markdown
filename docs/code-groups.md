@@ -19,6 +19,11 @@ console.log(answer);
 ## 解析与复制文本
 
 ```cangjie
+import markdown.core.*
+import markdown.engine.MarkdownEngine
+import markdown.extensions.{MarkdownDialect, OfficialExtensions}
+import markdown.render.CodeGroupHtmlOptions
+
 let dialect = OfficialExtensions.codeGroups(MarkdownDialect.define("examples", "1")).build()
 let engine = MarkdownEngine.builder().dialect(dialect).build()
 let result = engine.parse(source)

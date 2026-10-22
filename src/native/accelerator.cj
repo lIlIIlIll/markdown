@@ -1,6 +1,6 @@
 package markdown.native
 
-import markdown.{LineScanRecords, LineScannerAccelerator}
+import markdown.core.{LineScanRecords, LineScannerAccelerator}
 
 foreign func MD_Markdown_ScanLines(
     input: CPointer<UInt8>,

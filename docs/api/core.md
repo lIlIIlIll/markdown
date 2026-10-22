@@ -1,43 +1,32 @@
-# Core API
+# Core 与 Engine API
 
-`markdown.core` 提供解析入口、profile、完整 AST、资源限制、诊断和 source Event API。
+`markdown.core` 提供 AST、profile、资源限制和诊断；解析及 source Event API 位于
+`markdown.engine`。
 
 ## 导入
 
 ```cangjie
 import markdown.core.{
-    CancellationSource,
-    Markdown,
-    MarkdownEngine,
-    MarkdownException,
-    MarkdownProfile,
-    OperationBudget,
-    ParseLimits,
-    ParseOutcome,
-    Utf8Policy
+    CancellationSource, CancellationToken, MarkdownException, MarkdownProfile,
+    OperationBudget, ParseLimits, ParseOutcome, Utf8Policy
 }
+import markdown.engine.*
+import markdown.render.HtmlOptions
 ```
 
-## `Markdown`
+`markdown.core` 保存 AST、来源和资源契约。`markdown.engine` 实现 parser、builder、
+事件、追加会话、融合 HTML 执行和能力报告。根包不转导这两个领域的声明。
 
-`Markdown` 是无状态便利门面。所有方法默认使用
-`MarkdownProfile.commonMark0312()`。
-
-| 方法 | 返回值 | 行为 |
-| --- | --- | --- |
-| `parse(source, profile)` | `ParseResult` | 构造完整 AST |
-| `toSafeHtml(source, profile)` | `String` | 使用安全 HTML 默认值 |
-| `unsafe toSpecHtml(source, profile)` | `String` | 使用 CommonMark 兼容 raw HTML 行为 |
-| `toText(source, profile)` | `String` | 输出纯文本 |
-| `format(source, profile)` | `String` | 输出 canonical Markdown |
-
-需要自定义限制、方言、取消或 budget 时，使用 `MarkdownEngine`。
-
-`toSpecHtml` 会原样输出规范允许的 raw HTML，因此必须显式放在 unsafe context 中：
+## 最小调用
 
 ```cangjie
-let html = unsafe { Markdown.toSpecHtml(source) }
+let engine = MarkdownEngine.builder().build()
+let result = engine.parse("# title")
+let html = engine.renderHtml("# title").html
 ```
+
+`Markdown` 门面已移除。需要纯文本或 canonical Markdown 时，使用
+`PlainTextRenderer` 或 `CanonicalMarkdownRenderer` 渲染 `result.document`。
 
 ## `MarkdownEngineBuilder`
 
@@ -45,7 +34,6 @@ let html = unsafe { Markdown.toSpecHtml(source) }
 let engine = MarkdownEngine.builder()
     .profile(MarkdownProfile.gfm029())
     .limits(ParseLimits.safe())
-    .nativeScannerEnabled(false)
     .build()
 ```
 
@@ -55,10 +43,11 @@ let engine = MarkdownEngine.builder()
 | `limits(limits)` | `ParseLimits` | 覆盖 parser 限制 |
 | `dialect(dialect)` | `MarkdownDialect` | 编译并安装方言；未显式设置 limits 时使用 dialect limits |
 | `bindingOptions(options)` | `BindingOptions` | 配置文档片段 ID scope 和未定义脚注策略 |
-| `nativeScannerEnabled(enabled)` | `Bool` | 允许或禁止已注入 accelerator；不会自动链接 native library |
+| `lineScanner(accelerator)` | `?LineScannerAccelerator` | 配置可选 scanner 端口；默认 `None`，不会自动链接 native library |
 | `build()` | 无 | 返回不可变 `MarkdownEngine` |
 
-默认 profile 是 CommonMark 0.31.2，默认限制是 `ParseLimits.safe()`。
+默认 profile 是 CommonMark 0.31.2，默认限制是 `ParseLimits.safe()`。builder 通过
+`MarkdownEngine.builder()` 创建，`build()` 生成不可变 engine。
 
 ## `MarkdownEngine.parse`
 
@@ -187,9 +176,9 @@ budget。`maximumAstNodes` 只统计实际 AST 分配；fused path 不创建 AST
 
 | Factory | ID |
 | --- | --- |
-| `commonMark0312()`、`commonMark()` | `commonmark-0.31.2` |
+| `commonMark0312()` | `commonmark-0.31.2` |
 | `gfm029()` | `gfm-0.29` |
-| `gfmModernV1()`、`gfm()` | `gfm-modern-v1` |
+| `gfmModernV1()` | `gfm-modern-v1` |
 | `custom(id, version)` | 调用者提供 |
 
 需要与官方 GFM 0.29 语料逐项对齐时使用 `gfm029()`。需要仓库固定的现代 GFM

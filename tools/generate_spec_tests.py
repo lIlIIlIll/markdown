@@ -4,10 +4,8 @@
 from __future__ import annotations
 
 import argparse
-import html
-import importlib.util
-import sys
-import types
+import ast
+import re
 from pathlib import Path
 
 
@@ -34,17 +32,15 @@ def cj_string(value: str) -> str:
 
 
 def load_examples(spec_dir: Path) -> list[dict[str, object]]:
-    if "cgi" not in sys.modules:
-        cgi_compat = types.ModuleType("cgi")
-        cgi_compat.escape = html.escape  # type: ignore[attr-defined]
-        sys.modules["cgi"] = cgi_compat
-    sys.path.insert(0, str(spec_dir))
-    module_spec = importlib.util.spec_from_file_location("pinned_spec_tests", spec_dir / "spec_tests.py")
-    if module_spec is None or module_spec.loader is None:
-        raise RuntimeError("cannot load pinned official spec extractor")
-    module = importlib.util.module_from_spec(module_spec)
-    module_spec.loader.exec_module(module)
-    return list(module.get_tests(str(spec_dir / "spec.txt")))
+    source = spec_dir / "spec_tests.py"
+    tree = ast.parse(source.read_text(encoding="utf-8"), filename=str(source))
+    functions = [node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "get_tests"]
+    if len(functions) != 1:
+        raise ValueError("the pinned spec extractor must define exactly one get_tests function")
+    # Use the pinned extractor without importing its command-line renderer or HTML normalizer.
+    namespace = {"re": re}
+    exec(compile(ast.Module(body=functions, type_ignores=[]), str(source), "exec"), namespace)
+    return list(namespace["get_tests"](str(spec_dir / "spec.txt")))
 
 
 def main() -> int:
@@ -57,7 +53,10 @@ def main() -> int:
     examples = load_examples(args.spec_dir)
     class_name = "CommonMark0312ConformanceTest" if args.profile == "commonmark" else "Gfm029ConformanceTest"
     lines = [
-        "package markdown",
+        "package markdown.integration",
+        "import markdown.core.MarkdownProfile",
+        "import markdown.engine.MarkdownEngine",
+        "import markdown.render.{HtmlOptions, HtmlRenderer}",
         "",
         "import std.unittest.*",
         "import std.unittest.testmacro.*",
@@ -67,7 +66,7 @@ def main() -> int:
         f"class {class_name} {{",
     ]
     for example in examples:
-        number = int(example.get("number", example["example"]))
+        number = int(example["example"])
         extension_case = args.profile == "gfm" and "(extension)" in str(example["section"])
         profile = "MarkdownProfile.gfm029()" if extension_case else (
             "MarkdownProfile.gfm029CommonMarkBase()" if args.profile == "gfm" else "MarkdownProfile.commonMark0312()"

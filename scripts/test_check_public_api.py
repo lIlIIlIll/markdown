@@ -18,7 +18,7 @@ from urllib.parse import quote
 HERE = Path(__file__).resolve().parent
 CHECKER = HERE / "check_public_api.py"
 RELEASE_GATE = HERE / "release_gate.sh"
-HEADER = "# markdown public API snapshot v0.9.1"
+HEADER = "# markdown public API snapshot"
 
 
 class PublicApiCheckerCliTest(unittest.TestCase):
@@ -48,10 +48,10 @@ class PublicApiCheckerCliTest(unittest.TestCase):
     def update_snapshot(self) -> str:
         result = self.run_checker("--update")
         self.assertEqual(result.returncode, 0, result.stderr)
-        return (self.root / "api" / "public-api-v0.9.1.txt").read_text(encoding="utf-8")
+        return (self.root / "api" / "public-api.txt").read_text(encoding="utf-8")
 
     def write_snapshot(self, content: str) -> None:
-        (self.root / "api" / "public-api-v0.9.1.txt").write_bytes(content.encode("utf-8"))
+        (self.root / "api" / "public-api.txt").write_bytes(content.encode("utf-8"))
 
     def assert_snapshot_fails(self, content: str, message: str | None = None) -> subprocess.CompletedProcess[str]:
         self.write_snapshot(content)
@@ -90,7 +90,7 @@ class PublicApiCheckerCliTest(unittest.TestCase):
 
                 updated = self.run_checker("--update")
                 self.assertEqual(updated.returncode, 0, updated.stderr)
-                self.assertEqual((self.root / "api" / "public-api-v0.9.1.txt").read_text(encoding="utf-8"), raw)
+                self.assertEqual((self.root / "api" / "public-api.txt").read_text(encoding="utf-8"), raw)
 
     def test_real_constructor_signature_differences_fail_with_raw_diff(self) -> None:
         declaration = 'public init<T>(value: Int64, name!: String = "x") where T <: Any {'
@@ -493,7 +493,7 @@ class PublicApiCheckerCliTest(unittest.TestCase):
         self.write_source(source.replace("package sample", "package beta"), "b.cj")
         distinct_packages = self.run_checker("--update")
         self.assertEqual(distinct_packages.returncode, 0, distinct_packages.stderr)
-        distinct_raw = (self.root / "api" / "public-api-v0.9.1.txt").read_text(encoding="utf-8")
+        distinct_raw = (self.root / "api" / "public-api.txt").read_text(encoding="utf-8")
         self.assertIn("a.cj:package=alpha:owner=class/Box:", distinct_raw)
         self.assertIn("b.cj:package=beta:owner=class/Box:", distinct_raw)
 
@@ -1619,7 +1619,7 @@ class PublicApiCheckerCliTest(unittest.TestCase):
         result = self.run_checker("--update")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("canonical collision", result.stderr)
-        self.assertFalse((self.root / "api" / "public-api-v0.9.1.txt").exists())
+        self.assertFalse((self.root / "api" / "public-api.txt").exists())
 
     def test_implicit_public_interface_members_are_snapshotted(self) -> None:
         self.write_source(
@@ -1841,7 +1841,7 @@ class PublicApiCheckerCliTest(unittest.TestCase):
         result = self.run_checker("--update")
         self.assertNotEqual(result.returncode, 0, result.stdout)
         self.assertIn("nonempty type body", result.stderr)
-        self.assertFalse((self.root / "api" / "public-api-v0.9.1.txt").exists())
+        self.assertFalse((self.root / "api" / "public-api.txt").exists())
 
     def test_private_and_internal_owners_hide_nested_public_declarations(self) -> None:
         self.write_source(
@@ -2015,6 +2015,8 @@ class PublicApiCheckerCliTest(unittest.TestCase):
         self.write_python_stub(scripts / "fuzz_native_scanner.py", "native-fuzz")
         self.write_python_stub(scripts / "test_check_public_api.py", "checker-test", "CHECKER_TEST_EXIT")
         self.write_python_stub(scripts / "check_public_api.py", "checker", "CHECKER_EXIT")
+        self.write_python_stub(scripts / "test_domain_packages.py", "domain-packages")
+        self.write_python_stub(gate_root / "benchmarks" / "test_library_inputs.py", "domain-library-inputs")
         self.write_python_stub(scripts / "release_evidence.py", "release-evidence")
         (scripts / "release_evidence_bundle.py").write_text(
             "import pathlib, sys\n"
@@ -2060,6 +2062,7 @@ class PublicApiCheckerCliTest(unittest.TestCase):
         self.assertEqual(success_log[:6], ["format", "docs", "node-supervisor-capabilities", "native-build-test", "checker-test", "checker"])
         self.assertTrue(success_log[6].startswith("cjpm:check"))
         self.assertIn("link-input-tests", success_log)
+        self.assertLess(success_log.index("domain-packages"), success_log.index("native-build"))
 
     def write_shell_stub(self, path: Path, label: str) -> None:
         path.write_text(

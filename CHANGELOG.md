@@ -3,6 +3,36 @@
 本文件记录用户可观察的变更。项目遵循 Keep a Changelog；0.x 仍允许明确记录的破坏性
 调整。
 
+## 0.9.2 - Unreleased
+
+Breaking pre-GA：移除历史兼容层并收敛公开 API，升级步骤见
+[0.9.2 迁移](docs/migration-0.9.2.md)。已发布的 v0.9.1 保持不变。
+
+### Changed
+
+- 将类型与实现移入真实领域包，新增 `markdown.engine`；根包不再公开声明或转导。
+- 移除 `Markdown` 门面和 `AcceleratedMarkdownEngine` 包装器，统一 engine builder 与 scanner 配置。
+- snapshot、lint 和 artifact 操作归所属领域类型；lint provider 与 dialect 解析配置分离。
+- 仅维护 `api/public-api.txt` 当前声明快照，历史 API 通过对应 tag 查阅。
+- 官方 STS 1.2.0 为唯一工具链，benchmark 仅保留 canonical 构建，release evidence 仅接受 schema 4。
+- parser plan 更新为 7，旧解析缓存按身份检查失效。
+
+### Evidence
+
+<!-- release-evidence:start -->
+当前数字只由 [`release-evidence.json`](release-evidence.json)提供：
+
+- benchmark evidence status `current`；
+- CommonMark `652/652`；
+- GFM `671/671`；
+- 测试 `1622/1622`，`0` skipped，`0` failed；
+- public API snapshot `1679` declarations；
+- canonical CommonMark ratio `2.467460x`；
+- canonical GFM ratio `2.125837x`。
+
+原始数据和受测 commit identity 见 `docs/reports/benchmark-raw.json`。
+<!-- release-evidence:end -->
+
 ## 0.9.1 - 2026-10-21
 
 Breaking pre-GA：本版本包含原计划 0.10 的模型调整，不承诺兼容 0.9.0。核心已通过 PR #12 合入；发布包使用官方 STS 1.2.0，发布状态以 GitHub Release 为准。
@@ -39,19 +69,8 @@ Breaking pre-GA：本版本包含原计划 0.10 的模型调整，不承诺兼�
 
 ### Evidence
 
-<!-- release-evidence:start -->
-当前数字只由 [`release-evidence.json`](release-evidence.json)提供：
-
-- benchmark evidence status `current`；
-- CommonMark `652/652`；
-- GFM `671/671`；
-- 测试 `1621/1621`，`0` skipped，`0` failed；
-- public API snapshot `1706` declarations；
-- canonical CommonMark ratio `2.303624x`；
-- canonical GFM ratio `1.896210x`。
-
-原始数据和受测 commit identity 见 `docs/reports/benchmark-raw.json`。
-<!-- release-evidence:end -->
+历史测试、规范与性能证据保留在
+[v0.9.1 的 release-evidence.json](https://github.com/lIlIIlIll/markdown/blob/v0.9.1/release-evidence.json)。
 
 ## 0.9.0 - 2026-08-30
 

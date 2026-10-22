@@ -10,7 +10,10 @@ children。使用 `asHeading()`、`asText()`、`asLink()` 等 typed view 读取
 kind-specific 字段。
 
 ```cangjie
-let result = Markdown.parse("# title")
+import markdown.core.*
+import markdown.engine.MarkdownEngine
+
+let result = MarkdownEngine.builder().build().parse("# title")
 let heading = result.document.children()[0].asHeading().getOrThrow()
 println(heading.level)
 ```

@@ -12,6 +12,10 @@ import re
 import shutil
 import statistics
 import subprocess
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from library_inputs import library_digest, library_inputs, library_link_arguments
 
 
 def sha(path: Path) -> str:
@@ -40,13 +44,16 @@ def main() -> None:
     environment = os.environ | {"TMPDIR": str(output), "TMP": str(output), "TEMP": str(output),
         "cjHeapSize": "2GB", "cjGCInterval": "500ms", "LC_ALL": "C.UTF-8", "TZ": "UTC"}
     libraries = {"before": args.before_library.resolve(), "after": args.after_library.resolve()}
-    library_hashes = {name: sha(path / "libmarkdown.a") for name, path in libraries.items()}
+    library_hashes = {name: library_digest(path) for name, path in libraries.items()}
+    helper = Path(__file__).resolve().parents[1] / "library_inputs.py"
+    helper_hash = sha(helper)
+    shutil.copy2(helper, output / "library_inputs.py")
     executables = {}
     for name, library in libraries.items():
         executable = output / name
         with (output / f"compile-{name}.log").open("w") as log:
             subprocess.run(["cjc", str(source), "-O2", "--obf-seed", "0", "--import-path", str(library),
-                "-L", str(library), "-lmarkdown", "-o", str(executable)], env=environment,
+                *library_link_arguments(library), "-o", str(executable)], env=environment,
                 stdout=log, stderr=subprocess.STDOUT, check=True)
         executables[name] = executable
     inputs = {}
@@ -107,9 +114,12 @@ def main() -> None:
         comparisons.append({"requestedBytes": size, "baselineMedianNanos": baseline, "candidateMedianNanos": candidate,
             "medianSaving": saving, "maximumAaDeviation": max(noise), "peakRssRatio": ratio,
             "thresholdPass": saving >= 0.10 and saving > 2 * max(noise) and ratio <= 1.20})
-    if sha(Path(__file__)) != harness_hash or {name: sha(path / "libmarkdown.a") for name, path in libraries.items()} != library_hashes:
+    if (sha(Path(__file__)) != harness_hash or sha(helper) != helper_hash
+            or {name: library_digest(path) for name, path in libraries.items()} != library_hashes):
         raise ValueError("harness or libraries changed during measurement")
-    report = {"schema": "markdown.public-encode-cost/1", "librarySha256": library_hashes,
+    report = {"schema": "markdown.public-encode-cost/2", "librarySha256": library_hashes,
+        "libraryInputs": {name: library_inputs(path) for name, path in libraries.items()},
+        "libraryInputsHelperSha256": helper_hash,
         "sdk": version.strip(), "compilerSha256": sha(Path(compiler).resolve()), "flags": ["-O2", "--obf-seed", "0"],
         "harnessSha256": harness_hash, "consumerSourceSha256": sha(source),
         "executableSha256": {name: sha(path) for name, path in executables.items()},

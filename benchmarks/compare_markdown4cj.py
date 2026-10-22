@@ -1587,7 +1587,7 @@ def reproducibly_rebuild_binaries(report: dict[str, object], product_source: Pat
         product_environment = dict(native_environment)
         product_environment.pop("MARKDOWN_NATIVE_CFLAGS")
         build_result = subprocess.run([sys.executable,
-            str(product / "scripts/build_benchmark_driver.py"), "--mode", "canonical",
+            str(product / "scripts/build_benchmark_driver.py"),
             "--build-cli", "--identity-output", str(identity_output),
             "--sdk-url", SDK_URL, "--sdk-sha256", SDK_SHA256,
             "--sdk-archive", str(archive), "--sdk-extract-dir", str(sdk_extract),
@@ -2429,7 +2429,7 @@ unset MARKDOWN_NATIVE_ARFLAGS MARKDOWN_NATIVE_CFLAGS TARGET
 unset cjHeapSize cjGCInterval
 CC=clang AR=ar python3 scripts/build_native_scanner.py \\
   --enable --target {TARGET_TRIPLE}
-python3 scripts/build_benchmark_driver.py --mode canonical --build-cli \\
+python3 scripts/build_benchmark_driver.py --build-cli \\
   --identity-output /tmp/markdown-build-identity.json \\
   --sdk-url '{SDK_URL}' --sdk-sha256 {SDK_SHA256} \\
   --sdk-archive /path/to/cangjie-sdk.tar.gz \\

@@ -2,9 +2,13 @@
 
 `OfficialExtensions.math(builder)` 显式开启公式扩展。基础 CommonMark/GFM profile
 默认关闭它；Front Matter 不会替调用方开启扩展或指定程序。默认 HTML 只显示转义后的
-TeX，不调用外部引擎。真实公式排版后端仍在 issue #10 中实现。
+TeX，不调用外部引擎。真实排版需显式准备，见[可选 Node 后端](node-rich-backend.md)。
 
 ```cangjie
+import markdown.core.*
+import markdown.engine.MarkdownEngine
+import markdown.extensions.{MarkdownDialect, OfficialExtensions}
+
 let dialect = OfficialExtensions.math(MarkdownDialect.define("formula", "2")).build()
 let engine = MarkdownEngine.builder().dialect(dialect).build()
 let result = engine.parse("Value $x + y$.")
@@ -53,7 +57,7 @@ batch 与 append 的最终结果共享绑定和 payload；公开 raw/source even
 输出共享累计预算与取消。块公式同时受 block bytes、规则及全局 capture bytes、literal
 bytes 限制；capture 对原始正文行字节计数。`displayMath()` 拒绝被忽略的嵌套、Markdown
 正文、自定义 emitter、参数、动态 kind 和 document-start-only 设置。结构化公式不接受
-通用 RendererRule 覆盖。第三方派生输出将通过独立准备边界提供。
+通用 RendererRule 覆盖。第三方派生输出通过[独立准备边界](rich-content.md)提供。
 
 可运行 consumer 见 [cookbook](../examples/cookbook/src/main.cj) 的 `math-source` 段：
 

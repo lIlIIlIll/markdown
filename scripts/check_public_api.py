@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate or verify the deterministic markdown 0.9.1 pre-GA public API snapshot."""
+"""Generate or verify the deterministic markdown current public API snapshot."""
 
 from __future__ import annotations
 
@@ -14,8 +14,8 @@ from urllib.parse import quote, unquote_to_bytes
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SNAPSHOT = ROOT / "api" / "public-api-v0.9.1.txt"
-HEADER = "# markdown public API snapshot v0.9.1"
+SNAPSHOT = ROOT / "api" / "public-api.txt"
+HEADER = "# markdown public API snapshot"
 # Python's ``\w`` does not admit combining marks even though Cangjie accepts
 # them as XID_Continue characters.  Cover the Unicode combining-mark blocks
 # here, then validate actual declaration tokens with ``str.isidentifier``.
@@ -1979,7 +1979,7 @@ def _snapshot_content(declarations: list[str]) -> str:
 
 
 def _print_raw_diff(expected: list[str], current: list[str]) -> None:
-    for line in difflib.unified_diff(expected, current, fromfile="api/public-api-v0.9.1.txt", tofile="current API",
+    for line in difflib.unified_diff(expected, current, fromfile="api/public-api.txt", tofile="current API",
         lineterm=""):
         print(line, file=sys.stderr)
 
@@ -2014,7 +2014,7 @@ def main() -> int:
         print(error, file=sys.stderr)
         return 1
     if expected_keys != current_keys:
-        print("public API differs from api/public-api-v0.9.1.txt", file=sys.stderr)
+        print("public API differs from api/public-api.txt", file=sys.stderr)
         _print_raw_diff(expected_records, current_records)
         return 1
     print(f"public API snapshot verified: {len(declarations)} declarations")

@@ -1,8 +1,8 @@
 # 扩展模型
 
 `markdown.extensions` 用不可变方言描述 Markdown 语义。扩展可以声明受限语法、
-renderer lowering、AST transform、只读分析和 lint provider；engine 在第一次解析前完成依赖、冲突、
-资源边界和 renderer coverage 校验。
+renderer lowering、AST transform 和只读分析；engine 在第一次解析前完成依赖、冲突、
+资源边界和 renderer coverage 校验。snapshot lint provider 由 editor 的 MarkdownLinter 注册。
 
 如果只需要 CommonMark 或 GFM，请直接使用内置 profile。只有需要稳定复用自定义语法时，
 才创建方言。
@@ -22,7 +22,8 @@ ExtensionManifest + Syntax + Transform + Analysis + RendererRule
 
 `CompiledMarkdownDialect` 是不可变且可并发复用的。运行时不会动态更改 rule 顺序。
 `disable(extensionId)` 在编译前移除该扩展的 manifest、syntax、renderer、SPI、transform、
-analysis 和 lint provider。
+analysis。lint provider 通过 `MarkdownLinter(engine, providers: [...])` 显式注册，
+不属于 dialect 解析配置。
 
 用 ExtensionAstTransform 修改语义树，返回值会验证 source、profile、dialect、节点上限
 及图结构。然后绑定器统一确定引用、脚注编号和标题目标。ExtensionDocumentAnalysis
@@ -60,8 +61,8 @@ CommonMark 0.31.2 和 GFM modern 可组合这六项扩展；GFM 0.29 未列在�
 基础能力仅随对应 GFM profile 默认开启；github-alerts、wikilinks 仍是未实现的目录项。
 另有独立选择的 [Code Groups 1.0](code-groups.md)，不加入 p1Dialect 的六项组合。
 它支持有序代码条目、标题、行高亮、原始换行复制及可选 tabs；基础 profile 默认关闭。
-真实富内容有[可选 Linux Node 链路](node-rich-backend.md)；编辑和冻结性能的最终验收
-仍在 issue #10 中推进。
+真实富内容有[可选 Linux Node 链路](node-rich-backend.md)。历史验收和发布证据见
+[报告索引](reports/README.md)。
 
 ## 智能标点
 
@@ -88,6 +89,7 @@ RequireFused 明确失败，PreferFused 回退完整 AST。它不会在 feed 中
 
 ```cangjie
 import markdown.core.*
+import markdown.engine.*
 import markdown.extensions.*
 
 let manifest = ExtensionManifest(
@@ -128,7 +130,7 @@ let html = engine.htmlRenderer().render(engine.parse(":::note\n**important**\n::
 | DSL 无法表达、但 lookahead 有界的行内语法 | `InlineParserSpi` |
 | 绑定前修改完整 AST | `ExtensionAstTransform` |
 | 读取绑定结果并产生整文诊断 | `ExtensionDocumentAnalysis` |
-| snapshot 级诊断 | `ExtensionLintProvider` |
+| snapshot 级诊断 | editor 的 `ExtensionLintProvider` 与 `MarkdownLinter` |
 
 优先使用 DSL。它的边界、优先级和资源成本可以在 dialect 编译时验证。SPI callback
 运行在宿主进程内，必须自行保证确定性并遵守声明的 lookahead。

@@ -1,5 +1,8 @@
 package markdown
 
+import markdown.core.{ArenaNodePayload, AstArenaBuilder, AstInvariantValidator, AstQuery, LiteralStorage, NodeId, 
+    NodeKind, NodeOrigin, NodeOriginKind, NodeRef, NodeRefWalkEvent, ParseResult, SourceBuffer, SourceSpan}
+import markdown.editor.{DocumentSnapshot, SourceEdit}
 import std.collection.*
 
 // Restricted feasibility candidate: preserve IDs of unchanged semantic nodes,

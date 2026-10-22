@@ -1,14 +1,15 @@
 package markdown.node
 
+import markdown.core.{CancellationToken, ImmutableArray, MarkdownErrorCode, MarkdownException, OperationBudget, 
+    SourceSpan}
+import markdown.render.{CodeHighlightToken, MathMlAttribute, MathMlNode, RichContentBackend, RichContentFailure, 
+    RichContentKind, RichContentLimits, RichContentOutcome, RichContentProduct, RichContentRequest, RichPngImage}
 import std.collection.*
 import std.env.getProcessId
 import std.fs.{File, Path}
 import std.io.*
 import std.process.*
 import std.sync.AtomicBool
-import markdown.{CodeHighlightToken, ImmutableArray, MarkdownErrorCode, MarkdownException, MathMlAttribute, MathMlNode, 
-    OperationBudget, CancellationToken, RichContentBackend, RichContentFailure, RichContentKind, RichContentLimits, 
-    RichContentOutcome, RichContentProduct, RichContentRequest, RichPngImage, SourceSpan}
 
 /** 显式安装的 Linux Node 适配器；构造只读取固定 identity 文件，不启动或下载程序。 */
 public class NodeRichContentBackend <: RichContentBackend {
@@ -181,9 +182,9 @@ public class NodeRichContentBackend <: RichContentBackend {
 }
 
 private class NodePipeResult {
-    let output: Array<Byte>
+    protected let output: Array<Byte>
     let stderrBytes: Int64
-    init(output: Array<Byte>, stderrBytes: Int64) {
+    protected init(output: Array<Byte>, stderrBytes: Int64) {
         this.output = output
         this.stderrBytes = stderrBytes
     }
@@ -247,17 +248,17 @@ private class NodeWireWriter {
             values.add(UInt8((value >> shift) & 255))
         }
     }
-    func byte(value: Int64): Unit {
+    protected func byte(value: Int64): Unit {
         values.add(UInt8(value))
     }
-    func raw(value: String): Unit {
+    protected func raw(value: String): Unit {
         values.add(all: value.toArray())
     }
-    func string(value: String): Unit {
+    protected func string(value: String): Unit {
         uint(value.size);
         raw(value)
     }
-    func frame(): Array<Byte> {
+    protected func frame(): Array<Byte> {
         let body = values.toArray()
         let framed = NodeWireWriter()
         framed.uint(body.size)
@@ -308,12 +309,12 @@ private func encodeNodeRequests(requests: Array<RichContentRequest>, limits: Ric
 }
 
 private class NodeWireReader {
-    let bytes: Array<Byte>
-    var offset: Int64 = 0
-    init(bytes: Array<Byte>) {
+    protected let bytes: Array<Byte>
+    protected var offset: Int64 = 0
+    protected init(bytes: Array<Byte>) {
         this.bytes = bytes
     }
-    func byte(): Int64 {
+    protected func byte(): Int64 {
         if (offset >= bytes.size) {
             invalidNodeProtocol()
         }
@@ -328,7 +329,7 @@ private class NodeWireReader {
         }
         value
     }
-    func data(count: Int64): Array<Byte> {
+    protected func data(count: Int64): Array<Byte> {
         if (count < 0 || count > bytes.size - offset) {
             invalidNodeProtocol()
         }
@@ -336,14 +337,14 @@ private class NodeWireReader {
         offset += count
         Array<Byte>(count, {i => bytes[start + i]})
     }
-    func string(maximum: Int64): String {
+    protected func string(maximum: Int64): String {
         let count = uint()
         if (count > maximum) {
             invalidNodeProtocol()
         }
         String.fromUtf8(data(count))
     }
-    func expect(value: String): Unit {
+    protected func expect(value: String): Unit {
         for (expected in value.toArray()) {
             if (byte() != Int64(expected)) {
                 invalidNodeProtocol()
@@ -353,12 +354,12 @@ private class NodeWireReader {
 }
 
 private class NodeMathFrame {
-    let tag: String
-    let text: String
-    let attributes: Array<MathMlAttribute>
-    let children = ArrayList<MathMlNode>()
-    var remaining: Int64
-    init(tag: String, text: String, attributes: Array<MathMlAttribute>, remaining: Int64) {
+    protected let tag: String
+    protected let text: String
+    protected let attributes: Array<MathMlAttribute>
+    protected let children = ArrayList<MathMlNode>()
+    protected var remaining: Int64
+    protected init(tag: String, text: String, attributes: Array<MathMlAttribute>, remaining: Int64) {
         this.tag = tag
         this.text = text
         this.attributes = attributes

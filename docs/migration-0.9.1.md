@@ -1,8 +1,13 @@
 # 0.9.1 模型迁移
 
+本页记录 v0.9.1 的历史变更，示例及接口归属以该 tag 为准。当前升级继续阅读
+[0.9.2 迁移](migration-0.9.2.md)。
+
 本版本允许破坏性修改，不提供旧 API facade、旧缓存 reader 或自动迁移。
 以下列出已经实施的扩展、追加式 session、富内容后端及编辑/缓存取舍。
-本地正确性、冻结性能、离线候选包及记录修订的 hosted CI 已验证；核心已通过 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12) 合入；本次按 `0.9.1` 准备发布，最终发布状态以 GitHub Release 为准。
+v0.9.1 已发布为 breaking pre-GA，历史交付状态见
+[v0.9.1 Release](https://github.com/lIlIIlIll/markdown/releases/tag/v0.9.1)。核心通过
+[PR #12](https://github.com/lIlIIlIll/markdown/pull/12) 合入，发布准备通过 PR #15 合入。
 逐项进度见 [issue #10 验收矩阵](../.agent/issue-10-matrix.md)。
 
 - 使用 `result.document`；移除 `ParseResult.ast` 和 `parsePartial`。
@@ -36,7 +41,7 @@
 - executionModels 的失败模型字段为 parseOutcome；移除旧 partialParse 名称。
   CLI dialect validate 默认读取引擎当前 SPI；旧 SPI 1/2 明确拒绝。
 
-公开声明见[0.9.1 API snapshot](../api/public-api-v0.9.1.txt)。开发期间的完整验证进度见
+公开声明见[0.9.1 API snapshot](https://github.com/lIlIIlIll/markdown/blob/v0.9.1/api/public-api-v0.9.1.txt)。开发期间的完整验证进度见
 [issue #10 实施记录](../.agent/issue-10-status.md)。
 
 ## 追加输入

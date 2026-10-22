@@ -1,13 +1,14 @@
 package markdown_cookbook
 
+import markdown.core.{AstQuery, CancellationToken, DefinitionListPayload, DefinitionListRole, Diagnostic, 
+    DiagnosticSeverity, Document, MarkdownProfile, MathPayload, OperationBudget, ParseLimits, SourceBuffer}
+import markdown.editor.{DocumentSnapshot, MarkdownLinter}
+import markdown.engine.{AppendReplica, AppendState, MarkdownEngine}
+import markdown.extensions.{BlockSyntax, ExtensionCapabilities, ExtensionDocumentAnalysis, ExtensionManifest, 
+    MarkdownDialect, OfficialExtensions, RendererRule}
+import markdown.render.{AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, CanonicalMarkdownRenderer, 
+    CodeGroupHtmlOptions, HtmlOptions, HtmlRenderer, RichContentOptions, RichContentOutcome, RichContentPreparer}
 import std.collection.ArrayList
-import markdown.core.{AppendReplica, AppendState, CancellationToken, Diagnostic, DiagnosticSeverity, Document, Markdown, 
-    MarkdownEngine, MarkdownProfile, OperationBudget, ParseLimits, SourceBuffer}
-import markdown.editor.AstQuery
-import markdown.extensions.{DefinitionListPayload, DefinitionListRole, MathPayload, BlockSyntax, ExtensionCapabilities, 
-    ExtensionDocumentAnalysis, ExtensionManifest, MarkdownDialect, OfficialExtensions, RendererRule}
-import markdown.render.{CodeGroupHtmlOptions, AsyncRenderState, AsyncSinkWriteResult, AsyncTextSink, HtmlOptions, 
-    HtmlRenderer, RichContentPreparer, RichContentOptions, RichContentOutcome}
 
 class CookbookOutputSink <: AsyncTextSink {
     private let out = StringBuilder()
@@ -15,7 +16,7 @@ class CookbookOutputSink <: AsyncTextSink {
         out.append(value)
         AsyncSinkWriteResult.Continue
     }
-    func content(): String {
+    protected func content(): String {
         out.toString()
     }
 }
@@ -62,13 +63,14 @@ class CookbookHeadingAnalysis <: ExtensionDocumentAnalysis {
 
 main(): Int64 {
     println("== safe-html ==")
-    println(Markdown.toSafeHtml("# Hello\n\n<script>blocked</script>"))
+    println(MarkdownEngine.builder().build().renderHtml("# Hello\n\n<script>blocked</script>").html)
 
     println("== gfm ==")
-    println(Markdown.toSafeHtml("- [x] shipped\n\n~~old~~", profile: MarkdownProfile.gfm029()))
+    println(
+        MarkdownEngine.builder().profile(MarkdownProfile.gfm029()).build().renderHtml("- [x] shipped\n\n~~old~~").html)
 
     println("== ast ==")
-    let parsed = Markdown.parse("# Install\n\nSee [API](api).")
+    let parsed = MarkdownEngine.builder().build().parse("# Install\n\nSee [API](api).")
     for (heading in AstQuery.headings(parsed.document)) {
         let span = heading.node.span.getOrThrow()
         let position = parsed.source.utf16Position(span.startByte)
@@ -80,8 +82,8 @@ main(): Int64 {
 
     println("== lint ==")
     let lintEngine = MarkdownEngine.builder().build()
-    let snapshot = lintEngine.parseSnapshot("# Title\n\n### Skipped level")
-    for (diagnostic in lintEngine.lint(snapshot)) {
+    let snapshot = DocumentSnapshot.parse(lintEngine, "# Title\n\n### Skipped level")
+    for (diagnostic in MarkdownLinter(lintEngine).lint(snapshot)) {
         println("${diagnostic.code}: ${diagnostic.message}")
     }
 
@@ -205,6 +207,6 @@ main(): Int64 {
     println(analyzed.diagnostics[0].message)
 
     println("== format ==")
-    println(Markdown.format("#  Title\n\n* item"))
+    println(CanonicalMarkdownRenderer().render(MarkdownEngine.builder().build().parse("#  Title\n\n* item").document))
     0
 }

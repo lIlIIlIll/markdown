@@ -33,7 +33,7 @@ def main() -> None:
     if not re.fullmatch(r"[0-9a-f]{7,40}", args.revision):
         parser.error("supply the measured production revision")
     data = json.loads(args.report.read_text())
-    if data.get("schema") != "markdown.feature-cost/1" or data.get("retainedSamples") != 7:
+    if data.get("schema") != "markdown.feature-cost/2" or data.get("retainedSamples") != 7:
         raise ValueError("unsupported or incomplete measurement")
     for row in data["rows"] + data["richRows"] + data["calibration"]:
         path = Path(row["rawPath"])

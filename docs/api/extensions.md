@@ -6,6 +6,10 @@
 ## 最小块扩展
 
 ```cangjie
+import markdown.core.*
+import markdown.engine.MarkdownEngine
+import markdown.extensions.*
+
 let manifest = ExtensionManifest(
     "docs",
     "1.0.0",
@@ -87,13 +91,12 @@ MarkdownDialect.define(id, version)
     .parserSpi(spi)
     .astTransform(transform)
     .documentAnalysis(analysis)
-    .lint(provider)
     .disable(extensionId)
     .build()
 ```
 
-`disable` 会在编译前移除该扩展的 manifest、syntax、renderer、SPI、transform、analysis
-和 lint provider。
+`disable` 会在编译前移除该扩展的 manifest、syntax、renderer、SPI、transform 和 analysis。
+`ExtensionLintProvider` 由 editor 的 `MarkdownLinter` 独立注册，见 [Lint API](editor.md#lint)。
 
 `DialectCompiler.compile` 验证：
 
@@ -175,7 +178,7 @@ unknown、duplicate、missing、unclosed 或类型不匹配的参数产生
 
 ## `SyntaxPayload`
 
-Custom node 的 payload 保留：
+`SyntaxPayload` 是 `markdown.core` 的不可变语义模型。Custom node 的 payload 保留：
 
 - raw 参数拼写
 - typed parameter values
@@ -284,8 +287,8 @@ cjpm run --skip-build
 ```
 
 输出的 `== bound-analysis ==` 段包含 `heading=analyzed`。
-完整实现见 [cookbook 源码](../../examples/cookbook/src/main.cj)。ExtensionLintProvider
-仍为显式 snapshot lint 操作提供诊断。
+完整实现见 [cookbook 源码](../../examples/cookbook/src/main.cj)。editor 的 `ExtensionLintProvider`
+通过 `MarkdownLinter(engine, providers: [...])` 为显式 snapshot lint 操作提供诊断。
 
 ## Official extensions
 

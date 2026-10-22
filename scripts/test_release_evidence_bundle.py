@@ -62,7 +62,7 @@ class ReleaseEvidenceBundleTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "commonmark.xml").write_text(
-                '<testsuite name="markdown.CommonMark0312ConformanceTest" '
+                '<testsuite name="markdown.integration.CommonMark0312ConformanceTest" '
                 'tests="3" failures="0" errors="0" skipped="1"/>\n', encoding="utf-8"
             )
             (root / "other.xml").write_text(
@@ -73,7 +73,7 @@ class ReleaseEvidenceBundleTest(unittest.TestCase):
         self.assertEqual(totals, {
             "total": 5, "passed": 3, "skipped": 1, "failures": 1, "errors": 0,
         })
-        self.assertEqual(suites["markdown.CommonMark0312ConformanceTest"]["passed"], 2)
+        self.assertEqual(suites["markdown.integration.CommonMark0312ConformanceTest"]["passed"], 2)
 
     def test_checksum_verification_rejects_tampering(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
