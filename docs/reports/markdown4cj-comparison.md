@@ -4,7 +4,7 @@
 
 ## 对比边界
 
-- 产品提交：`ba71d8d9e131ef6de8fa9b7e9c38f72a8b51eba3`，Git tree `a293c2a8f34604b8867859a5d4c6e8d4a6449b89`。
+- 产品提交：`dff237c8fe34196366db7f1be3e242c0b6e6efb2`，Git tree `98d6d43cd236b08c0b69babb6c21d4e3159f432d`。
 - `markdown4cj` 固定提交 `f43cfb3ae1cd3092d9a8a94332c64815fc4572f9`。
 - `commonmark4cj` 固定提交 `41499e6d6e50efac71db3bba64d5300d251d9c90`，用于当前 SDK adapter。
 - SDK：`Cangjie Compiler: 1.2.0 (cjnative)`。
@@ -36,21 +36,21 @@
 
 | 语料 | parse 加速 | 峰值 RSS 比值 |
 | --- | ---: | ---: |
-| official-spec | 6.62× | 0.510× |
-| readme-api | 5.13× | 0.472× |
-| large-code | 2.91× | 0.543× |
-| large-table | 71.53× | 0.039× |
-| many-references | 13.91× | 0.192× |
-| cjk | 10.29× | 0.215× |
-| emoji | 11.76× | 0.224× |
-| deep-list | 9.59× | 0.556× |
-| pathological-delimiters | 14.67× | 0.253× |
-| long-line | 9.20× | 0.462× |
-| ordinary | 9.01× | 0.463× |
-| **几何平均** | **10.30×** | — |
+| official-spec | 6.04× | 0.517× |
+| readme-api | 5.02× | 0.484× |
+| large-code | 2.18× | 0.552× |
+| large-table | 78.26× | 0.026× |
+| many-references | 9.05× | 0.195× |
+| cjk | 9.32× | 0.226× |
+| emoji | 7.86× | 0.164× |
+| deep-list | 6.38× | 0.582× |
+| pathological-delimiters | 12.61× | 0.177× |
+| long-line | 6.73× | 0.437× |
+| ordinary | 6.49× | 0.460× |
+| **几何平均** | **8.25×** | — |
 
-11 个语料的最小加速为 `2.91×`。最大峰值 RSS 比值为
-`0.556×`。共享行为用例为
+11 个语料的最小加速为 `2.18×`。最大峰值 RSS 比值为
+`0.582×`。共享行为用例为
 `12/12`。
 
 ## 合入门禁
@@ -66,7 +66,7 @@ unset MARKDOWN_NATIVE_ARFLAGS MARKDOWN_NATIVE_CFLAGS TARGET
 unset cjHeapSize cjGCInterval
 CC=clang AR=ar python3 scripts/build_native_scanner.py \
   --enable --target x86_64-unknown-linux-gnu
-python3 scripts/build_benchmark_driver.py --mode canonical --build-cli \
+python3 scripts/build_benchmark_driver.py --build-cli \
   --identity-output /tmp/markdown-build-identity.json \
   --sdk-url 'https://cangjie-lang.cn/v1/files/auth/downLoad?nsId=142267&fileName=cangjie-sdk-linux-x64-1.2.0.tar.gz&objectKey=6ab1e26eece1f87ff5befa73' --sdk-sha256 8c5fd944cd9cc51ee63d4a240e3ecc4f540345dae1468e8b47c927ecf2ba998f \
   --sdk-archive /path/to/cangjie-sdk.tar.gz \
