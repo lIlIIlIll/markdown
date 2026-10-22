@@ -25,10 +25,10 @@ Breaking pre-GA：移除历史兼容层并收敛公开 API，升级步骤见
 - benchmark evidence status `current`；
 - CommonMark `652/652`；
 - GFM `671/671`；
-- 测试 `1621/1621`，`0` skipped，`0` failed；
-- public API snapshot `1706` declarations；
-- canonical CommonMark ratio `2.303624x`；
-- canonical GFM ratio `1.896210x`。
+- 测试 `1622/1622`，`0` skipped，`0` failed；
+- public API snapshot `1679` declarations；
+- canonical CommonMark ratio `2.467460x`；
+- canonical GFM ratio `2.125837x`。
 
 原始数据和受测 commit identity 见 `docs/reports/benchmark-raw.json`。
 <!-- release-evidence:end -->
