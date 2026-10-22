@@ -1,7 +1,11 @@
 package markdown_benchmark_driver
 
-import markdown.*
+import markdown.core.{MarkdownProfile, OwnedUtf8Input, ParseLimits, ParseResult, ReusableUtf8Input}
+import markdown.editor.DocumentSnapshot
+import markdown.engine.{MarkdownEngine, MarkdownEngineBuilder}
+import markdown.extensions.OfficialExtensions
 import markdown.native.NativeLineScanner
+import markdown.render.{HtmlOptions, HtmlRenderer}
 import std.collection.*
 import std.convert.*
 import std.io.*
@@ -54,20 +58,16 @@ private func readInputBytes(): Array<Byte> {
     bytes.bytes()
 }
 
-private func parseOwned(engine: AcceleratedMarkdownEngine, bytes: Array<Byte>): ParseResult {
+private func parseOwned(engine: MarkdownEngine, bytes: Array<Byte>): ParseResult {
     unsafe { engine.parse(OwnedUtf8Input.take(bytes.clone())) }
 }
 
-private func parseStream(engine: AcceleratedMarkdownEngine, bytes: Array<Byte>): ParseResult {
+private func parseStream(engine: MarkdownEngine, bytes: Array<Byte>): ParseResult {
     engine.parse(BenchmarkInputStream(bytes))
 }
 
 private func benchmarkEngineBuilder(): MarkdownEngineBuilder {
-    MarkdownEngine.builder()
-}
-
-private func accelerate(engine: MarkdownEngine): AcceleratedMarkdownEngine {
-    engine.acceleratedBy(NativeLineScanner())
+    MarkdownEngine.builder().lineScanner(Some(NativeLineScanner()))
 }
 
 main(args: Array<String>): Int64 {
@@ -87,15 +87,19 @@ main(args: Array<String>): Int64 {
     let sourceBytes = readInputBytes()
     var observed: Int64 = 0
     if (args[0] == "commonmark-parse") {
-        let engine = accelerate(
-            benchmarkEngineBuilder().profile(MarkdownProfile.commonMark0312()).limits(ParseLimits.trusted()).build())
+        let engine = benchmarkEngineBuilder()
+            .profile(MarkdownProfile.commonMark0312())
+            .limits(ParseLimits.trusted())
+            .build()
         let input = unsafe { ReusableUtf8Input.take(sourceBytes) }
         for (_ in 0..iterations) {
             observed += engine.parse(input).document.root().children().size
         }
     } else if (args[0] == "commonmark-parse-owned") {
-        let engine = accelerate(
-            benchmarkEngineBuilder().profile(MarkdownProfile.commonMark0312()).limits(ParseLimits.trusted()).build())
+        let engine = benchmarkEngineBuilder()
+            .profile(MarkdownProfile.commonMark0312())
+            .limits(ParseLimits.trusted())
+            .build()
         for (_ in 0..iterations) {
             observed += parseOwned(engine, sourceBytes).document.root().children().size
         }
@@ -109,14 +113,18 @@ main(args: Array<String>): Int64 {
             observed += engine.parse(sourceText).document.root().children().size
         }
     } else if (args[0] == "commonmark-parse-bytes") {
-        let engine = accelerate(
-            benchmarkEngineBuilder().profile(MarkdownProfile.commonMark0312()).limits(ParseLimits.trusted()).build())
+        let engine = benchmarkEngineBuilder()
+            .profile(MarkdownProfile.commonMark0312())
+            .limits(ParseLimits.trusted())
+            .build()
         for (_ in 0..iterations) {
             observed += engine.parse(sourceBytes).document.root().children().size
         }
     } else if (args[0] == "commonmark-parse-stream") {
-        let engine = accelerate(
-            benchmarkEngineBuilder().profile(MarkdownProfile.commonMark0312()).limits(ParseLimits.trusted()).build())
+        let engine = benchmarkEngineBuilder()
+            .profile(MarkdownProfile.commonMark0312())
+            .limits(ParseLimits.trusted())
+            .build()
         for (_ in 0..iterations) {
             observed += parseStream(engine, sourceBytes).document.root().children().size
         }
@@ -127,18 +135,22 @@ main(args: Array<String>): Int64 {
             .build()
         let sourceText = String.fromUtf8(sourceBytes)
         for (_ in 0..iterations) {
-            observed += engine.parseSnapshot(sourceText).syntaxTree.root.tokens.size
+            observed += DocumentSnapshot.parse(engine, sourceText).syntaxTree.root.tokens.size
         }
     } else if (args[0] == "commonmark-spec-html") {
-        let engine = accelerate(
-            benchmarkEngineBuilder().profile(MarkdownProfile.commonMark0312()).limits(ParseLimits.trusted()).build())
+        let engine = benchmarkEngineBuilder()
+            .profile(MarkdownProfile.commonMark0312())
+            .limits(ParseLimits.trusted())
+            .build()
         let renderer = unsafe { HtmlRenderer(options: HtmlOptions.specCompatible()) }
         let input = unsafe { ReusableUtf8Input.take(sourceBytes) }
         print(renderer.render(engine.parse(input).document))
         return 0
     } else if (args[0] == "commonmark-html" || args[0] == "commonmark-source-map") {
-        let engine = accelerate(
-            benchmarkEngineBuilder().profile(MarkdownProfile.commonMark0312()).limits(ParseLimits.trusted()).build())
+        let engine = benchmarkEngineBuilder()
+            .profile(MarkdownProfile.commonMark0312())
+            .limits(ParseLimits.trusted())
+            .build()
         let renderer = unsafe { HtmlRenderer(options: HtmlOptions.specCompatible()) }
         let input = unsafe { ReusableUtf8Input.take(sourceBytes) }
         for (_ in 0..iterations) {
@@ -149,8 +161,10 @@ main(args: Array<String>): Int64 {
             }
         }
     } else if (args[0] == "gfm-parse" || args[0] == "gfm-html") {
-        let engine = accelerate(
-            benchmarkEngineBuilder().profile(MarkdownProfile.gfmModernV1()).limits(ParseLimits.trusted()).build())
+        let engine = benchmarkEngineBuilder()
+            .profile(MarkdownProfile.gfmModernV1())
+            .limits(ParseLimits.trusted())
+            .build()
         let input = unsafe { ReusableUtf8Input.take(sourceBytes) }
         if (args[0] == "gfm-parse") {
             for (_ in 0..iterations) {
@@ -167,7 +181,7 @@ main(args: Array<String>): Int64 {
             .dialect(OfficialExtensions.p1Dialect())
             .limits(ParseLimits.trusted())
             .build()
-        let engine = accelerate(baseEngine)
+        let engine = baseEngine
         let renderer = baseEngine.htmlRenderer(options: HtmlOptions.safe())
         let input = unsafe { ReusableUtf8Input.take(sourceBytes) }
         for (_ in 0..iterations) {

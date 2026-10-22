@@ -1,6 +1,6 @@
 # 安全 HTML 与 URI
 
-处理不可信 Markdown 时，使用 `Markdown.toSafeHtml` 或
+处理不可信 Markdown 时，使用 `engine.renderHtml(source)` 的默认安全策略，或显式配置
 `HtmlOptions.safe()`。
 
 ## 安全默认值
@@ -17,9 +17,12 @@
 - 执行 cancellation、rendered-node 和 output-byte 限制
 
 ```cangjie
-let html = Markdown.toSafeHtml(
+import markdown.engine.MarkdownEngine
+
+let engine = MarkdownEngine.builder().build()
+let html = engine.renderHtml(
     "<script>alert(1)</script> [x](javascript:alert(1))"
-)
+).html
 ```
 
 ## Raw HTML

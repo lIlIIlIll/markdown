@@ -93,7 +93,7 @@ def initialize(output: Path) -> None:
         "toolchain": {
             "cangjie": command_output("cjc", "-v"),
             "sdkArchiveSha256": os.environ.get("MARKDOWN_SDK_ARCHIVE_SHA256"),
-            "benchmarkDriverMode": os.environ.get("MARKDOWN_BENCHMARK_DRIVER_MODE", "canonical"),
+            "benchmarkDriverMode": "canonical",
             "cc": command_output(os.environ.get("CC", "clang"), "--version"),
             "ar": command_output(os.environ.get("AR", "ar"), "--version"),
         },
@@ -132,7 +132,7 @@ def snapshot_artifacts(output: Path) -> None:
         output / "reports" / "differential-smoke.json")
     copy_path(ROOT / "docs" / "reports" / "benchmark-raw.json",
         output / "reports" / "benchmark-raw.json")
-    copy_path(ROOT / "api" / "public-api-v0.9.1.txt", output / "api" / "public-api-v0.9.1.txt")
+    copy_path(ROOT / "api" / "public-api.txt", output / "api" / "public-api.txt")
     for bundle in sorted((ROOT / "target").glob("*.cjp")):
         copy_path(bundle, output / "candidate" / bundle.name)
 
@@ -191,7 +191,7 @@ def finalize(output: Path, gate_exit: int) -> None:
         benchmark_errors = validate_benchmark_derivations(
             json.loads(benchmark_path.read_text(encoding="utf-8"))
         )
-    snapshot = output / "api" / "public-api-v0.9.1.txt"
+    snapshot = output / "api" / "public-api.txt"
     manifest = {
         "schemaVersion": 1,
         **context,
@@ -203,8 +203,8 @@ def finalize(output: Path, gate_exit: int) -> None:
         "steps": steps,
         "tests": tests,
         "conformance": {
-            "commonmark": suites.get("markdown.CommonMark0312ConformanceTest"),
-            "gfm": suites.get("markdown.Gfm029ConformanceTest"),
+            "commonmark": suites.get("markdown.integration.CommonMark0312ConformanceTest"),
+            "gfm": suites.get("markdown.integration.Gfm029ConformanceTest"),
         },
         "api": {
             "declarations": len(normalized_declarations()),

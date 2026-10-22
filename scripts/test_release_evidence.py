@@ -41,6 +41,12 @@ class ReleaseEvidenceTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("release evidence verified", result.stdout)
 
+    def test_previous_evidence_schema_is_rejected(self) -> None:
+        evidence = json.loads((ROOT / "release-evidence.json").read_text(encoding="utf-8"))
+        evidence["schemaVersion"] = 3
+        errors = release_evidence.validate(evidence, evidence_ready=False)
+        self.assertIn("release evidence schemaVersion must be 4", errors)
+
     def test_generated_sections_include_all_current_metrics(self) -> None:
         evidence = json.loads((ROOT / "release-evidence.json").read_text(encoding="utf-8"))
         readme = release_evidence.readme_block(evidence)
@@ -99,6 +105,22 @@ class ReleaseEvidenceTest(unittest.TestCase):
             expected,
             "# Example\n\n## Evidence\n\ngenerated metric\n\n## Next\n\nkeep me\n",
         )
+
+    def test_changelog_generation_cannot_overwrite_a_previous_release(self) -> None:
+        marker = "<!-- release-evidence:start -->stale<!-- release-evidence:end -->"
+        historical = f"## 0.9.1 - 2026-10-21\n\n{marker}\n"
+        current = f"## 0.9.2 - Unreleased\n\n### Evidence\n\n{marker}\n\n"
+        replacement = "<!-- release-evidence:start -->current<!-- release-evidence:end -->"
+        result = release_evidence.replace_changelog_evidence(current + historical, "0.9.2", replacement)
+        self.assertTrue(result.endswith(historical))
+        self.assertEqual(result.count("current"), 1)
+
+    def test_changelog_does_not_fall_back_to_historical_evidence(self) -> None:
+        text = ("## 0.9.2 - Unreleased\n\nNo evidence yet.\n\n"
+            "## 0.9.1 - 2026-10-21\n\n"
+            "<!-- release-evidence:start -->old<!-- release-evidence:end -->\n")
+        with self.assertRaisesRegex(ValueError, "current changelog"):
+            release_evidence.replace_changelog_evidence(text, "0.9.2", "new")
 
     def test_incomplete_release_can_project_current_failing_benchmark(self) -> None:
         evidence = json.loads((ROOT / "release-evidence.json").read_text(encoding="utf-8"))

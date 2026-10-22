@@ -72,7 +72,6 @@ unset cjHeapSize cjGCInterval
 CC=clang AR=ar python3 scripts/build_native_scanner.py \
   --enable --target x86_64-unknown-linux-gnu
 python3 scripts/build_benchmark_driver.py \
-  --mode canonical \
   --build-cli \
   --identity-output target/same-language-benchmark/build-identity.json \
   --sdk-url 'https://cangjie-lang.cn/v1/files/auth/downLoad?nsId=142267&fileName=cangjie-sdk-linux-x64-1.2.0.tar.gz&objectKey=6ab1e26eece1f87ff5befa73' \

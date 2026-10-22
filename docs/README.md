@@ -41,23 +41,23 @@
 | query、rewrite、lint 或 format | [Editor API](api/editor.md) |
 | 缓存结果或处理多文档 | [Artifact 与 Document API](api/artifacts-and-services.md) |
 | 使用命令行工具 | [CLI reference](cli.md) |
-| 从 0.8 迁移 | [迁移指南](migration.md) |
+| 从 0.9.1 迁移 | [0.9.2 迁移](migration-0.9.2.md) |
 
 ## 我要查 API
 
 - [API 速查](api/quick-reference.md)：常用入口、默认值和返回值。
 - [完整 API 索引](api.md)：按公开子包和类型定位 reference。
-- [公开声明 snapshot](../api/public-api-v0.9.1.txt)：精确声明事实源。
+- [公开声明 snapshot](../api/public-api.txt)：精确声明事实源。
 
 按子包深入：
 
 | 子包 | Reference |
 | --- | --- |
-| `markdown.core` | [解析、AST、限制、诊断和 events](api/core.md) |
+| `markdown.core`、`markdown.engine` | [AST、解析、限制、诊断和 events](api/core.md) |
 | AST 与 Source | [节点、typed view、span 和位置](api/ast-and-source.md) |
 | `markdown.render` | [HTML、文本、sink 和 source map](api/rendering.md) |
 | `markdown.extensions` | [manifest、dialect、DSL 和 SPI](api/extensions.md) |
-| `markdown.editor` | [query、rewrite、CST、lint 和 format](api/editor.md) |
+| core/editor 工具 | [query、rewrite、CST、lint 和 format](api/editor.md) |
 | artifact/document/testkit | [Artifact 与 Document API](api/artifacts-and-services.md) |
 
 ## 我要写扩展
@@ -98,4 +98,6 @@
 
 - [代码组](code-groups.md)：版本化代码、复制原文与可选 tabs。
 - [公式模型](math.md)：Math 2.0 的语义、原文和默认可读输出。
-- [0.9.1 模型迁移](migration-0.9.1.md)：破坏性修改与实际交付边界。
+- [0.9.2 迁移](migration-0.9.2.md)：真实领域分包、入口收敛和构建路径清理。
+- [0.9.1 模型迁移](migration-0.9.1.md)：历史语义、身份与流式模型调整。
+- [0.8 → 0.9 迁移](migration.md)：历史版本变更。

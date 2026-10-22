@@ -5,6 +5,7 @@
 
 ```cangjie
 import markdown.core.*
+import markdown.engine.*
 import markdown.extensions.*
 import markdown.render.*
 

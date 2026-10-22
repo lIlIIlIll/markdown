@@ -1,5 +1,9 @@
 package markdown
 
+import markdown.artifact.{BinaryArtifactCodec, BinaryArtifactLoadResult, BinarySnapshotArtifact}
+import markdown.core.{Document, NodeRefWalkEvent, SourceBuffer, SourceSpan}
+import markdown.editor.{DocumentSnapshot, SourceEdit, SyntaxToAstMap, SyntaxTree}
+import markdown.engine.MarkdownEngine
 import std.collection.*
 import std.convert.*
 import std.fs.*
@@ -218,7 +222,7 @@ main(args: Array<String>): Int64 {
     println("case\t${args[0]}\t${phase}\t${source.size}")
     match (phase) {
         case "cache-prepare" | "cache-encode" | "cache-write" =>
-            let snapshot = engine.parseSnapshot(source)
+            let snapshot = DocumentSnapshot.parse(engine, source)
             let bytes = if (phase == "cache-prepare") {
                 probeEncodeCache(snapshot, args[0])
             } else {
@@ -251,7 +255,7 @@ main(args: Array<String>): Int64 {
             })
             probeCheck(value, source)
         case "local-proof" =>
-            let original = engine.parseSnapshot(source)
+            let original = DocumentSnapshot.parse(engine, source)
             let inserted = probeVariableEdit(original, SourceEdit(SourceSpan(11, 11), "x")).getOrThrow()
             probeCheck(inserted, source[..11] + "x" + source[11..])
             let removed = probeVariableEdit(inserted, SourceEdit(SourceSpan(11, 12), "")).getOrThrow()
@@ -261,7 +265,7 @@ main(args: Array<String>): Int64 {
             if (value.source.text() != source) {
                 throw IllegalStateException("parse source differs")
             }
-        case "snapshot" => probeCheck(measured({=> engine.parseSnapshot(source)}), source)
+        case "snapshot" => probeCheck(measured({=> DocumentSnapshot.parse(engine, source)}), source)
         case "cst" =>
             let value = engine.parse(source)
             let syntax = measured({=> SyntaxTree.parse(value.source, document: Some(value.document))})
@@ -276,10 +280,10 @@ main(args: Array<String>): Int64 {
                 throw IllegalStateException("map root differs")
             }
         case "equal-edit" | "variable-edit" =>
-            let snapshot = engine.parseSnapshot(source)
+            let snapshot = DocumentSnapshot.parse(engine, source)
             probeCheck(measured({=> editSequence(snapshot, phase == "variable-edit")}), source)
         case "encode" | "write" | "decode" | "read-decode" =>
-            let snapshot = engine.parseSnapshot(source)
+            let snapshot = DocumentSnapshot.parse(engine, source)
             let artifact = BinaryArtifactCodec.encode(snapshot)
             if (phase == "encode") {
                 let value = measured({=> BinaryArtifactCodec.encode(snapshot)})

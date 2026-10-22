@@ -27,7 +27,6 @@ CLI = ROOT / "tools" / "markdown"
 NATIVE = ROOT / "target" / "native"
 NATIVE_MANIFEST = NATIVE / "markdown_scanner.cache.json"
 CANONICAL_OPTIMIZATION = "-O2 --lto thin --obf-seed 0"
-COMPATIBILITY_OPTIMIZATION = "-O2 --obf-seed 0"
 IDENTITY_SCHEMA_VERSION = 6
 NATIVE_CACHE_SCHEMA_VERSION = 3
 NATIVE_ENVIRONMENT_SCHEMA_VERSION = 1
@@ -261,20 +260,6 @@ def prepare_link_inputs(sdk: SdkToolchain, retained: Path | None = None) -> SdkT
         "identity": identity, "compilerOptions": options})
 
 
-def compatibility_manifest(source: str, root: Path) -> str:
-    replacements = {
-        f'compile-option = "{CANONICAL_OPTIMIZATION}"':
-            f'compile-option = "{COMPATIBILITY_OPTIMIZATION}"',
-        'link-option = "-L ../../target/native -lmarkdown_scanner"':
-            f'link-option = "-L {root / "target" / "native"} -lmarkdown_scanner"',
-        'markdown = { path = "../.." }': f'markdown = {{ path = "{root}" }}',
-    }
-    result = source
-    for old, new in replacements.items():
-        if result.count(old) != 1:
-            raise ValueError(f"expected exactly one manifest entry: {old}")
-        result = result.replace(old, new)
-    return result
 
 
 def manifest_option(text: str, name: str) -> str:
@@ -393,29 +378,6 @@ def build_canonical(sdk: SdkToolchain | None = None,
         "binary": binary_identity(destination)}
 
 
-def build_compatibility(sdk: SdkToolchain | None = None) -> dict[str, object]:
-    manifest_path = DRIVER / "cjpm.toml"
-    manifest = manifest_path.read_text(encoding="utf-8")
-    effective = compatibility_manifest(manifest, ROOT)
-    with tempfile.TemporaryDirectory(prefix="markdown-benchmark-driver-") as temporary:
-        checkout = Path(temporary)
-        shutil.copytree(DRIVER / "src", checkout / "src")
-        shutil.copy2(DRIVER / "cjpm.lock", checkout / "cjpm.lock")
-        (checkout / "cjpm.toml").write_text(effective, encoding="utf-8")
-        cjpm = str(sdk.cjpm) if sdk is not None else "cjpm"
-        build = command_record([cjpm, "build"], checkout, check=True,
-            environment=sdk.environment if sdk is not None else None)
-        built = checkout / "target" / "release" / "bin" / "main"
-        destination = DRIVER / "target" / "release" / "bin" / "main"
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(built, destination)
-    return {"mode": "compatibility", "build": build,
-        "sourceProductTreeSha256": benchmark_product_tree_sha256(ROOT),
-        "compileOption": manifest_option(effective, "compile-option"),
-        "linkOption": manifest_option(effective, "link-option"),
-        "canonicalManifestSha256": sha256(manifest_path),
-        "effectiveManifestSha256": hashlib.sha256(effective.encode("utf-8")).hexdigest(),
-        "binary": binary_identity(DRIVER / "target" / "release" / "bin" / "main")}
 
 
 def build_cli(sdk: SdkToolchain | None = None, source_root: Path = ROOT
@@ -630,9 +592,6 @@ def build_identity(args: argparse.Namespace, driver: dict[str, object],
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--mode", choices=("canonical", "compatibility"), default="canonical"
-    )
     parser.add_argument("--build-cli", action="store_true")
     parser.add_argument("--identity-output", type=Path)
     parser.add_argument("--sdk-url")
@@ -656,13 +615,13 @@ def main() -> int:
         sdk = prepare_sdk(args) if args.identity_output is not None else None
         if sdk is not None:
             sdk = prepare_link_inputs(sdk, args.link_inputs_root)
-        if sdk is not None and args.mode == "canonical":
+        if sdk is not None:
             with tempfile.TemporaryDirectory(prefix="markdown-pinned-sdk-build-") as temporary:
                 build_root = prepare_build_workspace(Path(temporary) / "markdown")
                 driver = build_canonical(sdk, build_root)
                 cli = build_cli(sdk, build_root)
         else:
-            driver = build_canonical(sdk) if args.mode == "canonical" else build_compatibility(sdk)
+            driver = build_canonical(sdk)
             cli = build_cli(sdk) if args.build_cli else None
         if args.identity_output is not None:
             assert cli is not None and sdk is not None
@@ -677,7 +636,7 @@ def main() -> int:
     except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as error:
         print(str(error), file=sys.stderr)
         return 2
-    print(f"benchmark driver build mode: {args.mode}")
+    print("benchmark driver build mode: canonical")
     return 0
 
 

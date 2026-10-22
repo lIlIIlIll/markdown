@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression tests for the benchmark driver compatibility build."""
+"""Regression tests for the canonical benchmark driver build."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tarfile
 import tempfile
 import unittest
@@ -47,6 +48,13 @@ def fake_sdk_archive(path: Path) -> str:
 
 
 class BenchmarkDriverBuildTest(unittest.TestCase):
+    def test_removed_build_mode_is_rejected(self) -> None:
+        result = subprocess.run(
+            [sys.executable, str(Path(build_benchmark_driver.__file__)), "--mode", "compatibility"],
+            capture_output=True, text=True, check=False)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("unrecognized arguments", result.stderr)
+
     def test_identity_schema_matches_same_language_gate(self) -> None:
         import compare_markdown4cj
 
@@ -108,31 +116,7 @@ class BenchmarkDriverBuildTest(unittest.TestCase):
         manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
         return obj, archive, manifest_path
 
-    def test_compatibility_manifest_changes_only_build_paths_and_lto(self) -> None:
-        root = Path("/workspace/markdown")
-        source = """[package]
-  compile-option = "-O2 --lto thin --obf-seed 0"
-  link-option = "-L ../../target/native -lmarkdown_scanner"
 
-[dependencies]
-  markdown = { path = "../.." }
-"""
-        self.assertEqual(
-            build_benchmark_driver.compatibility_manifest(source, root),
-            """[package]
-  compile-option = "-O2 --obf-seed 0"
-  link-option = "-L /workspace/markdown/target/native -lmarkdown_scanner"
-
-[dependencies]
-  markdown = { path = "/workspace/markdown" }
-""",
-        )
-
-    def test_compatibility_manifest_fails_closed_on_manifest_drift(self) -> None:
-        with self.assertRaisesRegex(ValueError, "expected exactly one manifest entry"):
-            build_benchmark_driver.compatibility_manifest(
-                'compile-option = "-O2"\n', Path("/workspace/markdown")
-            )
 
     def test_trimpath_manifest_is_root_specific_and_preserves_other_options(self) -> None:
         source = '[package]\n  compile-option = "-O2 --lto thin --obf-seed 0"\n'
@@ -401,7 +385,7 @@ class BenchmarkDriverBuildTest(unittest.TestCase):
             with patch.object(build_benchmark_driver, "NATIVE", native):
                 workspace = build_benchmark_driver.prepare_build_workspace(
                     Path(temporary) / "markdown")
-            self.assertTrue((workspace / "src/parser.cj").is_file())
+            self.assertTrue((workspace / "src/engine/parser.cj").is_file())
             self.assertEqual((workspace / "target/native/libmarkdown_scanner.a").read_bytes(),
                 b"native-archive")
             self.assertFalse((workspace / "benchmarks/driver/target").exists())

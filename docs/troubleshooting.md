@@ -53,14 +53,17 @@ native 配置复制到普通应用。
 默认 profile 是 CommonMark 0.31.2。显式使用 GFM：
 
 ```cangjie
-Markdown.toSafeHtml(source, profile: MarkdownProfile.gfm029())
+import markdown.core.MarkdownProfile
+import markdown.engine.MarkdownEngine
+
+let engine = MarkdownEngine.builder().profile(MarkdownProfile.gfm029()).build()
+let html = engine.renderHtml(source).html
 ```
 
 ### raw HTML 变成转义文本
 
-这是 `Markdown.toSafeHtml` 的安全默认行为。只有输入可信并且确实需要规范兼容输出时，
-才使用 `unsafe { Markdown.toSpecHtml(source) }` 或
-`unsafe { HtmlOptions.specCompatible() }`。普通 `HtmlOptions` 构造器不能启用
+这是安全 HTML 的默认行为。只有输入可信并且确实需要规范输出时，
+才将 `unsafe { HtmlOptions.specCompatible() }` 传给 renderer 或 `engine.renderHtml`。普通 `HtmlOptions` 构造器不能启用
 `RawHtmlPolicyKind.PassThrough`。
 
 ### `HeadingNodeView` 不能直接读取源码范围

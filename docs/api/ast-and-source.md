@@ -40,7 +40,10 @@ range 是半开区间 `[startByte, endByte)`。
 | `byteOffset(utf16Position)` | UTF-16 位置转 byte offset |
 
 ```cangjie
-let result = Markdown.parse("A😀\nB")
+import markdown.core.*
+import markdown.engine.MarkdownEngine
+
+let result = MarkdownEngine.builder().build().parse("A😀\nB")
 let byte = result.source.byteOffset(Utf16Position(0, 3))
 let position = result.source.position(byte)
 ```
@@ -52,12 +55,15 @@ let position = result.source.position(byte)
 需要大量位置查询时，创建一次索引：
 
 ```cangjie
-let positions = SourcePositionMap(result.source, tabStop: 4)
+let positions = SourcePositionMap(
+    result.source, tabStop: 4, displayWidthPolicy: DisplayWidthPolicy.UnicodeScalar
+)
 let lsp = positions.utf16Position(node.span.getOrThrow().startByte)
 let byte = positions.byteOffset(lsp)
 ```
 
-`SourcePositionMap` 使用 line index、checkpoint 和二分查找。visual column 是 Unicode
+`SourcePositionMap` 只有一个构造器，`tabStop` 默认 `4`，`displayWidthPolicy` 默认
+`UnicodeScalarWithTabStops`。它使用 line index、checkpoint 和二分查找。visual column 是 Unicode
 scalar 语义，不是终端 cell width。CJK wide character、combining mark 和 ZWJ emoji
 不会被伪装成终端显示宽度。
 

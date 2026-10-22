@@ -33,10 +33,11 @@ requirements:
   - 公开文档和 capability introspection 不使用语义可漂移的 Markdown latest
   status: pass
   implementation:
-  - 'cjpm.toml: product package metadata and public markdown module'
-  - 'src/profile.cj: versioned built-in profiles and Safe HTML policy identity'
+  - src/core/profile.cj
+  - src/core/ast.cj
+  - docs/versioning-and-compatibility.md
   tests:
-  - 'src/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
+  - 'src/integration/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -54,12 +55,12 @@ requirements:
   - 影响 AST 的修复评估是否需要新的 profile revision
   status: pass
   implementation:
-  - src/profile.cj
-  - src/ast.cj
+  - src/core/profile.cj
+  - src/core/ast.cj
   - docs/versioning-and-compatibility.md
   tests:
-  - 'src/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
-  - 'src/profile_snapshot_test.cj: ProfileBehaviorSnapshotTest.gfmModernV1FreezesItsDeclaredExtensionComposition'
+  - 'src/integration/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
+  - 'src/integration/profile_snapshot_test.cj: ProfileBehaviorSnapshotTest.gfmModernV1FreezesItsDeclaredExtensionComposition'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -76,9 +77,11 @@ requirements:
   - GFM tagfilter 不被描述为完整 sanitizer
   status: pass
   implementation:
-  - 'src/profile.cj: distinct SpecCompatible, GfmCompatible, and Safe policy kinds'
+  - src/core/profile.cj
+  - src/core/ast.cj
+  - docs/versioning-and-compatibility.md
   tests:
-  - 'src/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
+  - 'src/integration/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -95,15 +98,13 @@ requirements:
   - Event/fused 执行模型不以 AST walk 或能力降级伪装为低分配路径
   status: pass
   implementation:
-  - src/profile.cj
-  - src/ast.cj
-  - src/execution.cj
-  - 'src/events.cj: source-driven Resolved and RawBlock events never retain Document or NodeRef; AST-walk events remain excluded'
+  - src/core/profile.cj
+  - src/core/ast.cj
   - docs/versioning-and-compatibility.md
   tests:
-  - 'src/ast_test.cj: AstContractTest.constructsImmutableTypedAstAndValidatesIt'
-  - 'src/execution_test.cj: HtmlExecutionTest.preferFallsBackAndRequireFailsClosedForAstSyntax'
-  - 'src/events_test.cj: SourceEventApiTest.directSinkAndCumulativeNodeLimitUsePublicContracts'
+  - 'src/integration/ast_test.cj: AstContractTest.constructsImmutableTypedAstAndValidatesIt'
+  - 'src/integration/execution_test.cj: HtmlExecutionTest.preferFallsBackAndRequireFailsClosedForAstSyntax'
+  - 'src/integration/events_test.cj: SourceEventApiTest.directSinkAndCumulativeNodeLimitUsePublicContracts'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -123,14 +124,14 @@ requirements:
   - Front Matter 只提取原文，Math 只保留 literal
   status: pass
   implementation:
-  - src/profile.cj
-  - src/ast.cj
+  - src/core/profile.cj
+  - src/core/ast.cj
   - docs/versioning-and-compatibility.md
   tests:
-  - 'src/document_system_test.cj: DocumentSystemTest.documentGraphUsesOnlyHostSuppliedInputsAndResolvesEdgesAndReferences'
-  - 'src/external_descriptor_test.cj: ExternalDialectDescriptorTest.descriptorsRejectCallbacksUnknownFieldsInvalidSchemaAndUnboundedRules'
-  - 'src/isolation_test.cj: PluginIsolationTest.isolationPolicyIpcIdentityLimitsCancellationAndFailClosedAreEnforced'
-  - 'src/official_extensions_test.cj: OfficialExtensionsTest.frontMatterAndMathAreLiteralOnlyAndHeadingIdsAreStructured'
+  - 'src/integration/document_system_test.cj: DocumentSystemTest.documentGraphUsesOnlyHostSuppliedInputsAndResolvesEdgesAndReferences'
+  - 'src/integration/external_descriptor_test.cj: ExternalDialectDescriptorTest.descriptorsRejectCallbacksUnknownFieldsInvalidSchemaAndUnboundedRules'
+  - 'src/integration/isolation_test.cj: PluginIsolationTest.isolationPolicyIpcIdentityLimitsCancellationAndFailClosedAreEnforced'
+  - 'src/integration/official_extensions_test.cj: OfficialExtensionsTest.frontMatterAndMathAreLiteralOnlyAndHeadingIdsAreStructured'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -149,13 +150,13 @@ requirements:
   - 静态站点可组合自定义方言、AST transform、renderer hooks、containers 和可验证 cache artifact
   status: pass
   implementation:
-  - src/facade.cj
-  - src/services.cj
-  - src/editor.cj
+  - src/engine/parser.cj
+  - src/core/services.cj
+  - src/editor/editor.cj
   tests:
-  - 'src/facade_test.cj: FacadeTest.convenienceApisAreProfileAwareAndSafeByDefault'
-  - 'src/traversal_test.cj: TraversalQueryTest.typedVisitorAndQueriesReturnExactNodesAndRelations'
-  - 'src/editor_test.cj: EditorSnapshotTest.snapshotAppliesValidatedUtf8AndUtf16Edits'
+  - 'src/integration/facade_test.cj: FacadeTest.convenienceApisAreProfileAwareAndSafeByDefault'
+  - 'src/integration/traversal_test.cj: TraversalQueryTest.typedVisitorAndQueriesReturnExactNodesAndRelations'
+  - 'src/integration/editor_test.cj: EditorSnapshotTest.snapshotAppliesValidatedUtf8AndUtf16Edits'
   - 'examples/quickstart/src/main.cj'
   evidence:
   - *final_validation_evidence
@@ -172,13 +173,13 @@ requirements:
   - 完整产品链路包含版本化标准、受约束 DSL、不可变 AST、安全策略、确定性输出及 conformance/fuzz/benchmark 证据
   status: pass
   implementation:
-  - src/parser.cj
-  - src/rewrite.cj
-  - src/renderer.cj
+  - src/engine/parser.cj
+  - src/core/rewrite.cj
+  - src/render/renderer.cj
   tests:
-  - 'src/parser_test.cj: ParserBehaviorTest.parsesBlocksInlinesReferencesAndExactSpans'
-  - 'src/services_test.cj: ServicesTest.transformPipelineOrdersDependenciesAndValidatesOutput'
-  - 'src/renderer_test.cj: RendererBehaviorTest.outputBudgetCancellationAndSinkErrorsPropagate'
+  - 'src/integration/parser_test.cj: ParserBehaviorTest.parsesBlocksInlinesReferencesAndExactSpans'
+  - 'src/integration/services_test.cj: ServicesTest.transformPipelineOrdersDependenciesAndValidatesOutput'
+  - 'src/integration/renderer_test.cj: RendererBehaviorTest.outputBudgetCancellationAndSinkErrorsPropagate'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -197,9 +198,9 @@ requirements:
   - unsafe HTML API 位于独立命名空间
   status: pass
   implementation:
-  - src/parser.cj
-  - src/rewrite.cj
-  - src/renderer.cj
+  - src/engine/parser.cj
+  - src/core/rewrite.cj
+  - src/render/renderer.cj
   tests:
   - 'scripts/test_check_public_api.py'
   - 'scripts/release_gate.sh'
@@ -220,9 +221,10 @@ requirements:
   - gfm-modern-v1 文档明确其不是正式 GFM 规范的精确实现
   status: pass
   implementation:
-  - 'src/profile.cj: commonmark-0.31.2, gfm-0.29, gfm-modern-v1, custom profiles, and stable kind/id/version semantic identity'
+  - src/core/profile.cj
+  - src/integration/profile_snapshot_test.cj
   tests:
-  - 'src/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
+  - 'src/integration/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -240,11 +242,11 @@ requirements:
   - 公共 builder 可用自定义方言构建 engine
   status: pass
   implementation:
-  - 'src/extension.cj: MarkdownDialectBuilder base/enable/disable/inline/block/renderer declarations'
-  - 'src/parser.cj: MarkdownEngineBuilder.dialect'
+  - src/extensions/extension.cj
+  - src/core/fingerprint.cj
   tests:
-  - 'src/extension_test.cj: compilesAndRunsInlineBlockAndRendererDslEndToEnd'
-  - 'src/extension_test.cj: builderDisableRemovesRegistrationBeforeCompilation'
+  - 'src/integration/extension_test.cj: compilesAndRunsInlineBlockAndRendererDslEndToEnd'
+  - 'src/integration/extension_test.cj: builderDisableRemovesRegistrationBeforeCompilation'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -261,10 +263,10 @@ requirements:
   - 核心公开类型覆盖 dialect descriptor、fingerprint、plan version、rule 和 extension implementation identity
   status: pass
   implementation:
-  - 'src/extension.cj: DialectCompiler and immutable CompiledMarkdownDialect dispatch arrays'
-  - 'src/parser.cj: parser consumes compiled rules rather than interpreting builders'
+  - src/extensions/extension.cj
+  - src/core/fingerprint.cj
   tests:
-  - 'src/extension_test.cj: all ExtensionDslTest cases'
+  - 'src/integration/extension_test.cj: all ExtensionDslTest cases'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -282,15 +284,14 @@ requirements:
   - RendererFingerprint 包含 renderer kind、policy 和 renderer extension versions
   status: pass
   implementation:
-  - 'src/extension.cj: canonical descriptor includes base profile kind/id/version plus dialect/extensions/rules/SPI/plan identity'
-  - 'src/fingerprint.cj: length-prefixed CanonicalDescriptor plus pure-std SHA-256'
-  - 'src/renderer.cj, src/artifact.cj, src/binary_artifact.cj: renderer, engine and binary AST digests use the same unambiguous field encoding'
+  - src/extensions/extension.cj
+  - src/core/fingerprint.cj
   tests:
-  - 'src/fingerprint_test.cj: sha256MatchesKnownVectors'
-  - 'src/fingerprint_test.cj: dialectFingerprintIsDeterministicAndSemanticChangesAlterIt'
-  - 'src/fingerprint_test.cj: canonicalFingerprintEncodingHasNoDelimiterOrFieldSplitCollisions'
-  - 'src/fingerprint_test.cj: built-in and same-id/version custom profile kinds produce distinct dialect/engine fingerprints'
-  - 'src/renderer_test.cj: rendererFingerprintIsDeterministicAndPolicySensitive'
+  - 'src/integration/fingerprint_test.cj: sha256MatchesKnownVectors'
+  - 'src/integration/fingerprint_test.cj: dialectFingerprintIsDeterministicAndSemanticChangesAlterIt'
+  - 'src/integration/fingerprint_test.cj: canonicalFingerprintEncodingHasNoDelimiterOrFieldSplitCollisions'
+  - 'src/integration/fingerprint_test.cj: built-in and same-id/version custom profile kinds produce distinct dialect/engine fingerprints'
+  - 'src/integration/renderer_test.cj: rendererFingerprintIsDeterministicAndPolicySensitive'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -310,11 +311,11 @@ requirements:
   - 失败返回结构化方言或扩展错误
   status: pass
   implementation:
-  - 'src/extension.cj: manifest, dependency, conflict, SPI, rule-bound, opener/delimiter, renderer and capability validation'
-  - 'src/extension.cj: complete SemVer parser and precedence comparator for manifest versions and dependency minimums'
+  - src/extensions/extension.cj
+  - src/core/fingerprint.cj
   tests:
-  - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
-  - 'src/extension_test.cj: semanticVersionConstraintsFollowSemVerPrecedenceAndRejectInvalidVersions'
+  - 'src/integration/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
+  - 'src/integration/extension_test.cj: semanticVersionConstraintsFollowSemVerPrecedenceAndRejectInvalidVersions'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -331,10 +332,10 @@ requirements:
   - 规则可静态验证并可纳入 fingerprint
   status: pass
   implementation:
-  - 'src/extension.cj: bounded paired-inline and container-block typed syntax rules'
-  - 'src/parser.cj: compiled custom inline/block dispatch'
+  - src/extensions/extension.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/extension_test.cj: compilesAndRunsInlineBlockAndRendererDslEndToEnd'
+  - 'src/integration/extension_test.cj: compilesAndRunsInlineBlockAndRendererDslEndToEnd'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -350,10 +351,10 @@ requirements:
   - emitter 产生带 extension identity 和 SourceSpan 的 Custom Node
   status: pass
   implementation:
-  - 'src/extension.cj: delimiter, content, nesting, delimiter/lookahead bounds, priority and conflict group declarations'
-  - 'src/parser.cj: typed SyntaxPayload and SourceSpan emission'
+  - src/extensions/extension.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/extension_test.cj: compilesAndRunsInlineBlockAndRendererDslEndToEnd'
+  - 'src/integration/extension_test.cj: compilesAndRunsInlineBlockAndRendererDslEndToEnd'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -369,9 +370,10 @@ requirements:
   - 相同 priority 不依赖内存地址、随机 hash 或未定义 registry 顺序
   status: pass
   implementation:
-  - 'src/extension.cj: stable priority then registration-order insertion sort'
+  - src/extensions/extension.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
+  - 'src/integration/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -388,9 +390,10 @@ requirements:
   - delimiter storm 和超大 capture 进入 fuzz、预算和 TCK 覆盖
   status: pass
   implementation:
-  - 'src/extension.cj: DSL accepts fixed delimiters/prefixes only and rejects non-positive bounds'
+  - src/extensions/extension.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
+  - 'src/integration/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -407,10 +410,10 @@ requirements:
   - SPI v2 声明非空、无重复 triggerBytes，未命中位置不调用 callback
   status: pass
   implementation:
-  - src/extension.cj
-  - src/parser.cj
+  - src/extensions/extension.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/extension_test.cj: ExtensionDslTest.boundedParserSpiRunsAndFailuresAreStructuredWithoutStateLeak'
+  - 'src/integration/extension_test.cj: ExtensionDslTest.boundedParserSpiRunsAndFailuresAreStructuredWithoutStateLeak'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -428,12 +431,12 @@ requirements:
   - renderer coverage 可由 capability matrix 查询和验证
   status: pass
   implementation:
-  - src/extension.cj
-  - src/renderer.cj
-  - src/formatter.cj
+  - src/extensions/extension.cj
+  - src/render/renderer.cj
+  - src/render/formatter.cj
   tests:
-  - 'src/extension_test.cj: ExtensionDslTest.compilesAndRunsInlineBlockAndRendererDslEndToEnd'
-  - 'src/renderer_test.cj: RendererBehaviorTest.extensionMissingRendererPoliciesAreExplicitAndBounded'
+  - 'src/integration/extension_test.cj: ExtensionDslTest.compilesAndRunsInlineBlockAndRendererDslEndToEnd'
+  - 'src/integration/renderer_test.cj: RendererBehaviorTest.extensionMissingRendererPoliciesAreExplicitAndBounded'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -450,10 +453,11 @@ requirements:
   - 扩展普通字符串不能形成未转义 HTML
   status: pass
   implementation:
-  - 'src/extension.cj: RendererRule with compile-time tag/class validation'
-  - 'src/renderer.cj: custom nodes render through existing escaping/budget/cancellation Sink path'
+  - src/extensions/extension.cj
+  - src/render/renderer.cj
+  - src/render/formatter.cj
   tests:
-  - 'src/extension_test.cj: compilesAndRunsInlineBlockAndRendererDslEndToEnd'
+  - 'src/integration/extension_test.cj: compilesAndRunsInlineBlockAndRendererDslEndToEnd'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -470,12 +474,12 @@ requirements:
   - TrustedHtml 仍受 output budget 和 cancellation 约束
   status: pass
   implementation:
-  - src/extension.cj
-  - src/renderer.cj
-  - src/formatter.cj
+  - src/extensions/extension.cj
+  - src/render/renderer.cj
+  - src/render/formatter.cj
   tests:
-  - 'src/renderer_test.cj: RendererBehaviorTest.safeHtmlEscapesTextRawHtmlAndDangerousUris'
-  - 'src/security_corpus_test.cj: SecurityCorpusTest.safeHtmlCorpusRejectsInjectionAndUriConfusion'
+  - 'src/integration/renderer_test.cj: RendererBehaviorTest.safeHtmlEscapesTextRawHtmlAndDangerousUris'
+  - 'src/integration/security_corpus_test.cj: SecurityCorpusTest.safeHtmlCorpusRejectsInjectionAndUriConfusion'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -492,10 +496,11 @@ requirements:
   - 缺少 formatter 时保留原始 source、拒绝范围或使用显式 fallback
   status: pass
   implementation:
-  - 'src/extension.cj: MissingRendererPolicy defaults to Error'
-  - 'src/renderer.cj: missing custom renderer throws UnsupportedNode'
+  - src/extensions/extension.cj
+  - src/render/renderer.cj
+  - src/render/formatter.cj
   tests:
-  - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
+  - 'src/integration/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -512,12 +517,12 @@ requirements:
   - 检测循环、重复、缺失依赖、不确定顺序和变换后不变量错误
   status: pass
   implementation:
-  - src/services.cj
-  - src/rewrite.cj
+  - src/core/services.cj
+  - src/core/rewrite.cj
   tests:
-  - 'src/services_test.cj: ServicesTest.transformPipelineOrdersDependenciesAndValidatesOutput'
-  - 'src/rewrite_test.cj: TreeRewriterTest.budgetAndCancellationApplyToTransform'
-  - 'src/extension_test.cj: ExtensionDslTest.extensionPostprocessTransformLintAndFormatterCategoriesRunInFixedOrder'
+  - 'src/integration/services_test.cj: ServicesTest.transformPipelineOrdersDependenciesAndValidatesOutput'
+  - 'src/integration/rewrite_test.cj: TreeRewriterTest.budgetAndCancellationApplyToTransform'
+  - 'src/integration/extension_test.cj: ExtensionDslTest.extensionPostprocessTransformLintAndFormatterCategoriesRunInFixedOrder'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -532,9 +537,10 @@ requirements:
   - String 输入通过与其他输入形式一致的 profile、limit、budget 和 cancellation 路径
   status: pass
   implementation:
-  - 'src/parser.cj: MarkdownEngine.parse(String) with shared limits, budget, and cancellation path'
+  - src/core/source.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/parser_test.cj: all ParserBehaviorTest cases use public String parse entry'
+  - 'src/integration/parser_test.cj: all ParserBehaviorTest cases use public String parse entry'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -551,12 +557,11 @@ requirements:
   - 实现不使用平台默认编码
   status: pass
   implementation:
-  - 'src/parser.cj: Utf8Policy Strict/ReplaceInvalid and validated decoder'
-  - 'src/source.cj: decoded-to-original byte map used by SourceBuffer and parser spans'
-  - 'src/parser.cj: byte-safe GFM email punctuation and whole-buffer ASCII lowercase preserve decoded UTF-8 boundaries'
+  - src/core/source.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/input_test.cj: strictRejectsInvalidUtf8AndReplacePreservesOriginalOffsets'
-  - 'src/testkit_fuzz_test.cj: arbitraryByteFuzzMatchesBufferedAndChunkedUtf8Policies'
+  - 'src/integration/input_test.cj: strictRejectsInvalidUtf8AndReplacePreservesOriginalOffsets'
+  - 'src/integration/testkit_fuzz_test.cj: arbitraryByteFuzzMatchesBufferedAndChunkedUtf8Policies'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -574,11 +579,11 @@ requirements:
   - 结构化错误保留底层 cause
   status: pass
   implementation:
-  - 'src/parser.cj: InputStream overload with bounded reads and InputReadFailureException cause propagation'
-  - 'src/parser.cj: BufferedInputSession and tryParse make the fully-buffered and no-completed-prefix contracts explicit'
+  - src/core/source.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/input_test.cj: streamInputUsesSameParserAndPreservesReadFailuresAsTypedCause'
-  - 'src/input_test.cj: explicitBufferedInputSessionParsesOnlyAtFinish'
+  - 'src/integration/input_test.cj: streamInputUsesSameParserAndPreservesReadFailuresAsTypedCause'
+  - 'src/integration/input_test.cj: explicitBufferedInputSessionParsesOnlyAtFinish'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -597,10 +602,10 @@ requirements:
   - 单个 chunked session 不支持并发调用
   status: pass
   implementation:
-  - 'src/parser.cj: BufferedInputSession feed(Array<Byte>/String), finish, preallocation limit, cancellation, and single-finish lifecycle'
-  - 'src/parser.cj: ParserSession.newSession returns the explicitly named buffered, bounded, finish-only session'
+  - src/core/source.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/input_test.cj: arbitraryChunkBoundariesMatchAllAtOnce'
+  - 'src/integration/input_test.cj: arbitraryChunkBoundariesMatchAllAtOnce'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -618,12 +623,12 @@ requirements:
   - UTF-8 BOM 行为有明确契约且保留原始 byte offset 映射
   status: pass
   implementation:
-  - 'src/parser.cj: LF/CRLF/CR line splitter and UTF-8 BOM view offset'
-  - 'src/source.cj: original newline/BOM byte mapping'
+  - src/core/source.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/input_test.cj: bomDoesNotBecomeMarkdownTextButOffsetsRemainOriginal'
-  - 'src/input_test.cj: arbitraryChunkBoundariesMatchAllAtOnce'
-  - 'src/core_test.cj: sourceSpansAreUtf8HalfOpenIntervals'
+  - 'src/integration/input_test.cj: bomDoesNotBecomeMarkdownTextButOffsetsRemainOriginal'
+  - 'src/integration/input_test.cj: arbitraryChunkBoundariesMatchAllAtOnce'
+  - 'src/integration/core_test.cj: sourceSpansAreUtf8HalfOpenIntervals'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -639,9 +644,10 @@ requirements:
   - SourceSlice 不破坏原始 byte offset
   status: pass
   implementation:
-  - 'src/source.cj: immutable SourceBuffer text, byteLength, slice, line, and lineCount behavior'
+  - src/core/source.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/core_test.cj: CoreContractTest.sourceSpansAreUtf8HalfOpenIntervals'
+  - 'src/integration/core_test.cj: CoreContractTest.sourceSpansAreUtf8HalfOpenIntervals'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -658,11 +664,11 @@ requirements:
   - P1 Chunked literal storage 不被宣称为 1.0 能力
   status: pass
   implementation:
-  - src/source.cj
-  - src/parser.cj
+  - src/core/source.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/input_test.cj: InputBehaviorTest.sourceSlicesPositionMapAndDetachHaveExplicitOwnershipSemantics'
-  - 'src/parser_test.cj: ParserBehaviorTest.enforcesAstNodeAndAccumulatedLiteralLimitsDuringConstruction'
+  - 'src/integration/input_test.cj: InputBehaviorTest.sourceSlicesPositionMapAndDetachHaveExplicitOwnershipSemantics'
+  - 'src/integration/parser_test.cj: ParserBehaviorTest.enforcesAstNodeAndAccumulatedLiteralLimitsDuringConstruction'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -678,11 +684,11 @@ requirements:
   - raw/semantic/span 信息在可表达范围内保持一致
   status: pass
   implementation:
-  - src/source.cj
-  - src/parser.cj
+  - src/core/source.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/input_test.cj: InputBehaviorTest.sourceSlicesPositionMapAndDetachHaveExplicitOwnershipSemantics'
-  - 'src/facade_test.cj: FacadeTest.detachedDocumentNeedsNoSourceBuffer'
+  - 'src/integration/input_test.cj: InputBehaviorTest.sourceSlicesPositionMapAndDetachHaveExplicitOwnershipSemantics'
+  - 'src/integration/facade_test.cj: FacadeTest.detachedDocumentNeedsNoSourceBuffer'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -700,12 +706,11 @@ requirements:
   - UTF-8、多字节字符和各种换行均有范围测试
   status: pass
   implementation:
-  - 'src/source.cj: SourceOffset, SourceSpan half-open interval, SourcePosition, VisualPosition, and PositionEncoding'
-  - 'src/source.cj: SourceIndex line-start index and bounded per-line checkpoints for repeated position queries'
+  - src/core/source.cj
   tests:
-  - 'src/core_test.cj: CoreContractTest.sourceSpansAreUtf8HalfOpenIntervals'
-  - 'src/core_test.cj: CoreContractTest.mapsUtf8OffsetsToSourceAndUtf16Positions'
-  - 'src/input_test.cj: InputBehaviorTest.indexedPositionMapMatchesSourceAcrossCrlfUnicodeAndReplacement'
+  - 'src/integration/core_test.cj: CoreContractTest.sourceSpansAreUtf8HalfOpenIntervals'
+  - 'src/integration/core_test.cj: CoreContractTest.mapsUtf8OffsetsToSourceAndUtf16Positions'
+  - 'src/integration/input_test.cj: InputBehaviorTest.indexedPositionMapMatchesSourceAcrossCrlfUnicodeAndReplacement'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -723,9 +728,9 @@ requirements:
   - 编辑相关 API 显式标注 PositionEncoding
   status: pass
   implementation:
-  - 'src/source.cj: DisplayWidthPolicy explicitly distinguishes scalar columns with and without tab expansion'
+  - src/core/source.cj
   tests:
-  - 'src/input_test.cj: InputBehaviorTest.indexedPositionMapMatchesSourceAcrossCrlfUnicodeAndReplacement'
+  - 'src/integration/input_test.cj: InputBehaviorTest.indexedPositionMapMatchesSourceAcrossCrlfUnicodeAndReplacement'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -743,11 +748,10 @@ requirements:
   - 转换不对 SourceBuffer 做 Unicode normalization
   status: pass
   implementation:
-  - 'src/source.cj: SourceBuffer.utf16Position with emoji and CRLF handling'
-  - 'src/source.cj: SourcePositionMap caches SourceIndex line starts, UTF-16 checkpoints, visual checkpoints and replacement-map binary lookup'
+  - src/core/source.cj
   tests:
-  - 'src/core_test.cj: CoreContractTest.mapsUtf8OffsetsToSourceAndUtf16Positions'
-  - 'src/input_test.cj: InputBehaviorTest.indexedPositionMapMatchesSourceAcrossCrlfUnicodeAndReplacement'
+  - 'src/integration/core_test.cj: CoreContractTest.mapsUtf8OffsetsToSourceAndUtf16Positions'
+  - 'src/integration/input_test.cj: InputBehaviorTest.indexedPositionMapMatchesSourceAcrossCrlfUnicodeAndReplacement'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -764,10 +768,10 @@ requirements:
   - 规范化值不替换 SourceBuffer 中的原始值
   status: pass
   implementation:
-  - src/source.cj
+  - src/core/source.cj
   tests:
-  - 'src/parser_test.cj: ParserBehaviorTest.parsesBlocksInlinesReferencesAndExactSpans'
-  - 'src/input_test.cj: InputBehaviorTest.indexedPositionMapMatchesSourceAcrossCrlfUnicodeAndReplacement'
+  - 'src/integration/parser_test.cj: ParserBehaviorTest.parsesBlocksInlinesReferencesAndExactSpans'
+  - 'src/integration/input_test.cj: InputBehaviorTest.indexedPositionMapMatchesSourceAcrossCrlfUnicodeAndReplacement'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -783,9 +787,9 @@ requirements:
   - AST 只有通过 invariant validation 后才作为完整结果返回
   status: pass
   implementation:
-  - 'src/parser.cj: input view, reference collection, block/inline parse, and AST validation pipeline'
+  - src/engine/parser.cj
   tests:
-  - 'src/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
+  - 'src/integration/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -802,14 +806,14 @@ requirements:
   - 每种公开 block node 暴露 PRD §20.2 规定的主要字段
   status: pass
   implementation:
-  - 'src/parser.cj: ATX/Setext, paragraph, thematic break, fence/indented code, quote, list, HTML, references, blank semantics,
+  - src/engine/parser.cj
     and GFM table'
   - 'src/parser.cj and src/events.cj: CommonMark type-1 HTML tag-name boundary shared by batch and RawBlock lexical parsing'
   tests:
-  - 'src/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
-  - 'src/parser_test.cj: parsesFencesListsQuotesAndGfmTableWithoutLosingMetadata'
-  - 'src/parser_test.cj: htmlTypeOneOpenersRequireTagNameBoundary'
-  - 'src/events_test.cj: rawSessionHtmlBlockTypesAreChunkInvariant'
+  - 'src/integration/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
+  - 'src/integration/parser_test.cj: parsesFencesListsQuotesAndGfmTableWithoutLosingMetadata'
+  - 'src/integration/parser_test.cj: htmlTypeOneOpenersRequireTagNameBoundary'
+  - 'src/integration/events_test.cj: rawSessionHtmlBlockTypesAreChunkInvariant'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -827,11 +831,11 @@ requirements:
   - 每种公开 inline node 暴露 PRD §20.3 规定的主要字段
   status: pass
   implementation:
-  - 'src/parser.cj: text, breaks, escapes, named entities, code span, emphasis/strong, link/image/reference, autolink, raw
+  - src/engine/parser.cj
     HTML, and strikethrough'
   tests:
-  - 'src/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
-  - 'src/parser_test.cj: distinguishesCommonMarkFromGfmExtensions'
+  - 'src/integration/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
+  - 'src/integration/parser_test.cj: distinguishesCommonMarkFromGfmExtensions'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -848,9 +852,9 @@ requirements:
   - Safe HTML 输出不可执行 task checkbox
   status: pass
   implementation:
-  - 'src/ast.cj: TaskState and ListItem.markerSpan AST contract'
+  - src/engine/parser.cj
   tests:
-  - 'src/parser_test.cj: parsesFencesListsQuotesAndGfmTableWithoutLosingMetadata'
+  - 'src/integration/parser_test.cj: parsesFencesListsQuotesAndGfmTableWithoutLosingMetadata'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -866,9 +870,9 @@ requirements:
   - 重复、shadowed 和无效引用按 profile 规则确定且有测试
   status: pass
   implementation:
-  - 'src/ast.cj: ReferenceDefinition raw/semantic/normalized fields and LinkSyntaxKind variants'
+  - src/engine/parser.cj
   tests:
-  - 'src/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
+  - 'src/integration/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -884,9 +888,9 @@ requirements:
   - 代码块内容从不由核心库执行
   status: pass
   implementation:
-  - 'src/ast.cj: CodeBlock fenced/indented kind, literal, fence spans, info/language/attributes'
+  - src/engine/parser.cj
   tests:
-  - 'src/parser_test.cj: parsesFencesListsQuotesAndGfmTableWithoutLosingMetadata'
+  - 'src/integration/parser_test.cj: parsesFencesListsQuotesAndGfmTableWithoutLosingMetadata'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -903,12 +907,11 @@ requirements:
   - Sanitize 在 adapter 未配置时不被静默假定
   status: pass
   implementation:
-  - 'src/parser.cj: raw HTML recognized as HtmlBlock/HtmlInline without applying output policy'
-  - 'src/renderer.cj: explicit RawHtmlHandlerPort, fail-closed CustomHandler, and unsafe-only pass-through factories'
+  - src/engine/parser.cj
   tests:
-  - 'src/parser_test.cj: ParserBehaviorTest.parsesBlocksInlinesReferencesAndExactSpans'
-  - 'src/renderer_test.cj: RendererBehaviorTest.specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
-  - 'src/renderer_test.cj: customRawHtmlAndExternalLinkRewriteAreExplicitAndFailClosed'
+  - 'src/integration/parser_test.cj: ParserBehaviorTest.parsesBlocksInlinesReferencesAndExactSpans'
+  - 'src/integration/renderer_test.cj: RendererBehaviorTest.specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
+  - 'src/integration/renderer_test.cj: customRawHtmlAndExternalLinkRewriteAreExplicitAndFailClosed'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -925,9 +928,9 @@ requirements:
   - 容错不绕过 limit、budget 或 cancellation
   status: pass
   implementation:
-  - 'src/parser.cj: unmatched inline markers remain Text instead of hard parse failure'
+  - src/engine/parser.cj
   tests:
-  - 'src/parser_test.cj: preservesMalformedInlineAsTextAndHonorsResourceControls'
+  - 'src/integration/parser_test.cj: preservesMalformedInlineAsTextAndHonorsResourceControls'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -943,10 +946,9 @@ requirements:
   - trusted limits 也不能关闭调用栈安全
   status: pass
   implementation:
-  - 'src/parser.cj: block parser and containers use iterative loops'
-  - 'src/ast.cj: invariant validation uses explicit ArrayList stack'
+  - src/engine/parser.cj
   tests:
-  - 'src/ast_test.cj: rejectsDuplicateNodeIdsWithoutRecursingForever'
+  - 'src/integration/ast_test.cj: rejectsDuplicateNodeIdsWithoutRecursingForever'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -963,9 +965,9 @@ requirements:
   - 相同输入、profile、fingerprint、engine version 和 policy 产生相同 AST、diagnostics 和输出
   status: pass
   implementation:
-  - 'src/parser.cj: ordered arrays, deterministic NodeId allocation, and no unordered registry dependence'
+  - src/engine/parser.cj
   tests:
-  - 'src/parser_test.cj: deterministic representative parses'
+  - 'src/integration/parser_test.cj: deterministic representative parses'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -982,9 +984,10 @@ requirements:
   - 三个层次可通过测试证明不会相互覆盖
   status: pass
   implementation:
-  - 'src/ast.cj: Text, Link, Image, CodeBlock, and ReferenceDefinition separate raw/semantic/normalized fields'
+  - src/core/ast.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/ast_test.cj: AstContractTest.constructsImmutableTypedAstAndValidatesIt'
+  - 'src/integration/ast_test.cj: AstContractTest.constructsImmutableTypedAstAndValidatesIt'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1002,9 +1005,10 @@ requirements:
   - percent-decoded URL 不替换原始 destination
   status: pass
   implementation:
-  - 'src/parser.cj: raw/semantic link and entity values remain distinct; output escaping not stored in AST'
+  - src/core/ast.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
+  - 'src/integration/parser_test.cj: parsesBlocksInlinesReferencesAndExactSpans'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1024,15 +1028,11 @@ requirements:
   - Parsed origin 从 span 派生，普通 parsed node 不分配 NodeOrigin object
   status: pass
   implementation:
-  - 'src/arena.cj: fixed 4096-record/16384-child chunks, NodeRef ownership, immutable snapshots and COW header replacement'
-  - 'src/parser_node_factory.cj and src/parser.cj: built-in parser writes all nodes directly through the limit-aware arena factory'
-  - 'src/parser.cj: ParseResult.document and ParseResult.ast expose the same complete canonical arena snapshot without an object-tree projection'
-  - 'src/renderer.cj: standard CommonMark/GFM HTML directly traverses NodeRef without object-tree materialization'
-  - 'src/ast.cj and src/arena.cj: Document is the sole public semantic AST owner; consumers use NodeRef and typed value views'
+  - src/core/ast.cj
   tests:
-  - 'src/arena_test.cj: AstArenaTests'
-  - 'src/ast_test.cj: constructsImmutableTypedAstAndValidatesIt'
-  - 'src/ast_test.cj: rejectsDuplicateNodeIdsWithoutRecursingForever'
+  - 'src/integration/arena_test.cj: AstArenaTests'
+  - 'src/integration/ast_test.cj: constructsImmutableTypedAstAndValidatesIt'
+  - 'src/integration/ast_test.cj: rejectsDuplicateNodeIdsWithoutRecursingForever'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1054,12 +1054,9 @@ requirements:
   - schema 经 API review 和 public API snapshot 冻结
   status: pass
   implementation:
-  - 'src/arena.cj: compact common node record plus complete Document/block/inline payload and typed value-view schema'
-  - 'src/parser_node_factory.cj: parser construction covers every PRD block/inline payload through one arena boundary'
-  - 'src/renderer.cj: core and GFM rendering consumes typed arena views directly'
-  - 'src/ast.cj and src/arena.cj: public schema is frozen as Document/NodeRef plus typed value views; no 0.8 node classes remain'
+  - src/core/ast.cj
   tests:
-  - 'src/ast_test.cj: constructsImmutableTypedAstAndValidatesIt'
+  - 'src/integration/ast_test.cj: constructsImmutableTypedAstAndValidatesIt'
   - 'scripts/test_check_public_api.py: owner-aware deletion, comment/literal masking, effective visibility, multiline type/extend/member/enum and structural-brace regressions'
   evidence:
   - *final_validation_evidence
@@ -1085,11 +1082,10 @@ requirements:
   - 跨 snapshot StableNodeId 仅作为 P2 独立能力
   status: pass
   implementation:
-  - 'src/ast.cj: positive NodeId and deterministic NodeIdAllocator'
-  - 'src/ast.cj: validator duplicate-ID rejection'
+  - src/core/ast.cj
   tests:
-  - 'src/ast_test.cj: constructsImmutableTypedAstAndValidatesIt'
-  - 'src/ast_test.cj: rejectsDuplicateNodeIdsWithoutRecursingForever'
+  - 'src/integration/ast_test.cj: constructsImmutableTypedAstAndValidatesIt'
+  - 'src/integration/ast_test.cj: rejectsDuplicateNodeIdsWithoutRecursingForever'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1105,9 +1101,9 @@ requirements:
   - 变换和 artifact round-trip 不静默丢失所需来源信息
   status: pass
   implementation:
-  - 'src/ast.cj: NodeOriginKind and NodeOrigin source/transform/extension metadata'
+  - src/core/ast.cj
   tests:
-  - 'src/ast_test.cj: customNodesKeepTypedPayloadAndOrigin'
+  - 'src/integration/ast_test.cj: customNodesKeepTypedPayloadAndOrigin'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1124,9 +1120,9 @@ requirements:
   - 新增第三方语法不要求修改核心 node enum
   status: pass
   implementation:
-  - 'src/ast.cj: CustomPayload, CustomBlock, and CustomInline with extension/version/local kind identity'
+  - src/core/ast.cj
   tests:
-  - 'src/ast_test.cj: customNodesKeepTypedPayloadAndOrigin'
+  - 'src/integration/ast_test.cj: customNodesKeepTypedPayloadAndOrigin'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1144,11 +1140,11 @@ requirements:
   - transform 后 AST 重新验证，错误不作为完整 Document 返回
   status: pass
   implementation:
-  - 'src/ast.cj: iterative validation of node count, duplicate IDs, span containment, and child categories'
+  - src/core/ast.cj
   tests:
-  - 'src/ast_test.cj: rejectsDuplicateNodeIdsWithoutRecursingForever'
-  - 'src/ast_test.cj: rejectsChildSpanOutsideParent'
-  - 'src/ast_test.cj: rejectsBlockInsideInlineContainer'
+  - 'src/integration/ast_test.cj: rejectsDuplicateNodeIdsWithoutRecursingForever'
+  - 'src/integration/ast_test.cj: rejectsChildSpanOutsideParent'
+  - 'src/integration/ast_test.cj: rejectsBlockInsideInlineContainer'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1165,10 +1161,10 @@ requirements:
   - trivia 不被塞入 1.0 稳定 AST
   status: pass
   implementation:
-  - 'src/editor.cj: one shared SyntaxToken arena with immutable per-node range views and lossless reconstruction'
+  - src/editor/editor.cj
   tests:
-  - 'src/editor_test.cj: EditorSnapshotTest.syntaxTreeRoundTripsEverySourceByte'
-  - 'src/editor_test.cj: EditorSnapshotTest.syntaxArenaRangesAndIndexesRemainLossless'
+  - 'src/integration/editor_test.cj: EditorSnapshotTest.syntaxTreeRoundTripsEverySourceByte'
+  - 'src/integration/editor_test.cj: EditorSnapshotTest.syntaxArenaRangesAndIndexesRemainLossless'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1186,10 +1182,10 @@ requirements:
   - 允许没有对应 AST 节点的 syntax token
   status: pass
   implementation:
-  - 'src/editor.cj: NodeId-to-syntax, NodeId-to-semantic and token-to-smallest-semantic indexes plus binary byte-offset token lookup'
+  - src/editor/editor.cj
   tests:
-  - 'src/editor_test.cj: EditorSnapshotTest.syntaxTreeRoundTripsEverySourceByte'
-  - 'src/editor_test.cj: EditorSnapshotTest.syntaxArenaRangesAndIndexesRemainLossless'
+  - 'src/integration/editor_test.cj: EditorSnapshotTest.syntaxTreeRoundTripsEverySourceByte'
+  - 'src/integration/editor_test.cj: EditorSnapshotTest.syntaxArenaRangesAndIndexesRemainLossless'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1206,10 +1202,10 @@ requirements:
   - 只修改必要范围并有最小差异测试
   status: pass
   implementation:
-  - src/editor.cj
+  - src/editor/editor.cj
   tests:
-  - 'src/editor_test.cj: EditorSnapshotTest.syntaxTreeRoundTripsEverySourceByte'
-  - 'src/editor_test.cj: EditorSnapshotTest.preservingFormatterSupportsRangeNodeAndChangedRangeEntryPoints'
+  - 'src/integration/editor_test.cj: EditorSnapshotTest.syntaxTreeRoundTripsEverySourceByte'
+  - 'src/integration/editor_test.cj: EditorSnapshotTest.preservingFormatterSupportsRangeNodeAndChangedRangeEntryPoints'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1226,11 +1222,11 @@ requirements:
   - 可查询祖先/后代并提取标题、链接、图片、代码块和 custom node
   status: pass
   implementation:
-  - 'src/traversal.cj: NodeWalker Iterator with explicit Enter/Exit frame stack'
-  - 'src/traversal.cj: typed MarkdownVisitor and AstQuery ID/kind/span/relation/extractor APIs'
+  - src/core/traversal.cj
+  - src/core/rewrite.cj
   tests:
-  - 'src/traversal_test.cj: walkerIsNonRecursiveAndEmitsBalancedEvents'
-  - 'src/traversal_test.cj: typedVisitorAndQueriesReturnExactNodesAndRelations'
+  - 'src/integration/traversal_test.cj: walkerIsNonRecursiveAndEmitsBalancedEvents'
+  - 'src/integration/traversal_test.cj: typedVisitorAndQueriesReturnExactNodesAndRelations'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1247,12 +1243,12 @@ requirements:
   - 公共 API 不绑定具体内存实现
   status: pass
   implementation:
-  - 'src/rewrite.cj: iterative postorder TreeRewriter with Keep/Replace/Remove/InsertBefore/InsertAfter/ReplaceChildren/MapText'
-  - 'src/rewrite.cj: changed-subtree propagation, untouched branch sharing, budget/cancellation, and post-validation'
+  - src/core/traversal.cj
+  - src/core/rewrite.cj
   tests:
-  - 'src/rewrite_test.cj: mapsTextWithoutMutatingOriginalAndSharesUntouchedBranch'
-  - 'src/rewrite_test.cj: removeInsertAndReplaceChildrenRemainValid'
-  - 'src/rewrite_test.cj: budgetAndCancellationApplyToTransform'
+  - 'src/integration/rewrite_test.cj: mapsTextWithoutMutatingOriginalAndSharesUntouchedBranch'
+  - 'src/integration/rewrite_test.cj: removeInsertAndReplaceChildrenRemainValid'
+  - 'src/integration/rewrite_test.cj: budgetAndCancellationApplyToTransform'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1269,11 +1265,11 @@ requirements:
   - 每个 pass 后可验证 AST invariants
   status: pass
   implementation:
-  - src/traversal.cj
-  - src/rewrite.cj
+  - src/core/traversal.cj
+  - src/core/rewrite.cj
   tests:
-  - 'src/services_test.cj: ServicesTest.transformPipelineOrdersDependenciesAndValidatesOutput'
-  - 'src/extension_test.cj: ExtensionDslTest.extensionPostprocessTransformLintAndFormatterCategoriesRunInFixedOrder'
+  - 'src/integration/services_test.cj: ServicesTest.transformPipelineOrdersDependenciesAndValidatesOutput'
+  - 'src/integration/extension_test.cj: ExtensionDslTest.extensionPostprocessTransformLintAndFormatterCategoriesRunInFixedOrder'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1291,9 +1287,9 @@ requirements:
   - 线程安全策略明确
   status: pass
   implementation:
-  - src/services.cj
+  - src/core/services.cj
   tests:
-  - 'src/services_test.cj: ServicesTest.annotationChannelsAreTypedAndLifecycleBound'
+  - 'src/integration/services_test.cj: ServicesTest.annotationChannelsAreTypedAndLifecycleBound'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1311,11 +1307,12 @@ requirements:
   - Spec HTML、GFM HTML 和 Safe HTML 均有独立测试
   status: pass
   implementation:
-  - 'src/renderer.cj: HtmlOptions and HtmlRenderer policy-specific rendering'
+  - src/render/renderer.cj
+  - src/artifact/artifact.cj
   tests:
-  - 'src/renderer_test.cj: specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
-  - 'src/renderer_test.cj: safeHtmlEscapesTextRawHtmlAndDangerousUris'
-  - 'src/renderer_test.cj: gfmTagFilterRequiresTheSpecifiedPostNameBoundaryForBlockAndInlineHtml'
+  - 'src/integration/renderer_test.cj: specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
+  - 'src/integration/renderer_test.cj: safeHtmlEscapesTextRawHtmlAndDangerousUris'
+  - 'src/integration/renderer_test.cj: gfmTagFilterRequiresTheSpecifiedPostNameBoundaryForBlockAndInlineHtml'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1335,17 +1332,18 @@ requirements:
   - output limit 和 cancellation 生效
   status: pass
   implementation:
-  - 'src/renderer.cj: text/attribute/raw HTML escaping, URI rejection, class sanitization, disabled task controls, output
+  - src/render/renderer.cj
+  - src/artifact/artifact.cj
     budget'
   - 'src/renderer.cj: exact data-image media-type matching and Safe _blank rel hardening'
   - 'src/renderer.cj: segmented escaping and bounded GFM tagfilter compare before fixed/output-budget writes'
   tests:
-  - 'src/renderer_test.cj: safeHtmlEscapesTextRawHtmlAndDangerousUris'
-  - 'src/renderer_test.cj: specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
-  - 'src/renderer_test.cj: outputBudgetCancellationAndSinkErrorsPropagate'
-  - 'src/renderer_test.cj: cancellationChecksEmptyEntryAndStopsAfterMidRenderCancellation'
-  - 'src/renderer_test.cj: safeDataImageMimeAndBlankTargetPoliciesAreExact'
-  - 'src/renderer_test.cj: escapeHeavyTextChecksBudgetBeforeAnyEscapedSinkWrite and gfmTagFilterRejectsOversizedOutputWithoutMaterializingLongTagName'
+  - 'src/integration/renderer_test.cj: safeHtmlEscapesTextRawHtmlAndDangerousUris'
+  - 'src/integration/renderer_test.cj: specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
+  - 'src/integration/renderer_test.cj: outputBudgetCancellationAndSinkErrorsPropagate'
+  - 'src/integration/renderer_test.cj: cancellationChecksEmptyEntryAndStopsAfterMidRenderCancellation'
+  - 'src/integration/renderer_test.cj: safeDataImageMimeAndBlankTargetPoliciesAreExact'
+  - 'src/integration/renderer_test.cj: escapeHeavyTextChecksBudgetBeforeAnyEscapedSinkWrite and gfmTagFilterRejectsOversizedOutputWithoutMaterializingLongTagName'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1365,14 +1363,12 @@ requirements:
   - 远程图片默认策略和隐私影响有文档与测试
   status: pass
   implementation:
-  - 'src/renderer.cj: independent LinkUriPolicy and ImageUriPolicy'
-  - 'src/renderer.cj: Safe default blocks remote/data images and allows relative images'
-  - 'src/renderer.cj: data-image allowlist compares the complete media type before parameters; Safe external _blank links add noopener noreferrer'
-  - 'src/renderer.cj: identity-bearing HTTP(S) ExternalLinkRewriterPort executes before URI-policy revalidation and escaping'
+  - src/render/renderer.cj
+  - src/artifact/artifact.cj
   tests:
-  - 'src/renderer_test.cj: safeImagesBlockRemoteAndDataButAllowRelative'
-  - 'src/renderer_test.cj: safeDataImageMimeAndBlankTargetPoliciesAreExact'
-  - 'src/renderer_test.cj: customRawHtmlAndExternalLinkRewriteAreExplicitAndFailClosed'
+  - 'src/integration/renderer_test.cj: safeImagesBlockRemoteAndDataButAllowRelative'
+  - 'src/integration/renderer_test.cj: safeDataImageMimeAndBlankTargetPoliciesAreExact'
+  - 'src/integration/renderer_test.cj: customRawHtmlAndExternalLinkRewriteAreExplicitAndFailClosed'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1392,13 +1388,12 @@ requirements:
   - raw HTML PassThrough 只能显式 unsafe 启用
   status: pass
   implementation:
-  - 'src/renderer.cj: uriScheme removes control/ASCII whitespace, lowercases scheme, applies policy before escaping'
-  - 'src/renderer.cj: RawHtmlPolicyKind and explicit pass-through option'
-  - 'src/renderer.cj: normal HtmlOptions constructor rejects PassThrough; public unsafe factories are the only activation path'
+  - src/render/renderer.cj
+  - src/artifact/artifact.cj
   tests:
-  - 'src/renderer_test.cj: safeHtmlEscapesTextRawHtmlAndDangerousUris'
-  - 'src/renderer_test.cj: specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
-  - 'src/renderer_test.cj: customRawHtmlAndExternalLinkRewriteAreExplicitAndFailClosed'
+  - 'src/integration/renderer_test.cj: safeHtmlEscapesTextRawHtmlAndDangerousUris'
+  - 'src/integration/renderer_test.cj: specHtmlPassesRawHtmlAndSafeTaskIsDisabled'
+  - 'src/integration/renderer_test.cj: customRawHtmlAndExternalLinkRewriteAreExplicitAndFailClosed'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1416,10 +1411,10 @@ requirements:
   - GfmCompatible 不命名为 Safe
   status: pass
   implementation:
-  - src/renderer.cj
-  - src/artifact.cj
+  - src/render/renderer.cj
+  - src/artifact/artifact.cj
   tests:
-  - 'src/renderer_test.cj: RendererBehaviorTest.sanitizerAdapterFailsClosedAndAsyncSinkResumesWithoutDuplication'
+  - 'src/integration/renderer_test.cj: RendererBehaviorTest.sanitizerAdapterFailsClosedAndAsyncSinkResumesWithoutDuplication'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1436,11 +1431,11 @@ requirements:
   - 开启 SourceMap 的性能和内存开销单独记录
   status: pass
   implementation:
-  - 'src/renderer.cj: source-derived writes are recorded at the exact renderer write site; generated tags remain separate'
-  - 'src/artifact.cj: sorted write-time ranges and binary-search sourceSpanAt/nodeIdAt lookup'
+  - src/render/renderer.cj
+  - src/artifact/artifact.cj
   tests:
-  - 'src/artifact_test.cj: renderedSourceMapSeparatesSourceAndGeneratedRanges'
-  - 'src/artifact_test.cj: renderedSourceMapCannotMatchVisibleTextInsideGeneratedTags'
+  - 'src/integration/artifact_test.cj: renderedSourceMapSeparatesSourceAndGeneratedRanges'
+  - 'src/integration/artifact_test.cj: renderedSourceMapCannotMatchVisibleTextInsideGeneratedTags'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1458,9 +1453,9 @@ requirements:
   - 相同输入和配置产生相同文本
   status: pass
   implementation:
-  - 'src/renderer.cj: iterative PlainTextRenderer with link destination option and custom-node child fallback'
+  - src/render/renderer.cj
   tests:
-  - 'src/renderer_test.cj: plainTextIsDeterministicAndContainsNoAnsi'
+  - 'src/integration/renderer_test.cj: plainTextIsDeterministicAndContainsNoAnsi'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1478,10 +1473,11 @@ requirements:
   - 默认不自动重排普通段落
   status: pass
   implementation:
-  - 'src/formatter.cj: iterative CanonicalMarkdownRenderer and MarkdownFormatOptions'
+  - src/render/formatter.cj
+  - src/editor/editor.cj
   tests:
-  - 'src/formatter_test.cj: canonicalMarkdownIsIdempotentForMixedDocument'
-  - 'src/formatter_test.cj: formatterSupportsCrlfAndFinalNewlineOptions'
+  - 'src/integration/formatter_test.cj: canonicalMarkdownIsIdempotentForMixedDocument'
+  - 'src/integration/formatter_test.cj: formatterSupportsCrlfAndFinalNewlineOptions'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1498,10 +1494,11 @@ requirements:
   - 边界和 extension node 有 metamorphic tests
   status: pass
   implementation:
-  - 'src/formatter.cj: semantic AST formatting for link, code, task, table and breaks with adaptive fences'
+  - src/render/formatter.cj
+  - src/editor/editor.cj
   tests:
-  - 'src/formatter_test.cj: canonicalMarkdownIsIdempotentForMixedDocument'
-  - 'src/formatter_test.cj: formatterPreservesCodeDestinationsTaskStateAndTableAlignment'
+  - 'src/integration/formatter_test.cj: canonicalMarkdownIsIdempotentForMixedDocument'
+  - 'src/integration/formatter_test.cj: formatterPreservesCodeDestinationsTaskStateAndTableAlignment'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1518,11 +1515,11 @@ requirements:
   - 变更范围和 source edits 可复核
   status: pass
   implementation:
-  - src/formatter.cj
-  - src/editor.cj
+  - src/render/formatter.cj
+  - src/editor/editor.cj
   tests:
-  - 'src/editor_test.cj: EditorSnapshotTest.syntaxTreeRoundTripsEverySourceByte'
-  - 'src/editor_test.cj: EditorSnapshotTest.preservingFormatterSupportsRangeNodeAndChangedRangeEntryPoints'
+  - 'src/integration/editor_test.cj: EditorSnapshotTest.syntaxTreeRoundTripsEverySourceByte'
+  - 'src/integration/editor_test.cj: EditorSnapshotTest.preservingFormatterSupportsRangeNodeAndChangedRangeEntryPoints'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1539,11 +1536,11 @@ requirements:
   - 不得静默删除扩展节点
   status: pass
   implementation:
-  - src/formatter.cj
-  - src/editor.cj
+  - src/render/formatter.cj
+  - src/editor/editor.cj
   tests:
-  - 'src/editor_test.cj: EditorSnapshotTest.preservingFormatterSupportsRangeNodeAndChangedRangeEntryPoints'
-  - 'src/editor_test.cj: EditorSnapshotTest.overlappingAndSurrogateSplittingEditsAreRejected'
+  - 'src/integration/editor_test.cj: EditorSnapshotTest.preservingFormatterSupportsRangeNodeAndChangedRangeEntryPoints'
+  - 'src/integration/editor_test.cj: EditorSnapshotTest.overlappingAndSurrogateSplittingEditsAreRejected'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1562,20 +1559,13 @@ requirements:
   - FullAst/PreferFused/RequireFused 显式报告实际 HTML 执行路径且不静默降低能力
   status: pass
   implementation:
-  - 'src/events.cj: source-driven Resolved/RawBlock event values, direct sink lowering and incremental raw-block session'
-  - 'src/events.cj: shared pending buffer, feed-time line limit and lexical fence/HTML1-7/indented checkpoints avoid repeated unfinished-prefix copies/parses while respecting DSL shadowing'
-  - 'src/events.cj: paired block DSL body bytes and closer candidates use an O(1) incremental state machine with batch-equivalent nested/CRLF semantics and compaction-safe absolute spans'
-  - 'src/events.cj: String input is preflighted before byte conversion and both byte scans check cancellation at most every 1024 bytes before buffering or draining'
-  - 'src/parser.cj: two-pass resolved execution and transient top-level arena rollback after emission'
-  - 'src/parser_node_factory.cj: read-only transient arena access used before rollback'
-  - 'src/execution.cj: explicit FullAst/PreferFused/RequireFused HTML execution path reporting and fail-closed preflight'
-  - 'src/core/core.cj: curated public Event API exports'
+  - src/core/services.cj
   tests:
-  - 'src/events_test.cj: resolved references, raw non-final semantics, early closed-block emission, balanced event/range contracts, lifecycle, cumulative limits and split UTF-8 chunks'
-  - 'src/events_test.cj: whole/byte/line differential for fence, HTML1-7, indented, UTF-8/CRLF/span and DSL shadowing plus metered linear unfinished-block regressions'
-  - 'src/events_test.cj: paired DSL maximumBlockBytes whole/line/byte/nested/CRLF boundary, reset, compaction and 64 KiB byte-fed closer-tail complexity regressions'
-  - 'src/events_test.cj: deterministic scan-checkpoint cancellation and fail-before-conversion String lifecycle/input-limit regressions'
-  - 'src/execution_test.cj: explicit full/fused path selection and fail-closed capability guards'
+  - 'src/integration/events_test.cj: resolved references, raw non-final semantics, early closed-block emission, balanced event/range contracts, lifecycle, cumulative limits and split UTF-8 chunks'
+  - 'src/integration/events_test.cj: whole/byte/line differential for fence, HTML1-7, indented, UTF-8/CRLF/span and DSL shadowing plus metered linear unfinished-block regressions'
+  - 'src/integration/events_test.cj: paired DSL maximumBlockBytes whole/line/byte/nested/CRLF boundary, reset, compaction and 64 KiB byte-fed closer-tail complexity regressions'
+  - 'src/integration/events_test.cj: deterministic scan-checkpoint cancellation and fail-before-conversion String lifecycle/input-limit regressions'
+  - 'src/integration/execution_test.cj: explicit full/fused path selection and fail-closed capability guards'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1600,10 +1590,11 @@ requirements:
   - manifest 缺失必需能力时 engine build 失败
   status: pass
   implementation:
-  - 'src/extension.cj: ExtensionManifest identity, profiles, dependencies/conflicts, capabilities, budget, trust and renderer
+  - src/extensions/extension.cj
+  - src/testkit/testkit.cj
     policy'
   tests:
-  - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
+  - 'src/integration/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1622,9 +1613,10 @@ requirements:
   - fingerprint 纳入会影响语义的实现身份
   status: pass
   implementation:
-  - 'src/extension.cj: semantic/implementation/SPI identities and ExtensionCapabilities matrix'
+  - src/extensions/extension.cj
+  - src/testkit/testkit.cj
   tests:
-  - 'src/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
+  - 'src/integration/extension_test.cj: compilerRejectsConflictsDependenciesUnboundedRulesAndMissingRenderer'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1641,11 +1633,12 @@ requirements:
   - 插件隔离只作为 P2 独立能力，不在 1.0 做虚假保证
   status: pass
   implementation:
-  - 'src/extension.cj: manifest trustLevel and code-only typed builders'
+  - src/extensions/extension.cj
+  - src/testkit/testkit.cj
   tests:
-  - 'src/extension_test.cj: ExtensionDslTest.compilerRejectsProfileCyclesVersionsRuleIdentityAndCapabilities'
-  - 'src/external_descriptor_test.cj: ExternalDialectDescriptorTest.descriptorsRejectCallbacksUnknownFieldsInvalidSchemaAndUnboundedRules'
-  - 'src/isolation_test.cj: PluginIsolationTest.isolationPolicyIpcIdentityLimitsCancellationAndFailClosedAreEnforced'
+  - 'src/integration/extension_test.cj: ExtensionDslTest.compilerRejectsProfileCyclesVersionsRuleIdentityAndCapabilities'
+  - 'src/integration/external_descriptor_test.cj: ExternalDialectDescriptorTest.descriptorsRejectCallbacksUnknownFieldsInvalidSchemaAndUnboundedRules'
+  - 'src/integration/isolation_test.cj: PluginIsolationTest.isolationPolicyIpcIdentityLimitsCancellationAndFailClosedAreEnforced'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1661,10 +1654,10 @@ requirements:
   - 默认 hard failure 不返回伪装完整的 AST
   status: pass
   implementation:
-  - src/extension.cj
-  - src/testkit.cj
+  - src/extensions/extension.cj
+  - src/testkit/testkit.cj
   tests:
-  - 'src/extension_test.cj: ExtensionDslTest.boundedParserSpiRunsAndFailuresAreStructuredWithoutStateLeak'
+  - 'src/integration/extension_test.cj: ExtensionDslTest.boundedParserSpiRunsAndFailuresAreStructuredWithoutStateLeak'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1681,11 +1674,11 @@ requirements:
   - 第三方作者可在项目外独立运行 TCK
   status: pass
   implementation:
-  - src/extension.cj
-  - src/testkit.cj
+  - src/extensions/extension.cj
+  - src/testkit/testkit.cj
   tests:
-  - 'src/testkit_fuzz_test.cj: ExtensionTckAndFuzzTest.extensionTckPassesAllRequiredRuntimeChecks'
-  - 'src/official_extensions_test.cj: OfficialExtensionsTest.allOfficialP1ExtensionsPassTheSharedTck'
+  - 'src/integration/testkit_fuzz_test.cj: ExtensionTckAndFuzzTest.extensionTckPassesAllRequiredRuntimeChecks'
+  - 'src/integration/official_extensions_test.cj: OfficialExtensionsTest.allOfficialP1ExtensionsPassTheSharedTck'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1702,11 +1695,11 @@ requirements:
   - Front Matter 不解析 YAML/TOML/JSON，Math 不执行渲染
   status: pass
   implementation:
-  - src/extension.cj
-  - src/testkit.cj
+  - src/extensions/extension.cj
+  - src/testkit/testkit.cj
   tests:
-  - 'src/official_extensions_test.cj: OfficialExtensionsTest.catalogAndDefaultEnablementMatrixAreVersioned'
-  - 'src/profile_snapshot_test.cj: ProfileBehaviorSnapshotTest.gfmModernV1FreezesItsDeclaredExtensionComposition'
+  - 'src/integration/official_extensions_test.cj: OfficialExtensionsTest.catalogAndDefaultEnablementMatrixAreVersioned'
+  - 'src/integration/profile_snapshot_test.cj: ProfileBehaviorSnapshotTest.gfmModernV1FreezesItsDeclaredExtensionComposition'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1723,13 +1716,13 @@ requirements:
   - 病态输入下取消延迟有确定上界测试
   status: pass
   implementation:
-  - 'src/limits.cj: atomic CancellationToken and CancellationSource'
-  - 'src/renderer.cj: entry/exit, 256-node and at-most-1024-byte scan checkpoints bound renderer cancellation latency'
-  - 'src/events.cj: RawBlock validation and append scans use deterministic at-most-1024-byte cancellation checkpoints and recheck before buffering/drain'
+  - src/core/limits.cj
+  - src/engine/parser.cj
+  - src/render/renderer.cj
   tests:
-  - 'src/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
-  - 'src/renderer_test.cj: cancellationChecksEmptyEntryAndStopsAfterMidRenderCancellation'
-  - 'src/events_test.cj: deterministic RawBlock scan cancellation upper-bound regression'
+  - 'src/integration/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
+  - 'src/integration/renderer_test.cj: cancellationChecksEmptyEntryAndStopsAfterMidRenderCancellation'
+  - 'src/integration/events_test.cj: deterministic RawBlock scan cancellation upper-bound regression'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1749,10 +1742,11 @@ requirements:
   - partial result 仅在显式 allowPartialResult 时返回且标为不完整
   status: pass
   implementation:
-  - 'src/limits.cj: CancellationToken.throwIfCancelled returns typed Cancelled failure'
-  - 'src/renderer.cj: cancellation is checked before and after entry/exit, long scans and Sink writes'
+  - src/core/limits.cj
+  - src/engine/parser.cj
+  - src/render/renderer.cj
   tests:
-  - 'src/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
+  - 'src/integration/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1771,16 +1765,12 @@ requirements:
   - OperationBudget 是单次操作拥有的可变状态，不支持并发或跨操作复用
   status: pass
   implementation:
-  - 'src/limits.cj: independent scan, delimiter, extension, transform, renderer-node, and output budgets'
-  - 'src/limits.cj and docs/concurrency-and-observability.md: operation-scoped, non-thread-safe ownership contract'
-  - 'src/events.cj: RawBlock lexical scanning charges each newly appended byte once'
-  - 'src/events.cj: paired DSL maximumBlockBytes and closer matching are enforced with incrementally metered O(1) state updates during feed'
-  - 'src/renderer.cj and src/execution.cj: fixed and operation output budgets are checked before each built-in segment allocation/write'
+  - src/core/limits.cj
   tests:
-  - 'src/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
-  - 'src/events_test.cj: rawSessionUnclosedFenceCandidateLinesHaveLinearMeteredWork'
-  - 'src/events_test.cj: rawSessionPairedBlockDslCloserTailWhitespaceIsLinear'
-  - 'src/renderer_test.cj: escapeHeavyTextChecksBudgetBeforeAnyEscapedSinkWrite'
+  - 'src/integration/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
+  - 'src/integration/events_test.cj: rawSessionUnclosedFenceCandidateLinesHaveLinearMeteredWork'
+  - 'src/integration/events_test.cj: rawSessionPairedBlockDslCloserTailWhitespaceIsLinear'
+  - 'src/integration/renderer_test.cj: escapeHeavyTextChecksBudgetBeforeAnyEscapedSinkWrite'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1800,12 +1790,10 @@ requirements:
   - P1 的 Continue/Pause/Failed 异步 adapter 不被宣称为 1.0 能力
   status: pass
   implementation:
-  - 'src/renderer.cj: TextSink, SinkWriteResult, StringTextSink and SinkFailureException'
-  - 'src/renderer.cj: HtmlRenderer.renderTo stops on first failure and writes without unbounded renderer buffer'
-  - 'src/renderer.cj: BufferedAsyncHtmlOutputSession explicitly names the pre-rendered buffered adapter contract'
+  - src/render/renderer.cj
   tests:
-  - 'src/renderer_test.cj: outputBudgetCancellationAndSinkErrorsPropagate'
-  - 'src/renderer_test.cj: explicitlyNamedBufferedAsyncSessionPreservesBackpressure'
+  - 'src/integration/renderer_test.cj: outputBudgetCancellationAndSinkErrorsPropagate'
+  - 'src/integration/renderer_test.cj: explicitlyNamedBufferedAsyncSessionPreservesBackpressure'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1824,13 +1812,12 @@ requirements:
   - limits 覆盖输入、行、深度、节点、引用、URL、literal、表格、扩展和输出
   status: pass
   implementation:
-  - 'src/limits.cj: ParseLimits.safe and ParseLimits.trusted with all PRD limit dimensions'
-  - 'src/parser.cj, src/execution.cj and src/renderer.cj: accumulated literal/output checks execute on construction/render paths; maximumAstNodes counts actual AST allocation'
-  - 'src/parser.cj and src/events.cj: buffered String feeds perform lifecycle, cancellation and overflow-safe remaining-input preflight before byte-array conversion'
+  - src/core/limits.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/core_test.cj: CoreContractTest.safeAndTrustedLimitsRemainBounded'
-  - 'src/parser_test.cj: enforcesIndentedCodeLiteralLimitIncrementally'
-  - 'src/execution_test.cj: fused/full literal and output limit parity'
+  - 'src/integration/core_test.cj: CoreContractTest.safeAndTrustedLimitsRemainBounded'
+  - 'src/integration/parser_test.cj: enforcesIndentedCodeLiteralLimitIncrementally'
+  - 'src/integration/execution_test.cj: fused/full literal and output limit parity'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1848,12 +1835,12 @@ requirements:
   - 边界值、超一值和组合限制均有测试
   status: pass
   implementation:
-  - 'src/ast.cj, src/parser.cj: parser-owned NodeIdAllocator rejects the next allocation before maximumAstNodes is exceeded, including Parser SPI allocations'
-  - 'src/limits.cj, src/parser.cj: BoundedLiteralBuilder and literal guards enforce accumulated multiline and inline literal bytes during construction'
+  - src/core/limits.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/parser_test.cj: preservesMalformedInlineAsTextAndHonorsResourceControls'
-  - 'src/parser_test.cj: enforcesAstNodeAndAccumulatedLiteralLimitsDuringConstruction'
-  - 'src/extension_test.cj: boundedParserSpiRunsAndFailuresAreStructuredWithoutStateLeak'
+  - 'src/integration/parser_test.cj: preservesMalformedInlineAsTextAndHonorsResourceControls'
+  - 'src/integration/parser_test.cj: enforcesAstNodeAndAccumulatedLiteralLimitsDuringConstruction'
+  - 'src/integration/extension_test.cj: boundedParserSpiRunsAndFailuresAreStructuredWithoutStateLeak'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1872,14 +1859,12 @@ requirements:
   - 依赖图和干净环境构建可证明这些约束
   status: pass
   implementation:
-  - src/renderer.cj
-  - src/security_corpus_test.cj
+  - src/render/renderer.cj
+  - src/integration/security_corpus_test.cj
   - SECURITY.md
-  - 'src/native/accelerator.cj: foreign declaration isolated in an opt-in subpackage'
-  - 'cjpm.toml and build.cj: default package has no native link option and does not invoke a C toolchain'
   tests:
-  - 'src/security_corpus_test.cj: SecurityCorpusTest.safeHtmlCorpusRejectsInjectionAndUriConfusion'
-  - 'src/document_system_test.cj: DocumentSystemTest.documentGraphUsesOnlyHostSuppliedInputsAndResolvesEdgesAndReferences'
+  - 'src/integration/security_corpus_test.cj: SecurityCorpusTest.safeHtmlCorpusRejectsInjectionAndUriConfusion'
+  - 'src/integration/document_system_test.cj: DocumentSystemTest.documentGraphUsesOnlyHostSuppliedInputsAndResolvesEdgesAndReferences'
   - 'scripts/release_gate.sh'
   evidence:
   - *final_validation_evidence
@@ -1898,16 +1883,15 @@ requirements:
   - 病态 delimiter 无已知非线性问题
   status: implemented_unverified
   implementation:
-  - src/renderer.cj
-  - 'src/events.cj: incremental raw-block fence, HTML, indented and paired-DSL closer state prevents reparsing a growing unfinished prefix or line tail'
-  - src/security_corpus_test.cj
+  - src/render/renderer.cj
+  - src/integration/security_corpus_test.cj
   - SECURITY.md
   tests:
-  - 'src/security_corpus_test.cj: SecurityCorpusTest.pathologicalDelimiterReferenceHtmlAndTableInputsRemainBounded'
-  - 'src/testkit_fuzz_test.cj: ExtensionTckAndFuzzTest.pathologicalDepthAndOutputAmplificationAreBounded'
-  - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks.linearGrowthCorpus'
-  - 'src/events_test.cj: rawSessionUnclosedFenceCandidateLinesHaveLinearMeteredWork'
-  - 'src/events_test.cj: rawSessionPairedBlockDslCloserTailWhitespaceIsLinear'
+  - 'src/integration/security_corpus_test.cj: SecurityCorpusTest.pathologicalDelimiterReferenceHtmlAndTableInputsRemainBounded'
+  - 'src/integration/testkit_fuzz_test.cj: ExtensionTckAndFuzzTest.pathologicalDepthAndOutputAmplificationAreBounded'
+  - 'src/integration/benchmark_test.cj: MarkdownReleaseBenchmarks.linearGrowthCorpus'
+  - 'src/integration/events_test.cj: rawSessionUnclosedFenceCandidateLinesHaveLinearMeteredWork'
+  - 'src/integration/events_test.cj: rawSessionPairedBlockDslCloserTailWhitespaceIsLinear'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1925,12 +1909,12 @@ requirements:
   - P1 lint 可诊断 bidi control、zero-width、混淆换行和不可见 separator
   status: pass
   implementation:
-  - 'src/renderer.cj: every HTML Sink write consumes output budget'
-  - 'src/parser.cj: input/line/reference/table/URL/nesting/node limits'
-  - 'src/renderer.cj: built-in escaped and tagfilter output is segmented before allocation; fixed maximumOutputBytes is fingerprinted'
+  - src/render/renderer.cj
+  - src/integration/security_corpus_test.cj
+  - SECURITY.md
   tests:
-  - 'src/renderer_test.cj: outputBudgetCancellationAndSinkErrorsPropagate'
-  - 'src/renderer_test.cj: escapeHeavyTextChecksBudgetBeforeAnyEscapedSinkWrite and gfmTagFilterRejectsOversizedOutputWithoutMaterializingLongTagName'
+  - 'src/integration/renderer_test.cj: outputBudgetCancellationAndSinkErrorsPropagate'
+  - 'src/integration/renderer_test.cj: escapeHeavyTextChecksBudgetBeforeAnyEscapedSinkWrite and gfmTagFilterRejectsOversizedOutputWithoutMaterializingLongTagName'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1948,12 +1932,13 @@ requirements:
   - 测试证明普通扩展字符串不能获得 TrustedHtml 权限
   status: pass
   implementation:
-  - 'src/renderer.cj: TrustedHtml has private constructor and public unsafe factory only'
-  - 'src/renderer.cj and src/facade.cj: raw pass-through policies and spec HTML convenience require explicit unsafe blocks'
+  - src/render/renderer.cj
+  - src/integration/security_corpus_test.cj
+  - SECURITY.md
   tests:
-  - 'src/renderer_test.cj: RendererBehaviorTest.outputBudgetCancellationAndSinkErrorsPropagate'
-  - 'src/security_corpus_test.cj: SecurityCorpusTest.safeHtmlCorpusRejectsInjectionAndUriConfusion'
-  - 'src/renderer_test.cj: customRawHtmlAndExternalLinkRewriteAreExplicitAndFailClosed'
+  - 'src/integration/renderer_test.cj: RendererBehaviorTest.outputBudgetCancellationAndSinkErrorsPropagate'
+  - 'src/integration/security_corpus_test.cj: SecurityCorpusTest.safeHtmlCorpusRejectsInjectionAndUriConfusion'
+  - 'src/integration/renderer_test.cj: customRawHtmlAndExternalLinkRewriteAreExplicitAndFailClosed'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -1971,11 +1956,9 @@ requirements:
   - 发布门槛为已知高危安全问题 0
   status: pass
   implementation:
-  - src/renderer.cj
-  - src/security_corpus_test.cj
+  - src/render/renderer.cj
+  - src/integration/security_corpus_test.cj
   - SECURITY.md
-  - docs/security.md
-  - 'SECURITY.md: supported-version table, private fallback contact, response targets, advisory/CVE and backport policy'
   tests:
   - GitHub private vulnerability reporting API verification
   evidence:
@@ -1996,9 +1979,10 @@ requirements:
   - 底层 cause 在适当错误中可访问
   status: pass
   implementation:
-  - 'src/diagnostic.cj: MarkdownErrorCode and typed MarkdownException'
+  - src/core/diagnostic.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
+  - 'src/integration/core_test.cj: CoreContractTest.cancellationAndBudgetUseStructuredErrors'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2014,9 +1998,10 @@ requirements:
   - 所有 ParseLimits 与输出限制映射到稳定 limitKind
   status: pass
   implementation:
-  - 'src/diagnostic.cj: LimitExceededException with kind, configured/observed values, phase, span, and extension'
+  - src/core/diagnostic.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/parser_test.cj: preservesMalformedInlineAsTextAndHonorsResourceControls'
+  - 'src/integration/parser_test.cj: preservesMalformedInlineAsTextAndHonorsResourceControls'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2033,9 +2018,10 @@ requirements:
   - message 可变化但不作为程序分支契约
   status: pass
   implementation:
-  - 'src/diagnostic.cj: structured Diagnostic with stable code, severity, spans, extension, and rule identity'
+  - src/core/diagnostic.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/input_test.cj: strictRejectsInvalidUtf8AndReplacePreservesOriginalOffsets'
+  - 'src/integration/input_test.cj: strictRejectsInvalidUtf8AndReplacePreservesOriginalOffsets'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2052,10 +2038,10 @@ requirements:
   - partial result 不被 renderer 或 cache 当作完整 artifact
   status: pass
   implementation:
-  - src/diagnostic.cj
-  - src/parser.cj
+  - src/core/diagnostic.cj
+  - src/engine/parser.cj
   tests:
-  - 'src/parser_test.cj: ParserBehaviorTest.partialResultsRequireExplicitEntryAndCannotBecomeArtifacts'
+  - 'src/integration/parser_test.cj: ParserBehaviorTest.partialResultsRequireExplicitEntryAndCannotBecomeArtifacts'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2071,10 +2057,10 @@ requirements:
   - lint 结果具有 SourceSpan 和稳定 rule identity
   status: pass
   implementation:
-  - src/lint.cj
+  - src/editor/lint.cj
   tests:
-  - 'src/lint_test.cj: LintExplainTest.lintFindsStructureAccessibilityAndSecurityIssuesAndAppliesFreshFix'
-  - 'src/lint_test.cj: LintExplainTest.lintCoversUnusedReferencesMixedMarkersAmbiguityAndInvisibleSeparators'
+  - 'src/integration/lint_test.cj: LintExplainTest.lintFindsStructureAccessibilityAndSecurityIssuesAndAppliesFreshFix'
+  - 'src/integration/lint_test.cj: LintExplainTest.lintCoversUnusedReferencesMixedMarkersAmbiguityAndInvisibleSeparators'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2091,9 +2077,9 @@ requirements:
   - 失败时不做部分写入
   status: pass
   implementation:
-  - src/lint.cj
+  - src/editor/lint.cj
   tests:
-  - 'src/lint_test.cj: LintExplainTest.lintFindsStructureAccessibilityAndSecurityIssuesAndAppliesFreshFix'
+  - 'src/integration/lint_test.cj: LintExplainTest.lintFindsStructureAccessibilityAndSecurityIssuesAndAppliesFreshFix'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2109,9 +2095,9 @@ requirements:
   - 不开启时没有不可接受的热路径开销
   status: pass
   implementation:
-  - src/lint.cj
+  - src/engine/lint.cj
   tests:
-  - 'src/lint_test.cj: LintExplainTest.explainReportsActualExtensionSelectionAndFingerprint'
+  - 'src/integration/lint_test.cj: LintExplainTest.explainReportsActualExtensionSelectionAndFingerprint'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2128,10 +2114,10 @@ requirements:
   - 1.1 不对调用者承诺局部解析
   status: pass
   implementation:
-  - src/editor.cj
+  - src/editor/editor.cj
   tests:
-  - 'src/editor_test.cj: EditorSnapshotTest.snapshotAppliesValidatedUtf8AndUtf16Edits'
-  - 'src/editor_test.cj: EditorSnapshotTest.safeEqualLengthTextEditUsesRealBlockLocalIncrementalReparse'
+  - 'src/integration/editor_test.cj: EditorSnapshotTest.snapshotAppliesValidatedUtf8AndUtf16Edits'
+  - 'src/integration/editor_test.cj: EditorSnapshotTest.safeEqualLengthTextEditUsesRealBlockLocalIncrementalReparse'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2149,10 +2135,10 @@ requirements:
   - 未实现时 capability introspection 明确 incrementalSupport=false
   status: pass
   implementation:
-  - src/editor.cj
+  - src/editor/editor.cj
   tests:
-  - 'src/editor_test.cj: EditorSnapshotTest.safeEqualLengthTextEditUsesRealBlockLocalIncrementalReparse'
-  - 'src/capabilities_test.cj: CapabilitiesTest.reportsActualDialectAndVersionedOptionalSupport'
+  - 'src/integration/editor_test.cj: EditorSnapshotTest.safeEqualLengthTextEditUsesRealBlockLocalIncrementalReparse'
+  - 'src/integration/capabilities_test.cj: CapabilitiesTest.reportsActualDialectAndVersionedOptionalSupport'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2171,8 +2157,8 @@ requirements:
   implementation:
   - docs/prd/markdown-library.md
   tests:
-  - 'src/external_descriptor_test.cj: ExternalDialectDescriptorTest.jsonAndYamlDescriptorsCompileToTheSameDataOnlyDialect'
-  - 'src/external_descriptor_test.cj: ExternalDialectDescriptorTest.descriptorsRejectCallbacksUnknownFieldsInvalidSchemaAndUnboundedRules'
+  - 'src/integration/external_descriptor_test.cj: ExternalDialectDescriptorTest.jsonAndYamlDescriptorsCompileToTheSameDataOnlyDialect'
+  - 'src/integration/external_descriptor_test.cj: ExternalDialectDescriptorTest.descriptorsRejectCallbacksUnknownFieldsInvalidSchemaAndUnboundedRules'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2192,8 +2178,8 @@ requirements:
   - docs/prd/markdown-library.md
   - 'src/isolation.cj: bounded incremental output and diagnostic response decoder'
   tests:
-  - 'src/isolation_test.cj: PluginIsolationTest.isolationPolicyIpcIdentityLimitsCancellationAndFailClosedAreEnforced'
-  - 'src/isolation_test.cj: PluginIsolationTest.isolationDiagnosticsAreBoundedDuringTransportDecode'
+  - 'src/integration/isolation_test.cj: PluginIsolationTest.isolationPolicyIpcIdentityLimitsCancellationAndFailClosedAreEnforced'
+  - 'src/integration/isolation_test.cj: PluginIsolationTest.isolationDiagnosticsAreBoundedDuringTransportDecode'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2212,8 +2198,8 @@ requirements:
   implementation:
   - docs/prd/markdown-library.md
   tests:
-  - 'src/document_system_test.cj: DocumentSystemTest.documentGraphUsesOnlyHostSuppliedInputsAndResolvesEdgesAndReferences'
-  - 'src/document_system_test.cj: DocumentSystemTest.virtualTreePagesPreserveRangesCancellationAndBudgets'
+  - 'src/integration/document_system_test.cj: DocumentSystemTest.documentGraphUsesOnlyHostSuppliedInputsAndResolvesEdgesAndReferences'
+  - 'src/integration/document_system_test.cj: DocumentSystemTest.virtualTreePagesPreserveRangesCancellationAndBudgets'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2231,13 +2217,10 @@ requirements:
   - 能力矩阵与实际 builder 校验结果一致
   status: pass
   implementation:
-  - 'src/capabilities.cj: EngineCapabilities and MarkdownEngine.capabilities'
-  - 'src/parser.cj: MarkdownEngineBuilder.nativeScannerEnabled'
-  - 'src/capabilities.cj: ExecutionModelCapabilities reports buffered input/output and no-prefix failure semantics separately'
-  - 'src/scanner_accelerator.cj: AcceleratedMarkdownEngine reports the explicitly supplied scanner implementation'
+  - src/engine/capabilities.cj
   tests:
-  - 'src/capabilities_test.cj: reportsActualDialectAndVersionedOptionalSupport'
-  - 'src/input_test.cj: nativeScannerCanBeDisabledWithoutChangingPublicParseSemantics'
+  - 'src/integration/capabilities_test.cj: reportsActualDialectAndVersionedOptionalSupport'
+  - 'src/integration/input_test.cj: nativeScannerCanBeDisabledWithoutChangingPublicParseSemantics'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2257,17 +2240,12 @@ requirements:
   - schema v2 绑定原始字节、解码文本、UTF-8 policy 和 identity offset mapping；schema v1 明确 CacheMiss
   status: pass
   implementation:
-  - 'src/artifact.cj: schema-v2 binds original/decoded digests, UTF-8 policy, identity mapping digest and rejects v1'
-  - 'src/artifact.cj: create/load cross-check Document parser provenance, profile, dialect fingerprint and full root span against the supplied SourceBuffer/engine'
-  - 'src/artifact.cj: profile provenance binds stable kind/id/version so a same-name custom profile cannot reuse a built-in artifact'
-  - 'src/source.cj: source buffers retain decode policy and expose original identity bytes only to artifact codecs'
-  - 'src/binary_artifact.cj: MCJ2 fail-closed binary artifact binds the same input identity fields and canonical AST digest'
-  - 'src/capabilities.cj: advertises parse-artifact-2 and markdown-snapshot-binary-2 only'
+  - src/artifact/artifact.cj
   tests:
-  - 'src/artifact_test.cj: artifactHitsOnlyExactSourceEngineAndDialect covers v2 fields, policy match/miss and invalid-byte rejection'
-  - 'src/artifact_test.cj: rejects mismatched source/profile/dialect while accepting a TreeRewriter result that preserves parser provenance'
-  - 'src/artifact_test.cj: same-id/version custom profile is rejected at create and produces CacheMiss at load'
-  - 'src/document_system_test.cj: binarySnapshotIsVersionedStrictAndFuzzSafe'
+  - 'src/integration/artifact_test.cj: artifactHitsOnlyExactSourceEngineAndDialect covers v2 fields, policy match/miss and invalid-byte rejection'
+  - 'src/integration/artifact_test.cj: rejects mismatched source/profile/dialect while accepting a TreeRewriter result that preserves parser provenance'
+  - 'src/integration/artifact_test.cj: same-id/version custom profile is rejected at create and produces CacheMiss at load'
+  - 'src/integration/document_system_test.cj: binarySnapshotIsVersionedStrictAndFuzzSafe'
   evidence:
   - *final_validation_evidence
   - '2026-08-26: ArtifactSourceMapTest 3/3, DocumentSystemTest 4/4 and CapabilitiesTest 1/1 exit 0 after schema-v2 implementation'
@@ -2288,11 +2266,10 @@ requirements:
   - API 草案经契约冻结后以可编译示例验证
   status: pass
   implementation:
-  - 'src/parser.cj: MarkdownEngineBuilder profile/limits and MarkdownEngine.parse with cancellation/budget'
-  - 'src/parser.cj: String/bytes/InputStream overloads and ChunkedParseSession'
-  - 'src/parser.cj: typed dialect builder/compile integration'
+  - src/engine/parser.cj
+  - api/public-api.txt
   tests:
-  - 'src/parser_test.cj: ParserBehaviorTest public engine paths'
+  - 'src/integration/parser_test.cj: ParserBehaviorTest public engine paths'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2310,9 +2287,10 @@ requirements:
   - 便利别名在同一主版本中固定
   status: pass
   implementation:
-  - 'src/profile.cj: fixed commonMark() and gfm() convenience aliases'
+  - src/engine/parser.cj
+  - api/public-api.txt
   tests:
-  - 'src/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
+  - 'src/integration/core_test.cj: CoreContractTest.freezesVersionedProfilesAndSafeDefault'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2331,13 +2309,9 @@ requirements:
   - 核心 Cangjie 模块仅依赖仓颉标准库；native scanner 若启用必须是显式、静态、无副作用的链接资产
   status: pass
   implementation:
-  - 'cjpm.toml: Cangjie 1.1 static package metadata for public module markdown'
-  - '.gitignore: excludes generated target and cache artifacts'
-  - 'src/{core,render,extensions,editor,artifact,document,testkit}: curated public package facades with one-way dependency on the compatibility umbrella'
-  - 'src/native and scripts/build_native_scanner.py: opt-in accelerator plus Unix/MinGW/MSVC target-aware archive production'
-  - 'src/ast.cj and src/fingerprint.cj: NodeIdAllocator and Sha256 implementation helpers reduced to internal visibility'
+  - cjpm.toml
   tests:
-  - 'src/core_test.cj: package-level test suite'
+  - 'src/integration/core_test.cj: package-level test suite'
   - 'scripts/test_build_native_scanner.py: default no-op and Linux/MinGW/MSVC tool/linker command contracts'
   - 'examples/quickstart: public consumer imports curated packages without native linkage'
   evidence:
@@ -2410,11 +2384,11 @@ requirements:
   - 不存在可变全局 registry，只读静态表可安全共享
   status: pass
   implementation:
-  - 'src/parser.cj: immutable MarkdownEngine config and fresh ParserSession per parse'
-  - 'src/ast.cj: immutable Document/MarkdownNode public surface'
+  - src/integration/concurrency_test.cj
+  - docs/concurrency-and-observability.md
   tests:
-  - 'src/concurrency_test.cj: ConcurrencyContractTest.immutableEngineAndDocumentSupportConcurrentReadOnlyUse'
-  - 'src/concurrency_test.cj: ConcurrencyContractTest.cancellationRaceStopsAnAlreadyStartedParse'
+  - 'src/integration/concurrency_test.cj: ConcurrencyContractTest.immutableEngineAndDocumentSupportConcurrentReadOnlyUse'
+  - 'src/integration/concurrency_test.cj: ConcurrencyContractTest.cancellationRaceStopsAnAlreadyStartedParse'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2432,12 +2406,12 @@ requirements:
   - fingerprint determinism 和 chunk invariance 达到 100%
   status: pass
   implementation:
-  - src/fingerprint.cj
-  - src/concurrency_test.cj
+  - src/core/fingerprint.cj
+  - src/integration/concurrency_test.cj
   tests:
-  - 'src/fingerprint_test.cj: FingerprintTest.dialectFingerprintIsDeterministicAndSemanticChangesAlterIt'
-  - 'src/profile_snapshot_test.cj: ProfileBehaviorSnapshotTest.gfmModernV1FreezesItsDeclaredExtensionComposition'
-  - 'src/renderer_test.cj: RendererBehaviorTest.arenaRendererIsDeterministicForCoreAndGfmTrees'
+  - 'src/integration/fingerprint_test.cj: FingerprintTest.dialectFingerprintIsDeterministicAndSemanticChangesAlterIt'
+  - 'src/integration/profile_snapshot_test.cj: ProfileBehaviorSnapshotTest.gfmModernV1FreezesItsDeclaredExtensionComposition'
+  - 'src/integration/renderer_test.cj: RendererBehaviorTest.arenaRendererIsDeterministicForCoreAndGfmTrees'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2455,11 +2429,11 @@ requirements:
   - 未记录规范偏差为 0，并发布两份 conformance report
   status: pass
   implementation:
-  - 'tests/spec/commonmark-0.31.2: pinned official spec/extractor/LICENSE at tag 0.31.2'
-  - 'tests/spec/gfm-0.29: pinned official spec/extractor/COPYING at tag 0.29.0.gfm.0'
-  - 'tools/generate_spec_tests.py and src/generated_commonmark_spec_test.cj: one non-skipped test per official example'
+  - src/integration/testkit_fuzz_test.cj
+  - src/integration/security_corpus_test.cj
+  - scripts/release_gate.sh
   tests:
-  - 'src/generated_commonmark_spec_test.cj: CommonMark0312ConformanceTest examples 1-652'
+  - 'src/integration/generated_commonmark_spec_test.cj: CommonMark0312ConformanceTest examples 1-652'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2477,20 +2451,13 @@ requirements:
   - 参考实现不进入生产依赖
   status: pass
   implementation:
-  - src/testkit_fuzz_test.cj
-  - src/security_corpus_test.cj
+  - src/integration/testkit_fuzz_test.cj
+  - src/integration/security_corpus_test.cj
   - scripts/release_gate.sh
-  - '.github/workflows/candidate-validation.yml: pinned minimum/current SDK matrix executes the complete release gate'
-  - '.github/workflows/candidate-validation.yml: Same-language benchmark (current-1.1.3) verifies committed evidence and reruns the pinned paired comparison'
-  - 'scripts/setup_differential_tools.sh: pinned, reproducible cmark/cmark-gfm/commonmark.js setup used by the gate'
-  - 'tests/differential/commonmark-js/package.json and package-lock.json: exact npm graph and integrity records consumed by npm ci'
-  - 'tests/fuzz/native_scanner_fuzz.c and scripts/fuzz_native_scanner.py: coverage-guided libFuzzer with ASan/UBSan'
-  - 'tests/fuzz/native_scanner_sanitizer.c: deterministic scanner boundary sanitizer harness'
-  - 'tests/fuzz/crashes and tests/fuzz/native-scanner-corpus: checked-in historical crash and seed corpora'
   tests:
   - 'scripts/differential_test.py'
-  - 'src/generated_commonmark_spec_test.cj'
-  - 'src/generated_gfm_spec_test.cj'
+  - 'src/integration/generated_commonmark_spec_test.cj'
+  - 'src/integration/generated_gfm_spec_test.cj'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2510,11 +2477,12 @@ requirements:
   - Chunk invariance 和 Formatter 幂等指标均为 100%
   status: pass
   implementation:
-  - 'src/input_test.cj: chunk metamorphic public-engine comparison'
-  - 'src/formatter_test.cj: formatter idempotence comparison'
+  - src/integration/testkit_fuzz_test.cj
+  - src/integration/security_corpus_test.cj
+  - scripts/release_gate.sh
   tests:
-  - 'src/input_test.cj: arbitraryChunkBoundariesMatchAllAtOnce'
-  - 'src/formatter_test.cj: canonicalMarkdownIsIdempotentForMixedDocument'
+  - 'src/integration/input_test.cj: arbitraryChunkBoundariesMatchAllAtOnce'
+  - 'src/integration/formatter_test.cj: canonicalMarkdownIsIdempotentForMixedDocument'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2532,14 +2500,14 @@ requirements:
   - 发布时无未处理 fuzz crash
   status: pass
   implementation:
-  - src/testkit_fuzz_test.cj
-  - src/security_corpus_test.cj
+  - src/integration/testkit_fuzz_test.cj
+  - src/integration/security_corpus_test.cj
   - scripts/release_gate.sh
   tests:
-  - 'src/testkit_fuzz_test.cj: deterministicFuzzSmokeCoversAllPublicPipelines'
-  - 'src/testkit_fuzz_test.cj: arbitraryByteFuzzMatchesBufferedAndChunkedUtf8Policies'
-  - 'src/testkit_fuzz_test.cj: historicalInvalidUtf8GfmCrashCorpusStaysFixed'
-  - 'src/security_corpus_test.cj: safeHtmlCorpusRejectsInjectionAndUriConfusion'
+  - 'src/integration/testkit_fuzz_test.cj: deterministicFuzzSmokeCoversAllPublicPipelines'
+  - 'src/integration/testkit_fuzz_test.cj: arbitraryByteFuzzMatchesBufferedAndChunkedUtf8Policies'
+  - 'src/integration/testkit_fuzz_test.cj: historicalInvalidUtf8GfmCrashCorpusStaysFixed'
+  - 'src/integration/security_corpus_test.cj: safeHtmlCorpusRejectsInjectionAndUriConfusion'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2560,13 +2528,12 @@ requirements:
   - 所有 bug 修复包含 regression test
   status: pass
   implementation:
-  - src/testkit_fuzz_test.cj
-  - src/security_corpus_test.cj
+  - src/integration/testkit_fuzz_test.cj
+  - src/integration/security_corpus_test.cj
   - scripts/release_gate.sh
-  - '.github/workflows/candidate-validation.yml: pinned minimum/current SDK matrix executes the complete release gate'
   tests:
-  - 'src/security_corpus_test.cj: SecurityCorpusTest.pathologicalDelimiterReferenceHtmlAndTableInputsRemainBounded'
-  - 'src/testkit_fuzz_test.cj: ExtensionTckAndFuzzTest.extensionTckPassesAllRequiredRuntimeChecks'
+  - 'src/integration/security_corpus_test.cj: SecurityCorpusTest.pathologicalDelimiterReferenceHtmlAndTableInputsRemainBounded'
+  - 'src/integration/testkit_fuzz_test.cj: ExtensionTckAndFuzzTest.extensionTckPassesAllRequiredRuntimeChecks'
   - 'scripts/test_check_public_api.py'
   - 'benchmarks/test_compare_markdown4cj.py: eight fail-closed protocol, derivation, output-stability, CPU-affinity and canonical-iteration tests'
   evidence:
@@ -2588,21 +2555,13 @@ requirements:
   - 固定 reference host、工具版本、构建模式和原始样本可复核
   status: implemented_unverified
   implementation:
-  - src/benchmark_test.cj
-  - src/renderer.cj
+  - src/integration/benchmark_test.cj
   - benchmarks/measure.py
-  - 'benchmarks/release_statistics.py: independent recomputation of every ratio, slope, RSS delta and gate from raw samples'
-  - benchmarks/driver/src/main.cj
-  - benchmarks/compare_markdown4cj.py
-  - 'benchmarks/measure.py: 12 in-process iterations per canonical matrix sample amortize executable/runtime startup without changing the measured full-AST and HTML profiles'
-  - 'scripts/build_benchmark_driver.py: safe fresh extraction of the verified official SDK and absolute-tool/fresh-source builds for product driver and CLI'
-  - '.github/workflows/candidate-validation.yml: required same-language benchmark job retains and re-verifies minimal pinned-comparator Git bundles'
   - docs/reports/benchmark.md
-  - docs/reports/markdown4cj-comparison.md
   tests:
   - 'scripts/test_benchmark_input_profiles.py: six corpus/input identity and fail-closed normalization tests'
-  - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks.commonmarkParseOnly'
-  - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks.gfmParseAndHtml'
+  - 'src/integration/benchmark_test.cj: MarkdownReleaseBenchmarks.commonmarkParseOnly'
+  - 'src/integration/benchmark_test.cj: MarkdownReleaseBenchmarks.gfmParseAndHtml'
   - benchmarks/measure.py
   - scripts/test_benchmark_input_profiles.py
   - 'benchmarks/test_compare_markdown4cj.py: semantic/protocol/statistics/build-provenance and Git-object identity adversarial tests'
@@ -2647,16 +2606,12 @@ requirements:
   - SourceMap、CST 等可选能力分别记录开销
   status: implemented_unverified
   implementation:
-  - src/benchmark_test.cj
+  - src/integration/benchmark_test.cj
   - benchmarks/measure.py
-  - benchmarks/driver/src/main.cj
-  - docs/performance.md
   - docs/reports/benchmark.md
-  - benchmarks/compare_markdown4cj.py
-  - '.github/workflows/candidate-validation.yml: Same-language benchmark (current-1.1.3) merge gate'
   tests:
   - benchmarks/measure.py
-  - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks'
+  - 'src/integration/benchmark_test.cj: MarkdownReleaseBenchmarks'
   - scripts/test_benchmark_input_profiles.py
   - 'scripts/test_benchmark_input_profiles.py: canonical matrix is frozen at 12 in-process iterations and all eight benchmark-profile tests pass'
   - benchmarks/test_compare_markdown4cj.py
@@ -2840,13 +2795,13 @@ requirements:
   - 小节点采用紧凑表示，或记录未采用的测量理由
   status: pass
   implementation:
-  - src/benchmark_test.cj
+  - src/integration/benchmark_test.cj
   - benchmarks/measure.py
   - docs/reports/benchmark.md
   tests:
-  - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks.commonmarkParseOnly'
-  - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks.gfmParseAndHtml'
-  - 'src/benchmark_test.cj: MarkdownReleaseBenchmarks.linearGrowthCorpus'
+  - 'src/integration/benchmark_test.cj: MarkdownReleaseBenchmarks.commonmarkParseOnly'
+  - 'src/integration/benchmark_test.cj: MarkdownReleaseBenchmarks.gfmParseAndHtml'
+  - 'src/integration/benchmark_test.cj: MarkdownReleaseBenchmarks.linearGrowthCorpus'
   - 'benchmarks/measure.py'
   evidence:
   - *final_validation_evidence
@@ -2866,9 +2821,9 @@ requirements:
   - 默认不记录完整文档、link/image URL、code block 或 Front Matter 内容
   status: pass
   implementation:
-  - src/observability.cj
+  - src/engine/observability.cj
   tests:
-  - 'src/observability_test.cj: ObservabilityTest.statisticsAreExplicitLocalAndContentFree'
+  - 'src/integration/observability_test.cj: ObservabilityTest.statisticsAreExplicitLocalAndContentFree'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2889,7 +2844,6 @@ requirements:
   - README.md
   - docs/
   - examples/quickstart/
-  - examples/cookbook/
   tests:
   - 'scripts/check_docs.py'
   - 'scripts/test_release_evidence.py'
@@ -2920,7 +2874,6 @@ requirements:
   - README.md
   - docs/
   - examples/quickstart/
-  - examples/cookbook/
   tests:
   - 'examples/quickstart/src/main.cj'
   - 'examples/cookbook/src/main.cj'
@@ -2948,9 +2901,8 @@ requirements:
   implementation:
   - docs/versioning-and-compatibility.md
   - scripts/check_public_api.py
-  - 'src/extension.cj: SemVer validation and ordering for extension manifests and dependency constraints'
   tests:
-  - 'src/extension_test.cj: semanticVersionConstraintsFollowSemVerPrecedenceAndRejectInvalidVersions'
+  - 'src/integration/extension_test.cj: semanticVersionConstraintsFollowSemVerPrecedenceAndRejectInvalidVersions'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -2977,9 +2929,9 @@ requirements:
   - scripts/check_public_api.py
   tests:
   - 'scripts/test_check_public_api.py'
-  - 'src/profile_snapshot_test.cj: ProfileBehaviorSnapshotTest.gfmModernV1FreezesItsDeclaredExtensionComposition'
-  - 'src/extension_test.cj: ExtensionDslTest.compilerRejectsProfileCyclesVersionsRuleIdentityAndCapabilities'
-  - 'src/artifact_test.cj: ArtifactSourceMapTest.artifactHitsOnlyExactSourceEngineAndDialect'
+  - 'src/integration/profile_snapshot_test.cj: ProfileBehaviorSnapshotTest.gfmModernV1FreezesItsDeclaredExtensionComposition'
+  - 'src/integration/extension_test.cj: ExtensionDslTest.compilerRejectsProfileCyclesVersionsRuleIdentityAndCapabilities'
+  - 'src/integration/artifact_test.cj: ArtifactSourceMapTest.artifactHitsOnlyExactSourceEngineAndDialect'
   evidence:
   - *final_validation_evidence
   - '2026-08-18: cjpm test; exit 0; 1410 passed, 0 skipped, 0 error, 0 failed'
@@ -3002,12 +2954,7 @@ requirements:
   implementation:
   - CHANGELOG.md
   - LICENSE
-  - .github/workflows/candidate-validation.yml
   - scripts/release_gate.sh
-  - scripts/setup_differential_tools.sh
-  - release-evidence.json
-  - scripts/release_evidence.py
-  - 'scripts/release_evidence_bundle.py: command/exit/JUnit/API/benchmark/source-archive manifest and SHA256SUMS collector'
   tests:
   - scripts/release_gate.sh
   - cjpm bundle
@@ -3046,7 +2993,6 @@ requirements:
   implementation:
   - docs/reports/benchmark.md
   - docs/reports/fuzz-summary.md
-  - release-evidence.json
   tests:
   - scripts/release_gate.sh
   - benchmarks/measure.py

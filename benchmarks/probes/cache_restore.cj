@@ -1,13 +1,19 @@
 package markdown
 
+import markdown.artifact.{BinaryArtifactCodec, BinaryArtifactLoadResult, BinarySnapshotArtifact}
+import markdown.core.{ArenaNodePayload, AstArenaBuilder, AstInvariantValidator, ImmutableArray, LiteralStorage, 
+    NodeCategory, NodeKind, NodeOriginKind, NodeRef, NodeRefWalkEvent, ParseResult, ReferenceDefinition, Sha256, 
+    SourceBuffer, SourceSpan, parserConfigurationFingerprint}
+import markdown.editor.{DocumentSnapshot, SyntaxKind, SyntaxToken, SyntaxTree, syntaxRootForDocument}
+import markdown.engine.MarkdownEngine
 import std.collection.*
 
 // Restricted feasibility format, never a production artifact reader. It handles
 // only the primitive fixture and omits general Markdown grammar certification.
 // Its cost is therefore an optimistic bound on a complete direct decoder.
 private class ProbeWireWriter {
-    let bytes = ArrayList<Byte>()
-    func number(value: Int64): Unit {
+    protected let bytes = ArrayList<Byte>()
+    protected func number(value: Int64): Unit {
         if (value < 0 || value > Int64(UInt32.Max)) {
             throw IllegalArgumentException("prototype integer range")
         }
@@ -18,19 +24,19 @@ private class ProbeWireWriter {
         }
         bytes.add(UInt8(rest))
     }
-    func string(value: String): Unit {
+    protected func string(value: String): Unit {
         number(value.size);
         bytes.add(all: value.toArray())
     }
 }
 
 private class ProbeWireReader {
-    let bytes: Array<Byte>
-    var offset: Int64 = 0
+    protected let bytes: Array<Byte>
+    protected var offset: Int64 = 0
     init(bytes: Array<Byte>) {
         this.bytes = bytes
     }
-    func number(maximum: Int64): Int64 {
+    protected func number(maximum: Int64): Int64 {
         var value: Int64 = 0
         for (index in 0..5) {
             if (offset >= bytes.size) {
@@ -48,7 +54,7 @@ private class ProbeWireReader {
         }
         throw IllegalArgumentException("prototype overlong integer")
     }
-    func take(size: Int64): Array<Byte> {
+    protected func take(size: Int64): Array<Byte> {
         if (size < 0 || size > bytes.size - offset) {
             throw IllegalArgumentException("prototype truncated bytes")
         }
@@ -56,10 +62,10 @@ private class ProbeWireReader {
         offset += size
         value
     }
-    func string(maximum: Int64): String {
+    protected func string(maximum: Int64): String {
         String.fromUtf8(take(number(maximum)))
     }
-    func finish(): Unit {
+    protected func finish(): Unit {
         if (offset != bytes.size) {
             throw IllegalArgumentException("prototype trailing data")
         }

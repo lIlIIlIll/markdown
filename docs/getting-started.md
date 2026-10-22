@@ -42,11 +42,12 @@ cd markdown_demo
 ```cangjie
 package markdown_demo
 
-import markdown.core.Markdown
+import markdown.engine.MarkdownEngine
 
 main(): Int64 {
     let source = "# Hello\n\n<script>blocked</script>"
-    println(Markdown.toSafeHtml(source))
+    let engine = MarkdownEngine.builder().build()
+    println(engine.renderHtml(source).html)
     0
 }
 ```
@@ -66,7 +67,7 @@ cjpm run --skip-build
 &lt;script&gt;blocked&lt;/script&gt;
 ```
 
-`Markdown.toSafeHtml` 默认转义 raw HTML，并拒绝危险 URI。现在你已经完成最小集成。
+`engine.renderHtml` 默认使用安全 HTML 策略，转义 raw HTML 并拒绝危险 URI。
 
 ### 成功检查
 

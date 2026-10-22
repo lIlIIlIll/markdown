@@ -4,6 +4,7 @@
 
 ```cangjie
 import markdown.core.*
+import markdown.engine.*
 import markdown.testkit.*
 
 let report = MarkdownExtensionTestKit.verify(engine, sample)

@@ -13,6 +13,7 @@
 
 ```cangjie
 import markdown.core.*
+import markdown.engine.*
 
 let engine = MarkdownEngine.builder().build()
 let session = engine.newAppendSession()

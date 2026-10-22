@@ -1,9 +1,9 @@
 package markdown.node
 
+import markdown.core.{CancellationSource, MarkdownException, OperationBudget}
+import markdown.render.{RichContentFailure, RichContentKind, RichContentLimits, RichContentOutcome, RichContentRequest}
 import std.unittest.*
 import std.unittest.testmacro.*
-import markdown.{CancellationSource, OperationBudget, MarkdownException, RichContentRequest, RichContentKind, 
-    RichContentLimits, RichContentOutcome, RichContentFailure}
 
 @Test
 class OptionalNodeBackendTests {

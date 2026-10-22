@@ -17,6 +17,9 @@ parse、render 和只读 traversal。
 
 ## 收集统计
 
+`StatisticsOptions` 位于 core，`ObservedParseResult` 和 `ParseStatistics` 位于 engine，
+`ObservedRenderedOutput` 和 `RenderStatistics` 位于 render。
+
 ```cangjie
 let parsed = engine.parseObserved(
     source,

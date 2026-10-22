@@ -16,7 +16,10 @@
 ## 转换
 
 ```cangjie
-let result = Markdown.parse("A😀\nB")
+import markdown.core.*
+import markdown.engine.MarkdownEngine
+
+let result = MarkdownEngine.builder().build().parse("A😀\nB")
 let map = SourcePositionMap(result.source)
 
 let utf16 = map.utf16Position(5)

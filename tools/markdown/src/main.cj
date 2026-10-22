@@ -1,6 +1,12 @@
 package markdown_cli
 
-import markdown.*
+import markdown.artifact.MarkdownParseArtifact
+import markdown.core.{CancellationSource, CancellationToken, DiagnosticSeverity, MarkdownErrorCode, MarkdownException, 
+    MarkdownProfile, ParseLimits, ProfileKind, SourceSpan}
+import markdown.editor.{DocumentSnapshot, MarkdownLinter, PreservingFormatter}
+import markdown.engine.MarkdownEngine
+import markdown.extensions.{DialectCompiler, ExtensionManifest, MarkdownDialect}
+import markdown.render.{CanonicalMarkdownRenderer, HtmlOptions, HtmlRenderer, PlainTextRenderer}
 import std.convert.*
 import std.env.*
 
@@ -38,14 +44,14 @@ main(args: Array<String>): Int64 {
         }
         if (command == "parse") {
             let result = engine.parse(source, cancellation: cancellation.token)
-            let artifact = engine.createArtifact(result)
+            let artifact = MarkdownParseArtifact.create(engine, result)
             println(artifact.debugJson())
             return 0
         }
         if (command == "format") {
             cancellation.token.throwIfCancelled(phase: "format")
             let formatted = if (hasArg(args, "--range")) {
-                let snapshot = engine.parseSnapshot(source)
+                let snapshot = DocumentSnapshot.parse(engine, source)
                 let range = parseRange(argValue(args, "--range", ""), source.size)
                 let edits = PreservingFormatter.formatRange(snapshot, range)
                 if (edits.isEmpty()) {
@@ -66,8 +72,8 @@ main(args: Array<String>): Int64 {
             return 0
         }
         if (command == "check") {
-            let snapshot = engine.parseSnapshot(source)
-            let diagnostics = engine.lint(snapshot)
+            let snapshot = DocumentSnapshot.parse(engine, source)
+            let diagnostics = MarkdownLinter(engine).lint(snapshot)
             var rejected = false
             for (diagnostic in diagnostics) {
                 println("${diagnostic.code}: ${diagnostic.message}")

@@ -1,11 +1,12 @@
 # Document system
 
 Document system API 建立在完整 AST 和 lossless snapshot 之上。它们不改变 parser 的
-默认执行模型。
+默认执行模型。snapshot 和 CST 位于 `markdown.editor`，多文档工具位于
+`markdown.document`，持久化 codec 位于 `markdown.artifact`。
 
 ## Document snapshot
 
-`engine.parseSnapshot(source)` 同时创建：
+`DocumentSnapshot.parse(engine, source)` 同时创建：
 
 - `ParseResult`
 - `SyntaxTree`
@@ -44,7 +45,7 @@ effective definition。
 
 ## Binary snapshot
 
-`BinaryArtifactCodec` 使用 schema `markdown-snapshot-binary-2`。artifact 绑定
+`BinaryArtifactCodec` 使用 schema `markdown-snapshot-binary-3`。artifact 绑定
 profile、dialect、engine、source、AST 和 CST digest。
 
 decode 对任何 schema、identity、digest、truncation、UTF-8 或 trailing-byte 问题返回

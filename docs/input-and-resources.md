@@ -126,7 +126,7 @@ engine.parse(input, cancellation: token)
 
 ## Native line scanner
 
-根包没有 foreign declaration 或 linker option。默认所有入口使用纯仓颉 scanner。
+基础解析不包含 foreign declaration 或 linker option。默认所有入口使用纯仓颉 scanner。
 
 显式构建可选 accelerator：
 
@@ -140,16 +140,18 @@ CC=clang AR=ar python3 scripts/build_native_scanner.py \
 
 1. 为目标平台链接生成的 archive。
 2. 导入 `markdown.native.NativeLineScanner`。
-3. 调用 `engine.acceleratedBy(NativeLineScanner())`。
+3. 构建 engine 时调用 `.lineScanner(Some(NativeLineScanner()))`。
 
 ```cangjie
+import markdown.engine.MarkdownEngine
 import markdown.native.NativeLineScanner
 
-let accelerated = engine.acceleratedBy(NativeLineScanner())
-let result = accelerated.parse(bytes)
+let engine = MarkdownEngine.builder().lineScanner(Some(NativeLineScanner())).build()
+let result = engine.parse(bytes)
 ```
 
-`nativeScannerEnabled(false)` 可禁止已注入 accelerator。native off 必须保持功能完整。
+不配置 `lineScanner` 即使用纯仓颉路径。字节、owned/reusable UTF-8 和 stream 入口可使用
+注入端口；String 入口保持直接扫描，不为 native 复制 bytes。纯仓颉路径保持完整功能。
 
 | Target | 工具 | 产物 |
 | --- | --- | --- |

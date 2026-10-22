@@ -29,7 +29,7 @@ def main() -> None:
     if not re.fullmatch(r"[0-9a-f]{7,40}", args.revision):
         parser.error("revision must be the measured hexadecimal commit ID")
     data = json.loads(args.report.read_text())
-    if data.get("schema") != "markdown.append-cost/1" or data.get("retainedSamples", 0) < 7:
+    if data.get("schema") != "markdown.append-cost/2" or data.get("retainedSamples", 0) < 7:
         raise ValueError("unsupported or incomplete measurement")
     for row in data["samples"]:
         relative = Path(row["rawPath"])

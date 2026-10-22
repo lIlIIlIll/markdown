@@ -1,13 +1,17 @@
-import markdown.*
+import markdown.artifact.BinaryArtifactCodec
+import markdown.core.MarkdownProfile
+import markdown.editor.DocumentSnapshot
+import markdown.engine.MarkdownEngine
+import markdown.extensions.{MarkdownDialect, OfficialExtensions}
 import std.fs.*
 
 class WireProofInput {
-    let bytes: Array<Byte>
-    var offset: Int64 = 0
+    protected let bytes: Array<Byte>
+    protected var offset: Int64 = 0
     init(bytes: Array<Byte>) {
         this.bytes = bytes
     }
-    func number(maximum: Int64): Int64 {
+    protected func number(maximum: Int64): Int64 {
         var value: Int64 = 0
         for (index in 0..5) {
             if (offset >= bytes.size) {
@@ -25,7 +29,7 @@ class WireProofInput {
         }
         throw IllegalArgumentException("overlong proof input")
     }
-    func string(maximum: Int64): String {
+    protected func string(maximum: Int64): String {
         let count = number(maximum)
         if (count > bytes.size - offset) {
             throw IllegalArgumentException("truncated proof text")
@@ -66,7 +70,7 @@ main(args: Array<String>): Int64 {
     for (index in 0..count) {
         let engine = engines[input.number(3)]
         let source = input.string(1024 * 1024)
-        let snapshot = engine.parseSnapshot(source)
+        let snapshot = DocumentSnapshot.parse(engine, source)
         let bytes = BinaryArtifactCodec.encode(snapshot).bytes()
         let restored = BinaryArtifactCodec.read(engine, bytes)
         if (restored.result.source.text() != source || restored.syntaxTree.losslessText() != source ||

@@ -3,13 +3,22 @@
 本页覆盖 `markdown.artifact`、`markdown.document`、observability 和
 `markdown.testkit`。这些 API 不属于最小 parser 使用路径。
 
+```cangjie
+import markdown.artifact.*
+import markdown.core.*
+import markdown.document.*
+import markdown.editor.DocumentSnapshot
+import markdown.engine.*
+import markdown.render.*
+```
+
 ## Parse artifact
 
 ```cangjie
 let result = engine.parse(source)
-let artifact = engine.createArtifact(result)
+let artifact = MarkdownParseArtifact.create(engine, result)
 
-match (engine.loadArtifact(artifact, source)) {
+match (artifact.load(engine, source)) {
     case ArtifactLoadResult.Hit(document) => println(document.nodeCount)
     case ArtifactLoadResult.CacheMiss(reason) => println(reason)
 }
@@ -27,26 +36,26 @@ match (engine.loadArtifact(artifact, source)) {
 - offset mapping digest
 - AST、references 和 diagnostics
 
-`createArtifact` 只接受成功的 ParseResult，并拒绝非 identity UTF-8 mapping。只有输入实际
+`MarkdownParseArtifact.create` 只接受成功的 ParseResult，并拒绝非 identity UTF-8 mapping。只有输入实际
 包含无效 UTF-8 并发生替换时，`ReplaceInvalid` 才产生非 identity mapping。有效 UTF-8
 bytes 即使使用 `ReplaceInvalid` 也能创建和加载当前 parse artifact。
 
-`createArtifact` 还会交叉验证 `ParseResult.source`、AST root profile、dialect fingerprint、
+`MarkdownParseArtifact.create` 还会交叉验证 `ParseResult.source`、AST root profile、dialect fingerprint、
 parser 保留的 `SourceBuffer`、UTF-8 policy、原始与解码 digest，以及根节点的完整源码
 范围。不能把一个 Document 与另一个 SourceBuffer 或 engine 拼接后创建 artifact。
 `TreeRewriter` 等保留 parser provenance 的变换结果仍可创建 artifact。
 
-`loadArtifact` 接受 String 或 bytes。任何 schema、profile kind/ID/version、fingerprint、digest、policy
+`artifact.load` 接受 String 或 bytes。任何 schema、profile kind/ID/version、fingerprint、digest、policy
 或 mapping 不匹配都返回 `CacheMiss(reason)`。加载时会再次检查 artifact 中 AST 的来源，
 避免已篡改的 AST 与正确 digest 组合命中 cache。
 
-0.9.1 的 parser plan、节点身份及 SPI 改变了 fingerprint。旧 artifact 返回 cache miss，
+0.9.2 的 parser plan 7 将 lint provider 与解析配置分离，改变了 fingerprint。旧 artifact 返回 cache miss，
 不进行猜测性迁移。
 
 ## Binary snapshot
 
 ```cangjie
-let snapshot = engine.parseSnapshot(source)
+let snapshot = DocumentSnapshot.parse(engine, source)
 let artifact = BinaryArtifactCodec.encode(snapshot)
 let bytes = artifact.bytes()
 
@@ -71,7 +80,7 @@ payload 缺少可验证的语义编码：encode 报 `InvalidArtifact`，decode �
 ## Rendered source map
 
 `RenderedOutput` 和 `RenderedSourceMapEntry` 由
-`HtmlRenderer.renderWithSourceMap` 返回。完整查询接口见
+`HtmlRenderer.renderWithSourceMap` 返回，类型与实现归 `markdown.render`。完整查询接口见
 [Rendering API](rendering.md#source-map)。
 
 ## `DocumentGraph`
@@ -130,6 +139,8 @@ let page = tree.page(
 snapshot 的分页视图，不是 partial parser。
 
 ## Observability
+
+`StatisticsOptions` 位于 core，解析统计位于 engine，渲染统计位于 render。
 
 ```cangjie
 let observed = engine.parseObserved(

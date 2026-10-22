@@ -16,6 +16,7 @@ import statistics
 import subprocess
 
 from benchmark_identity import benchmark_product_tree_sha256
+from library_inputs import library_digest, library_inputs, library_link_arguments
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -42,7 +43,9 @@ def main() -> None:
     output.mkdir(parents=True, exist_ok=False)
     library = args.library_directory.resolve()
     product_tree = benchmark_product_tree_sha256(ROOT)
-    library_hash = digest(library / "libmarkdown.a")
+    library_hash = library_digest(library)
+    helper_hash = digest(ROOT / "benchmarks/library_inputs.py")
+    shutil.copy2(ROOT / "benchmarks/library_inputs.py", output / "library_inputs.py")
     source = ROOT / "benchmarks/append_workload.cj"
     executable = output / "append_workload"
     environment = os.environ | {
@@ -57,7 +60,7 @@ def main() -> None:
     if "1.2.0" not in version:
         parser.error("official STS 1.2.0 is required")
     command = [compiler, str(source), "-O2", "--obf-seed", "0", "--import-path", str(library),
-        "-L", str(library), "-lmarkdown", "-o", str(executable)]
+        *library_link_arguments(library), "-o", str(executable)]
     with (output / "compile.log").open("w") as log:
         subprocess.run(command, env=environment, stdout=log, stderr=subprocess.STDOUT, check=True)
     cases = [("append", shape, size, width)
@@ -93,9 +96,10 @@ def main() -> None:
             rows.append(row)
         print(f"Completed sample {sample}: {len(cases)} equivalent workloads", flush=True)
     report = {
-        "schema": "markdown.append-cost/1", "sdk": version.strip(), "compilerSha256": digest(Path(compiler).resolve()),
+        "schema": "markdown.append-cost/2", "sdk": version.strip(), "compilerSha256": digest(Path(compiler).resolve()),
         "driverSourceSha256": digest(source), "driverSha256": digest(executable),
-        "librarySha256": library_hash, "productTreeSha256": product_tree,
+        "librarySha256": library_hash, "libraryInputs": library_inputs(library),
+        "libraryInputsHelperSha256": helper_hash, "productTreeSha256": product_tree,
         "cpu": cpu, "flags": ["-O2", "--obf-seed", "0"], "native": False,
         "heap": "2GB", "gcInterval": "500ms", "retainedSamples": args.runs, "samples": rows,
         "notes": [
@@ -109,7 +113,7 @@ def main() -> None:
             "First block -1 means no feed yielded a closed block before finish; input generation is excluded from timers.",
         ],
     }
-    if benchmark_product_tree_sha256(ROOT) != product_tree or digest(library / "libmarkdown.a") != library_hash:
+    if benchmark_product_tree_sha256(ROOT) != product_tree or library_digest(library) != library_hash or digest(ROOT / "benchmarks/library_inputs.py") != helper_hash:
         raise ValueError("source or library changed during measurement")
     (output / "result.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
     print("PASS append/output resource matrix", flush=True)

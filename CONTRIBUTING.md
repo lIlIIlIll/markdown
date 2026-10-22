@@ -1,7 +1,8 @@
 # 贡献指南
 
 感谢你改进 `markdown`。本仓库接受 parser、renderer、扩展、编辑器工具、文档和测试修改。
-提交前请确认改动属于当前 PRD 范围，并保留公开 API、SourceSpan、资源限制和安全默认值。
+提交前请确认改动属于当前 PRD 范围，并保留 AST、SourceSpan、资源限制和安全默认值。
+当前开发版本为 0.9.2 breaking pre-GA；公开接口调整需同步迁移说明，不增加旧接口转导。
 
 ## 准备环境
 
@@ -20,7 +21,8 @@ cjpm check
 ## 修改原则
 
 - 解析行为、renderer 输出和文档必须一致。
-- 新增公开 API 时同步更新 `api/public-api-v0.9.1.txt` 和对应 API 文档。
+- 调整公开 API 时同步更新 `api/public-api.txt`、对应 API 文档和迁移说明。
+- 按领域放置类型与实现，依赖保持单向；根包不公开声明或转导。共享内部 helper 使用最小可见性。
 - parser 创建的每个节点都必须经过统一 node limit；literal 必须执行累计 byte limit。
 - extension 必须声明有限 lookahead/capture，并提供 renderer 或明确 fallback。
 - Safe HTML 默认值不能因便利入口或扩展而绕过。
@@ -91,7 +93,7 @@ MARKDOWN_RELEASE_COMMIT=<branch-tip-sha> scripts/release_gate.sh
 gate 只接受可达提交，并要求该提交的完整 Git tree 与干净 workspace tree 完全相同；
 因此不能用旧提交或只匹配产品源码子集的提交冒充受测版本。
 
-门禁会在 `/tmp` 中按不可变 commit 获取 cmark 0.31.1、cmark-gfm 0.29.0.gfm.13 和
+门禁按不可变 commit 获取 cmark 0.31.1、cmark-gfm 0.29.0.gfm.13 和
 commonmark.js 0.31.2。设置 `MARKDOWN_DIFFERENTIAL_ROOT` 可改用预置缓存；目录存在但
 commit 不匹配时门禁会拒绝覆盖并失败。
 

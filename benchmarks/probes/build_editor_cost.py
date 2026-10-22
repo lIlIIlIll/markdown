@@ -33,7 +33,7 @@ def sha(path: Path) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--baseline", type=Path, help="Retained production source at the measured pre-optimization revision")
+    parser.add_argument("--baseline", type=Path, help="Clean source checkout using the current domain package layout")
     args = parser.parse_args()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -43,10 +43,13 @@ def main() -> None:
     source = output / "src"
     source.mkdir()
     originals = {}
-    for path in sorted((baseline / "src").glob("*.cj")):
+    for path in sorted((baseline / "src").rglob("*.cj")):
         if not path.name.endswith("_test.cj"):
-            shutil.copy2(path, source / path.name)
-            originals[f"src/{path.name}"] = sha(path)
+            relative = path.relative_to(baseline / "src")
+            destination = source / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(path, destination)
+            originals[path.relative_to(baseline).as_posix()] = sha(path)
     manifest = (baseline / "cjpm.toml").read_text().replace('output-type = "static"', 'output-type = "executable"')
     (output / "cjpm.toml").write_text(manifest)
     probe = ROOT / "benchmarks/probes/editor_cost.cj"
@@ -59,15 +62,52 @@ def main() -> None:
     cache_probe_hash = sha(cache_probe)
     shutil.copy2(cache_probe, source / "cache_restore_probe.cj")
 
-    path = source / "arena.cj"
+    # Instrumentation state is a module-private leaf package, independent of the AST.
+    controller = source / "editor_cost_probe.cj"
+    controller_text = controller.read_text()
+    import re
+    counters = re.findall(r"^var probe\w+[^\n]*", controller_text, flags=re.M)
+    controller_text = re.sub(r"^var probe\w+[^\n]*\n", "", controller_text, flags=re.M)
+    helpers = []
+    for name in ("probeTextBoundaries", "probeTextByte", "probeTextBitmap"):
+        match = re.search(r"^func " + name + r"\([\s\S]*?^}\n", controller_text, flags=re.M)
+        if match is None:
+            raise ValueError(f"missing editor instrumentation helper: {name}")
+        helpers.append(match.group().replace("func ", "protected func ", 1))
+        controller_text = controller_text[:match.start()] + controller_text[match.end():]
+    state = source / "probe"
+    state.mkdir()
+    (state / "state.cj").write_text("protected package markdown.probe\n\n" +
+        "\n".join("protected " + line for line in counters) + "\n")
+    (source / "editor" / "probe_helpers.cj").write_text("package markdown.editor\n\n" +
+        "import markdown.core.*\nimport std.collection.*\nimport std.sort.sort\n\n" + "\n".join(helpers))
+    for name in ("editor_cost_probe.cj", "variable_edit_probe.cj", "cache_restore_probe.cj"):
+        target = source / name
+        text = controller_text if name == "editor_cost_probe.cj" else target.read_text()
+        text = text.replace("package markdown\n", "package markdown\n\nimport markdown.probe.*\n", 1)
+        if name == "cache_restore_probe.cj":
+            text = text.replace("package markdown\n", "package markdown\nimport markdown.editor.probeTextByte\n", 1)
+        target.write_text(text)
+    for relative, names in {
+        "core/arena.cj": "probeAstRecords",
+        "core/limits.cj": "probeChargedScans",
+        "artifact/binary_artifact.cj": "probeSharedDigests",
+        "editor/editor.cj": "{probeSyntaxTokens, probeSyntaxNodes, probeCstBytes, probeMapVisits, probeCoalesceCst, probeBitmapCst}",
+    }.items():
+        target = source / relative
+        text = target.read_text()
+        at = text.index("\n") + 1
+        target.write_text(text[:at] + "\nimport markdown.probe." + names + "\n" + text[at:])
+
+    path = source / "core" / "arena.cj"
     text = replace(path.read_text(), "        localIdentityValue = UInt32(localIdentity)",
         "        probeAstRecords++\n        localIdentityValue = UInt32(localIdentity)")
     path.write_text(text)
-    path = source / "limits.cj"
+    path = source / "core" / "limits.cj"
     text = replace(path.read_text(), "        remainingScanSteps -= steps",
         "        probeChargedScans += steps\n        remainingScanSteps -= steps")
     path.write_text(text)
-    path = source / "binary_artifact.cj"
+    path = source / "artifact" / "binary_artifact.cj"
     text = path.read_text()
     text = replace(text, "binaryWriteString(out, Sha256.digestBytes(originalBytes))",
         "binaryWriteString(out, if (probeSharedDigests) { snapshot.sourceDigest } else { Sha256.digestBytes(originalBytes) })")
@@ -90,7 +130,7 @@ def main() -> None:
             }
             if (cstDigest != (if (probeSharedDigests) { snapshot.sourceDigest } else { Sha256.digest(cstText) })) {""")
     path.write_text(text)
-    path = source / "editor.cj"
+    path = source / "editor" / "editor.cj"
     text = path.read_text()
     token_start = text.index("public class SyntaxToken {")
     token_end = text.index("\n}\n", token_start)
@@ -128,12 +168,15 @@ def main() -> None:
     text = replace(text, "            tokens.add(\n                SyntaxToken(kind, value[start..index],", "            probeCstBytes += index - start\n            tokens.add(\n                SyntaxToken(kind, value[start..index],")
     text = replace(text, "                    while (tokenIndex < end) {\n                        if (length < ownerLengths[tokenIndex])", "                    while (tokenIndex < end) {\n                        probeMapVisits++\n                        if (length < ownerLengths[tokenIndex])")
     text = replace(text, "    private init(source: SourceBuffer, root: SyntaxNode, tokenArena: Array<SyntaxToken>, document: ?Document)",
-        "    internal init(source: SourceBuffer, root: SyntaxNode, tokenArena: Array<SyntaxToken>, document: ?Document)")
-    text = replace(text, "private func syntaxRootForDocument(", "internal func syntaxRootForDocument(")
+        "    protected init(source: SourceBuffer, root: SyntaxNode, tokenArena: Array<SyntaxToken>, document: ?Document)")
+    text, changed = re.subn(r"^(?:private|internal|protected) func syntaxRootForDocument\(",
+        "protected func syntaxRootForDocument(", text, flags=re.M)
+    if changed != 1:
+        raise ValueError("syntax root instrumentation boundary changed")
     text = replace(text, "        sourceDigest = Sha256.digestBytes(result.source.text().toArray())\n    }", """        sourceDigest = Sha256.digestBytes(result.source.text().toArray())
     }
 
-    internal init(engine: MarkdownEngine, version: Int64, result: ParseResult, restoredSyntax!: SyntaxTree) {
+    protected init(engine: MarkdownEngine, version: Int64, result: ParseResult, restoredSyntax!: SyntaxTree) {
         restoredSyntax.requireDocument(result.document)
         this.engine = engine
         this.version = version
@@ -162,7 +205,7 @@ def main() -> None:
         "variableEditProbeSha256": variable_probe_hash,
         "cacheRestoreProbeSha256": cache_probe_hash,
         "sdk": version.strip(), "cjcSha256": sha(Path(compiler).resolve()), "cjpmSha256": sha(Path(tool).resolve()),
-        "instrumentedFiles": {str(path.relative_to(output)): sha(path) for path in sorted(source.glob("*.cj"))},
+        "instrumentedFiles": {str(path.relative_to(output)): sha(path) for path in sorted(source.rglob("*.cj"))},
         "manifestSha256": sha(output / "cjpm.toml"), "executableSha256": sha(output / "target/release/bin/main"),
         "scope": "private constructor/charged-work counters and runtime CST candidate; no SDK or production edits"}
     (output / "build.json").write_text(json.dumps(metadata, indent=2) + "\n")

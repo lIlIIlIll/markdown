@@ -1,7 +1,13 @@
 # Editor API
 
-`markdown.editor` 提供 AST traversal、query、rewrite、CST、snapshot、lint 和保留格式
-编辑。它不会改变 `markdown.core` 的默认 parse 路径。
+AST traversal、query、rewrite、transform pipeline 和 annotation 位于 `markdown.core`。
+`markdown.editor` 提供 CST、snapshot、lint 和保留格式编辑，解析由 `markdown.engine` 执行。
+
+```cangjie
+import markdown.core.*
+import markdown.editor.*
+import markdown.engine.*
+```
 
 ## 遍历
 
@@ -137,7 +143,7 @@ CST 使用共享 token arena。嵌套节点保存 range，不复制整组 token�
 ## `DocumentSnapshot`
 
 ```cangjie
-let snapshot = engine.parseSnapshot(source)
+let snapshot = DocumentSnapshot.parse(engine, source)
 ```
 
 字段：
@@ -212,8 +218,8 @@ preserving formatter 只规范化目标范围内支持的语法。未触及内�
 ## Lint
 
 ```cangjie
-let snapshot = engine.parseSnapshot(source)
-let diagnostics = engine.lint(snapshot)
+let snapshot = DocumentSnapshot.parse(engine, source)
+let diagnostics = MarkdownLinter(engine).lint(snapshot)
 ```
 
 `LintDiagnostic` 包含：
@@ -224,6 +230,16 @@ let diagnostics = engine.lint(snapshot)
 - `message`
 - `span`
 - `fixes`
+
+`ExtensionLintProvider` 在 editor 定义，由 linter 显式注册：
+
+```cangjie
+let linter = MarkdownLinter(engine, providers: [provider])
+let diagnostics = linter.lint(snapshot)
+```
+
+provider 必须匹配 engine 已注册的 extension 身份，重复注册和不同 dialect 的
+snapshot 会失败。lint provider 不再通过 dialect builder 注册，也不参与解析指纹。
 
 内置 lint 覆盖 heading level、link/image、危险 URI、raw HTML、table column、
 invisible Unicode、duplicate/unused reference 和一组标记歧义。
@@ -237,6 +253,8 @@ let reparse = MarkdownLinter.applyFix(snapshot, fix)
 Fix 绑定 source digest 和 snapshot version。对旧 snapshot 使用 fix 会失败。
 
 ## Explain
+
+解释操作和结果类型位于 `markdown.engine`，可在未构造 editor snapshot 时使用。
 
 ```cangjie
 let dialect = engine.explainDialect()

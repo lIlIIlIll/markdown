@@ -230,6 +230,20 @@ def replace_section(path: Path, heading: str, next_heading: str, body: str) -> s
     )
 
 
+def replace_changelog_evidence(text: str, version: str, block: str) -> str:
+    section = re.search(rf"(?ms)^## {re.escape(version)} - [^\n]+\n.*?(?=^## |\Z)", text)
+    if section is None:
+        raise ValueError("current release section is missing from CHANGELOG.md")
+    body = section.group()
+    start = "<!-- release-evidence:start -->"
+    end = "<!-- release-evidence:end -->"
+    if body.count(start) != 1 or body.count(end) != 1:
+        raise ValueError("current changelog section must contain one evidence block")
+    prefix, remainder = body.split(start, 1)
+    _, suffix = remainder.split(end, 1)
+    return text[:section.start()] + prefix + block + suffix + text[section.end():]
+
+
 def validate_current_benchmark_identity(raw: dict[str, object],
         benchmark: dict[str, object]) -> list[str]:
     errors: list[str] = []
@@ -425,7 +439,7 @@ def validate_execution_manifest(data: dict[str, object], path: Path) -> list[str
         "format", "docs", "native-build-tests", "api-checker-tests", "api",
         "static-check", "release-evidence-consistency", "release-evidence-bundle-tests",
         "release-evidence-tests",
-        "benchmark-driver-tests", "link-input-tests", "build", "native-build", "benchmark-driver",
+        "benchmark-driver-tests", "link-input-tests", "build", "domain-packages", "domain-library-inputs", "native-build", "benchmark-driver",
         "native-fuzz", "benchmark-profile-tests", "tests", "cli-build", "cli-smoke",
         "quickstart", "cookbook", "differential-setup", "differential",
         "benchmark-smoke", "bundle",
@@ -497,8 +511,8 @@ def validate_execution_manifest(data: dict[str, object], path: Path) -> list[str
 def validate(data: dict[str, object], evidence_ready: bool,
         execution_manifest: Path | None = None) -> list[str]:
     errors: list[str] = []
-    if data.get("schemaVersion") not in (3, 4):
-        errors.append("release evidence schemaVersion must be 3 or 4")
+    if data.get("schemaVersion") != 4:
+        errors.append("release evidence schemaVersion must be 4")
     for section, path_key, digest_key in (
         (data["conformance"]["commonmark"], "corpusPath", "corpusSha256"),
         (data["conformance"]["gfm"], "corpusPath", "corpusSha256"),
@@ -559,10 +573,6 @@ def validate(data: dict[str, object], evidence_ready: bool,
         errors.extend(validate_commit_git_tree(
             benchmark["sourceCommit"], "benchmark source", benchmark.get("sourceGitTree")
         ))
-        if data.get("schemaVersion") == 3:
-            errors.extend(validate_commit_product_tree(
-                identity["repositoryHeadAtGeneration"], "repository generation HEAD", expected_tree
-            ))
     if benchmark["status"] == "current" and benchmark["sourceCommit"] != identity["artifactCommit"]:
         errors.append("current benchmark source does not match artifact commit")
     if release["ciVerifiedAtHead"]:
@@ -601,8 +611,8 @@ def main() -> int:
     expected_readme = replace_section(
         README, "## 验证状态", "## 参与项目", readme_block(data)
     )
-    expected_changelog = replace_section(
-        CHANGELOG, "### Evidence", "## 0.9.0 - 2026-08-30", changelog_block(data)
+    expected_changelog = replace_changelog_evidence(
+        CHANGELOG.read_text(encoding="utf-8"), data["release"]["version"], changelog_block(data)
     )
     expected_performance = replace_section(
         PERFORMANCE, "## 当前 canonical 结果", "## 比较了什么", performance_block(data)

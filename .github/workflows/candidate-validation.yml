@@ -20,7 +20,6 @@ jobs:
           - sdk: sts-1.2.0
             url: https://cangjie-lang.cn/v1/files/auth/downLoad?nsId=142267&fileName=cangjie-sdk-linux-x64-1.2.0.tar.gz&objectKey=6ab1e26eece1f87ff5befa73
             sha256: 8c5fd944cd9cc51ee63d4a240e3ecc4f540345dae1468e8b47c927ecf2ba998f
-            benchmark-driver-mode: canonical
     steps:
       # actions/checkout v7.0.1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -59,7 +58,6 @@ jobs:
           set -u
           CC=clang AR=ar \
             MARKDOWN_SDK_ARCHIVE_SHA256='${{ matrix.sha256 }}' \
-            MARKDOWN_BENCHMARK_DRIVER_MODE='${{ matrix.benchmark-driver-mode }}' \
             scripts/release_gate.sh
 
       - name: Diagnose compiler backend failure
@@ -151,7 +149,7 @@ jobs:
           mkdir -p target/same-language-benchmark
           CC=clang AR=ar python3 scripts/build_native_scanner.py \
             --enable --target x86_64-unknown-linux-gnu
-          python3 scripts/build_benchmark_driver.py --mode canonical --build-cli \
+          python3 scripts/build_benchmark_driver.py --build-cli \
             --identity-output target/same-language-benchmark/build-identity.json \
             --sdk-url \
               'https://cangjie-lang.cn/v1/files/auth/downLoad?nsId=142267&fileName=cangjie-sdk-linux-x64-1.2.0.tar.gz&objectKey=6ab1e26eece1f87ff5befa73' \

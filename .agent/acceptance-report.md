@@ -1,6 +1,12 @@
 # markdown 验收证据
 
-## 当前 0.9.1 发布候选
+## 当前 0.9.2 开发候选
+
+本次为移除兼容层、公开 API 收敛和真实领域分包的 breaking pre-GA 调整。
+迁移步骤见 [0.9.2 迁移](../docs/migration-0.9.2.md)；当前规范、测试与性能事实由
+`release-evidence.json` 及下方生成块提供。最终 CI、合入和发布是独立核验事项。
+
+## 0.9.1 历史发布证据
 
 核心已通过 [PR #12](https://github.com/lIlIIlIll/markdown/pull/12) 合入。维护者选择将原计划
 0.10 的模型以 breaking pre-GA `0.9.1` 发布，官方 STS 1.2.0。

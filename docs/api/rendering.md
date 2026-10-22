@@ -6,6 +6,9 @@
 ## `HtmlRenderer`
 
 ```cangjie
+import markdown.core.*
+import markdown.render.*
+
 let renderer = HtmlRenderer(options: HtmlOptions.safe())
 let html = renderer.render(
     document,
@@ -205,6 +208,9 @@ GFM tagfilter 只在 denylist 名称后为输入结束、HTML 空白、`/` 或 `
 `StringTextSink` 是内置 String 收集器。
 
 ## Source map
+
+`RenderedOutput`、`RenderedSourceMapEntry` 与 `renderWithSourceMap` 的实现都位于
+`markdown.render`。
 
 ```cangjie
 let output = renderer.renderWithSourceMap(document)

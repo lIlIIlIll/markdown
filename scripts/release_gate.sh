@@ -45,10 +45,11 @@ run_step release-evidence-tests python3 scripts/test_release_evidence.py
 run_step benchmark-driver-tests python3 scripts/test_build_benchmark_driver.py
 run_step link-input-tests python3 benchmarks/test_link_inputs.py
 run_step build cjpm build
+run_step domain-packages python3 scripts/test_domain_packages.py
+run_step domain-library-inputs python3 benchmarks/test_library_inputs.py
 run_step native-build env CC="${CC:-clang}" AR="${AR:-ar}" \
     python3 scripts/build_native_scanner.py --enable
-run_step benchmark-driver python3 scripts/build_benchmark_driver.py \
-    --mode "${MARKDOWN_BENCHMARK_DRIVER_MODE:-canonical}"
+run_step benchmark-driver python3 scripts/build_benchmark_driver.py
 run_step native-fuzz python3 scripts/fuzz_native_scanner.py --runs 10000
 run_step benchmark-profile-tests python3 scripts/test_benchmark_input_profiles.py
 run_step tests cjpm test --no-color --no-progress \

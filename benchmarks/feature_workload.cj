@@ -1,4 +1,8 @@
-import markdown.*
+import markdown.artifact.BinaryArtifactCodec
+import markdown.core.ParseResult
+import markdown.editor.DocumentSnapshot
+import markdown.engine.MarkdownEngine
+import markdown.extensions.{MarkdownDialect, OfficialExtensions}
 import std.collection.*
 import std.convert.*
 import std.fs.*
@@ -95,7 +99,7 @@ func featureCheckSnapshot(snapshot: DocumentSnapshot, source: String, enabled: B
     if (snapshot.syntaxTree.losslessText() != source) {
         throw IllegalStateException("lossless source differs")
     }
-    let full = snapshot.engine.parseSnapshot(source)
+    let full = DocumentSnapshot.parse(snapshot.engine, source)
     let actual = snapshot.engine.htmlRenderer().renderWithSourceMap(snapshot.result.document)
     let expected = snapshot.engine.htmlRenderer().renderWithSourceMap(full.result.document)
     if (actual.content != expected.content || actual.sourceMap.size != expected.sourceMap.size ||
@@ -133,7 +137,7 @@ main(args: Array<String>): Int64 {
     let engine = featureEngine(enabled, shape)
     match (phase) {
         case "prepare" =>
-            let snapshot = engine.parseSnapshot(source)
+            let snapshot = DocumentSnapshot.parse(engine, source)
             File.writeTo(args[6], BinaryArtifactCodec.encode(snapshot).bytes())
             featureCheckSnapshot(snapshot, source, enabled, shape, units)
         case "parse" =>
@@ -143,8 +147,8 @@ main(args: Array<String>): Int64 {
             if (engine.htmlRenderer().render(result.document) != engine.htmlRenderer().render(expected.document)) {
                 throw IllegalStateException("parse output differs")
             }
-        case "snapshot" => featureCheckSnapshot(featureMeasured(repetitions, {=> engine.parseSnapshot(source)}), source,
-            enabled, shape, units)
+        case "snapshot" => featureCheckSnapshot(featureMeasured(repetitions, {=> DocumentSnapshot.parse(engine, source)}),
+            source, enabled, shape, units)
         case "render" =>
             let result = engine.parse(source)
             let renderer = engine.htmlRenderer()

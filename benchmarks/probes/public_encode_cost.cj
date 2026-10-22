@@ -1,4 +1,6 @@
-import markdown.*
+import markdown.artifact.BinaryArtifactCodec
+import markdown.editor.DocumentSnapshot
+import markdown.engine.MarkdownEngine
 import std.convert.*
 import std.fs.*
 import std.time.*
@@ -13,7 +15,7 @@ main(args: Array<String>): Int64 {
         throw IllegalArgumentException("positive repetition count required")
     }
     let engine = MarkdownEngine.builder().build()
-    let snapshot = engine.parseSnapshot(source)
+    let snapshot = DocumentSnapshot.parse(engine, source)
     var totalBytes: Int64 = 0
     var tailBytes: Int64 = 0
     let begin = MonoTime.now()
