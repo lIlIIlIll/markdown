@@ -14,6 +14,9 @@ jobs:
     name: Generate and verify API documentation
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    permissions:
+      contents: read
+      pages: read
     steps:
       # actions/checkout v7.0.1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -102,6 +105,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
@@ -111,7 +115,25 @@ jobs:
       group: github-pages
       cancel-in-progress: false
     steps:
+      - name: Check current main revision
+        id: current
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          EXPECTED_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          current_sha="$(gh api "repos/${GH_REPO}/git/ref/heads/main" --jq '.object.sha')"
+          if [[ "${current_sha}" == "${EXPECTED_SHA}" ]]; then
+            echo 'current=true' >> "${GITHUB_OUTPUT}"
+          else
+            echo 'current=false' >> "${GITHUB_OUTPUT}"
+            echo 'Skipping deployment because main has advanced.'
+          fi
+
       - name: Deploy Pages
+        if: steps.current.outputs.current == 'true'
         id: deployment
         # actions/deploy-pages v5.0.1
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
