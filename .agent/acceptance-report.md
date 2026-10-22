@@ -50,12 +50,12 @@ metadata 提交；当前保持 false，`ciVerifiedCommit` 记录实际已测 hea
 ## Generated Release Evidence
 
 - Version/status: `0.9.2` / `evidence-ready`.
-- Artifact commit: `fe67ba2c3a8f847a31662191f5a529edee4ed458`.
-- Evidence subject commit: `fe67ba2c3a8f847a31662191f5a529edee4ed458`; the retained execution manifest binds the clean gate commit and Git tree.
+- Artifact commit: `6a375488a40092e2289f461b0e5d66bf39a5826f`.
+- Evidence subject commit: `6a375488a40092e2289f461b0e5d66bf39a5826f`; the retained execution manifest binds the clean gate commit and Git tree.
 - Hosted CI verified at that HEAD: `False`; published: `False`.
 - Tests: `1622/1622` passed, `0` skipped, `0` failed.
-- Benchmark: CommonMark `2.47x`, GFM `2.13x`, status `current`.
-- Raw digest: `d34d0dc82bb8b1f14b5e40e3f8337441e36224b02861ab63155bc9b5ef57f2fb`.
+- Benchmark: CommonMark `2.31x`, GFM `2.02x`, status `current`.
+- Raw digest: `259d2cf1ad5d210a02a9f96f5c3530c7c4cbf2788e955aca57145cb7555d4461`.
 
 All mandatory offline evidence and performance gates pass. Hosted CI and publication remain separate claims.
 <!-- release-evidence:end -->
